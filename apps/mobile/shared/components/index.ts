@@ -29,6 +29,7 @@ export { MoneyAmountDisplay } from "./MoneyAmountDisplay";
 export type { MoneyAmountDisplayProps } from "./MoneyAmountDisplay";
 export { MetricCard } from "./MetricCard";
 export type { MetricCardProps } from "./MetricCard";
+export { NumpadFormScreen } from "./NumpadFormScreen";
 export { CustomTabBar } from "./navigation/CustomTabBar";
 export { DialogRouteFrame } from "./DialogRouteFrame";
 export { ProgressBar } from "./ProgressBar";

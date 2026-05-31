@@ -22,6 +22,7 @@ const editLoadedSource = readSource(
 const formSource = readSource("../../features/goals/components/goal-form/GoalForm.tsx");
 const frameSource = readSource("../../features/goals/components/goal-form/GoalFormFrame.tsx");
 const stylesSource = readSource("../../features/goals/components/goal-form/GoalForm.styles.ts");
+const numpadFormScreenSource = readSource("../../shared/components/NumpadFormScreen.tsx");
 const typeToggleSource = readSource("../../features/goals/components/goal-form/GoalTypeToggle.tsx");
 const dateFieldSource = readSource("../../features/goals/components/goal-form/GoalDateField.tsx");
 const formHookSource = readSource("../../features/goals/components/goal-form/useGoalForm.ts");
@@ -79,15 +80,21 @@ test("goals proposal keeps the empty state and goal cards wired", () => {
   expect(goalCardSource).not.toContain("event.stopPropagation()");
 });
 
-test("goal creation and payment sheets use the proposal card surface", () => {
+test("goal creation and payment sheets use the shared numpad form surface", () => {
   expect(createSheetSource).toContain("<GoalForm");
   expect(createSheetSource).toContain("fullScreen");
   expect(formSource).toContain("showGoalTypeToggle");
+  expect(formSource).toContain("hideLabel={fullScreen}");
+  expect(formSource).toContain('size={fullScreen ? "hero" : "medium"}');
   expect(frameSource).toContain("fullScreenForm");
-  expect(addPaymentSource).toContain("paymentCard");
-  expect(addPaymentSource).toContain("<AppAuroraBackground");
+  expect(frameSource).toContain("<NumpadFormScreen");
+  expect(addPaymentSource).toContain("<NumpadFormScreen");
+  expect(addPaymentSource).toContain("footer={");
+  expect(addPaymentSource).toContain("middle={");
+  expect(addPaymentSource).not.toContain("<Card");
+  expect(addPaymentSource).not.toContain("<AppAuroraBackground");
   expect(addPaymentSource).not.toContain("styles.title");
-  expect(addPaymentSource).toContain('t("goals.payment.amount")');
+  expect(addPaymentSource).not.toContain('t("goals.payment.amount")');
 });
 
 test("goal payment date opens the shared calendar picker instead of editing raw text", () => {
@@ -134,11 +141,14 @@ test("goal payment and edit open as full screen routes, not dialogs", () => {
 
 test("create-goal full screen avoids nested card and uses debt red state", () => {
   expect(frameSource).toContain("fullScreen ? styles.fullScreenForm : styles.formCard");
-  expect(frameSource).toContain("<AppAuroraBackground");
-  expect(frameSource).toContain("<ScrollView");
-  expect(frameSource).toContain('keyboardShouldPersistTaps="handled"');
-  expect(frameSource).toContain("FidyNumpad compact={fullScreen}");
-  expect(stylesSource).toContain('justifyContent: "space-between"');
+  expect(frameSource).toContain("<NumpadFormScreen");
+  expect(frameSource).toContain("numpadVisible={numpadEnabled}");
+  expect(frameSource).not.toContain("FidyNumpad compact={fullScreen}");
+  expect(numpadFormScreenSource).toContain("<AppAuroraBackground");
+  expect(numpadFormScreenSource).toContain("<FidyNumpad");
+  expect(numpadFormScreenSource).toContain('justifyContent: "space-between"');
+  expect(numpadFormScreenSource).toContain("bottomShell");
+  expect(stylesSource).toMatch(/fullScreenContainer:\s*\{\s*gap:\s*16,\s*paddingBottom:\s*12,/);
   expect(typeToggleSource).toContain("<SegmentedControl");
   expect(typeToggleSource).toContain('type === "debt" ? "danger" : "success"');
 });

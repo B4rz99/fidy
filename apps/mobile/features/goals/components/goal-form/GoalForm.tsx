@@ -24,30 +24,30 @@ export function GoalForm({
   title,
 }: GoalFormProps) {
   const { locale } = useTranslation();
-
-  return (
-    <GoalFormFrame
-      title={title}
-      fullScreen={fullScreen}
-      numpadEnabled={form.numpadTarget != null}
-      onKeyPress={form.handleKey}
-    >
-      {showGoalTypeToggle ? (
-        <GoalTypeToggle goalType={form.goalType} onChange={form.setGoalType} />
-      ) : null}
-      <GoalAmountField
-        cursorStyle={form.cursorStyle}
-        digits={form.digits}
-        isAmountActive={form.numpadTarget === "amount"}
-        onPress={form.handleAmountPress}
+  const typeToggle = showGoalTypeToggle ? (
+    <GoalTypeToggle goalType={form.goalType} onChange={form.setGoalType} />
+  ) : null;
+  const amountField = (
+    <GoalAmountField
+      cursorStyle={form.cursorStyle}
+      digits={form.digits}
+      hideLabel={fullScreen}
+      isAmountActive={form.numpadTarget === "amount"}
+      onPress={form.handleAmountPress}
+      size={fullScreen ? "hero" : "medium"}
+    />
+  );
+  const interestField =
+    form.goalType === "debt" ? (
+      <GoalInterestField
+        interestRate={form.interestRate}
+        onChange={form.setInterestRate}
+        onFocus={form.handleInterestRateFocus}
       />
-      {form.goalType === "debt" ? (
-        <GoalInterestField
-          interestRate={form.interestRate}
-          onChange={form.setInterestRate}
-          onFocus={form.handleInterestRateFocus}
-        />
-      ) : null}
+    ) : null;
+  const detailFields = (
+    <>
+      {interestField}
       <GoalNameField name={form.name} onChange={form.setName} onFocus={form.handleNameFocus} />
       <GoalDateField
         locale={locale}
@@ -58,6 +58,23 @@ export function GoalForm({
         showDatePicker={form.showDatePicker}
         targetDate={form.targetDate}
       />
+    </>
+  );
+
+  return (
+    <GoalFormFrame
+      title={title}
+      actionContent={children}
+      amountContent={amountField}
+      detailContent={detailFields}
+      fullScreen={fullScreen}
+      numpadEnabled={form.numpadTarget != null}
+      onKeyPress={form.handleKey}
+      topContent={typeToggle}
+    >
+      {typeToggle}
+      {amountField}
+      {detailFields}
       {children}
     </GoalFormFrame>
   );

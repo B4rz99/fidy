@@ -1,31 +1,37 @@
 import type { ReactNode } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppAuroraBackground, FidyNumpad } from "@/shared/components";
+import { FidyNumpad, NumpadFormScreen } from "@/shared/components";
 import { ScrollView, Text, View } from "@/shared/components/rn";
-import { useColorScheme, useThemeColor } from "@/shared/hooks";
+import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./GoalForm.styles";
 
 type GoalFormFrameProps = {
   readonly children: ReactNode;
+  readonly actionContent?: ReactNode;
+  readonly amountContent?: ReactNode;
+  readonly detailContent?: ReactNode;
   readonly fullScreen?: boolean;
   readonly numpadEnabled: boolean;
   readonly onKeyPress: (key: string) => void;
   readonly title: string;
+  readonly topContent?: ReactNode;
 };
 
 export function GoalFormFrame({
+  actionContent,
+  amountContent,
   children,
+  detailContent,
   fullScreen = false,
   numpadEnabled,
   onKeyPress,
   title,
+  topContent,
 }: GoalFormFrameProps) {
   const card = useThemeColor("card");
-  const page = useThemeColor("page");
   const primary = useThemeColor("primary");
   const border = useThemeColor("borderSubtle");
-  const isDark = useColorScheme() === "dark";
-  const { bottom, top } = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const content = (
     <>
       <Text
@@ -41,27 +47,29 @@ export function GoalFormFrame({
       >
         {children}
       </View>
-      {numpadEnabled ? <FidyNumpad compact={fullScreen} onKeyPress={onKeyPress} /> : null}
+      {!fullScreen && numpadEnabled ? <FidyNumpad onKeyPress={onKeyPress} /> : null}
     </>
   );
 
   if (fullScreen) {
     return (
-      <View style={[styles.fullScreenShell, { backgroundColor: page }]}>
-        <AppAuroraBackground isDark={isDark} />
-        <ScrollView
-          style={styles.fullScreenScroller}
-          contentContainerStyle={[
-            styles.fullScreenContainer,
-            { paddingBottom: bottom + 12, paddingTop: top + 72 },
-          ]}
-          contentInsetAdjustmentBehavior="never"
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {content}
-        </ScrollView>
-      </View>
+      <NumpadFormScreen
+        contentStyle={styles.fullScreenContainer}
+        footer={
+          detailContent || actionContent ? (
+            <View style={styles.fullScreenBottomForm}>
+              {detailContent}
+              {actionContent}
+            </View>
+          ) : null
+        }
+        middle={amountContent}
+        middleStyle={styles.fullScreenAmount}
+        numpadVisible={numpadEnabled}
+        onKeyPress={onKeyPress}
+      >
+        {topContent}
+      </NumpadFormScreen>
     );
   }
 

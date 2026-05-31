@@ -11,25 +11,7 @@ export const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
-  container: {},
-  hint: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 11,
-    fontStyle: "italic",
-  },
   inputGroup: {
     gap: 4,
-  },
-  inputLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-  },
-  scrollContent: {
-    gap: 16,
-    padding: 24,
-  },
-  title: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
   },
 });

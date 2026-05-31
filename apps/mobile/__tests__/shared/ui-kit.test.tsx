@@ -48,6 +48,7 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
     expect(source).toContain('export { MoneyAmountDisplay } from "./MoneyAmountDisplay"');
+    expect(source).toContain('export { NumpadFormScreen } from "./NumpadFormScreen"');
   });
 
   it("renders primitive text content", () => {

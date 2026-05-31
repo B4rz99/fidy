@@ -1,25 +1,12 @@
 import { useRouter } from "expo-router";
 import { useCallback, useReducer } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
-import {
-  AppAuroraBackground,
-  Button,
-  FidyNumpad,
-  FormTextField,
-  MoneyAmountDisplay,
-} from "@/shared/components";
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Button, FormTextField, MoneyAmountDisplay, NumpadFormScreen } from "@/shared/components";
+import { Keyboard, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import {
-  useAsyncGuard,
-  useBlinkingCursor,
-  useColorScheme,
-  useThemeColor,
-  useTranslation,
-} from "@/shared/hooks";
+import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { addContribution, useGoalStore } from "../store";
 
@@ -66,14 +53,11 @@ function addPaymentReducer(state: AddPaymentState, action: AddPaymentAction): Ad
 export function AddPaymentScreen() {
   const { back } = useRouter();
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  const isDark = useColorScheme() === "dark";
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const userId = useOptionalUserId();
 
   const cardBg = useThemeColor("card");
-  const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const borderColor = useThemeColor("borderSubtle");
 
@@ -123,19 +107,51 @@ export function AddPaymentScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: pageBg }]}>
-      <AppAuroraBackground isDark={isDark} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="always"
-      >
-        <View style={[styles.paymentCard, { backgroundColor: cardBg, borderColor }]}>
-          <Text style={[styles.fieldLabel, { color: primaryColor }]}>
-            {t("goals.payment.amount")}
-          </Text>
+    <>
+      <NumpadFormScreen
+        footer={
+          <View style={styles.formStack}>
+            <FormTextField
+              label={t("goals.payment.noteOptional")}
+              value={note}
+              onChangeText={(nextNote) => dispatch({ type: "setNote", note: nextNote })}
+              onFocus={() => dispatch({ type: "deactivateNumpad" })}
+              maxLength={200}
+              placeholder={t("goals.payment.notePlaceholder")}
+              style={styles.fieldGroup}
+              labelStyle={[styles.fieldLabel, { color: primaryColor }]}
+              inputStyle={[styles.input, { backgroundColor: cardBg, borderColor }]}
+            />
 
+            <Pressable
+              style={styles.fieldGroup}
+              onPress={() => {
+                Keyboard.dismiss();
+                dispatch({ type: "openDatePicker" });
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.fieldLabel, { color: primaryColor }]}>
+                {t("goals.payment.date")}
+              </Text>
+              <View
+                style={[styles.input, styles.dateButton, { backgroundColor: cardBg, borderColor }]}
+              >
+                <Text style={[styles.dateText, { color: primaryColor }]}>{date}</Text>
+              </View>
+            </Pressable>
+
+            <Button
+              label={t("goals.payment.addPaymentCta")}
+              onPress={() => {
+                void handleAddPayment();
+              }}
+              disabled={isAdding || userId == null}
+              loading={isAdding}
+            />
+          </View>
+        }
+        middle={
           <Pressable
             style={styles.amountSection}
             onPress={() => {
@@ -148,55 +164,15 @@ export function AddPaymentScreen() {
               cursorStyle={cursorStyle}
               cursorVisible={numpadActive}
               digits={digits}
-              size="large"
+              size="hero"
             />
           </Pressable>
-
-          <FormTextField
-            label={t("goals.payment.noteOptional")}
-            value={note}
-            onChangeText={(nextNote) => dispatch({ type: "setNote", note: nextNote })}
-            onFocus={() => dispatch({ type: "deactivateNumpad" })}
-            maxLength={200}
-            placeholder={t("goals.payment.notePlaceholder")}
-            style={styles.fieldGroup}
-            labelStyle={[styles.fieldLabel, { color: primaryColor }]}
-            inputStyle={[
-              styles.input,
-              { backgroundColor: cardBg, borderColor, color: primaryColor },
-            ]}
-          />
-
-          <Pressable
-            style={styles.fieldGroup}
-            onPress={() => {
-              Keyboard.dismiss();
-              dispatch({ type: "openDatePicker" });
-            }}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.fieldLabel, { color: primaryColor }]}>
-              {t("goals.payment.date")}
-            </Text>
-            <View
-              style={[styles.input, styles.dateButton, { backgroundColor: cardBg, borderColor }]}
-            >
-              <Text style={[styles.dateText, { color: primaryColor }]}>{date}</Text>
-            </View>
-          </Pressable>
-        </View>
-
-        <Button
-          label={t("goals.payment.addPaymentCta")}
-          onPress={() => {
-            void handleAddPayment();
-          }}
-          disabled={isAdding || userId == null}
-          loading={isAdding}
-        />
-
-        {numpadActive ? <FidyNumpad onKeyPress={handleKey} /> : null}
-      </ScrollView>
+        }
+        numpadVisible={numpadActive}
+        onKeyPress={handleKey}
+      >
+        {null}
+      </NumpadFormScreen>
       <TransactionDatePickerDialog
         date={datePickerDate}
         onChange={(nextDate) => dispatch({ type: "setDate", date: toIsoDate(nextDate) })}
@@ -204,21 +180,15 @@ export function AddPaymentScreen() {
         onClose={() => dispatch({ type: "closeDatePicker" })}
         visible={showDatePicker}
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContent: { padding: 24, gap: 16 },
-  paymentCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    borderCurve: "continuous",
-    padding: 16,
-    gap: 16,
+  formStack: {
+    gap: 12,
   },
-  amountSection: { alignItems: "center", paddingVertical: 8 },
+  amountSection: { alignItems: "center" },
   fieldGroup: { gap: 4 },
   fieldLabel: { fontFamily: "Poppins_500Medium", fontSize: 12, fontStyle: "italic" },
   input: {
