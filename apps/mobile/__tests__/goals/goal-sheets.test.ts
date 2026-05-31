@@ -44,7 +44,7 @@ test("keeps the edit-goal sheet wired to the shared form and delete flow", () =>
   expect(editSheetSource).toContain("<GoalEditScreenLoaded");
   expect(editSheetSource).toContain("<AppAuroraBackground");
   expect(editLoadedSource).toContain("<GoalForm");
-  expect(editLoadedSource).toContain("fullScreen");
+  expect(editLoadedSource).not.toContain("fullScreen");
   expect(editActionsSource).toContain("Alert.alert");
   expect(editActionsSource).toContain("deleteGoal(db, userId, goalId)");
   expect(editActionsSource).toContain("updateGoal(db, userId");
@@ -82,15 +82,15 @@ test("goals proposal keeps the empty state and goal cards wired", () => {
 
 test("goal creation and payment sheets use the shared numpad form surface", () => {
   expect(createSheetSource).toContain("<GoalForm");
-  expect(createSheetSource).toContain("fullScreen");
+  expect(createSheetSource).not.toContain("fullScreen");
   expect(formSource).toContain("showGoalTypeToggle");
-  expect(formSource).toContain("hideLabel={fullScreen}");
-  expect(formSource).toContain('size={fullScreen ? "hero" : "medium"}');
-  expect(frameSource).toContain("fullScreenForm");
-  expect(frameSource).toContain("<NumpadFormScreen");
-  expect(addPaymentSource).toContain("<NumpadFormScreen");
-  expect(addPaymentSource).toContain("footer={");
-  expect(addPaymentSource).toContain("middle={");
+  expect(formSource).not.toContain("hideLabel");
+  expect(formSource).not.toContain('size={fullScreen ? "hero" : "medium"}');
+  expect(frameSource).not.toContain("fullScreen ? styles.fullScreenForm : styles.formCard");
+  expect(frameSource).toContain("<MoneyEntryScreen");
+  expect(addPaymentSource).toContain("<MoneyEntryScreen");
+  expect(addPaymentSource).toContain("actionContent={");
+  expect(addPaymentSource).toContain("amountContent={");
   expect(addPaymentSource).not.toContain("<Card");
   expect(addPaymentSource).not.toContain("<AppAuroraBackground");
   expect(addPaymentSource).not.toContain("styles.title");
@@ -140,10 +140,11 @@ test("goal payment and edit open as full screen routes, not dialogs", () => {
 });
 
 test("create-goal full screen avoids nested card and uses debt red state", () => {
-  expect(frameSource).toContain("fullScreen ? styles.fullScreenForm : styles.formCard");
-  expect(frameSource).toContain("<NumpadFormScreen");
+  expect(frameSource).not.toContain("formCard");
+  expect(frameSource).not.toContain("<ScrollView");
+  expect(frameSource).not.toContain("<FidyNumpad");
+  expect(frameSource).toContain("<MoneyEntryScreen");
   expect(frameSource).toContain("numpadVisible={numpadEnabled}");
-  expect(frameSource).not.toContain("FidyNumpad compact={fullScreen}");
   expect(numpadFormScreenSource).toContain("<AppAuroraBackground");
   expect(numpadFormScreenSource).toContain("<FidyNumpad");
   expect(numpadFormScreenSource).toContain('justifyContent: "space-between"');

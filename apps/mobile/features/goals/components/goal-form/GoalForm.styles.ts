@@ -1,9 +1,6 @@
 import { StyleSheet } from "@/shared/components/rn";
 
 export const styles = StyleSheet.create({
-  container: {},
-  scrollContent: { padding: 24, gap: 16 },
-  title: { fontFamily: "Poppins_700Bold", fontSize: 18, textAlign: "center" },
   fullScreenContainer: {
     gap: 16,
     paddingBottom: 12,
@@ -14,28 +11,6 @@ export const styles = StyleSheet.create({
   fullScreenBottomForm: {
     gap: 10,
   },
-  fullScreenTitle: {
-    display: "none",
-  },
-  formCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    borderCurve: "continuous",
-    padding: 16,
-    gap: 16,
-  },
-  fullScreenForm: {
-    gap: 10,
-  },
-  toggleRow: { flexDirection: "row", gap: 8 },
-  toggleButton: {
-    flex: 1,
-    height: 38,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  toggleText: { fontFamily: "Poppins_600SemiBold", fontSize: 13 },
   fieldGroup: { gap: 4 },
   fieldLabel: { fontFamily: "Poppins_600SemiBold", fontSize: 12 },
   input: {
@@ -50,9 +25,7 @@ export const styles = StyleSheet.create({
   dateButton: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   dateText: { fontFamily: "Poppins_500Medium", fontSize: 14 },
   clearDateText: { fontSize: 14 },
-  amountSection: { alignItems: "center", gap: 2, paddingVertical: 2 },
   interestInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   interestInput: { flex: 1 },
   interestSuffix: { fontFamily: "Poppins_700Bold", fontSize: 18 },
-  projectionHint: { fontFamily: "Poppins_500Medium", fontSize: 12, textAlign: "center" },
 });

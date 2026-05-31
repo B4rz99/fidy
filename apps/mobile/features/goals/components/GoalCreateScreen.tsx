@@ -13,7 +13,7 @@ export function GoalCreateScreen() {
   const createActions = useGoalCreateActions(form);
 
   return (
-    <GoalForm title={t("goals.create.title")} form={form} fullScreen showGoalTypeToggle>
+    <GoalForm form={form} showGoalTypeToggle>
       <GoalFormActionButton
         label={t("goals.create.title")}
         busy={createActions.isCreating}

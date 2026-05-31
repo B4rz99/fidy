@@ -11,18 +11,10 @@ import type { GoalFormModel } from "./useGoalForm";
 type GoalFormProps = {
   readonly children: ReactNode;
   readonly form: GoalFormModel;
-  readonly fullScreen?: boolean;
   readonly showGoalTypeToggle?: boolean;
-  readonly title: string;
 };
 
-export function GoalForm({
-  children,
-  form,
-  fullScreen = false,
-  showGoalTypeToggle = false,
-  title,
-}: GoalFormProps) {
+export function GoalForm({ children, form, showGoalTypeToggle = false }: GoalFormProps) {
   const { locale } = useTranslation();
   const typeToggle = showGoalTypeToggle ? (
     <GoalTypeToggle goalType={form.goalType} onChange={form.setGoalType} />
@@ -31,10 +23,8 @@ export function GoalForm({
     <GoalAmountField
       cursorStyle={form.cursorStyle}
       digits={form.digits}
-      hideLabel={fullScreen}
       isAmountActive={form.numpadTarget === "amount"}
       onPress={form.handleAmountPress}
-      size={fullScreen ? "hero" : "medium"}
     />
   );
   const interestField =
@@ -63,19 +53,12 @@ export function GoalForm({
 
   return (
     <GoalFormFrame
-      title={title}
       actionContent={children}
       amountContent={amountField}
       detailContent={detailFields}
-      fullScreen={fullScreen}
       numpadEnabled={form.numpadTarget != null}
       onKeyPress={form.handleKey}
       topContent={typeToggle}
-    >
-      {typeToggle}
-      {amountField}
-      {detailFields}
-      {children}
-    </GoalFormFrame>
+    />
   );
 }

@@ -86,11 +86,13 @@ export const styles = StyleSheet.create({
     zIndex: 1,
   },
   tabPill: {
+    borderCurve: "continuous",
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 30,
+    left: 0,
     position: "absolute",
     top: 2,
-    left: 0,
-    borderRadius: 999,
-    height: 30,
   },
   tabText: {
     fontFamily: "Poppins_600SemiBold",

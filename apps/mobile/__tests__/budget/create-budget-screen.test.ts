@@ -57,9 +57,10 @@ test("create-budget screen supports edit mode via budgetId params", () => {
 
 test("create-budget content renders category pills and numpad entry", () => {
   expect(contentSource).toContain("CategoryPill");
-  expect(contentSource).toContain("NumpadFormScreen");
-  expect(contentSource).toContain("footer={");
-  expect(contentSource).toContain("middle={");
+  expect(contentSource).toContain("MoneyEntryScreen");
+  expect(contentSource).toContain("ChoiceTray");
+  expect(contentSource).toContain("actionContent={");
+  expect(contentSource).toContain("amountContent={");
   expect(contentSource).not.toContain('t("budgets.create.enterAmount")');
   expect(contentSource).not.toContain('t("budgets.create.title")');
 });

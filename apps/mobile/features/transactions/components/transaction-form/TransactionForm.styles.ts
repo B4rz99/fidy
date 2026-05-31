@@ -9,18 +9,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  actionRow: {
-    flexDirection: "row",
-    gap: 8,
+  amountZone: {
+    alignItems: "center",
   },
   closeButtonContainer: {
     alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingTop: 12,
-  },
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
   },
   dateChip: {
     alignItems: "center",
@@ -70,10 +65,5 @@ export const styles = StyleSheet.create({
   accountRow: {
     flexDirection: "row",
     gap: 8,
-  },
-  bottomZone: {
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingTop: 8,
   },
 });

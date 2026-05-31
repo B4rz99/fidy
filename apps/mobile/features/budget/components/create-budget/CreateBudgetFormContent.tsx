@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { CategoryPill } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { Button, MoneyAmountDisplay, NumpadFormScreen } from "@/shared/components";
+import { Button, ChoiceTray, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
 import { View } from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import type { BudgetSuggestion } from "../../lib/derive";
@@ -43,24 +43,9 @@ export function CreateBudgetFormContent({
   );
 
   return (
-    <NumpadFormScreen
-      footer={
+    <MoneyEntryScreen
+      actionContent={
         <>
-          {!isEdit && (
-            <View style={styles.inputGroup}>
-              <View style={styles.chipRow}>
-                {availableCategories.map((categoryOption) => (
-                  <CategoryPill
-                    key={categoryOption.id}
-                    category={categoryOption}
-                    isSelected={category === categoryOption.id}
-                    onPress={() => setCategory(categoryOption.id)}
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-
           <Button
             label={t("common.save")}
             onPress={handleSave}
@@ -78,7 +63,25 @@ export function CreateBudgetFormContent({
           ) : null}
         </>
       }
-      middle={
+      detailContent={
+        <>
+          {!isEdit && (
+            <View style={styles.inputGroup}>
+              <ChoiceTray>
+                {availableCategories.map((categoryOption) => (
+                  <CategoryPill
+                    key={categoryOption.id}
+                    category={categoryOption}
+                    isSelected={category === categoryOption.id}
+                    onPress={() => setCategory(categoryOption.id)}
+                  />
+                ))}
+              </ChoiceTray>
+            </View>
+          )}
+        </>
+      }
+      amountContent={
         <View style={styles.amountSection}>
           <MoneyAmountDisplay
             color={primaryColor}

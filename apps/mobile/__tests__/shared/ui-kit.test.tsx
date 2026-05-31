@@ -48,7 +48,11 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
     expect(source).toContain('export { MoneyAmountDisplay } from "./MoneyAmountDisplay"');
+    expect(source).toContain('export { MoneyEntryScreen } from "./MoneyEntryScreen"');
+    expect(source).toContain('export { NumpadActionFooter } from "./NumpadActionFooter"');
     expect(source).toContain('export { NumpadFormScreen } from "./NumpadFormScreen"');
+    expect(source).toContain('export { PinnedFormStack } from "./PinnedFormStack"');
+    expect(source).toContain('export { ChoiceTray } from "./ChoiceTray"');
   });
 
   it("renders primitive text content", () => {
@@ -458,7 +462,6 @@ describe("shared UI kit", () => {
 
   it("keeps migrated form field buttons on the shared FieldButton primitive", () => {
     const files = [
-      "../../features/goals/components/goal-form/GoalAmountField.tsx",
       "../../features/goals/components/goal-form/GoalDateField.tsx",
       "../../features/transfers/components/transfer-form/TransferSideCard.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
@@ -790,10 +793,7 @@ describe("shared UI kit", () => {
     expectSharedComponentImport(financialAccountIdentifierSource, "ScreenLayout");
     expect(financialAccountIdentifierSource).toContain("<Button");
     expect(financialAccountIdentifierSource).not.toContain("styles.primaryButton");
-    expect(transactionActionSource).toContain(
-      'import { Button, FidyNumpad } from "@/shared/components"'
-    );
-    expect(transactionActionSource).toContain("<Button");
+    expect(transactionActionSource).toContain("NumpadActionFooter");
     expect(transactionActionSource).not.toContain("<Pressable");
     expect(transactionActionSource).not.toContain("styles.saveButton");
     expect(transactionActionSource).not.toContain("styles.deleteButton");

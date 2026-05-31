@@ -3,7 +3,7 @@ import { useCallback, useReducer } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
-import { Button, FormTextField, MoneyAmountDisplay, NumpadFormScreen } from "@/shared/components";
+import { Button, FormTextField, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
 import { Keyboard, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -108,9 +108,19 @@ export function AddPaymentScreen() {
 
   return (
     <>
-      <NumpadFormScreen
-        footer={
-          <View style={styles.formStack}>
+      <MoneyEntryScreen
+        actionContent={
+          <Button
+            label={t("goals.payment.addPaymentCta")}
+            onPress={() => {
+              void handleAddPayment();
+            }}
+            disabled={isAdding || userId == null}
+            loading={isAdding}
+          />
+        }
+        detailContent={
+          <>
             <FormTextField
               label={t("goals.payment.noteOptional")}
               value={note}
@@ -140,18 +150,9 @@ export function AddPaymentScreen() {
                 <Text style={[styles.dateText, { color: primaryColor }]}>{date}</Text>
               </View>
             </Pressable>
-
-            <Button
-              label={t("goals.payment.addPaymentCta")}
-              onPress={() => {
-                void handleAddPayment();
-              }}
-              disabled={isAdding || userId == null}
-              loading={isAdding}
-            />
-          </View>
+          </>
         }
-        middle={
+        amountContent={
           <Pressable
             style={styles.amountSection}
             onPress={() => {
@@ -172,7 +173,7 @@ export function AddPaymentScreen() {
         onKeyPress={handleKey}
       >
         {null}
-      </NumpadFormScreen>
+      </MoneyEntryScreen>
       <TransactionDatePickerDialog
         date={datePickerDate}
         onChange={(nextDate) => dispatch({ type: "setDate", date: toIsoDate(nextDate) })}
@@ -185,9 +186,6 @@ export function AddPaymentScreen() {
 }
 
 const styles = StyleSheet.create({
-  formStack: {
-    gap: 12,
-  },
   amountSection: { alignItems: "center" },
   fieldGroup: { gap: 4 },
   fieldLabel: { fontFamily: "Poppins_500Medium", fontSize: 12, fontStyle: "italic" },
