@@ -21,25 +21,25 @@ import {
   type ViewStyle,
 } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
-import { styles } from "./PencilEntryScaffold.styles";
-export { PencilEntryField, PencilEntryTextInputField } from "./PencilEntryField";
-export type { PencilEntryFieldProps } from "./PencilEntryField";
+import { styles } from "./EntryScaffold.styles";
+export { EntryField, EntryTextInputField } from "./EntryField";
+export type { EntryFieldProps } from "./EntryField";
 
-export type PencilEntryTab = "expense" | "income" | "transfer";
+export type EntryTab = "expense" | "income" | "transfer";
 
-type PencilEntryScaffoldProps = {
-  readonly activeTab: PencilEntryTab;
+type EntryScaffoldProps = {
+  readonly activeTab: EntryTab;
   readonly amount: string;
   readonly fields: ReactNode;
   readonly isConfirmDisabled: boolean;
   readonly onConfirm: () => void;
   readonly onKeyPress: (key: string) => void;
-  readonly onTabPress: (tab: PencilEntryTab) => void;
-  readonly tabs: readonly { readonly key: PencilEntryTab; readonly label: string }[];
+  readonly onTabPress: (tab: EntryTab) => void;
+  readonly tabs: readonly { readonly key: EntryTab; readonly label: string }[];
   readonly includesNativeHeader?: boolean;
 };
 
-const PENCIL_ENTRY_ROWS = [
+const ENTRY_ROWS = [
   ["1", "2", "3"],
   ["4", "5", "6"],
   ["7", "8", "9"],
@@ -47,7 +47,7 @@ const PENCIL_ENTRY_ROWS = [
 ] as const;
 
 const ANDROID_TAB_BAR_HEIGHT = 64;
-const PENCIL_ENTRY_HORIZONTAL_PADDING = 16;
+const ENTRY_HORIZONTAL_PADDING = 16;
 const SWIPE_TAB_THRESHOLD = 56;
 const TAB_GAP = 8;
 const NUMPAD_RIPPLE_COLOR = "rgba(255, 255, 255, 0.42)";
@@ -55,7 +55,7 @@ const NUMPAD_RIPPLE_COLOR = "rgba(255, 255, 255, 0.42)";
 function getTabIndicatorColor(input: {
   readonly accentGreen: string;
   readonly accentRed: string;
-  readonly tab: PencilEntryTab;
+  readonly tab: EntryTab;
   readonly tertiary: string;
 }) {
   if (input.tab === "expense") return input.accentRed;
@@ -63,7 +63,7 @@ function getTabIndicatorColor(input: {
   return input.tertiary;
 }
 
-type PencilNumpadButtonProps = {
+type EntryNumpadButtonProps = {
   readonly accessibilityLabel?: string;
   readonly children: ReactNode;
   readonly disabled?: boolean;
@@ -72,14 +72,14 @@ type PencilNumpadButtonProps = {
   readonly testID?: string;
 };
 
-function PencilNumpadButton({
+function EntryNumpadButton({
   accessibilityLabel,
   children,
   disabled = false,
   onPress,
   style,
   testID,
-}: PencilNumpadButtonProps) {
+}: EntryNumpadButtonProps) {
   const feedback = useSharedValue(0);
   const feedbackStyle = useAnimatedStyle(() => ({
     opacity: feedback.value,
@@ -111,7 +111,7 @@ function PencilNumpadButton({
   );
 }
 
-export function PencilEntryScaffold({
+export function EntryScaffold({
   activeTab,
   amount,
   fields,
@@ -121,9 +121,9 @@ export function PencilEntryScaffold({
   onTabPress,
   tabs,
   includesNativeHeader = false,
-}: PencilEntryScaffoldProps) {
+}: EntryScaffoldProps) {
   const { width } = useWindowDimensions();
-  const tabBarWidth = useSharedValue(Math.max(width - PENCIL_ENTRY_HORIZONTAL_PADDING * 2, 0));
+  const tabBarWidth = useSharedValue(Math.max(width - ENTRY_HORIZONTAL_PADDING * 2, 0));
   const { t } = useTranslation();
   const isDark = useColorScheme() === "dark";
   const primary = useThemeColor("primary");
@@ -140,7 +140,7 @@ export function PencilEntryScaffold({
   const activeTabIndex = tabs.findIndex((tab) => tab.key === activeTab);
   const totalTabGap = Math.max(tabs.length - 1, 0) * TAB_GAP;
   const tabPillWidth = Math.max(
-    (width - PENCIL_ENTRY_HORIZONTAL_PADDING * 2 - totalTabGap) / Math.max(tabs.length, 1),
+    (width - ENTRY_HORIZONTAL_PADDING * 2 - totalTabGap) / Math.max(tabs.length, 1),
     0
   );
   const animatedTabPillX = useDerivedValue(() => {
@@ -239,20 +239,20 @@ export function PencilEntryScaffold({
           <View style={styles.fields}>{fields}</View>
 
           <View style={styles.numpad}>
-            {PENCIL_ENTRY_ROWS.map((row) => (
+            {ENTRY_ROWS.map((row) => (
               <View key={row.join("-")} style={styles.numpadRow}>
                 {row.map((key) => {
                   if (key === "delete") {
                     return (
                       <View key={key} style={styles.rightColumn}>
-                        <PencilNumpadButton
+                        <EntryNumpadButton
                           style={[styles.key, { backgroundColor: specialKeyBg }]}
                           onPress={() => handleKeyPress(key)}
                           accessibilityLabel={t("common.delete")}
                         >
                           <Delete size={20} color={tertiary} />
-                        </PencilNumpadButton>
-                        <PencilNumpadButton
+                        </EntryNumpadButton>
+                        <EntryNumpadButton
                           testID="keyConfirm"
                           style={[
                             styles.key,
@@ -265,20 +265,20 @@ export function PencilEntryScaffold({
                           onPress={isConfirmDisabled ? undefined : handleConfirmPress}
                         >
                           <Check size={22} color={onAccent} />
-                        </PencilNumpadButton>
+                        </EntryNumpadButton>
                       </View>
                     );
                   }
 
                   return (
-                    <PencilNumpadButton
+                    <EntryNumpadButton
                       key={key}
                       style={[styles.key, { backgroundColor: keyBg }]}
                       onPress={() => handleKeyPress(key)}
                       accessibilityLabel={key}
                     >
                       <Text style={[styles.keyText, { color: primary }]}>{key}</Text>
-                    </PencilNumpadButton>
+                    </EntryNumpadButton>
                   );
                 })}
               </View>

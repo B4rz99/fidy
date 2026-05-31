@@ -50,7 +50,7 @@ export type { TextActionButtonProps, TextActionButtonTone } from "./TextActionBu
 export { TransactionRow } from "./TransactionRow";
 export {
   createFullScreenRouteOptions,
-  createPencilEntryRouteOptions,
+  createEntryRouteOptions,
   createTransparentHeaderRouteOptions,
   dialogRouteOptions,
 } from "./route-options";

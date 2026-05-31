@@ -33,7 +33,7 @@ import { useSettingsStore } from "@/features/settings/hooks.public";
 import {
   AppToastHost,
   createFullScreenRouteOptions,
-  createPencilEntryRouteOptions,
+  createEntryRouteOptions,
   createTransparentHeaderRouteOptions,
   dialogRouteOptions,
   ErrorFallback,
@@ -213,7 +213,7 @@ export function RootLayout() {
   const db = userId ? getDb(userId) : null;
   const iosHeaderOptions = createTransparentHeaderRouteOptions(theme);
   const fullScreenHeaderOptions = createFullScreenRouteOptions(theme);
-  const pencilEntryRouteOptions = createPencilEntryRouteOptions();
+  const entryRouteOptions = createEntryRouteOptions();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -250,13 +250,13 @@ export function RootLayout() {
             <Stack.Screen name="create-goal" options={fullScreenHeaderOptions} />
             <Stack.Screen name="add-payment" options={fullScreenHeaderOptions} />
             <Stack.Screen name="edit-goal" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="add-transaction" options={pencilEntryRouteOptions} />
-            <Stack.Screen name="add-transfer" options={pencilEntryRouteOptions} />
+            <Stack.Screen name="add-transaction" options={entryRouteOptions} />
+            <Stack.Screen name="add-transfer" options={entryRouteOptions} />
             <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
             <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
             <Stack.Screen name="categories" options={iosHeaderOptions} />
             <Stack.Screen name="create-category" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="edit-transaction" options={pencilEntryRouteOptions} />
+            <Stack.Screen name="edit-transaction" options={entryRouteOptions} />
             <Stack.Screen name="reclassify-transaction" options={fullScreenHeaderOptions} />
             {localQaAvailable ? (
               <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />

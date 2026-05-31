@@ -1,1 +1,1 @@
-export { PencilTransactionEntryScreen } from "./components/PencilTransactionEntryScreen";
+export { TransactionEntryScreen } from "./components/TransactionEntryScreen";

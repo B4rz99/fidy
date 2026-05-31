@@ -28,7 +28,7 @@ export function createFullScreenRouteOptions(theme: RouteTheme) {
   } as const;
 }
 
-export function createPencilEntryRouteOptions() {
+export function createEntryRouteOptions() {
   return {
     contentStyle: { backgroundColor: "transparent" },
     gestureEnabled: false,

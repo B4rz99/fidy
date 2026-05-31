@@ -7,14 +7,14 @@ import {
   getFinancialAccountsForUser,
   tryEnsureDefaultFinancialAccount,
 } from "@/features/financial-accounts/public";
-import { usePencilTransferEntry } from "@/features/transfers/ui.public";
+import { useTransferEntry } from "@/features/transfers/ui.public";
 import { Calendar, Pencil, Tag, Wallet } from "@/shared/components/icons";
 import {
-  PencilEntryField,
-  PencilEntryScaffold,
-  PencilEntryTextInputField,
-  type PencilEntryTab,
-} from "@/shared/components/PencilEntryScaffold";
+  EntryField,
+  EntryScaffold,
+  EntryTextInputField,
+  type EntryTab,
+} from "@/shared/components/EntryScaffold";
 import { View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useSubscription, useTranslation } from "@/shared/hooks";
@@ -33,12 +33,12 @@ import {
   TransactionAccountPickerDialog,
   TransactionCategoryPickerDialog,
   TransactionDatePickerDialog,
-} from "./PencilTransactionEntryPickers";
+} from "./TransactionEntryPickers";
 
 type TransactionPicker = "account" | "category" | "date" | null;
 type AddEntryUiState = {
   readonly accounts: readonly FinancialAccountRow[];
-  readonly entryMode: PencilEntryTab;
+  readonly entryMode: EntryTab;
   readonly picker: TransactionPicker;
 };
 
@@ -46,13 +46,13 @@ function mergeUiState(state: AddEntryUiState, patch: Partial<AddEntryUiState>): 
   return { ...state, ...patch };
 }
 
-type PencilTransactionEntryScreenProps = {
+type TransactionEntryScreenProps = {
   readonly includesNativeHeader?: boolean;
 };
 
-export function PencilTransactionEntryScreen({
+export function TransactionEntryScreen({
   includesNativeHeader = true,
-}: PencilTransactionEntryScreenProps = {}) {
+}: TransactionEntryScreenProps = {}) {
   const [uiState, setUiState] = useReducer(mergeUiState, {
     accounts: [],
     entryMode: "expense",
@@ -98,7 +98,7 @@ export function PencilTransactionEntryScreen({
   const selectedAccount = uiState.accounts.find((account) => account.id === accountId);
   const selectedCategory = CATEGORIES.find((category) => category.id === categoryId);
   const isTransfer = uiState.entryMode === "transfer";
-  const transferEntry = usePencilTransferEntry({ enabled: isTransfer });
+  const transferEntry = useTransferEntry({ enabled: isTransfer });
   const dateLabel = getDateLabel({
     date,
     now: new Date(),
@@ -122,7 +122,7 @@ export function PencilTransactionEntryScreen({
     db != null && userId != null
   );
 
-  const handleTabPress = (tab: PencilEntryTab) => {
+  const handleTabPress = (tab: EntryTab) => {
     setUiState({ entryMode: tab });
     if (tab !== "transfer") setType(tab);
   };
@@ -139,26 +139,26 @@ export function PencilTransactionEntryScreen({
   };
   const transactionFields = (
     <>
-      <PencilEntryTextInputField
+      <EntryTextInputField
         icon={Pencil}
         label={t("common.description")}
         value={description}
         onChangeText={setDescription}
       />
-      <PencilEntryField
+      <EntryField
         icon={Wallet}
         label=""
         value={selectedAccount?.name ?? t("common.account")}
         onPress={() => setUiState({ picker: "account" })}
       />
       <View style={{ flexDirection: "row", gap: 12, height: 50 }}>
-        <PencilEntryField
+        <EntryField
           icon={Calendar}
           label={dateLabel}
           valueTone="primary"
           onPress={() => setUiState({ picker: "date" })}
         />
-        <PencilEntryField
+        <EntryField
           icon={Tag}
           label={`${t("common.category")}:`}
           value={selectedCategory ? getCategoryLabel(selectedCategory, locale) : undefined}
@@ -171,7 +171,7 @@ export function PencilTransactionEntryScreen({
 
   return (
     <>
-      <PencilEntryScaffold
+      <EntryScaffold
         activeTab={activeTab}
         amount={isTransfer ? transferEntry.amount : formatInputDisplay(digits)}
         isConfirmDisabled={

@@ -41,8 +41,8 @@ test("exposes a login selector for local QA entry", () => {
   expect(localQaButtonSource).toContain('testID="login.local-qa"');
 });
 
-test("routes add tab directly to Pencil transaction entry", () => {
-  expect(addRouteSource).toContain("PencilTransactionEntryScreen");
+test("routes add tab directly to Transaction entry", () => {
+  expect(addRouteSource).toContain("TransactionEntryScreen");
 });
 
 test("exposes transaction form selectors for save, date, and account selection", () => {

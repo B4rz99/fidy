@@ -4,7 +4,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import type { Category } from "../lib/categories";
 import { CATEGORIES } from "../lib/categories";
-import { pickerStyles } from "./PencilTransactionEntryPickers.styles";
+import { pickerStyles } from "./TransactionEntryPickers.styles";
 
 export function TransactionCategoryPickerDialog(props: {
   readonly categoryId: Category["id"] | null;

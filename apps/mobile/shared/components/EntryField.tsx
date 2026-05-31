@@ -1,9 +1,9 @@
 import type { ComponentType, ReactNode } from "react";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { styles } from "./PencilEntryScaffold.styles";
+import { styles } from "./EntryScaffold.styles";
 
-export type PencilEntryFieldProps = {
+export type EntryFieldProps = {
   readonly icon: ComponentType<{ size?: number; color?: string }>;
   readonly label: string;
   readonly value?: string;
@@ -19,7 +19,7 @@ function getToneColor(input: {
   readonly secondary: string;
   readonly tertiary: string;
   readonly value?: string;
-  readonly valueTone?: PencilEntryFieldProps["valueTone"];
+  readonly valueTone?: EntryFieldProps["valueTone"];
 }): string {
   if (input.valueTone === "primary") return input.primary;
   if (input.valueTone === "secondary") return input.secondary;
@@ -28,7 +28,7 @@ function getToneColor(input: {
   return input.tertiary;
 }
 
-export function PencilEntryField({
+export function EntryField({
   children,
   icon: Icon,
   label,
@@ -36,7 +36,7 @@ export function PencilEntryField({
   testID,
   value,
   valueTone,
-}: PencilEntryFieldProps) {
+}: EntryFieldProps) {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -68,8 +68,8 @@ export function PencilEntryField({
   );
 }
 
-export function PencilEntryTextInputField(props: {
-  readonly icon: PencilEntryFieldProps["icon"];
+export function EntryTextInputField(props: {
+  readonly icon: EntryFieldProps["icon"];
   readonly label: string;
   readonly onChangeText: (text: string) => void;
   readonly value: string;
@@ -78,7 +78,7 @@ export function PencilEntryTextInputField(props: {
   const tertiary = useThemeColor("tertiary");
 
   return (
-    <PencilEntryField icon={props.icon} label={props.label}>
+    <EntryField icon={props.icon} label={props.label}>
       <TextInput
         value={props.value}
         onChangeText={props.onChangeText}
@@ -87,6 +87,6 @@ export function PencilEntryTextInputField(props: {
         maxLength={200}
         style={[styles.fieldInput, { color: primary }]}
       />
-    </PencilEntryField>
+    </EntryField>
   );
 }

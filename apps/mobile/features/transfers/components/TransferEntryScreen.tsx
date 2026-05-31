@@ -1,19 +1,19 @@
 import { useTransactionStore } from "@/features/transactions/store.public";
-import { PencilEntryScaffold, type PencilEntryTab } from "@/shared/components/PencilEntryScaffold";
+import { EntryScaffold, type EntryTab } from "@/shared/components/EntryScaffold";
 import { useTranslation } from "@/shared/hooks";
-import { usePencilTransferEntry } from "./PencilTransferEntryContent";
+import { useTransferEntry } from "./TransferEntryContent";
 
-export function PencilTransferEntryScreen(
+export function TransferEntryScreen(
   props: {
-    readonly onTransactionTabSelect?: (tab: Exclude<PencilEntryTab, "transfer">) => void;
+    readonly onTransactionTabSelect?: (tab: Exclude<EntryTab, "transfer">) => void;
     readonly includesNativeHeader?: boolean;
   } = {}
 ) {
   const { t } = useTranslation();
-  const transferEntry = usePencilTransferEntry();
+  const transferEntry = useTransferEntry();
   const setTransactionType = useTransactionStore((state) => state.setType);
 
-  const handleTabPress = (tab: PencilEntryTab) => {
+  const handleTabPress = (tab: EntryTab) => {
     if (tab === "transfer") return;
     setTransactionType(tab);
     props.onTransactionTabSelect?.(tab);
@@ -21,7 +21,7 @@ export function PencilTransferEntryScreen(
 
   return (
     <>
-      <PencilEntryScaffold
+      <EntryScaffold
         activeTab="transfer"
         amount={transferEntry.amount}
         isConfirmDisabled={transferEntry.isConfirmDisabled}

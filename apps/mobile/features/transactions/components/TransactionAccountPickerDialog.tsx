@@ -3,7 +3,7 @@ import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { Wallet } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { pickerStyles } from "./PencilTransactionEntryPickers.styles";
+import { pickerStyles } from "./TransactionEntryPickers.styles";
 
 export function TransactionAccountPickerDialog(props: {
   readonly accountId: FinancialAccountRow["id"] | null;

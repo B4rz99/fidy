@@ -1,10 +1,7 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { ArrowLeftRight, Calendar, Pencil, Tag } from "@/shared/components/icons";
-import {
-  PencilEntryField,
-  PencilEntryTextInputField,
-} from "@/shared/components/PencilEntryScaffold";
+import { EntryField, EntryTextInputField } from "@/shared/components/EntryScaffold";
 import { Modal, Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, showSuccessToast } from "@/shared/lib";
@@ -14,9 +11,9 @@ import type { TransferSide } from "../lib/build-transfer";
 import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
 import { TRANSFER_FORM_TEST_IDS } from "./transfer-form/TransferForm.types";
 import { useTransferForm } from "./transfer-form/useTransferForm";
-import { transferEntryStyles } from "./PencilTransferEntryScreen.styles";
+import { transferEntryStyles } from "./TransferEntryScreen.styles";
 
-function getPencilTransferSideTitle(
+function getTransferSideTitle(
   side: TransferSide | null,
   accounts: readonly FinancialAccountRow[],
   t: ReturnType<typeof useTranslation>["t"]
@@ -26,7 +23,7 @@ function getPencilTransferSideTitle(
   return accounts.find((account) => account.id === side.accountId)?.name ?? t("common.unknown");
 }
 
-export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {}) {
+export function useTransferEntry(props: { readonly enabled?: boolean } = {}) {
   const { t } = useTranslation();
   const form = useTransferForm({
     enabled: props.enabled ?? true,
@@ -47,37 +44,37 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
     amount: formatInputDisplay(form.digits),
     fields: (
       <>
-        <PencilEntryTextInputField
+        <EntryTextInputField
           icon={Pencil}
           label={t("common.description")}
           value={form.description}
           onChangeText={form.setDescription}
         />
         <View style={{ flexDirection: "row", gap: 12, height: 50 }}>
-          <PencilEntryField
+          <EntryField
             icon={ArrowLeftRight}
             label={`${t("transfers.fromLabel")}:`}
-            value={getPencilTransferSideTitle(form.fromSide, form.accounts, t)}
+            value={getTransferSideTitle(form.fromSide, form.accounts, t)}
             testID={TRANSFER_FORM_TEST_IDS.fromSide}
             onPress={() => form.setPickerTarget("from")}
           />
-          <PencilEntryField
+          <EntryField
             icon={ArrowLeftRight}
             label={`${t("transfers.toLabel")}:`}
-            value={getPencilTransferSideTitle(form.toSide, form.accounts, t)}
+            value={getTransferSideTitle(form.toSide, form.accounts, t)}
             testID={TRANSFER_FORM_TEST_IDS.toSide}
             onPress={() => form.setPickerTarget("to")}
           />
         </View>
         <View style={{ flexDirection: "row", gap: 12, height: 50 }}>
-          <PencilEntryField
+          <EntryField
             icon={Calendar}
             label={form.dateLabel}
             valueTone="primary"
             testID={TRANSFER_FORM_TEST_IDS.date}
             onPress={() => form.setShowDatePicker(true)}
           />
-          <PencilEntryField
+          <EntryField
             icon={Tag}
             label={`${t("common.category")}:`}
             value={t("transfers.activity.generic")}
