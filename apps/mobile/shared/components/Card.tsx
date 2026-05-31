@@ -70,59 +70,37 @@ export function Card({
   ];
   const canUseLiquidGlass = Platform.OS === "ios" && isLiquidGlassAvailable();
   const resolvedContentClassName = `${padded ? "p-4" : ""} ${contentClassName ?? ""}`;
-  const content = canUseLiquidGlass ? (
-    <GlassView
-      {...viewProps}
-      glassEffectStyle="clear"
-      tintColor={tokens.tintColor}
-      colorScheme={isDark ? "dark" : "light"}
-      isInteractive={onPress != null}
-      style={glassStyle}
-    >
-      <View className={resolvedContentClassName} style={contentStyle}>
-        {children}
+  const innerClassName = `${resolvedContentClassName} ${disabled ? "opacity-60" : ""}`;
+
+  const renderSurface = (props: ViewProps) =>
+    canUseLiquidGlass ? (
+      <GlassView
+        {...props}
+        glassEffectStyle="clear"
+        tintColor={tokens.tintColor}
+        colorScheme={isDark ? "dark" : "light"}
+        isInteractive={onPress != null}
+        style={glassStyle}
+      >
+        <View className={innerClassName} style={contentStyle}>
+          {children}
+        </View>
+      </GlassView>
+    ) : (
+      <View {...props} style={cardSurfaceStyle}>
+        <View className={innerClassName} style={contentStyle}>
+          {children}
+        </View>
       </View>
-    </GlassView>
-  ) : (
-    <View {...viewProps} style={cardSurfaceStyle}>
-      <View className={resolvedContentClassName} style={contentStyle}>
-        {children}
-      </View>
-    </View>
-  );
+    );
 
   if (onPress == null) {
-    return content;
+    return renderSurface(viewProps);
   }
 
   return (
     <Pressable {...pressableProps} onPress={onPress} disabled={disabled}>
-      {canUseLiquidGlass ? (
-        <GlassView
-          {...surfaceProps}
-          glassEffectStyle="clear"
-          tintColor={tokens.tintColor}
-          colorScheme={isDark ? "dark" : "light"}
-          isInteractive
-          style={glassStyle}
-        >
-          <View
-            className={`${resolvedContentClassName} ${disabled ? "opacity-60" : ""}`}
-            style={contentStyle}
-          >
-            {children}
-          </View>
-        </GlassView>
-      ) : (
-        <View {...surfaceProps} style={cardSurfaceStyle}>
-          <View
-            className={`${resolvedContentClassName} ${disabled ? "opacity-60" : ""}`}
-            style={contentStyle}
-          >
-            {children}
-          </View>
-        </View>
-      )}
+      {renderSurface(surfaceProps)}
     </Pressable>
   );
 }

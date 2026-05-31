@@ -35,6 +35,8 @@ export function FilterTextField({
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
+        accessible
+        accessibilityLabel={label || placeholder || value}
         placeholder={placeholder}
         placeholderTextColor={secondary}
       />

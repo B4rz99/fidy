@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { X } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { IconActionButton } from "./IconActionButton";
 
 type FieldButtonProps = Omit<ViewProps, "children"> & {
@@ -38,6 +38,7 @@ export function FieldButton({
   style,
   ...viewProps
 }: FieldButtonProps) {
+  const { t } = useTranslation();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -91,7 +92,7 @@ export function FieldButton({
         <View className="flex-1">{valueNode}</View>
         {handleClear ? (
           <IconActionButton
-            accessibilityLabel={clearAccessibilityLabel ?? "Clear"}
+            accessibilityLabel={clearAccessibilityLabel ?? t("common.clear")}
             icon={<X size={14} color={tertiary} />}
             onPress={handleClear}
             size="size-7"

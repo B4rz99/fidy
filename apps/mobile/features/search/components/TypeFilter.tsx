@@ -3,7 +3,6 @@ import { SegmentedControl } from "@/shared/components";
 import { useTranslation } from "@/shared/hooks";
 
 type FilterType = "all" | "expense" | "income" | "transfer";
-type SelectableFilterType = Exclude<FilterType, "all">;
 
 type TypeFilterProps = {
   value: FilterType;
@@ -13,12 +12,13 @@ type TypeFilterProps = {
 export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
   const { t } = useTranslation();
   const options = [
+    { value: "all", label: t("search.allTypes") },
     { value: "expense", label: t("transactions.expense") },
     { value: "income", label: t("transactions.income") },
     { value: "transfer", label: t("search.transfers") },
   ] as const;
 
-  const handlePress = (type: SelectableFilterType) => {
+  const handlePress = (type: FilterType) => {
     void Haptics.selectionAsync();
     onChange(type === value ? "all" : type);
   };
@@ -26,7 +26,7 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
   return (
     <SegmentedControl
       options={options}
-      value={value === "all" ? null : value}
+      value={value}
       onChange={handlePress}
       getOptionTone={(type) =>
         type === "expense" ? "danger" : type === "income" ? "success" : "primary"

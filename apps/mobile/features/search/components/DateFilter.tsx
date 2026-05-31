@@ -1,9 +1,11 @@
 import * as Haptics from "expo-haptics";
+import { format } from "date-fns";
 import { useState } from "react";
 import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
 import { FieldButton, FilterPill } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 import { parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
 import { DATE_PRESETS, getDatePresetRange } from "../lib/date-presets";
 
@@ -14,7 +16,7 @@ type DateFilterProps = {
 };
 
 export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps) => {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [activePicker, setActivePicker] = useState<"from" | "to" | null>(null);
 
   const activePresetKey =
@@ -37,6 +39,9 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
 
   const fromDate = parseOptionalIsoDate(dateFrom) ?? new Date();
   const toDate = parseOptionalIsoDate(dateTo) ?? parseOptionalIsoDate(dateFrom) ?? new Date();
+  const dateFnsLocale = getDateFnsLocale(locale);
+  const fromDateLabel = dateFrom ? format(fromDate, "PP", { locale: dateFnsLocale }) : "";
+  const toDateLabel = dateTo ? format(toDate, "PP", { locale: dateFnsLocale }) : "";
 
   const handleDateChange = (target: "from" | "to", date: Date) => {
     const next = toIsoDate(date);
@@ -56,7 +61,7 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
         <View className="flex-1">
           <FieldButton
             label={t("search.from")}
-            value={dateFrom ?? ""}
+            value={fromDateLabel}
             placeholder={t("search.chooseDate")}
             onPress={() => setActivePicker("from")}
             active={activePicker === "from"}
@@ -65,7 +70,7 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
         <View className="flex-1">
           <FieldButton
             label={t("search.to")}
-            value={dateTo ?? ""}
+            value={toDateLabel}
             placeholder={t("search.chooseDate")}
             onPress={() => setActivePicker("to")}
             active={activePicker === "to"}

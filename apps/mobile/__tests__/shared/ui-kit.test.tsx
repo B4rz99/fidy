@@ -20,7 +20,7 @@ import { Text } from "@/shared/components/rn";
 
 function expectSharedComponentImport(source: string, componentName: string) {
   const importsFromBarrel = new RegExp(
-    `import\\s*\\{[\\s\\S]*\\b${componentName}\\b[\\s\\S]*\\}\\s*from "@/shared/components"`
+    `import\\s*\\{[\\s\\S]*?\\b${componentName}\\b[\\s\\S]*?\\}\\s*from "@/shared/components"`
   ).test(source);
   const importsDirectPrimitive = source.includes(`from "@/shared/components/${componentName}"`);
 
@@ -404,11 +404,11 @@ describe("shared UI kit", () => {
     files.forEach((file) => {
       const source = readFileSync(resolve(__dirname, file), "utf-8");
 
-      expect(source).toMatch(/<Card|<MetricCard/);
+      expect(source).toMatch(/<(?:Card|MetricCard)(?:\s|>)/);
       expect(source).not.toContain("<Card className=");
       expect(source).not.toContain("<MetricCard className=");
       expect(source).not.toContain("styles.card,");
-      expect(source).not.toContain("<Pressable\n      onPress=");
+      expect(source).not.toMatch(/<Pressable\s*\n\s*onPress=/);
     });
   });
 
@@ -476,7 +476,7 @@ describe("shared UI kit", () => {
     );
 
     expect(source).toContain("contentStyle");
-    expect(source).toContain('flexDirection: "row"');
+    expect(source).toMatch(/flexDirection:\s*['"]row['"]/);
     expect(source).not.toContain('className="rounded-lg"');
   });
 

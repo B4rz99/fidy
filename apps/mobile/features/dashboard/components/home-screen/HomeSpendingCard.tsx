@@ -32,6 +32,7 @@ export function HomeSpendingCard({
       accessibilityRole={onPress ? "button" : undefined}
       accessibilityLabel={t("dashboard.spendingSummary")}
       onPress={onPress}
+      padded={false}
       contentClassName="p-6"
     >
       <View className="gap-4">
