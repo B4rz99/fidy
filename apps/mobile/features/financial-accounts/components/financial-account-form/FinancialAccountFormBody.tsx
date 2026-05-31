@@ -1,20 +1,17 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { useState } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/shared/components/Button";
 import { FieldButton } from "@/shared/components/FieldButton";
-import { Keyboard, Platform, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
+import { FormScreen } from "@/shared/components/FormScreen";
+import { FormSection } from "@/shared/components/FormSection";
+import { FormTextField } from "@/shared/components/FormTextField";
+import { Keyboard, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { canFinancialAccountHaveIdentifiers } from "../../lib/kind";
 import { styles } from "./FinancialAccountForm.styles";
-import {
-  ACCOUNT_KIND_OPTIONS,
-  FieldLabel,
-  FormSection,
-  KindChip,
-} from "./FinancialAccountFormFields";
+import { ACCOUNT_KIND_OPTIONS, KindChip } from "./FinancialAccountFormFields";
 import { FinancialAccountIdentifiersSection } from "./FinancialAccountIdentifiersSection";
 import {
   type FinancialAccountFormDetails,
@@ -29,14 +26,9 @@ export function FinancialAccountFormBody({
   readonly onManageIdentifiers: (() => void) | null;
 }) {
   const { t, locale } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
   const [datePickerFallback] = useState(() => new Date());
-  const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const tertiary = useThemeColor("tertiary");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentGreenLight = useThemeColor("accentGreenLight");
-  const card = useThemeColor("card");
   const {
     amountDigits,
     amountPreview,
@@ -61,12 +53,7 @@ export function FinancialAccountFormBody({
   } = useFinancialAccountForm({ existingDetails });
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
+    <FormScreen contentContainerStyle={styles.content}>
       <FormSection title={t("financialAccounts.form.kindLabel")}>
         <View style={[styles.kindWrap, styles.typeFirstSection]}>
           {ACCOUNT_KIND_OPTIONS.map((option) => (
@@ -81,42 +68,20 @@ export function FinancialAccountFormBody({
       </FormSection>
 
       <FormSection title={t("financialAccounts.form.basicInfoSection")}>
-        <View style={styles.fieldBlock}>
-          <FieldLabel>{t("financialAccounts.form.nameLabel")}</FieldLabel>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: card,
-                borderColor: borderSubtle,
-                color: primary,
-              },
-            ]}
-            value={name}
-            onChangeText={setName}
-            placeholder={t("financialAccounts.form.namePlaceholder")}
-            placeholderTextColor={tertiary}
-          />
-        </View>
+        <FormTextField
+          label={t("financialAccounts.form.nameLabel")}
+          value={name}
+          onChangeText={setName}
+          placeholder={t("financialAccounts.form.namePlaceholder")}
+        />
 
         {canFinancialAccountHaveIdentifiers(kind) && !isEdit ? (
-          <View style={styles.fieldBlock}>
-            <FieldLabel>{t("financialAccounts.identifierSheet.label")}</FieldLabel>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: card,
-                  borderColor: borderSubtle,
-                  color: primary,
-                },
-              ]}
-              value={manualIdentifierValue}
-              onChangeText={setManualIdentifierValue}
-              placeholder={t("financialAccounts.identifierSheet.placeholder")}
-              placeholderTextColor={tertiary}
-            />
-          </View>
+          <FormTextField
+            label={t("financialAccounts.identifierScreen.label")}
+            value={manualIdentifierValue}
+            onChangeText={setManualIdentifierValue}
+            placeholder={t("financialAccounts.identifierScreen.placeholder")}
+          />
         ) : null}
       </FormSection>
 
@@ -124,31 +89,18 @@ export function FinancialAccountFormBody({
         title={t("financialAccounts.detail.openingBalanceSection")}
         optionalLabel={t("financialAccounts.form.optionalLabel")}
       >
-        <View style={styles.fieldBlock}>
-          <FieldLabel>
-            {kind === "credit_card"
+        <FormTextField
+          label={
+            kind === "credit_card"
               ? t("financialAccounts.form.debtLabel")
-              : t("financialAccounts.form.balanceLabel")}
-          </FieldLabel>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: card,
-                borderColor: borderSubtle,
-                color: primary,
-              },
-            ]}
-            value={amountDigits}
-            onChangeText={setAmountDigits}
-            keyboardType="number-pad"
-            placeholder="0"
-            placeholderTextColor={tertiary}
-          />
-          {amountPreview ? (
-            <Text style={[styles.helperText, { color: secondary }]}>{amountPreview}</Text>
-          ) : null}
-        </View>
+              : t("financialAccounts.form.balanceLabel")
+          }
+          value={amountDigits}
+          onChangeText={setAmountDigits}
+          keyboardType="number-pad"
+          placeholder="0"
+          helperText={amountPreview}
+        />
 
         <View style={styles.fieldBlock}>
           <FieldButton
@@ -194,45 +146,23 @@ export function FinancialAccountFormBody({
 
       {kind === "credit_card" ? (
         <FormSection title={t("financialAccounts.detail.billingProfileTitle")}>
-          <View style={styles.fieldBlock}>
-            <FieldLabel>{t("financialAccounts.form.statementClosingDay")}</FieldLabel>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: card,
-                  borderColor: borderSubtle,
-                  color: primary,
-                },
-              ]}
-              value={statementClosingDayText}
-              onChangeText={setStatementClosingDayText}
-              keyboardType="number-pad"
-              placeholder={t("financialAccounts.form.dayPlaceholder")}
-              placeholderTextColor={tertiary}
-              maxLength={2}
-            />
-          </View>
+          <FormTextField
+            label={t("financialAccounts.form.statementClosingDay")}
+            value={statementClosingDayText}
+            onChangeText={setStatementClosingDayText}
+            keyboardType="number-pad"
+            placeholder={t("financialAccounts.form.dayPlaceholder")}
+            maxLength={2}
+          />
 
-          <View style={styles.fieldBlock}>
-            <FieldLabel>{t("financialAccounts.form.paymentDueDay")}</FieldLabel>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: card,
-                  borderColor: borderSubtle,
-                  color: primary,
-                },
-              ]}
-              value={paymentDueDayText}
-              onChangeText={setPaymentDueDayText}
-              keyboardType="number-pad"
-              placeholder={t("financialAccounts.form.dayPlaceholder")}
-              placeholderTextColor={tertiary}
-              maxLength={2}
-            />
-          </View>
+          <FormTextField
+            label={t("financialAccounts.form.paymentDueDay")}
+            value={paymentDueDayText}
+            onChangeText={setPaymentDueDayText}
+            keyboardType="number-pad"
+            placeholder={t("financialAccounts.form.dayPlaceholder")}
+            maxLength={2}
+          />
 
           <View style={[styles.noteBanner, { backgroundColor: accentGreenLight }]}>
             <Text style={[styles.noteText, { color: secondary }]}>
@@ -244,16 +174,12 @@ export function FinancialAccountFormBody({
 
       {isEdit && canFinancialAccountHaveIdentifiers(kind) ? (
         <FinancialAccountIdentifiersSection
-          borderSubtle={borderSubtle}
-          card={card}
           existingDetails={existingDetails}
           isEdit={isEdit}
           manualIdentifierValue={manualIdentifierValue}
           onManageIdentifiers={onManageIdentifiers}
-          primary={primary}
           secondary={secondary}
           setManualIdentifierValue={setManualIdentifierValue}
-          tertiary={tertiary}
         />
       ) : null}
 
@@ -265,6 +191,6 @@ export function FinancialAccountFormBody({
         onPress={handleSave}
         loading={isBusy}
       />
-    </ScrollView>
+    </FormScreen>
   );
 }

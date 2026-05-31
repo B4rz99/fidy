@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
-import { CategoryPill } from "@/features/transactions/display.public";
+import { CategoryPill } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import { Button, FidyNumpad } from "@/shared/components";
 import { ScrollView, Text, View } from "@/shared/components/rn";

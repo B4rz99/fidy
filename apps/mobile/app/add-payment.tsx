@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { AddPaymentSheet } from "@/features/goals/ui.public";
+import { AddPaymentScreen } from "@/features/goals/routes.public";
 import { useTranslation } from "@/shared/hooks";
 
 export default function AddPaymentRoute() {
@@ -15,7 +15,7 @@ export default function AddPaymentRoute() {
           title: t("goals.payment.title"),
         }}
       />
-      <AddPaymentSheet />
+      <AddPaymentScreen />
     </>
   );
 }

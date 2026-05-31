@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { format } from "date-fns";
 import { useState } from "react";
-import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
+import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { FieldButton, FilterPill } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
@@ -94,7 +94,7 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
           );
         })}
       </View>
-      <TransactionDatePickerSheet
+      <TransactionDatePickerDialog
         date={activePicker === "to" ? toDate : fromDate}
         visible={activePicker !== null}
         onChange={(date) => {

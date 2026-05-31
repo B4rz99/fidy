@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { GoalCreateSheet } from "@/features/goals/ui.public";
+import { GoalCreateScreen } from "@/features/goals/routes.public";
 import { useTranslation } from "@/shared/hooks";
 
 export default function CreateGoalRoute() {
@@ -15,7 +15,7 @@ export default function CreateGoalRoute() {
           title: t("goals.create.title"),
         }}
       />
-      <GoalCreateSheet />
+      <GoalCreateScreen />
     </>
   );
 }

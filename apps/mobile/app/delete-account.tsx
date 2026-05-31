@@ -6,7 +6,7 @@ import { TriangleAlert } from "@/shared/components/icons";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
-export default function DeleteAccountSheet() {
+export default function DeleteAccountDialogRoute() {
   const { t } = useTranslation();
   const { back } = useRouter();
   const accessToken = useAuthStore((s) => s.session?.access_token);

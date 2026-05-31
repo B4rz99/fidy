@@ -18,7 +18,10 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
   },
-  container: {},
+  container: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
   dateChip: {
     alignItems: "center",
     borderRadius: 10,

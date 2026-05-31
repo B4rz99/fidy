@@ -1,2 +1,2 @@
-export { PencilTransferEntryScreen } from "./components/PencilTransferEntryScreen";
+export { TransferEntryScreen } from "./components/TransferEntryScreen";
 export { TransferFormScreen } from "./components/TransferFormScreen";

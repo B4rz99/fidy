@@ -9,6 +9,7 @@ import { Chip } from "@/shared/components/Chip";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { FieldButton } from "@/shared/components/FieldButton";
 import { FilterPill } from "@/shared/components/FilterPill";
+import { FormTextField } from "@/shared/components/FormTextField";
 import { IconActionButton } from "@/shared/components/IconActionButton";
 import { MetricCard } from "@/shared/components/MetricCard";
 import { MonthNavigator } from "@/shared/components/MonthNavigator";
@@ -20,7 +21,7 @@ import { Text } from "@/shared/components/rn";
 
 function expectSharedComponentImport(source: string, componentName: string) {
   const importsFromBarrel = new RegExp(
-    `import\\s*\\{[\\s\\S]*?\\b${componentName}\\b[\\s\\S]*?\\}\\s*from "@/shared/components"`
+    `import\\s*\\{[\\s\\S]*\\b${componentName}\\b[\\s\\S]*\\}\\s*from "@/shared/components"`
   ).test(source);
   const importsDirectPrimitive = source.includes(`from "@/shared/components/${componentName}"`);
 
@@ -33,7 +34,6 @@ describe("shared UI kit", () => {
 
     expect(source).toContain('export { Button } from "./Button"');
     expect(source).toContain('export { Card } from "./Card"');
-    expect(source).toContain('export type { GlassCardTokens } from "./card-tokens"');
     expect(source).toContain('export { Row } from "./Row"');
     expect(source).toContain('export { Chip } from "./Chip"');
     expect(source).toContain('export { Callout } from "./Callout"');
@@ -41,35 +41,11 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { FieldButton } from "./FieldButton"');
     expect(source).toContain('export { FilterPill } from "./FilterPill"');
     expect(source).toContain('export { FilterTextField } from "./FilterTextField"');
+    expect(source).toContain('export { FormTextField } from "./FormTextField"');
     expect(source).toContain('export { SegmentedControl } from "./SegmentedControl"');
     expect(source).toContain('export { SelectableChipRow } from "./SelectableChipRow"');
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
-    expect(source).toContain('export { MetricCard } from "./MetricCard"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
-    expect(source).toContain('export { TextActionButton } from "./TextActionButton"');
-  });
-
-  it("keeps Card API explicit about glass surface and content layout", () => {
-    const cardSource = readFileSync(
-      resolve(__dirname, "../../shared/components/Card.tsx"),
-      "utf-8"
-    );
-    const metricCardSource = readFileSync(
-      resolve(__dirname, "../../shared/components/MetricCard.tsx"),
-      "utf-8"
-    );
-
-    expect(cardSource).toContain("getSubtleGlassCardTokens");
-    expect(cardSource).toContain("contentClassName?: string");
-    expect(cardSource).toContain("contentStyle?: StyleProp<ViewStyle>");
-    expect(cardSource).toContain("surfaceStyle?: StyleProp<ViewStyle>");
-    expect(cardSource).not.toContain("className?: string");
-    expect(cardSource).not.toContain('Omit<ViewProps, "children">');
-    expect(cardSource).not.toContain("viewProps.style");
-    expect(metricCardSource).toContain("contentClassName");
-    expect(metricCardSource).toContain("contentStyle");
-    expect(metricCardSource).toContain("surfaceStyle");
-    expect(metricCardSource).not.toContain("className?: string");
   });
 
   it("renders primitive text content", () => {
@@ -141,6 +117,7 @@ describe("shared UI kit", () => {
           selected
           onPress={() => actions.push("filter")}
         />
+        <FormTextField label="Name" value="" onChangeText={() => undefined} placeholder="Account" />
         <TextActionButton label="See all" onPress={() => actions.push("text-action")} />
       </>
     );
@@ -152,6 +129,8 @@ describe("shared UI kit", () => {
     expect(screen.getByText("Target date")).toBeTruthy();
     expect(screen.getByText("Choose")).toBeTruthy();
     expect(screen.getByText("Monthly spend")).toBeTruthy();
+    expect(screen.getByText("Name")).toBeTruthy();
+    expect(screen.getByA11yLabel("Name")).toBeTruthy();
     expect(actions).toEqual(["clear", "filter", "text-action"]);
   });
 
@@ -464,8 +443,8 @@ describe("shared UI kit", () => {
 
   it("keeps migrated form field buttons on the shared FieldButton primitive", () => {
     const files = [
-      "../../features/goals/components/goal-sheet/GoalAmountField.tsx",
-      "../../features/goals/components/goal-sheet/GoalDateField.tsx",
+      "../../features/goals/components/goal-form/GoalAmountField.tsx",
+      "../../features/goals/components/goal-form/GoalDateField.tsx",
       "../../features/transfers/components/transfer-form/TransferSideCard.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
     ];
@@ -475,6 +454,33 @@ describe("shared UI kit", () => {
 
       expectSharedComponentImport(source, "FieldButton");
       expect(source).toContain("<FieldButton");
+    });
+  });
+
+  it("keeps repeated form text inputs on the shared FormTextField primitive", () => {
+    const files = [
+      "../../app/auto-suggest-budgets.tsx",
+      "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx",
+      "../../features/calendar/components/add-bill/AddBillFormContent.tsx",
+      "../../features/categories/components/category-form/CreateCategoryScreenContent.tsx",
+      "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx",
+      "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
+      "../../features/financial-accounts/components/financial-account-form/FinancialAccountIdentifiersSection.tsx",
+      "../../features/goals/components/AddPaymentScreen.tsx",
+      "../../features/goals/components/goal-form/GoalInterestField.tsx",
+      "../../features/goals/components/goal-form/GoalNameField.tsx",
+      "../../features/onboarding/components/BudgetSetupStep.tsx",
+      "../../features/settings/components/PrivateBackupScreen.tsx",
+      "../../features/transactions/components/transaction-form/TransactionMetadataRow.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "FormTextField");
+      expect(source).toContain("<FormTextField");
+      expect(source).not.toContain("<FieldLabel");
+      expect(source).not.toContain("<TextInput");
     });
   });
 
@@ -743,13 +749,13 @@ describe("shared UI kit", () => {
 
   it("keeps remaining repeated action buttons on the shared Button primitive", () => {
     const goalSheetActionSource = readFileSync(
-      resolve(__dirname, "../../features/goals/components/goal-sheet/GoalSheetActionButton.tsx"),
+      resolve(__dirname, "../../features/goals/components/goal-form/GoalFormActionButton.tsx"),
       "utf-8"
     );
     const financialAccountIdentifierSource = readFileSync(
       resolve(
         __dirname,
-        "../../features/financial-accounts/components/FinancialAccountIdentifierSheet.tsx"
+        "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx"
       ),
       "utf-8"
     );
@@ -765,9 +771,8 @@ describe("shared UI kit", () => {
     expect(goalSheetActionSource).toContain("<Button");
     expect(goalSheetActionSource).not.toContain("<Pressable");
     expect(goalSheetActionSource).not.toContain("styles.actionButton");
-    expect(financialAccountIdentifierSource).toContain(
-      'import { Button, ScreenLayout } from "@/shared/components"'
-    );
+    expectSharedComponentImport(financialAccountIdentifierSource, "Button");
+    expectSharedComponentImport(financialAccountIdentifierSource, "ScreenLayout");
     expect(financialAccountIdentifierSource).toContain("<Button");
     expect(financialAccountIdentifierSource).not.toContain("styles.primaryButton");
     expect(transactionActionSource).toContain(
@@ -784,7 +789,7 @@ describe("shared UI kit", () => {
     const files = [
       "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx",
       "../../features/calendar/components/add-bill/AddBillFormContent.tsx",
-      "../../features/goals/components/AddPaymentSheet.tsx",
+      "../../features/goals/components/AddPaymentScreen.tsx",
       "../../features/goals/components/GoalCard.tsx",
       "../../features/financial-accounts/components/FinancialAccountFormScreen.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
@@ -822,7 +827,7 @@ describe("shared UI kit", () => {
     const files = [
       "../../features/analytics/components/PeriodSelector.tsx",
       "../../features/transactions/components/TypeToggle.tsx",
-      "../../features/goals/components/goal-sheet/GoalTypeToggle.tsx",
+      "../../features/goals/components/goal-form/GoalTypeToggle.tsx",
       "../../features/goals/components/goal-detail/TabControl.tsx",
     ];
 

@@ -27,7 +27,7 @@ export const TRANSFER_FORM_TEST_IDS = {
   fromSide: "transfer.form.from-side",
   pickerAccountPrefix: "transfer.picker.account.",
   pickerOutsideFidy: "transfer.picker.outside-fidy",
-  pickerSheet: "transfer.picker.sheet",
+  pickerDialog: "transfer.picker.dialog",
   save: "transfer.form.save",
   toSide: "transfer.form.to-side",
 } as const;

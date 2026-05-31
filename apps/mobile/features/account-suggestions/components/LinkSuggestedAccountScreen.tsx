@@ -62,11 +62,10 @@ export default function LinkSuggestedAccountScreen() {
   const secondary = useThemeColor("secondary");
   const { run: guardedLink } = useAsyncGuard();
 
-  if (typeof fingerprint !== "string" || fingerprint.trim().length === 0) {
-    return null;
-  }
-
-  const suggestion = suggestions.find((item) => item.fingerprint === fingerprint) ?? null;
+  const hasFingerprint = typeof fingerprint === "string" && fingerprint.trim().length > 0;
+  const suggestion = hasFingerprint
+    ? (suggestions.find((item) => item.fingerprint === fingerprint) ?? null)
+    : null;
   const rankedAccounts =
     db && userId && suggestion
       ? rankSuggestedFinancialAccounts(getFinancialAccountsForUser(db, userId), suggestion)
@@ -116,7 +115,7 @@ export default function LinkSuggestedAccountScreen() {
           {t("accountSuggestions.link.subtitle")}
         </Text>
 
-        {hasLoadedSuggestions && suggestion == null ? (
+        {(!hasFingerprint || hasLoadedSuggestions) && suggestion == null ? (
           <EmptyState title={t("accountSuggestions.review.emptyTitle")} className="py-12" />
         ) : (
           <>

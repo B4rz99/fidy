@@ -4,6 +4,10 @@ import { describe, expect, test } from "vitest";
 
 describe("Root layout native headers", () => {
   const source = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+  const routeOptionsSource = readFileSync(
+    resolve(__dirname, "../../shared/components/route-options.ts"),
+    "utf-8"
+  );
 
   test("default screenOptions hides headers", () => {
     expect(source).toContain("screenOptions={{ headerShown: false }}");
@@ -16,26 +20,26 @@ describe("Root layout native headers", () => {
       const screenBlock = source.slice(screenStart, source.indexOf("/>", screenStart));
       expect(screenBlock).not.toContain("headerTransparent");
     }
-    expect(source).toContain('headerShown: Platform.OS === "ios"');
-    expect(source).toContain('headerStyle: { backgroundColor: "transparent" }');
-    expect(source).toContain("headerTransparent: true");
-    expect(source).toContain("theme.primary");
+    expect(routeOptionsSource).toContain('headerShown: Platform.OS === "ios"');
+    expect(routeOptionsSource).toContain('headerStyle: { backgroundColor: "transparent" }');
+    expect(routeOptionsSource).toContain("headerTransparent: true");
+    expect(source).toContain("createTransparentHeaderRouteOptions(theme)");
   });
 
-  test("dialog modal routes use DIALOG_MODAL without sheet detents", () => {
-    expect(source).toContain("const DIALOG_MODAL = {");
-    expect(source).toContain('presentation: "transparentModal"');
-    expect(source).toContain('animation: "fade"');
-    expect(source).toContain('contentStyle: { backgroundColor: "transparent" }');
-    expect(source).not.toContain("formSheet");
-    expect(source).not.toContain("sheetAllowedDetents");
+  test("dialog modal routes use shared dialog route options without sheet detents", () => {
+    expect(source).toContain("dialogRouteOptions");
+    expect(routeOptionsSource).toContain('presentation: "transparentModal"');
+    expect(routeOptionsSource).toContain('animation: "fade"');
+    expect(routeOptionsSource).toContain('contentStyle: { backgroundColor: "transparent" }');
+    expect(routeOptionsSource).not.toContain("formSheet");
+    expect(routeOptionsSource).not.toContain("sheetAllowedDetents");
   });
 
   test("promoted full-screen routes keep native headers on every platform", () => {
-    expect(source).toContain("const fullScreenHeaderOptions = {");
-    expect(source).toContain("headerShown: true");
-    expect(source).toContain('headerTransparent: Platform.OS === "ios"');
-    expect(source).toContain(
+    expect(source).toContain("createFullScreenRouteOptions(theme)");
+    expect(routeOptionsSource).toContain("headerShown: true");
+    expect(routeOptionsSource).toContain('headerTransparent: Platform.OS === "ios"');
+    expect(routeOptionsSource).toContain(
       'headerStyle: { backgroundColor: Platform.OS === "ios" ? "transparent" : theme.page }'
     );
     expect(source).toContain('name="add-bill"');
@@ -50,5 +54,21 @@ describe("Root layout native headers", () => {
 
   test("bills-calendar uses iosHeaderOptions to enable iOS-only native header", () => {
     expect(source).toContain('<Stack.Screen name="bills-calendar" options={iosHeaderOptions} />');
+  });
+
+  test("ScreenLayout full-screen routes avoid Android native header duplication", () => {
+    expect(source).toContain("createScreenLayoutRouteOptions(theme)");
+    expect(routeOptionsSource).toContain("createScreenLayoutRouteOptions");
+    expect(routeOptionsSource).toContain('headerShown: Platform.OS === "ios"');
+
+    for (const screen of [
+      "financial-account-identifier",
+      "link-suggested-account",
+      "reclassify-transaction",
+    ]) {
+      expect(source).toContain(
+        `<Stack.Screen name="${screen}" options={screenLayoutRouteOptions} />`
+      );
+    }
   });
 });

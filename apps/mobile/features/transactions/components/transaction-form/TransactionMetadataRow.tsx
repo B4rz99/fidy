@@ -1,5 +1,6 @@
 import { Calendar } from "@/shared/components/icons";
-import { Text, TextInput, View } from "@/shared/components/rn";
+import { FormTextField } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { styles } from "./TransactionForm.styles";
 
 type TransactionMetadataRowProps = {
@@ -12,7 +13,6 @@ type TransactionMetadataRowProps = {
   readonly onDescriptionFocus: () => void;
   readonly primaryColor: string;
   readonly secondaryColor: string;
-  readonly tertiaryColor: string;
 };
 
 export function TransactionMetadataRow({
@@ -25,15 +25,16 @@ export function TransactionMetadataRow({
   onDescriptionFocus,
   primaryColor,
   secondaryColor,
-  tertiaryColor,
 }: TransactionMetadataRowProps) {
   return (
     <View style={styles.metadataRow}>
-      <TextInput
+      <FormTextField
         testID="transaction-form.description"
-        style={[styles.descriptionInput, { borderColor: borderSubtle, color: primaryColor }]}
+        label={descriptionPlaceholder}
+        labelStyle={{ display: "none" }}
+        style={{ flex: 1, gap: 0 }}
+        inputStyle={[styles.descriptionInput, { borderColor: borderSubtle, color: primaryColor }]}
         placeholder={descriptionPlaceholder}
-        placeholderTextColor={tertiaryColor}
         value={description}
         onChangeText={onDescriptionChange}
         onFocus={onDescriptionFocus}

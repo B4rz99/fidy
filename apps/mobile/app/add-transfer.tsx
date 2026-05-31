@@ -1,6 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { PencilTransferEntryScreen } from "@/features/transfers/routes.public";
-import { DialogRouteFrame } from "@/shared/components";
+import { TransferEntryScreen } from "@/features/transfers/routes.public";
 
 export default function AddTransferRoute() {
   const { replace } = useRouter();
@@ -12,9 +11,10 @@ export default function AddTransferRoute() {
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: true }} />
-      <DialogRouteFrame>
-        <PencilTransferEntryScreen onTransactionTabSelect={handleTransactionTabSelect} />
-      </DialogRouteFrame>
+      <TransferEntryScreen
+        includesNativeHeader={false}
+        onTransactionTabSelect={handleTransactionTabSelect}
+      />
     </>
   );
 }

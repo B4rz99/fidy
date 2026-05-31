@@ -10,7 +10,7 @@ const OPTIONS = [
   { locale: "es", label: "Español" },
 ] as const;
 
-export default function LanguagePickerSheet() {
+export default function LanguagePickerDialogRoute() {
   const { t, locale } = useTranslation();
   const { back } = useRouter();
   const setLocale = useLocaleStore((s) => s.setLocale);

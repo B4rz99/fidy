@@ -10,40 +10,41 @@ const addRouteSource = readSource("../../app/(tabs)/add/index.tsx");
 const addTransactionRouteSource = readSource("../../app/add-transaction.tsx");
 const addTransferRouteSource = readSource("../../app/add-transfer.tsx");
 const transactionEntrySource = readSource(
-  "../../features/transactions/components/PencilTransactionEntryScreen.tsx"
+  "../../features/transactions/components/TransactionEntryScreen.tsx"
 );
-const pencilTransferEntrySource = readSource(
-  "../../features/transfers/components/PencilTransferEntryContent.tsx"
+const transferEntryContentSource = readSource(
+  "../../features/transfers/components/TransferEntryContent.tsx"
 );
 const transferEntrySource = readSource(
-  "../../features/transfers/components/PencilTransferEntryScreen.tsx"
+  "../../features/transfers/components/TransferEntryScreen.tsx"
 );
-const scaffoldSource = readSource("../../shared/components/PencilEntryScaffold.tsx");
-const entryFieldSource = readSource("../../shared/components/PencilEntryField.tsx");
-const scaffoldStylesSource = readSource("../../shared/components/PencilEntryScaffold.styles.ts");
-const transactionSheetsSource = readSource(
-  "../../features/transactions/components/PencilTransactionEntrySheets.tsx"
+const scaffoldSource = readSource("../../shared/components/EntryScaffold.tsx");
+const entryFieldSource = readSource("../../shared/components/EntryField.tsx");
+const scaffoldStylesSource = readSource("../../shared/components/EntryScaffold.styles.ts");
+const transactionPickersSource = readSource(
+  "../../features/transactions/components/TransactionEntryPickers.tsx"
 );
 const transferSidePickerSource = readSource(
   "../../features/transfers/components/transfer-form/TransferSidePicker.tsx"
 );
+const sharedDialogSource = readSource("../../shared/components/DialogFrame.tsx");
 const themeSource = readSource("../../shared/constants/theme.ts");
 
-test("add transaction routes use the Pencil transaction entry screen from scratch", () => {
-  expect(addRouteSource).toContain("PencilTransactionEntryScreen");
-  expect(addTransactionRouteSource).toContain("PencilTransactionEntryScreen");
+test("add transaction routes use the Transaction entry screen from scratch", () => {
+  expect(addRouteSource).toContain("TransactionEntryScreen");
+  expect(addTransactionRouteSource).toContain("TransactionEntryScreen");
   expect(addRouteSource).not.toContain("TransactionForm");
   expect(addRouteSource).not.toContain("AddEntryCard");
   expect(addRouteSource).not.toContain("addEntry.");
 });
 
-test("add transfer route uses the Pencil transfer entry screen", () => {
-  expect(addTransferRouteSource).toContain("PencilTransferEntryScreen");
+test("add transfer route uses the Transfer entry screen", () => {
+  expect(addTransferRouteSource).toContain("TransferEntryScreen");
   expect(addTransferRouteSource).not.toContain("TransferFormScreen");
 });
 
-test("Pencil entry scaffold matches the requested layout structure", () => {
-  expect(scaffoldSource).toContain("PENCIL_ENTRY_ROWS");
+test("Entry scaffold matches the requested layout structure", () => {
+  expect(scaffoldSource).toContain("ENTRY_ROWS");
   expect(scaffoldSource).toContain("useSafeAreaInsets");
   expect(scaffoldSource).toContain("ANDROID_TAB_BAR_HEIGHT");
   expect(scaffoldSource).toContain("tabBarClearance");
@@ -63,7 +64,7 @@ test("Pencil entry scaffold matches the requested layout structure", () => {
   expect(scaffoldStylesSource).toContain("tabPill");
   expect(scaffoldStylesSource).not.toContain("tabLine");
   expect(scaffoldSource).toContain("useWindowDimensions");
-  expect(scaffoldSource).toContain("PENCIL_ENTRY_HORIZONTAL_PADDING");
+  expect(scaffoldSource).toContain("ENTRY_HORIZONTAL_PADDING");
   expect(scaffoldSource).toContain("TAB_GAP");
   expect(entryFieldSource).toContain("valueTone");
   expect(scaffoldSource).toContain("amountArea");
@@ -74,7 +75,7 @@ test("Pencil entry scaffold matches the requested layout structure", () => {
   expect(scaffoldSource).toContain("$0");
 });
 
-test("Pencil entry numpad keeps the final row aligned to three columns", () => {
+test("Entry numpad keeps the final row aligned to three columns", () => {
   expect(scaffoldSource).toContain('["000", "0", "delete"]');
   expect(scaffoldSource).toContain("<View key={key} style={styles.rightColumn}>");
   expect(scaffoldSource).not.toContain("style={({ pressed })");
@@ -85,8 +86,8 @@ test("Pencil entry numpad keeps the final row aligned to three columns", () => {
   expect(scaffoldStylesSource).not.toContain("minWidth");
 });
 
-test("Pencil entry numpad feedback does not own layout styles", () => {
-  expect(scaffoldSource).toContain("PencilNumpadButton");
+test("Entry numpad feedback does not own layout styles", () => {
+  expect(scaffoldSource).toContain("EntryNumpadButton");
   expect(scaffoldSource).toContain("Haptics.impactAsync");
   expect(scaffoldSource).toContain("android_ripple");
   expect(scaffoldSource).toContain("styles.keyFeedback");
@@ -94,7 +95,7 @@ test("Pencil entry numpad feedback does not own layout styles", () => {
   expect(scaffoldStylesSource).not.toContain("keyPressed");
 });
 
-test("Pencil entry tab indicator uses a centered pill instead of an underline", () => {
+test("Entry tab indicator uses a centered pill instead of an underline", () => {
   expect(scaffoldSource).toContain("animatedTabPillStyle");
   expect(scaffoldSource).toContain("animatedTabPillX");
   expect(scaffoldSource).toContain("animatedTabPillColor");
@@ -113,76 +114,73 @@ test("Pencil entry tab indicator uses a centered pill instead of an underline", 
   expect(scaffoldStylesSource).not.toContain("tabLine");
 });
 
-test("Pencil entry bottom spacing keeps the numpad close to the floating tab bar", () => {
+test("Entry bottom spacing keeps the numpad close to the floating tab bar", () => {
   expect(scaffoldSource).toContain('Platform.OS === "ios" ? ANDROID_TAB_BAR_HEIGHT / 8');
   expect(scaffoldSource).toContain("tabBarHeight + Math.max(bottom, 16)");
   expect(scaffoldStylesSource).not.toContain("bottomSpacer");
   expect(scaffoldStylesSource).not.toContain("maxHeight: 256");
 });
 
-test("Pencil entry dismisses the description keyboard from outside taps", () => {
+test("Entry dismisses the description keyboard from outside taps", () => {
   expect(scaffoldSource).toContain("Keyboard");
   expect(scaffoldSource).toContain("onPress={Keyboard.dismiss}");
   expect(scaffoldSource).not.toContain("onTouchStart={Keyboard.dismiss}");
 });
 
-test("Pencil entry picker backdrops are translucent and do not slide the screen", () => {
+test("Entry picker backdrops are translucent and do not slide the screen", () => {
   expect(themeSource).toContain('modalBackdrop: "#000000"');
-  expect(transactionSheetsSource).toContain("backgroundColor: `${modalBackdrop}40`");
-  expect(transactionSheetsSource).toContain('justifyContent: "center"');
-  expect(transactionSheetsSource).toContain("maxWidth: 480");
-  expect(pencilTransferEntrySource).toContain("backgroundColor: `${modalBackdrop}40`");
-  expect(pencilTransferEntrySource).toContain('justifyContent: "center"');
-  expect(pencilTransferEntrySource).toContain("maxWidth: 480");
-  expect(transferSidePickerSource).toContain('animationType="fade"');
+  expect(sharedDialogSource).toContain("backgroundColor: `${modalBackdrop}40`");
+  expect(sharedDialogSource).toContain('justifyContent: "center"');
+  expect(sharedDialogSource).toContain("maxWidth: 480");
+  expect(sharedDialogSource).toContain('animationType="fade"');
   expect(transferSidePickerSource).not.toContain('animationType="slide"');
-  expect(transferSidePickerSource).toContain("backgroundColor: `${modalBackdrop}40`");
-  expect(transferSidePickerSource).toContain("styles.pickerSheet");
+  expect(transferSidePickerSource).toContain("DialogFrame");
+  expect(transferSidePickerSource).toContain("DialogPanel");
 });
 
-test("Pencil transaction entry supports expense income transfer and calendar", () => {
+test("Transaction entry supports expense income transfer and calendar", () => {
   expect(transactionEntrySource).toContain("activeTab={activeTab}");
   expect(transactionEntrySource).toContain('uiState.entryMode === "transfer"');
-  expect(transactionEntrySource).not.toContain("PencilTransferEntryScreen");
-  expect(transactionEntrySource).toContain("usePencilTransferEntry");
-  expect(pencilTransferEntrySource).toContain("useTransferForm");
+  expect(transactionEntrySource).not.toContain("TransferEntryScreen");
+  expect(transactionEntrySource).toContain("useTransferEntry");
+  expect(transferEntryContentSource).toContain("useTransferForm");
   expect(transactionEntrySource).not.toContain('push("/add-transfer');
-  expect(transactionSheetsSource).toContain("DateTimePicker");
-  expect(transactionEntrySource).toContain('uiState.sheet === "account"');
-  expect(transactionEntrySource).toContain('uiState.sheet === "category"');
-  expect(transactionSheetsSource).toContain("Modal");
-  expect(transactionSheetsSource).toContain("account-picker.backdrop");
-  expect(transactionSheetsSource).toContain("calendar-picker.backdrop");
-  expect(transactionSheetsSource).toContain("category-picker.backdrop");
-  expect(transactionSheetsSource).toContain("accounts.map");
-  expect(transactionSheetsSource).toContain("CATEGORIES.map");
+  expect(transactionPickersSource).toContain("DateTimePicker");
+  expect(transactionEntrySource).toContain('uiState.picker === "account"');
+  expect(transactionEntrySource).toContain('uiState.picker === "category"');
+  expect(transactionPickersSource).toContain("Modal");
+  expect(transactionPickersSource).toContain("account-picker.backdrop");
+  expect(transactionPickersSource).toContain("calendar-picker.backdrop");
+  expect(transactionPickersSource).toContain("category-picker.backdrop");
+  expect(transactionPickersSource).toContain("accounts.map");
+  expect(transactionPickersSource).toContain("CATEGORIES.map");
   expect(transactionEntrySource).not.toContain("getNextAccountId");
   expect(transactionEntrySource).toContain("saveCurrentTransaction");
 });
 
-test("Pencil transaction entry confirms saves with a toast without leaving the add screen", () => {
+test("Transaction entry confirms saves with a toast without leaving the add screen", () => {
   expect(transactionEntrySource).toContain("showSuccessToast");
   expect(transactionEntrySource).toContain('showSuccessToast(t("transactions.saved"), 1.6)');
-  expect(pencilTransferEntrySource).toContain('showSuccessToast(t("transfers.saved"), 1.6)');
+  expect(transferEntryContentSource).toContain('showSuccessToast(t("transfers.saved"), 1.6)');
   expect(transactionEntrySource).not.toContain('navigate("/(tabs)"');
-  expect(pencilTransferEntrySource).not.toContain('navigate("/(tabs)"');
+  expect(transferEntryContentSource).not.toContain('navigate("/(tabs)"');
 });
 
-test("Pencil add screens do not allow future transaction dates", () => {
-  expect(transactionSheetsSource).toContain("useCurrentDate");
-  expect(pencilTransferEntrySource).toContain("useCurrentDate");
+test("Add screens do not allow future transaction dates", () => {
+  expect(transactionPickersSource).toContain("useCurrentDate");
+  expect(transferEntryContentSource).toContain("useCurrentDate");
 });
 
-test("Pencil transfer entry supports transfer side pickers and calendar", () => {
+test("Transfer entry supports transfer side pickers and calendar", () => {
   expect(transferEntrySource).toContain('activeTab="transfer"');
-  expect(transferEntrySource).toContain("usePencilTransferEntry");
-  expect(pencilTransferEntrySource).toContain("TransferSidePicker");
-  expect(pencilTransferEntrySource).toContain('setPickerTarget("from")');
+  expect(transferEntrySource).toContain("useTransferEntry");
+  expect(transferEntryContentSource).toContain("TransferSidePicker");
+  expect(transferEntryContentSource).toContain('setPickerTarget("from")');
   expect(transferEntrySource).toContain("onTransactionTabSelect");
   expect(transferEntrySource).not.toContain('replace("/add-transaction');
-  expect(pencilTransferEntrySource).toContain("DateTimePicker");
-  expect(pencilTransferEntrySource).toContain("showCategoryPicker");
-  expect(pencilTransferEntrySource).toContain("Modal");
-  expect(pencilTransferEntrySource).toContain("calendar-picker.backdrop");
-  expect(pencilTransferEntrySource).toContain("category-picker.backdrop");
+  expect(transferEntryContentSource).toContain("DateTimePicker");
+  expect(transferEntryContentSource).toContain("showCategoryPicker");
+  expect(transferEntryContentSource).toContain("Modal");
+  expect(transferEntryContentSource).toContain("calendar-picker.backdrop");
+  expect(transferEntryContentSource).toContain("category-picker.backdrop");
 });

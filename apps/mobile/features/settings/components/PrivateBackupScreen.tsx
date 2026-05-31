@@ -7,9 +7,9 @@ import {
   generateBackupRecoveryKey,
   type PrivateBackupHealthStatus,
 } from "@/features/backup/public";
-import { Card, ScreenLayout } from "@/shared/components";
+import { Card, FormTextField, ScreenLayout } from "@/shared/components";
 import { CheckCircle, KeyRound, RefreshCcw, Shield, Smartphone } from "@/shared/components/icons";
-import { Alert, Platform, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
+import { Alert, Platform, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { captureError } from "@/shared/lib";
@@ -54,7 +54,6 @@ export function PrivateBackupScreen() {
   );
   const markPrivateBackupUploadFailed = useSettingsStore((s) => s.markPrivateBackupUploadFailed);
   const markPrivateBackupUploadReady = useSettingsStore((s) => s.markPrivateBackupUploadReady);
-  const secondaryColor = useThemeColor("secondary");
   const borderColor = useThemeColor("borderSubtle");
   const cardColor = useThemeColor("card");
 
@@ -180,21 +179,23 @@ export function PrivateBackupScreen() {
                 {t("privateBackup.recoveryKeyHelper")}
               </Text>
             </Card>
-            <TextInput
+            <FormTextField
+              label={t("privateBackup.confirmPlaceholder")}
               value={confirmation}
               onChangeText={setConfirmation}
               autoCapitalize="characters"
               autoCorrect={false}
               placeholder={t("privateBackup.confirmPlaceholder")}
-              placeholderTextColor={secondaryColor}
-              className="font-poppins text-sm text-primary dark:text-primary-dark"
-              style={{
+              labelStyle={{ display: "none" }}
+              inputStyle={{
                 minHeight: 52,
                 borderRadius: 16,
                 borderWidth: 1,
                 borderColor,
                 backgroundColor: cardColor,
                 paddingHorizontal: 16,
+                fontFamily: "Poppins_400Regular",
+                fontSize: 14,
               }}
             />
             <PrivateBackupChecklist />

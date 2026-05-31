@@ -104,7 +104,7 @@ test("add-bill content uses Pressable per ui-pressable rule", () => {
 });
 
 test("add-bill date picker uses the shared scrollable calendar sheet", () => {
-  expect(formContentSource).toContain("TransactionDatePickerSheet");
+  expect(formContentSource).toContain("TransactionDatePickerDialog");
   expect(formContentSource).toContain("showDatePicker");
   expect(formContentSource).toContain("setShowDatePicker(true)");
   expect(formContentSource).toContain("allowFuture");

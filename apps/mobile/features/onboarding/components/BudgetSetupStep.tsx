@@ -7,16 +7,8 @@ import {
 } from "@/features/budget/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Button, EmptyState } from "@/shared/components";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from "@/shared/components/rn";
+import { Button, EmptyState, FormTextField } from "@/shared/components";
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -122,8 +114,11 @@ export function BudgetSetupStep() {
                     </View>
                   </View>
                   <View style={styles.rowRight}>
-                    <TextInput
-                      style={[
+                    <FormTextField
+                      label={categoryLabel}
+                      labelStyle={{ display: "none" }}
+                      style={{ gap: 0 }}
+                      inputStyle={[
                         styles.amountInput,
                         {
                           backgroundColor: pageBg,

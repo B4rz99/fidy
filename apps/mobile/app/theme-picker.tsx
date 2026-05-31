@@ -11,7 +11,7 @@ const OPTIONS: { key: ThemePreference; labelKey: string }[] = [
   { key: "dark", labelKey: "settings.themeDark" },
 ];
 
-export default function ThemePickerSheet() {
+export default function ThemePickerDialogRoute() {
   const { t } = useTranslation();
   const { back } = useRouter();
   const current = useSettingsStore((s) => s.themePreference);

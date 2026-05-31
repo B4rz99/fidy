@@ -1,16 +1,10 @@
 import { useState } from "react";
+import type { TextInput as RNTextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
+import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { AppAuroraBackground, Button, SelectableChipRow } from "@/shared/components";
-import {
-  KeyboardAvoidingView,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "@/shared/components/rn";
+import { AppAuroraBackground, Button, FormTextField, SelectableChipRow } from "@/shared/components";
+import { KeyboardAvoidingView, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { type BillFrequency, FREQUENCIES } from "../../schema";
@@ -18,7 +12,7 @@ import { styles } from "./AddBillForm.styles";
 
 type AddBillFormContentProps = {
   readonly amount: string;
-  readonly amountRef: React.RefObject<TextInput | null>;
+  readonly amountRef: React.RefObject<RNTextInput | null>;
   readonly canSubmit: boolean;
   readonly category: CategoryId;
   readonly frequency: BillFrequency;
@@ -78,32 +72,36 @@ export function AddBillFormContent({
         keyboardShouldPersistTaps="always"
       >
         <View style={styles.formGrid}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>{t("common.name")}</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: pageBg, borderColor, color: primaryColor }]}
-              value={name}
-              onChangeText={onNameChange}
-              placeholder="Netflix"
-              placeholderTextColor={secondaryColor}
-              returnKeyType="next"
-              onSubmitEditing={() => amountRef.current?.focus()}
-            />
-          </View>
+          <FormTextField
+            label={t("common.name")}
+            value={name}
+            onChangeText={onNameChange}
+            placeholder={t("bills.placeholder.name")}
+            returnKeyType="next"
+            onSubmitEditing={() => amountRef.current?.focus()}
+            style={styles.inputGroup}
+            labelStyle={[styles.inputLabel, { color: secondaryColor }]}
+            inputStyle={[
+              styles.input,
+              { backgroundColor: pageBg, borderColor, color: primaryColor },
+            ]}
+          />
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>{t("common.amount")}</Text>
-            <TextInput
-              ref={amountRef}
-              style={[styles.input, { backgroundColor: pageBg, borderColor, color: primaryColor }]}
-              value={amount}
-              onChangeText={onAmountChange}
-              placeholder="50000"
-              placeholderTextColor={secondaryColor}
-              keyboardType="number-pad"
-              returnKeyType="done"
-            />
-          </View>
+          <FormTextField
+            ref={amountRef}
+            label={t("common.amount")}
+            value={amount}
+            onChangeText={onAmountChange}
+            placeholder={t("bills.placeholder.amount")}
+            keyboardType="number-pad"
+            returnKeyType="done"
+            style={styles.inputGroup}
+            labelStyle={[styles.inputLabel, { color: secondaryColor }]}
+            inputStyle={[
+              styles.input,
+              { backgroundColor: pageBg, borderColor, color: primaryColor },
+            ]}
+          />
 
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>
@@ -160,7 +158,7 @@ export function AddBillFormContent({
           loading={isSaving}
         />
       </ScrollView>
-      <TransactionDatePickerSheet
+      <TransactionDatePickerDialog
         allowFuture
         date={startDate}
         onChange={onStartDateChange}
