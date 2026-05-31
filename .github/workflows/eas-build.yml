@@ -59,7 +59,7 @@ jobs:
           cat eas-build-result.json
 
       - name: Download Android artifact for MAST
-        if: ${{ inputs.platform == 'android' || inputs.platform == 'all' }}
+        if: ${{ (inputs.platform == 'android' || inputs.platform == 'all') && inputs.profile != 'production' }}
         working-directory: apps/mobile
         run: |
           android_build_id="$(
@@ -87,6 +87,6 @@ jobs:
           echo "apk_path=$apk_path" >> "$GITHUB_ENV"
 
       - name: Fluid Attacks MAST
-        if: ${{ inputs.platform == 'android' || inputs.platform == 'all' }}
+        if: ${{ (inputs.platform == 'android' || inputs.platform == 'all') && inputs.profile != 'production' }}
         working-directory: apps/mobile
-        run: docker run --rm -v "$PWD:/src" docker.io/fluidattacks/mast:latest mast --strict scan "/src/${apk_path#./}"
+        run: docker run --rm -v "$PWD:/src" docker.io/fluidattacks/mast@sha256:e32271dd4e6a90a10b0e9be41cd9c9aeeb50d4167b477a095cd5f9e52fb2bd6a mast --strict scan "/src/${apk_path#./}"

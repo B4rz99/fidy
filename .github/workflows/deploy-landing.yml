@@ -27,7 +27,7 @@ jobs:
       - name: Deploy to production
         id: deploy
         run: |
-          deployment_url="$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} | tail -n 1)"
+          deployment_url="$(vercel deploy --prod --skip-domain --token=${{ secrets.VERCEL_TOKEN }} | tail -n 1)"
           echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
           echo "$deployment_url"
         working-directory: apps/landing
@@ -36,4 +36,28 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Fluid Attacks DAST
-        run: docker run --rm docker.io/fluidattacks/dast:latest dast --strict scan "${{ steps.deploy.outputs.url }}"
+        working-directory: apps/landing
+        run: |
+          cat > fluidattacks-dast.config.yaml << 'EOF'
+          strict: true
+          namespace: fidy-landing
+          output:
+            file_path: /tmp/fluid-attacks-results.csv
+            format: CSV
+          dast:
+            strict_connectivity: true
+            urls:
+              - url: ${{ steps.deploy.outputs.url }}
+          EOF
+
+          docker run --rm -v "$PWD:/scan-root" docker.io/fluidattacks/dast@sha256:c2b70826369c89086ce5ead62438725d1991a2f8a120007d318f3d2ef9c03448 dast --strict scan /scan-root/fluidattacks-dast.config.yaml
+
+          rm fluidattacks-dast.config.yaml
+
+      - name: Promote production deployment
+        run: |
+          vercel promote "${{ steps.deploy.outputs.url }}" --token=${{ secrets.VERCEL_TOKEN }} --yes
+        working-directory: apps/landing
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
