@@ -1,0 +1,153 @@
+apps/mobile/app/edit-transaction.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 172-202
+apps/mobile/__tests__/categories/create-category-sheet.test.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 9,11,14,17,20-22
+apps/mobile/features/transfers/components/transfer-form/TransferSidePicker.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 6,8,37-43,45-48,50-55,102,129-131
+  s_674d9abb97ec32::t_54123477f1c60a 44,57-79,81-88,90,92,96-97,99-101,104-118,120-128
+apps/mobile/features/transactions/components/TransactionDatePickerDialog.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-55
+apps/mobile/app/language-picker.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 13
+apps/mobile/features/goals/routes.public.ts
+  s_674d9abb97ec32::t_54123477f1c60a 1-5
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_674d9abb97ec32::t_386a71e815fb98 106-113,118-125,127
+  s_674d9abb97ec32::t_c23252129d93f2 126
+  s_674d9abb97ec32::t_67a912f4a32c10 5-9,14,56,71-76,79-84,92-94,96-103,149-156,158-165,194
+apps/mobile/features/transactions/components/TransactionAccountPickerDialog.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-66
+apps/mobile/features/transfers/components/transfer-form/TransferForm.styles.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 80
+apps/mobile/features/onboarding/components/BudgetSetupStep.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 10,117-121
+  s_674d9abb97ec32::t_54123477f1c60a 11
+apps/mobile/app/auto-suggest-budgets.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 92-94
+  s_674d9abb97ec32::t_67a912f4a32c10 10,72-80,82-87,89-91,95,97-108,111-140,142-146,148-166
+apps/mobile/app/categories.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 1
+apps/mobile/shared/components/DialogFrame.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-117
+apps/mobile/app/edit-goal.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 2,18
+apps/mobile/shared/i18n/locales/es.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 269
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_674d9abb97ec32::t_c0ff9ce92eaec3 14,19
+  s_674d9abb97ec32::t_67a912f4a32c10 10-12,41-44,99-136,408-544,752,758,774-775,792,830
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 92
+apps/mobile/features/account-suggestions/components/LinkSuggestedAccountScreen.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 67
+  s_674d9abb97ec32::t_67a912f4a32c10 65-66,68,118
+apps/mobile/features/settings/components/PrivateBackupScreen.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 10,12,182-183,189-190,197-198
+apps/mobile/__tests__/transactions/add-screen-source.test.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 24-25,30,132-135,137-138,148-156,170
+apps/mobile/features/transactions/components/transaction-form/TransactionMetadataRow.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 2-3,31,33-36
+apps/mobile/shared/components/index.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 8,19-22,51-56
+apps/mobile/shared/components/FormTextField.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-101
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 20
+apps/mobile/app/create-category.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 1-3,6-7,9-19
+apps/mobile/app/create-goal.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 2,18
+apps/mobile/features/transactions/display.public.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 2
+apps/mobile/features/financial-accounts/routes.public.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 3
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 2,4,6,15,75-83,88,90-99,104,161
+  s_674d9abb97ec32::t_54123477f1c60a 7,84-87,100-103
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 6
+apps/mobile/app/reclassify-transaction.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 4
+apps/mobile/features/financial-accounts/components/financial-account-form/ManageIdentifiersButton.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-22
+apps/mobile/app/add-transfer.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 14-17
+apps/mobile/features/categories/index.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 1
+apps/mobile/app/add-payment.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 2,18
+apps/mobile/app/create-budget.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 4
+apps/mobile/features/transactions/components/transaction-form/TransactionFormContent.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 41,55
+apps/mobile/app/enable-notifications.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 20,35,79,84
+apps/mobile/features/transactions/components/PencilTransactionEntryScreen.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 33-36,38,42,59,152,159,166,198,201-202,205,208,210-211,214,217-218,221
+apps/mobile/features/search/components/DateFilter.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 4,97
+apps/mobile/app/goal-detail.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 1
+apps/mobile/features/transactions/components/transaction-form/TransactionForm.styles.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 21-24
+apps/mobile/features/transactions/components/TransactionCategoryPickerDialog.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-66
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountIdentifiersSection.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 1-3,6-7,54-60
+apps/mobile/features/goals/components/goal-form/GoalNameField.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-32
+apps/mobile/features/financial-accounts/components/financial-account-form/IdentifierChip.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-14
+apps/mobile/shared/i18n/locales/en.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 262
+apps/mobile/app/_layout.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 245-246,253-254,259
+  s_674d9abb97ec32::t_67a912f4a32c10 33-41,214-216,229-232,247-248,258,260
+apps/mobile/app/theme-picker.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 14
+apps/mobile/features/categories/routes.public.ts
+  s_674d9abb97ec32::t_54123477f1c60a 1-2
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_674d9abb97ec32::t_54123477f1c60a 25
+  s_674d9abb97ec32::t_67a912f4a32c10 9,17-18,20,22-24,26-27,29,32,36,43,45,52,55,83,94
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 107
+apps/mobile/app/delete-account.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 9
+apps/mobile/features/goals/components/AddPaymentScreen.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-244
+apps/mobile/shared/components/route-options.ts
+  s_674d9abb97ec32::t_54123477f1c60a 1-46
+apps/mobile/__tests__/ui/date-picker-imports.test.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 43,47
+apps/mobile/features/transfers/components/transfer-form/TransferForm.types.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 30
+apps/mobile/app/link-suggested-account.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 4
+apps/mobile/shared/components/FormScreen.tsx
+  s_674d9abb97ec32::t_54123477f1c60a 1-45
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 7-8,98-113
+apps/mobile/app/add-transaction.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 8
+apps/mobile/app/financial-account-identifier.tsx
+  s_674d9abb97ec32::t_67a912f4a32c10 1,4
+apps/mobile/__tests__/goals/goal-date-field-helpers.test.ts
+  s_674d9abb97ec32::t_67a912f4a32c10 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "1efec2f97db457d8a175e735ce576298c2fe1f8e",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
