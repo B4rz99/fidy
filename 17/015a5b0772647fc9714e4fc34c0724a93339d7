@@ -1,0 +1,19 @@
+.agents/skills/review/SKILL.md
+  s_d5d3d1948279c4::t_8a4d667649bad4 32-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "17015a5b0772647fc9714e4fc34c0724a93339d7",
+  "prompts": {},
+  "sessions": {
+    "s_d5d3d1948279c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7e73-4a03-7d11-8de3-d8698cbe2895",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
