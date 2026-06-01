@@ -1,0 +1,50 @@
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 11,26,30-32
+apps/mobile/shared/components/index.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 12-13
+apps/mobile/__tests__/calendar/day-detail-screen.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 7-10,14,16-18
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 11,33-36
+.agents/skills/mobile-qa/SKILL.md
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 32,91-92
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 73-74,112-114,124-126
+apps/mobile/features/search/components/search-screen/SearchResultsList.tsx
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 2-3,8,77,84-85,102
+apps/mobile/app/_layout.tsx
+  s_3da3e4b4c5ffcc::t_868a5ba0aeb686 33,46-49
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 221-246
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 26-27,65,67,74-75
+apps/mobile/features/ai-chat/components/ConversationList.tsx
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 4,136,145-146,175
+apps/mobile/__tests__/transactions/callers.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 17-20,39-41
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 13,45-46,111-113
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 615-630
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 7,124,129
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 11-14,22,24-25,29,33,42,48-51,55-57,61,70,72-73
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_3da3e4b4c5ffcc::t_cc2cb81e875727 1,7,213-222
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "ee0413c93fe18f6b721be41f5f576790f437e995",
+  "prompts": {},
+  "sessions": {
+    "s_3da3e4b4c5ffcc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e808d-766b-7bc3-a1fb-a246d22913ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
