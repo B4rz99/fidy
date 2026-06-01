@@ -48,7 +48,10 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
     expect(source).toContain('export { MoneyAmountDisplay } from "./MoneyAmountDisplay"');
+    expect(source).toContain('export { MoneyEntryAmountField } from "./MoneyEntryAmountField"');
+    expect(source).toContain('export { MoneyEntryDateButton } from "./MoneyEntryDateButton"');
     expect(source).toContain('export { MoneyEntryScreen } from "./MoneyEntryScreen"');
+    expect(source).toContain('export { MoneyEntryTextField } from "./MoneyEntryTextField"');
     expect(source).toContain('export { NumpadActionFooter } from "./NumpadActionFooter"');
     expect(source).toContain('export { NumpadFormScreen } from "./NumpadFormScreen"');
     expect(source).toContain('export { PinnedFormStack } from "./PinnedFormStack"');
@@ -462,7 +465,6 @@ describe("shared UI kit", () => {
 
   it("keeps migrated form field buttons on the shared FieldButton primitive", () => {
     const files = [
-      "../../features/goals/components/goal-form/GoalDateField.tsx",
       "../../features/transfers/components/transfer-form/TransferSideCard.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
     ];
@@ -475,6 +477,35 @@ describe("shared UI kit", () => {
     });
   });
 
+  it("keeps money-entry date controls on the shared money entry date button", () => {
+    const files = [
+      "../../features/goals/components/AddPaymentScreen.tsx",
+      "../../features/goals/components/goal-form/GoalDateField.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "MoneyEntryDateButton");
+      expect(source).toContain("<MoneyEntryDateButton");
+    });
+  });
+
+  it("keeps money-entry amount controls on the shared money entry amount field", () => {
+    const files = [
+      "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx",
+      "../../features/goals/components/AddPaymentScreen.tsx",
+      "../../features/goals/components/goal-form/GoalAmountField.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "MoneyEntryAmountField");
+      expect(source).toContain("<MoneyEntryAmountField");
+    });
+  });
+
   it("keeps repeated form text inputs on the shared FormTextField primitive", () => {
     const files = [
       "../../app/auto-suggest-budgets.tsx",
@@ -484,9 +515,6 @@ describe("shared UI kit", () => {
       "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountIdentifiersSection.tsx",
-      "../../features/goals/components/AddPaymentScreen.tsx",
-      "../../features/goals/components/goal-form/GoalInterestField.tsx",
-      "../../features/goals/components/goal-form/GoalNameField.tsx",
       "../../features/onboarding/components/BudgetSetupStep.tsx",
       "../../features/settings/components/PrivateBackupScreen.tsx",
       "../../features/transactions/components/transaction-form/TransactionMetadataRow.tsx",
@@ -498,6 +526,22 @@ describe("shared UI kit", () => {
       expectSharedComponentImport(source, "FormTextField");
       expect(source).toContain("<FormTextField");
       expect(source).not.toContain("<FieldLabel");
+      expect(source).not.toContain("<TextInput");
+    });
+  });
+
+  it("keeps money-entry text inputs on the shared money entry text field", () => {
+    const files = [
+      "../../features/goals/components/AddPaymentScreen.tsx",
+      "../../features/goals/components/goal-form/GoalInterestField.tsx",
+      "../../features/goals/components/goal-form/GoalNameField.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "MoneyEntryTextField");
+      expect(source).toContain("<MoneyEntryTextField");
       expect(source).not.toContain("<TextInput");
     });
   });

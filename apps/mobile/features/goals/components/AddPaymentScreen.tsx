@@ -3,10 +3,16 @@ import { useCallback, useReducer } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
-import { Button, FormTextField, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
-import { Keyboard, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import {
+  Button,
+  MoneyEntryAmountField,
+  MoneyEntryDateButton,
+  MoneyEntryScreen,
+  MoneyEntryTextField,
+} from "@/shared/components";
+import { Keyboard } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useBlinkingCursor, useTranslation } from "@/shared/hooks";
 import { parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { addContribution, useGoalStore } from "../store";
 
@@ -56,10 +62,6 @@ export function AddPaymentScreen() {
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const userId = useOptionalUserId();
-
-  const cardBg = useThemeColor("card");
-  const primaryColor = useThemeColor("primary");
-  const borderColor = useThemeColor("borderSubtle");
 
   const [state, dispatch] = useReducer(addPaymentReducer, undefined, () => ({
     date: toIsoDate(new Date()),
@@ -121,55 +123,36 @@ export function AddPaymentScreen() {
         }
         detailContent={
           <>
-            <FormTextField
+            <MoneyEntryTextField
               label={t("goals.payment.noteOptional")}
               value={note}
               onChangeText={(nextNote) => dispatch({ type: "setNote", note: nextNote })}
               onFocus={() => dispatch({ type: "deactivateNumpad" })}
               maxLength={200}
               placeholder={t("goals.payment.notePlaceholder")}
-              style={styles.fieldGroup}
-              labelStyle={[styles.fieldLabel, { color: primaryColor }]}
-              inputStyle={[styles.input, { backgroundColor: cardBg, borderColor }]}
             />
 
-            <Pressable
-              style={styles.fieldGroup}
+            <MoneyEntryDateButton
+              label={t("goals.payment.date")}
+              value={date}
               onPress={() => {
                 Keyboard.dismiss();
                 dispatch({ type: "openDatePicker" });
               }}
-              accessibilityRole="button"
-            >
-              <Text style={[styles.fieldLabel, { color: primaryColor }]}>
-                {t("goals.payment.date")}
-              </Text>
-              <View
-                style={[styles.input, styles.dateButton, { backgroundColor: cardBg, borderColor }]}
-              >
-                <Text style={[styles.dateText, { color: primaryColor }]}>{date}</Text>
-              </View>
-            </Pressable>
+            />
           </>
         }
         amountContent={
-          <Pressable
-            style={styles.amountSection}
+          <MoneyEntryAmountField
             onPress={() => {
               Keyboard.dismiss();
               dispatch({ type: "activateNumpad" });
             }}
-            accessibilityRole="button"
             accessibilityLabel={t("goals.payment.amount")}
-          >
-            <MoneyAmountDisplay
-              color={primaryColor}
-              cursorStyle={cursorStyle}
-              cursorVisible={numpadActive}
-              digits={digits}
-              size="hero"
-            />
-          </Pressable>
+            cursorStyle={cursorStyle}
+            cursorVisible={numpadActive}
+            digits={digits}
+          />
         }
         numpadVisible={numpadActive}
         onKeyPress={handleKey}
@@ -186,20 +169,3 @@ export function AddPaymentScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  amountSection: { alignItems: "center" },
-  fieldGroup: { gap: 4 },
-  fieldLabel: { fontFamily: "Poppins_500Medium", fontSize: 12, fontStyle: "italic" },
-  input: {
-    height: 48,
-    borderRadius: 12,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-  },
-  dateButton: { justifyContent: "center" },
-  dateText: { fontFamily: "Poppins_500Medium", fontSize: 14 },
-});
