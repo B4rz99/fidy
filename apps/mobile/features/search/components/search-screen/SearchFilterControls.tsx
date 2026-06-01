@@ -4,7 +4,7 @@ import { ResultsSummary } from "../ResultsSummary";
 import { SearchInputBar } from "./SearchInputBar";
 import type { SearchScreenViewModel } from "./SearchScreen.types";
 
-type SearchListHeaderProps = Pick<
+type SearchFilterControlsProps = Pick<
   SearchScreenViewModel,
   | "activePanel"
   | "filterPanel"
@@ -23,7 +23,7 @@ type SearchListHeaderProps = Pick<
   readonly placeholder: string;
 };
 
-export function SearchListHeader({
+export function SearchFilterControls({
   activePanel,
   filterPanel,
   filters,
@@ -38,7 +38,7 @@ export function SearchListHeader({
   secondary,
   showSummary,
   summary,
-}: SearchListHeaderProps) {
+}: SearchFilterControlsProps) {
   return (
     <>
       <SearchInputBar

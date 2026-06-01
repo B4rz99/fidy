@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "vitest";
+import { expectTitledRouteExtendsFullScreen } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -8,6 +9,7 @@ function readSource(relativePath: string) {
 
 const routeSource = readSource("../../app/create-budget.tsx");
 const layoutSource = readSource("../../app/_layout.tsx");
+const rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
 const autoSuggestBudgetsSource = readSource("../../app/auto-suggest-budgets.tsx");
 const screenSource = readSource(
   "../../features/budget/components/create-budget/CreateBudgetScreen.tsx"
@@ -29,9 +31,10 @@ test("create-budget is registered in root layout as a full screen route", () => 
   expect(layoutSource).toContain('"create-budget"');
   expect(routeSource).not.toContain("DialogRouteFrame");
   expect(routeSource).toContain("CreateBudgetScreen");
-  const createBudgetBlock = layoutSource.slice(layoutSource.indexOf('name="create-budget"'));
-  expect(createBudgetBlock.slice(0, 140)).toContain("createBudgetRouteOptions");
-  expect(layoutSource).toContain("...fullScreenHeaderOptions");
+  expect(layoutSource).toContain('name="create-budget"');
+  expect(layoutSource).toContain("routeOptions.titled.createBudget");
+  expect(rootStackRoutesSource).toContain("createBudget");
+  expectTitledRouteExtendsFullScreen(rootStackRoutesSource, "createBudget");
   expect(layoutSource).not.toContain("formSheet");
 });
 

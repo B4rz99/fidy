@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -10,6 +11,7 @@ const billsCalendarSource = readSource("../../app/bills-calendar.tsx");
 const financeTabSource = readSource("../../app/(tabs)/(finance)/index.tsx");
 const dayDetailSource = readSource("../../app/day-detail.tsx");
 const rootLayoutSource = readSource("../../app/_layout.tsx");
+const rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
 const monthBoardSource = readSource("../../features/calendar/components/CalendarMonthBoard.tsx");
 const gridSource = readSource("../../features/calendar/components/CalendarGrid.tsx");
 const dayCellSource = readSource("../../features/calendar/components/CalendarDayCell.tsx");
@@ -41,9 +43,8 @@ describe("calendar screen", () => {
     expect(billsCalendarSource).toContain("rightActions");
     expect(billsCalendarSource).toContain('push("/add-bill")');
     expect(billsCalendarSource).toContain('accessibilityLabel={t("bills.addBill")}');
-    expect(rootLayoutSource).toContain(
-      '<Stack.Screen name="bills-calendar" options={iosHeaderOptions} />'
-    );
+    expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", "bills-calendar");
+    expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.transparentHeader.map");
   });
 
   test("calendar proposal keeps the calendar, legend, and upcoming pending list without summary card", () => {
@@ -108,13 +109,9 @@ describe("calendar screen", () => {
   });
 
   test("day detail is a full screen route so bill editing pushes normally", () => {
-    const dayDetailStart = rootLayoutSource.indexOf('name="day-detail"');
-    const themePickerStart = rootLayoutSource.indexOf('name="theme-picker"');
-    expect(dayDetailStart).toBeGreaterThan(-1);
-    expect(themePickerStart).toBeGreaterThan(dayDetailStart);
-    const dayDetailBlock = rootLayoutSource.slice(dayDetailStart, themePickerStart);
-    expect(dayDetailBlock).toContain("fullScreenHeaderOptions");
-    expect(dayDetailBlock).not.toContain("DIALOG_MODAL");
+    expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "day-detail");
+    expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+    expect(rootLayoutSource).toContain("routeOptions.fullScreen");
     expect(dayDetailSource).not.toContain("DialogRouteFrame");
     expect(dayDetailSource).toContain("<Stack.Screen");
     expect(dayDetailSource).toContain('router.push({ pathname: "/add-bill"');

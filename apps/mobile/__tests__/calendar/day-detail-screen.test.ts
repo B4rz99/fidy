@@ -1,21 +1,28 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
-const source = readFileSync(resolve(__dirname, "../../app/day-detail.tsx"), "utf-8");
-const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+let source = "";
+let layoutSource = "";
+let rootStackRoutesSource = "";
+
+beforeAll(() => {
+  source = readFileSync(resolve(__dirname, "../../app/day-detail.tsx"), "utf-8");
+  layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+  rootStackRoutesSource = readFileSync(
+    resolve(__dirname, "../../shared/navigation/root-stack-routes.ts"),
+    "utf-8"
+  );
+});
 
 describe("day-detail screen", () => {
   test("is registered in root layout as a full screen route", () => {
-    expect(layoutSource).toContain('name="day-detail"');
+    expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
     expect(source).not.toContain("DialogRouteFrame");
-    const dayDetailStart = layoutSource.indexOf('name="day-detail"');
-    const themePickerStart = layoutSource.indexOf('name="theme-picker"');
-    expect(dayDetailStart).toBeGreaterThan(-1);
-    expect(themePickerStart).toBeGreaterThan(dayDetailStart);
-    const dayDetailBlock = layoutSource.slice(dayDetailStart, themePickerStart);
-    expect(dayDetailBlock).toContain("fullScreenHeaderOptions");
-    expect(dayDetailBlock).not.toContain("DIALOG_MODAL");
+    expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "day-detail");
+    expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+    expect(layoutSource).toContain("routeOptions.fullScreen");
     expect(layoutSource).not.toContain("formSheet");
   });
 

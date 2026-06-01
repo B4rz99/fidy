@@ -30,15 +30,7 @@ import {
 import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa/hooks.public";
 import { QaStatusBanner } from "@/features/qa/ui.public";
 import { useSettingsStore } from "@/features/settings/hooks.public";
-import {
-  AppToastHost,
-  createFullScreenRouteOptions,
-  createEntryRouteOptions,
-  createScreenLayoutRouteOptions,
-  createTransparentHeaderRouteOptions,
-  dialogRouteOptions,
-  ErrorFallback,
-} from "@/shared/components";
+import { AppToastHost, ErrorFallback } from "@/shared/components";
 import { useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { type AnyDb, getDb } from "@/shared/db";
@@ -51,6 +43,10 @@ import {
   setSentryUser,
   wrapWithSentry,
 } from "@/shared/lib";
+import {
+  createRootStackRouteOptions,
+  ROOT_STACK_ROUTES,
+} from "@/shared/navigation/root-stack-routes";
 import { QueryProvider } from "@/shared/query";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
@@ -213,18 +209,7 @@ export function RootLayout() {
   }
 
   const db = userId ? getDb(userId) : null;
-  const iosHeaderOptions = createTransparentHeaderRouteOptions(theme);
-  const fullScreenHeaderOptions = createFullScreenRouteOptions(theme);
-  const createBudgetRouteOptions = {
-    ...fullScreenHeaderOptions,
-    title: t("budgets.create.title"),
-  };
-  const autoSuggestBudgetsRouteOptions = {
-    ...fullScreenHeaderOptions,
-    title: t("budgets.autoSuggest.title"),
-  };
-  const screenLayoutRouteOptions = createScreenLayoutRouteOptions(theme);
-  const entryRouteOptions = createEntryRouteOptions();
+  const routeOptions = createRootStackRouteOptions(theme, t);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -233,42 +218,36 @@ export function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
-            {localQaAvailable ? <Stack.Screen name="qa-tools" options={iosHeaderOptions} /> : null}
-            {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
-            <Stack.Screen name="add-bill" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="day-detail" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="theme-picker" options={dialogRouteOptions} />
-            <Stack.Screen name="language-picker" options={dialogRouteOptions} />
-            <Stack.Screen name="delete-account" options={dialogRouteOptions} />
-            <Stack.Screen name="enable-notifications" options={dialogRouteOptions} />
-            <Stack.Screen name="analytics" options={iosHeaderOptions} />
-            <Stack.Screen name="notifications" options={iosHeaderOptions} />
-            <Stack.Screen name="search" options={iosHeaderOptions} />
-            <Stack.Screen name="connected-accounts" options={iosHeaderOptions} />
-            <Stack.Screen name="account-suggestions" options={iosHeaderOptions} />
-            <Stack.Screen name="create-financial-account" options={iosHeaderOptions} />
-            <Stack.Screen name="financial-accounts" options={iosHeaderOptions} />
-            <Stack.Screen name="financial-account-details" options={iosHeaderOptions} />
-            <Stack.Screen name="financial-account-form" options={iosHeaderOptions} />
-            <Stack.Screen name="profile" options={iosHeaderOptions} />
-            <Stack.Screen name="settings" options={iosHeaderOptions} />
-            {__DEV__ ? <Stack.Screen name="design-system" options={iosHeaderOptions} /> : null}
-            <Stack.Screen name="financial-account-identifier" options={screenLayoutRouteOptions} />
-            <Stack.Screen name="link-suggested-account" options={screenLayoutRouteOptions} />
-            <Stack.Screen name="create-budget" options={createBudgetRouteOptions} />
-            <Stack.Screen name="auto-suggest-budgets" options={autoSuggestBudgetsRouteOptions} />
-            <Stack.Screen name="goal-detail" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="create-goal" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="add-payment" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="edit-goal" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="add-transaction" options={entryRouteOptions} />
-            <Stack.Screen name="add-transfer" options={entryRouteOptions} />
-            <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
-            <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
-            <Stack.Screen name="categories" options={iosHeaderOptions} />
-            <Stack.Screen name="create-category" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="edit-transaction" options={entryRouteOptions} />
-            <Stack.Screen name="reclassify-transaction" options={screenLayoutRouteOptions} />
+            {localQaAvailable
+              ? ROOT_STACK_ROUTES.localQaTransparentHeader.map((name) => (
+                  <Stack.Screen key={name} name={name} options={routeOptions.transparentHeader} />
+                ))
+              : null}
+            {ROOT_STACK_ROUTES.fullScreen.map((name) => (
+              <Stack.Screen key={name} name={name} options={routeOptions.fullScreen} />
+            ))}
+            {ROOT_STACK_ROUTES.dialog.map((name) => (
+              <Stack.Screen key={name} name={name} options={routeOptions.dialog} />
+            ))}
+            {ROOT_STACK_ROUTES.transparentHeader.map((name) => (
+              <Stack.Screen key={name} name={name} options={routeOptions.transparentHeader} />
+            ))}
+            {__DEV__
+              ? ROOT_STACK_ROUTES.devOnlyTransparentHeader.map((name) => (
+                  <Stack.Screen key={name} name={name} options={routeOptions.transparentHeader} />
+                ))
+              : null}
+            {ROOT_STACK_ROUTES.screenLayout.map((name) => (
+              <Stack.Screen key={name} name={name} options={routeOptions.screenLayout} />
+            ))}
+            <Stack.Screen name="create-budget" options={routeOptions.titled.createBudget} />
+            <Stack.Screen
+              name="auto-suggest-budgets"
+              options={routeOptions.titled.autoSuggestBudgets}
+            />
+            {ROOT_STACK_ROUTES.entry.map((name) => (
+              <Stack.Screen key={name} name={name} options={routeOptions.entry} />
+            ))}
             {localQaAvailable ? (
               <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
             ) : null}

@@ -1,10 +1,10 @@
-import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { formatMonthYear } from "@/features/calendar/public";
 import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
-import { Button, EmptyState, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Button, EmptyState, FeedList, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -210,39 +210,30 @@ export function BudgetListScreen() {
         />
       }
     >
-      <View style={styles.content}>
-        <FlashList
-          data={hasBudgets ? budgetProgress : []}
-          renderItem={renderBudget}
-          keyExtractor={budgetKeyExtractor}
-          ListHeaderComponent={budgetSummary}
-          ListEmptyComponent={emptyState}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={BudgetItemSeparator}
-        />
-      </View>
+      <FeedList
+        data={hasBudgets ? budgetProgress : []}
+        renderItem={renderBudget}
+        keyExtractor={budgetKeyExtractor}
+        header={budgetSummary}
+        empty={emptyState}
+        containerStyle={styles.content}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
+        itemSeparatorHeight={8}
+      />
     </ScreenLayout>
   );
 }
-
-const BudgetItemSeparator = () => <View style={styles.itemSeparator} />;
 
 const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
-    gap: 8,
   },
   scrollContent: {
     gap: 8,
   },
   headerContent: {
     gap: 8,
-  },
-  itemSeparator: {
-    height: 8,
   },
   addButton: {
     width: 36,

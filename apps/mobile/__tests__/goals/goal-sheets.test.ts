@@ -1,37 +1,61 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { expect, test } from "vitest";
+import { beforeAll, expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
 }
 
-const createSheetSource = readSource("../../features/goals/components/GoalCreateScreen.tsx");
-const createGoalRouteSource = readSource("../../app/create-goal.tsx");
-const addPaymentRouteSource = readSource("../../app/add-payment.tsx");
-const editGoalRouteSource = readSource("../../app/edit-goal.tsx");
-const rootLayoutSource = readSource("../../app/_layout.tsx");
-const goalsListSource = readSource("../../features/goals/components/GoalsListScreen.tsx");
-const goalCardSource = readSource("../../features/goals/components/GoalCard.tsx");
-const goalDetailSource = readSource("../../features/goals/components/GoalDetail.tsx");
-const addPaymentSource = readSource("../../features/goals/components/AddPaymentScreen.tsx");
-const editSheetSource = readSource("../../features/goals/components/GoalEditScreen.tsx");
-const editLoadedSource = readSource(
-  "../../features/goals/components/goal-form/GoalEditScreenLoaded.tsx"
-);
-const formSource = readSource("../../features/goals/components/goal-form/GoalForm.tsx");
-const frameSource = readSource("../../features/goals/components/goal-form/GoalFormFrame.tsx");
-const stylesSource = readSource("../../features/goals/components/goal-form/GoalForm.styles.ts");
-const numpadFormScreenSource = readSource("../../shared/components/NumpadFormScreen.tsx");
-const typeToggleSource = readSource("../../features/goals/components/goal-form/GoalTypeToggle.tsx");
-const dateFieldSource = readSource("../../features/goals/components/goal-form/GoalDateField.tsx");
-const formHookSource = readSource("../../features/goals/components/goal-form/useGoalForm.ts");
-const createActionsSource = readSource(
-  "../../features/goals/components/goal-form/useGoalCreateActions.ts"
-);
-const editActionsSource = readSource(
-  "../../features/goals/components/goal-form/useGoalEditActions.ts"
-);
+let createSheetSource = "";
+let createGoalRouteSource = "";
+let addPaymentRouteSource = "";
+let editGoalRouteSource = "";
+let rootLayoutSource = "";
+let rootStackRoutesSource = "";
+let goalsListSource = "";
+let goalCardSource = "";
+let goalDetailSource = "";
+let addPaymentSource = "";
+let editSheetSource = "";
+let editLoadedSource = "";
+let formSource = "";
+let frameSource = "";
+let stylesSource = "";
+let numpadFormScreenSource = "";
+let typeToggleSource = "";
+let dateFieldSource = "";
+let formHookSource = "";
+let createActionsSource = "";
+let editActionsSource = "";
+
+beforeAll(() => {
+  createSheetSource = readSource("../../features/goals/components/GoalCreateScreen.tsx");
+  createGoalRouteSource = readSource("../../app/create-goal.tsx");
+  addPaymentRouteSource = readSource("../../app/add-payment.tsx");
+  editGoalRouteSource = readSource("../../app/edit-goal.tsx");
+  rootLayoutSource = readSource("../../app/_layout.tsx");
+  rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
+  goalsListSource = readSource("../../features/goals/components/GoalsListScreen.tsx");
+  goalCardSource = readSource("../../features/goals/components/GoalCard.tsx");
+  goalDetailSource = readSource("../../features/goals/components/GoalDetail.tsx");
+  addPaymentSource = readSource("../../features/goals/components/AddPaymentScreen.tsx");
+  editSheetSource = readSource("../../features/goals/components/GoalEditScreen.tsx");
+  editLoadedSource = readSource(
+    "../../features/goals/components/goal-form/GoalEditScreenLoaded.tsx"
+  );
+  formSource = readSource("../../features/goals/components/goal-form/GoalForm.tsx");
+  frameSource = readSource("../../features/goals/components/goal-form/GoalFormFrame.tsx");
+  stylesSource = readSource("../../features/goals/components/goal-form/GoalForm.styles.ts");
+  numpadFormScreenSource = readSource("../../shared/components/NumpadFormScreen.tsx");
+  typeToggleSource = readSource("../../features/goals/components/goal-form/GoalTypeToggle.tsx");
+  dateFieldSource = readSource("../../features/goals/components/goal-form/GoalDateField.tsx");
+  formHookSource = readSource("../../features/goals/components/goal-form/useGoalForm.ts");
+  createActionsSource = readSource(
+    "../../features/goals/components/goal-form/useGoalCreateActions.ts"
+  );
+  editActionsSource = readSource("../../features/goals/components/goal-form/useGoalEditActions.ts");
+});
 
 test("keeps the create-goal sheet wired to the shared form without projection copy", () => {
   expect(createSheetSource).toContain("<GoalForm");
@@ -70,8 +94,8 @@ test("goals proposal keeps the empty state and goal cards wired", () => {
   expect(goalsListSource).toContain("<EmptyState");
   expect(goalsListSource).toContain("<Button");
   expect(goalsListSource).not.toContain("styles.emptyCard");
-  expect(goalsListSource).toContain("ItemSeparatorComponent={GoalItemSeparator}");
-  expect(goalsListSource).toContain("itemSeparator");
+  expect(goalsListSource).toContain("<FeedList");
+  expect(goalsListSource).toContain("itemSeparatorHeight={12}");
   expect(goalCardSource).toContain("goal.iconName");
   expect(goalCardSource).toContain("percentPill");
   expect(goalCardSource).toContain('t("goals.card.detail")');
@@ -109,13 +133,10 @@ test("create-goal opens as a full screen route, not a dialog", () => {
   expect(createGoalRouteSource).not.toContain("DialogRouteFrame");
   expect(createGoalRouteSource).toContain('headerBackTitle: ""');
   expect(createGoalRouteSource).toContain('headerTitle: t("goals.create.title")');
-  const createGoalStart = rootLayoutSource.indexOf('name="create-goal"');
-  const addPaymentStart = rootLayoutSource.indexOf('name="add-payment"');
-  expect(createGoalStart).toBeGreaterThan(-1);
-  expect(addPaymentStart).toBeGreaterThan(createGoalStart);
-  const createGoalBlock = rootLayoutSource.slice(createGoalStart, addPaymentStart);
-  expect(createGoalBlock).toContain("fullScreenHeaderOptions");
-  expect(createGoalBlock).not.toContain("DIALOG_MODAL");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+  expect(rootLayoutSource).toContain("routeOptions.fullScreen");
+  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "create-goal");
 });
 
 test("goal payment and edit open as full screen routes, not dialogs", () => {
@@ -125,18 +146,11 @@ test("goal payment and edit open as full screen routes, not dialogs", () => {
   expect(editGoalRouteSource).not.toContain("DialogRouteFrame");
   expect(editGoalRouteSource).toContain('headerBackTitle: ""');
   expect(editGoalRouteSource).toContain('headerTitle: t("goals.edit.title")');
-  const addPaymentStart = rootLayoutSource.indexOf('name="add-payment"');
-  const editGoalStart = rootLayoutSource.indexOf('name="edit-goal"');
-  const addTransactionStart = rootLayoutSource.indexOf('name="add-transaction"');
-  expect(addPaymentStart).toBeGreaterThan(-1);
-  expect(editGoalStart).toBeGreaterThan(addPaymentStart);
-  expect(addTransactionStart).toBeGreaterThan(editGoalStart);
-  const addPaymentBlock = rootLayoutSource.slice(addPaymentStart, editGoalStart);
-  const editGoalBlock = rootLayoutSource.slice(editGoalStart, addTransactionStart);
-  expect(addPaymentBlock).toContain("fullScreenHeaderOptions");
-  expect(addPaymentBlock).not.toContain("DIALOG_MODAL");
-  expect(editGoalBlock).toContain("fullScreenHeaderOptions");
-  expect(editGoalBlock).not.toContain("DIALOG_MODAL");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+  expect(rootLayoutSource).toContain("routeOptions.fullScreen");
+  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "add-payment");
+  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "edit-goal");
 });
 
 test("create-goal full screen avoids nested card and uses debt red state", () => {

@@ -29,7 +29,7 @@ Run from the repo root unless a command says otherwise.
    ```bash
    IP=$(ipconfig getifaddr en0)
    cd apps/mobile
-   CI=1 bun x expo start --dev-client --host lan --port 8081 --clear
+   bun x expo start --dev-client --host lan --port 8081 --clear
    ```
 
    Wait until Metro prints that it is waiting on `8081`, then confirm from the
@@ -88,5 +88,7 @@ Run from the repo root unless a command says otherwise.
   `bun sim:serve:kill` if ports pile up.
 - If the app shows a red dev-client screen for `127.0.0.1:8081`, fix Metro
   first. The simulator viewer is not the problem.
+- Do not set `CI=1` for manual UI QA. It can disable hot reload and make visual
+  iteration misleading.
 - Use simulator tools or direct deep links for interaction; use the browser
   stream primarily for visual QA.
