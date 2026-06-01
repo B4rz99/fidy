@@ -4,6 +4,10 @@ import { describe, expect, test } from "vitest";
 
 describe("Root layout query provider", () => {
   const source = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+  const rootStackRoutesSource = readFileSync(
+    resolve(__dirname, "../../shared/navigation/root-stack-routes.ts"),
+    "utf-8"
+  );
 
   test("wraps the app tree in QueryProvider", () => {
     expect(source).toContain('import { QueryProvider } from "@/shared/query"');
@@ -21,8 +25,12 @@ describe("Root layout query provider", () => {
   });
 
   test("keeps the existing root Stack screen declarations", () => {
-    for (const screen of ["(auth)", "(tabs)", "add-bill", "delete-account", "analytics"]) {
+    for (const screen of ["(auth)", "(tabs)"]) {
       expect(source).toContain(`"${screen}"`);
+    }
+
+    for (const screen of ["add-bill", "delete-account", "analytics"]) {
+      expect(rootStackRoutesSource).toContain(`"${screen}"`);
     }
   });
 
