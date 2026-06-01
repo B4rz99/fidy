@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -42,7 +43,7 @@ describe("calendar screen", () => {
     expect(billsCalendarSource).toContain("rightActions");
     expect(billsCalendarSource).toContain('push("/add-bill")');
     expect(billsCalendarSource).toContain('accessibilityLabel={t("bills.addBill")}');
-    expect(rootStackRoutesSource).toContain('"bills-calendar"');
+    expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", "bills-calendar");
     expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.transparentHeader.map");
   });
 
@@ -108,7 +109,7 @@ describe("calendar screen", () => {
   });
 
   test("day detail is a full screen route so bill editing pushes normally", () => {
-    expect(rootStackRoutesSource).toContain('"day-detail"');
+    expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "day-detail");
     expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
     expect(rootLayoutSource).toContain("routeOptions.fullScreen");
     expect(dayDetailSource).not.toContain("DialogRouteFrame");

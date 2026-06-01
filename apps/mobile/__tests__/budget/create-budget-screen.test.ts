@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "vitest";
+import { expectTitledRouteExtendsFullScreen } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -33,7 +34,7 @@ test("create-budget is registered in root layout as a full screen route", () => 
   expect(layoutSource).toContain('name="create-budget"');
   expect(layoutSource).toContain("routeOptions.titled.createBudget");
   expect(rootStackRoutesSource).toContain("createBudget");
-  expect(rootStackRoutesSource).toContain("...fullScreen");
+  expectTitledRouteExtendsFullScreen(rootStackRoutesSource, "createBudget");
   expect(layoutSource).not.toContain("formSheet");
 });
 

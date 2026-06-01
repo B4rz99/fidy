@@ -6,10 +6,7 @@ import {
   dialogRouteOptions,
 } from "@/shared/components";
 
-type RootRouteTheme = {
-  readonly page: string;
-  readonly primary: string;
-};
+type RootRouteTheme = Parameters<typeof createFullScreenRouteOptions>[0];
 
 type Translate = (key: string) => string;
 

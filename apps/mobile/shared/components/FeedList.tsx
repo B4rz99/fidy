@@ -1,4 +1,5 @@
 import { FlashList, type FlashListProps } from "@shopify/flash-list";
+import { useMemo } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "@/shared/components/rn";
 
 type FeedListProps<TItem> = Omit<
@@ -40,15 +41,18 @@ export function FeedList<TItem>({
   showsVerticalScrollIndicator = false,
   ...listProps
 }: FeedListProps<TItem>) {
+  const separator = useMemo(
+    () => (itemSeparatorHeight != null ? createSeparator(itemSeparatorHeight) : undefined),
+    [itemSeparatorHeight]
+  );
+
   const list = (
     <FlashList
       {...listProps}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-      ItemSeparatorComponent={
-        itemSeparatorHeight != null ? createSeparator(itemSeparatorHeight) : undefined
-      }
+      ItemSeparatorComponent={separator}
       ListEmptyComponent={empty}
       ListFooterComponent={footer}
       ListHeaderComponent={header}

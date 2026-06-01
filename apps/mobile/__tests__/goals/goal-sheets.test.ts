@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -11,6 +12,7 @@ const createGoalRouteSource = readSource("../../app/create-goal.tsx");
 const addPaymentRouteSource = readSource("../../app/add-payment.tsx");
 const editGoalRouteSource = readSource("../../app/edit-goal.tsx");
 const rootLayoutSource = readSource("../../app/_layout.tsx");
+const rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
 const goalsListSource = readSource("../../features/goals/components/GoalsListScreen.tsx");
 const goalCardSource = readSource("../../features/goals/components/GoalCard.tsx");
 const goalDetailSource = readSource("../../features/goals/components/GoalDetail.tsx");
@@ -112,6 +114,7 @@ test("create-goal opens as a full screen route, not a dialog", () => {
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
   expect(rootLayoutSource).toContain("routeOptions.fullScreen");
+  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "create-goal");
 });
 
 test("goal payment and edit open as full screen routes, not dialogs", () => {
@@ -124,6 +127,8 @@ test("goal payment and edit open as full screen routes, not dialogs", () => {
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
   expect(rootLayoutSource).toContain("routeOptions.fullScreen");
+  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "add-payment");
+  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "edit-goal");
 });
 
 test("create-goal full screen avoids nested card and uses debt red state", () => {

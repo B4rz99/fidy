@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 describe("Root layout native headers", () => {
   const source = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
@@ -19,7 +20,7 @@ describe("Root layout native headers", () => {
 
   test("detail screens enable native headers on iOS with aurora-safe chrome", () => {
     for (const screen of ["search", "connected-accounts", "profile"]) {
-      expect(rootStackRoutesSource).toContain(`"${screen}"`);
+      expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", screen);
     }
     expect(source).toContain("ROOT_STACK_ROUTES.transparentHeader.map");
     expect(source).toContain("routeOptions.transparentHeader");
@@ -45,14 +46,14 @@ describe("Root layout native headers", () => {
     expect(routeOptionsSource).toContain(
       'headerStyle: { backgroundColor: Platform.OS === "ios" ? "transparent" : theme.page }'
     );
-    expect(rootStackRoutesSource).toContain('"add-bill"');
-    expect(rootStackRoutesSource).toContain('"day-detail"');
+    expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "add-bill");
+    expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "day-detail");
     expect(source).toContain("ROOT_STACK_ROUTES.fullScreen.map");
     expect(source).toContain("routeOptions.fullScreen");
   });
 
   test("bills-calendar uses iosHeaderOptions to enable iOS-only native header", () => {
-    expect(rootStackRoutesSource).toContain('"bills-calendar"');
+    expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", "bills-calendar");
     expect(source).toContain("ROOT_STACK_ROUTES.transparentHeader.map");
     expect(source).toContain("routeOptions.transparentHeader");
   });
@@ -67,7 +68,7 @@ describe("Root layout native headers", () => {
       "link-suggested-account",
       "reclassify-transaction",
     ]) {
-      expect(rootStackRoutesSource).toContain(`"${screen}"`);
+      expectRouteInRootStackGroup(rootStackRoutesSource, "screenLayout", screen);
     }
     expect(source).toContain("ROOT_STACK_ROUTES.screenLayout.map");
     expect(source).toContain("routeOptions.screenLayout");

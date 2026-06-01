@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -27,7 +28,7 @@ test("add-bill is registered in root layout as a full screen route", () => {
   expect(routeSource).not.toContain("DialogRouteFrame");
   expect(routeSource).toContain('headerBackTitle: ""');
   expect(routeSource).toContain("headerTitle: title");
-  expect(rootStackRoutesSource).toContain('"add-bill"');
+  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "add-bill");
   expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
   expect(layoutSource).toContain("routeOptions.fullScreen");
   expect(layoutSource).not.toContain("formSheet");

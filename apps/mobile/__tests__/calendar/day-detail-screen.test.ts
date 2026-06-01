@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 const source = readFileSync(resolve(__dirname, "../../app/day-detail.tsx"), "utf-8");
 const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
@@ -13,7 +14,7 @@ describe("day-detail screen", () => {
   test("is registered in root layout as a full screen route", () => {
     expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
     expect(source).not.toContain("DialogRouteFrame");
-    expect(rootStackRoutesSource).toContain('"day-detail"');
+    expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "day-detail");
     expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
     expect(layoutSource).toContain("routeOptions.fullScreen");
     expect(layoutSource).not.toContain("formSheet");
