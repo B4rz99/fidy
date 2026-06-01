@@ -12,6 +12,7 @@ import { FilterPill } from "@/shared/components/FilterPill";
 import { FormTextField } from "@/shared/components/FormTextField";
 import { IconActionButton } from "@/shared/components/IconActionButton";
 import { MetricCard } from "@/shared/components/MetricCard";
+import { MoneyAmountDisplay } from "@/shared/components/MoneyAmountDisplay";
 import { MonthNavigator } from "@/shared/components/MonthNavigator";
 import { Row } from "@/shared/components/Row";
 import { SegmentedControl } from "@/shared/components/SegmentedControl";
@@ -46,6 +47,12 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { SelectableChipRow } from "./SelectableChipRow"');
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
+    expect(source).toContain('export { MoneyAmountDisplay } from "./MoneyAmountDisplay"');
+    expect(source).toContain('export { MoneyEntryScreen } from "./MoneyEntryScreen"');
+    expect(source).toContain('export { NumpadActionFooter } from "./NumpadActionFooter"');
+    expect(source).toContain('export { NumpadFormScreen } from "./NumpadFormScreen"');
+    expect(source).toContain('export { PinnedFormStack } from "./PinnedFormStack"');
+    expect(source).toContain('export { ChoiceTray } from "./ChoiceTray"');
   });
 
   it("renders primitive text content", () => {
@@ -132,6 +139,18 @@ describe("shared UI kit", () => {
     expect(screen.getByText("Name")).toBeTruthy();
     expect(screen.getByA11yLabel("Name")).toBeTruthy();
     expect(actions).toEqual(["clear", "filter", "text-action"]);
+  });
+
+  it("renders money amount display with formatted digits and empty fallback", () => {
+    const screen = renderFidy(
+      <>
+        <MoneyAmountDisplay color="#111111" digits="125000" />
+        <MoneyAmountDisplay color="#111111" digits="" />
+      </>
+    );
+
+    expect(screen.getByText("$125.000")).toBeTruthy();
+    expect(screen.getByText("$")).toBeTruthy();
   });
 
   it("selects segmented control options through accessible buttons", () => {
@@ -443,7 +462,6 @@ describe("shared UI kit", () => {
 
   it("keeps migrated form field buttons on the shared FieldButton primitive", () => {
     const files = [
-      "../../features/goals/components/goal-form/GoalAmountField.tsx",
       "../../features/goals/components/goal-form/GoalDateField.tsx",
       "../../features/transfers/components/transfer-form/TransferSideCard.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
@@ -775,10 +793,7 @@ describe("shared UI kit", () => {
     expectSharedComponentImport(financialAccountIdentifierSource, "ScreenLayout");
     expect(financialAccountIdentifierSource).toContain("<Button");
     expect(financialAccountIdentifierSource).not.toContain("styles.primaryButton");
-    expect(transactionActionSource).toContain(
-      'import { Button, FidyNumpad } from "@/shared/components"'
-    );
-    expect(transactionActionSource).toContain("<Button");
+    expect(transactionActionSource).toContain("NumpadActionFooter");
     expect(transactionActionSource).not.toContain("<Pressable");
     expect(transactionActionSource).not.toContain("styles.saveButton");
     expect(transactionActionSource).not.toContain("styles.deleteButton");

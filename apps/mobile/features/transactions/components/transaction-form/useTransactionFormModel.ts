@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useBlinkingCursor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
+import { parseDigitsToAmount } from "@/shared/lib";
 import { hasSelectedFinancialAccount } from "../../lib/account-selection";
 import { getDateLabel } from "../../lib/format-date";
 import { handleNumpadPress } from "../../lib/handle-numpad-press";
@@ -31,7 +31,6 @@ export function useTransactionFormModel(args: TransactionFormModelInput): Transa
     cursorStyle,
     dateLabel,
     descriptionFocused,
-    displayAmount: digits.length > 0 ? formatInputDisplay(digits) : "$",
     handleDescriptionBlur: useCallback(() => {
       setDescriptionFocused(false);
     }, []),

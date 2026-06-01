@@ -1,21 +1,13 @@
 import { useRouter } from "expo-router";
-import { useCallback, useReducer, useRef } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
+import { useCallback, useReducer } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
-import { AppAuroraBackground, Button, FidyNumpad, FormTextField } from "@/shared/components";
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Button, FormTextField, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
+import { Keyboard, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import {
-  useAsyncGuard,
-  useBlinkingCursor,
-  useColorScheme,
-  useThemeColor,
-  useTranslation,
-} from "@/shared/hooks";
-import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
+import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
+import { parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { addContribution, useGoalStore } from "../store";
 
 type AddPaymentState = {
@@ -28,6 +20,7 @@ type AddPaymentState = {
 
 type AddPaymentAction =
   | { readonly type: "setDigits"; readonly digits: string }
+  | { readonly type: "pressKey"; readonly key: string }
   | { readonly type: "setNote"; readonly note: string }
   | { readonly type: "activateNumpad" }
   | { readonly type: "deactivateNumpad" }
@@ -39,6 +32,8 @@ function addPaymentReducer(state: AddPaymentState, action: AddPaymentAction): Ad
   switch (action.type) {
     case "setDigits":
       return { ...state, digits: action.digits };
+    case "pressKey":
+      return { ...state, digits: handleNumpadPress(state.digits, action.key) };
     case "setNote":
       return { ...state, note: action.note };
     case "activateNumpad":
@@ -58,14 +53,11 @@ function addPaymentReducer(state: AddPaymentState, action: AddPaymentAction): Ad
 export function AddPaymentScreen() {
   const { back } = useRouter();
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  const isDark = useColorScheme() === "dark";
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const userId = useOptionalUserId();
 
   const cardBg = useThemeColor("card");
-  const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const borderColor = useThemeColor("borderSubtle");
 
@@ -77,20 +69,17 @@ export function AddPaymentScreen() {
     showDatePicker: false,
   }));
   const { date, digits, note, numpadActive, showDatePicker } = state;
-  const fallbackDateRef = useRef(new Date());
-  const digitsRef = useRef(digits);
-  digitsRef.current = digits;
 
   // Blinking cursor
   const { cursorStyle } = useBlinkingCursor();
 
   const { isBusy: isAdding, run: guardedAdd } = useAsyncGuard();
 
-  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
   const selectedDate = new Date(`${date}T00:00:00`);
+  const datePickerDate = Number.isNaN(selectedDate.getTime()) ? new Date() : selectedDate;
 
   const handleKey = useCallback((key: string) => {
-    dispatch({ type: "setDigits", digits: handleNumpadPress(digitsRef.current, key) });
+    dispatch({ type: "pressKey", key });
   }, []);
 
   const handleAddPayment = useCallback(
@@ -118,114 +107,88 @@ export function AddPaymentScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: pageBg }]}>
-      <AppAuroraBackground isDark={isDark} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="always"
-      >
-        <View style={[styles.paymentCard, { backgroundColor: cardBg, borderColor }]}>
-          <Text style={[styles.fieldLabel, { color: primaryColor }]}>
-            {t("goals.payment.amount")}
-          </Text>
+    <>
+      <MoneyEntryScreen
+        actionContent={
+          <Button
+            label={t("goals.payment.addPaymentCta")}
+            onPress={() => {
+              void handleAddPayment();
+            }}
+            disabled={isAdding || userId == null}
+            loading={isAdding}
+          />
+        }
+        detailContent={
+          <>
+            <FormTextField
+              label={t("goals.payment.noteOptional")}
+              value={note}
+              onChangeText={(nextNote) => dispatch({ type: "setNote", note: nextNote })}
+              onFocus={() => dispatch({ type: "deactivateNumpad" })}
+              maxLength={200}
+              placeholder={t("goals.payment.notePlaceholder")}
+              style={styles.fieldGroup}
+              labelStyle={[styles.fieldLabel, { color: primaryColor }]}
+              inputStyle={[styles.input, { backgroundColor: cardBg, borderColor }]}
+            />
 
+            <Pressable
+              style={styles.fieldGroup}
+              onPress={() => {
+                Keyboard.dismiss();
+                dispatch({ type: "openDatePicker" });
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.fieldLabel, { color: primaryColor }]}>
+                {t("goals.payment.date")}
+              </Text>
+              <View
+                style={[styles.input, styles.dateButton, { backgroundColor: cardBg, borderColor }]}
+              >
+                <Text style={[styles.dateText, { color: primaryColor }]}>{date}</Text>
+              </View>
+            </Pressable>
+          </>
+        }
+        amountContent={
           <Pressable
             style={styles.amountSection}
             onPress={() => {
               Keyboard.dismiss();
               dispatch({ type: "activateNumpad" });
             }}
-          >
-            <View style={styles.amountRow}>
-              <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
-              {numpadActive ? (
-                <Animated.View
-                  style={[
-                    {
-                      width: 2,
-                      height: 28,
-                      marginLeft: 2,
-                      borderRadius: 1,
-                      backgroundColor: primaryColor,
-                    },
-                    cursorStyle,
-                  ]}
-                />
-              ) : null}
-            </View>
-          </Pressable>
-
-          <FormTextField
-            label={t("goals.payment.noteOptional")}
-            value={note}
-            onChangeText={(nextNote) => dispatch({ type: "setNote", note: nextNote })}
-            onFocus={() => dispatch({ type: "deactivateNumpad" })}
-            maxLength={200}
-            placeholder={t("goals.payment.notePlaceholder")}
-            style={styles.fieldGroup}
-            labelStyle={[styles.fieldLabel, { color: primaryColor }]}
-            inputStyle={[
-              styles.input,
-              { backgroundColor: cardBg, borderColor, color: primaryColor },
-            ]}
-          />
-
-          <Pressable
-            style={styles.fieldGroup}
-            onPress={() => {
-              Keyboard.dismiss();
-              dispatch({ type: "openDatePicker" });
-            }}
             accessibilityRole="button"
+            accessibilityLabel={t("goals.payment.amount")}
           >
-            <Text style={[styles.fieldLabel, { color: primaryColor }]}>
-              {t("goals.payment.date")}
-            </Text>
-            <View
-              style={[styles.input, styles.dateButton, { backgroundColor: cardBg, borderColor }]}
-            >
-              <Text style={[styles.dateText, { color: primaryColor }]}>{date}</Text>
-            </View>
+            <MoneyAmountDisplay
+              color={primaryColor}
+              cursorStyle={cursorStyle}
+              cursorVisible={numpadActive}
+              digits={digits}
+              size="hero"
+            />
           </Pressable>
-        </View>
-
-        <Button
-          label={t("goals.payment.addPaymentCta")}
-          onPress={() => {
-            void handleAddPayment();
-          }}
-          disabled={isAdding || userId == null}
-          loading={isAdding}
-        />
-
-        {numpadActive ? <FidyNumpad onKeyPress={handleKey} /> : null}
-      </ScrollView>
+        }
+        numpadVisible={numpadActive}
+        onKeyPress={handleKey}
+      >
+        {null}
+      </MoneyEntryScreen>
       <TransactionDatePickerDialog
-        date={Number.isNaN(selectedDate.getTime()) ? fallbackDateRef.current : selectedDate}
+        date={datePickerDate}
         onChange={(nextDate) => dispatch({ type: "setDate", date: toIsoDate(nextDate) })}
         // Source contract: setDate(toIsoDate(nextDate)).
         onClose={() => dispatch({ type: "closeDatePicker" })}
         visible={showDatePicker}
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContent: { padding: 24, gap: 16 },
-  paymentCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    borderCurve: "continuous",
-    padding: 16,
-    gap: 16,
-  },
-  amountSection: { alignItems: "center", paddingVertical: 8 },
-  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  amountDisplay: { fontFamily: "Poppins_700Bold", fontSize: 32 },
+  amountSection: { alignItems: "center" },
   fieldGroup: { gap: 4 },
   fieldLabel: { fontFamily: "Poppins_500Medium", fontSize: 12, fontStyle: "italic" },
   input: {

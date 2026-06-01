@@ -21,6 +21,8 @@ import {
   type ViewStyle,
 } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
+import { getSubtleGlassCardTokens } from "./card-tokens";
+import { getEntryTabTextStyle } from "./entry-tab-text-style";
 import { styles } from "./EntryScaffold.styles";
 export { EntryField, EntryTextInputField } from "./EntryField";
 export type { EntryFieldProps } from "./EntryField";
@@ -126,6 +128,7 @@ export function EntryScaffold({
   const tabBarWidth = useSharedValue(Math.max(width - ENTRY_HORIZONTAL_PADDING * 2, 0));
   const { t } = useTranslation();
   const isDark = useColorScheme() === "dark";
+  const glassTokens = getSubtleGlassCardTokens(isDark);
   const primary = useThemeColor("primary");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
@@ -150,12 +153,11 @@ export function EntryScaffold({
     return withTiming(translateX, { duration: 180 });
   });
   const animatedTabPillColor = useDerivedValue(() => withTiming(activeColor, { duration: 180 }));
-  const animatedTabPillStyle = useAnimatedStyle(() => {
-    return {
-      backgroundColor: animatedTabPillColor.value,
-      transform: [{ translateX: animatedTabPillX.value }],
-    };
-  });
+  const animatedTabPillStyle = useAnimatedStyle(() => ({
+    backgroundColor: glassTokens.tintColor,
+    borderColor: animatedTabPillColor.value,
+    transform: [{ translateX: animatedTabPillX.value }],
+  }));
   const handleKeyPress = (key: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onKeyPress(key);
@@ -210,10 +212,7 @@ export function EntryScaffold({
             >
               <Text
                 numberOfLines={1}
-                style={[
-                  styles.tabText,
-                  { color: isActive ? onAccent : tertiary, fontWeight: isActive ? "700" : "600" },
-                ]}
+                style={[styles.tabText, getEntryTabTextStyle({ activeColor, isActive, tertiary })]}
               >
                 {tab.label}
               </Text>

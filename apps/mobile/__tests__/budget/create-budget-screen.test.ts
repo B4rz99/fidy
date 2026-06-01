@@ -45,6 +45,12 @@ test("auto-suggest budgets keeps the scroll view bounded inside the full screen 
 test("create-budget route uses the budget public route surface", () => {
   expect(routeSource).toContain("routes.public");
   expect(routeSource).toContain("CreateBudgetScreen");
+  expect(routeSource).toContain('headerBackButtonDisplayMode: "minimal"');
+  expect(routeSource).toContain('headerBackTitle: ""');
+  expect(routeSource).toContain(
+    'budgetId != null ? t("budgets.edit.title") : t("budgets.create.title")'
+  );
+  expect(routeSource).toContain("headerTitle: title");
 });
 
 test("create-budget screen supports edit mode via budgetId params", () => {
@@ -54,7 +60,13 @@ test("create-budget screen supports edit mode via budgetId params", () => {
 
 test("create-budget content renders category pills and numpad entry", () => {
   expect(contentSource).toContain("CategoryPill");
-  expect(contentSource).toContain("FidyNumpad");
+  expect(contentSource).toContain("MoneyEntryScreen");
+  expect(contentSource).toContain("ChoiceTray");
+  expect(contentSource).toContain("actionContent={");
+  expect(contentSource).toContain("amountContent={");
+  expect(contentSource).toContain('t("budgets.create.lastMonthHint"');
+  expect(contentSource).not.toContain('t("budgets.create.enterAmount")');
+  expect(contentSource).not.toContain('t("budgets.create.title")');
 });
 
 test("create-budget form delegates numpad digits through handleNumpadPress", () => {

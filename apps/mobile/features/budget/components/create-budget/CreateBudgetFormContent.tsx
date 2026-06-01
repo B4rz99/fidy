@@ -1,13 +1,11 @@
 import { useMemo } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
 import { CategoryPill } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { Button, FidyNumpad } from "@/shared/components";
-import { ScrollView, Text, View } from "@/shared/components/rn";
+import { Button, ChoiceTray, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatInputDisplay, formatMoney } from "@/shared/lib";
+import { formatMoney } from "@/shared/lib";
 import type { BudgetSuggestion } from "../../lib/derive";
 import { styles } from "./CreateBudget.styles";
 
@@ -25,22 +23,6 @@ type CreateBudgetFormContentProps = {
   readonly setCategory: (category: CategoryId) => void;
 };
 
-function resolveLastMonthHintData(
-  autoSuggestions: readonly BudgetSuggestion[],
-  category: CategoryId | null,
-  locale: string
-) {
-  if (!category) return null;
-  const categoryOption = CATEGORIES.find((categoryItem) => categoryItem.id === category);
-  if (!categoryOption) return null;
-  const suggestion = autoSuggestions.find((item) => item.categoryId === category);
-  if (!suggestion) return null;
-  return {
-    amount: formatMoney(suggestion.suggestedAmount),
-    category: getCategoryLabel(categoryOption, locale),
-  };
-}
-
 export function CreateBudgetFormContent({
   autoSuggestions,
   canMutate,
@@ -54,10 +36,8 @@ export function CreateBudgetFormContent({
   isSaving,
   setCategory,
 }: CreateBudgetFormContentProps) {
-  const { t, locale } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
+  const { locale, t } = useTranslation();
   const { cursorStyle } = useBlinkingCursor();
-  const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
@@ -65,84 +45,70 @@ export function CreateBudgetFormContent({
     () => CATEGORIES.filter((categoryOption) => !existingCategoryIds.has(categoryOption.id)),
     [existingCategoryIds]
   );
-  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
-  const lastMonthHintData = useMemo(
-    () => resolveLastMonthHintData(autoSuggestions, category, locale),
-    [autoSuggestions, category, locale]
+  const selectedSuggestion = autoSuggestions.find(
+    (suggestion) => suggestion.categoryId === category
   );
-  const lastMonthHint = lastMonthHintData
-    ? t("budgets.create.lastMonthHint", lastMonthHintData)
-    : null;
+  const selectedCategory = CATEGORIES.find((categoryOption) => categoryOption.id === category);
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: cardBg }]}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <Text style={[styles.title, { color: primaryColor }]}>
-        {isEdit ? t("budgets.edit.title") : t("budgets.create.title")}
-      </Text>
-
-      {!isEdit && (
-        <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: secondaryColor }]}>
-            {t("budgets.create.selectCategory")}
-          </Text>
-          <View style={styles.chipRow}>
-            {availableCategories.map((categoryOption) => (
-              <CategoryPill
-                key={categoryOption.id}
-                category={categoryOption}
-                isSelected={category === categoryOption.id}
-                onPress={() => setCategory(categoryOption.id)}
-              />
-            ))}
-          </View>
-        </View>
-      )}
-
-      <View style={styles.amountSection}>
-        <Text style={[styles.inputLabel, { color: secondaryColor }]}>
-          {t("budgets.create.enterAmount")}
-        </Text>
-        <View style={styles.amountRow}>
-          <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
-          <Animated.View
-            style={[
-              {
-                backgroundColor: primaryColor,
-                borderRadius: 1,
-                height: 28,
-                marginLeft: 2,
-                width: 2,
-              },
-              cursorStyle,
-            ]}
+    <MoneyEntryScreen
+      actionContent={
+        <>
+          <Button
+            label={t("common.save")}
+            onPress={handleSave}
+            disabled={isSaving || !canMutate}
+            loading={isSaving}
           />
+
+          {isEdit ? (
+            <Button
+              label={t("common.delete")}
+              variant="danger"
+              onPress={handleDelete}
+              disabled={isSaving || !canMutate}
+            />
+          ) : null}
+        </>
+      }
+      detailContent={
+        <>
+          {!isEdit && (
+            <View style={styles.inputGroup}>
+              <ChoiceTray>
+                {availableCategories.map((categoryOption) => (
+                  <CategoryPill
+                    key={categoryOption.id}
+                    category={categoryOption}
+                    isSelected={category === categoryOption.id}
+                    onPress={() => setCategory(categoryOption.id)}
+                  />
+                ))}
+              </ChoiceTray>
+            </View>
+          )}
+        </>
+      }
+      amountContent={
+        <View style={styles.amountSection}>
+          <MoneyAmountDisplay
+            color={primaryColor}
+            cursorStyle={cursorStyle}
+            cursorVisible
+            digits={digits}
+            size="hero"
+          />
+          {selectedSuggestion && selectedCategory ? (
+            <Text style={[styles.suggestionHint, { color: secondaryColor }]}>
+              {t("budgets.create.lastMonthHint", {
+                amount: formatMoney(selectedSuggestion.suggestedAmount),
+                category: getCategoryLabel(selectedCategory, locale),
+              })}
+            </Text>
+          ) : null}
         </View>
-        {lastMonthHint ? (
-          <Text style={[styles.hint, { color: secondaryColor }]}>{lastMonthHint}</Text>
-        ) : null}
-      </View>
-
-      <Button
-        label={t("common.save")}
-        onPress={handleSave}
-        disabled={isSaving || !canMutate}
-        loading={isSaving}
-      />
-
-      {isEdit ? (
-        <Button
-          label={t("common.delete")}
-          variant="danger"
-          onPress={handleDelete}
-          disabled={isSaving || !canMutate}
-        />
-      ) : null}
-
-      <FidyNumpad onKeyPress={handleKey} />
-    </ScrollView>
+      }
+      onKeyPress={handleKey}
+    />
   );
 }

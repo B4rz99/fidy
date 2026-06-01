@@ -9,18 +9,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  actionRow: {
-    flexDirection: "row",
-    gap: 8,
+  amountZone: {
+    alignItems: "center",
   },
   closeButtonContainer: {
     alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingTop: 12,
-  },
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
   },
   dateChip: {
     alignItems: "center",
@@ -57,21 +52,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  amountCursor: {
-    borderRadius: 1,
-    height: 32,
-    marginLeft: 2,
-    width: 2,
-  },
-  amountDisplay: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 40,
-  },
-  amountRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-  },
   pillGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -85,10 +65,5 @@ export const styles = StyleSheet.create({
   accountRow: {
     flexDirection: "row",
     gap: 8,
-  },
-  bottomZone: {
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingTop: 8,
   },
 });

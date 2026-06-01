@@ -11,43 +11,33 @@ import type { GoalFormModel } from "./useGoalForm";
 type GoalFormProps = {
   readonly children: ReactNode;
   readonly form: GoalFormModel;
-  readonly fullScreen?: boolean;
   readonly showGoalTypeToggle?: boolean;
-  readonly title: string;
 };
 
-export function GoalForm({
-  children,
-  form,
-  fullScreen = false,
-  showGoalTypeToggle = false,
-  title,
-}: GoalFormProps) {
+export function GoalForm({ children, form, showGoalTypeToggle = false }: GoalFormProps) {
   const { locale } = useTranslation();
-
-  return (
-    <GoalFormFrame
-      title={title}
-      fullScreen={fullScreen}
-      numpadEnabled={form.numpadTarget != null}
-      onKeyPress={form.handleKey}
-    >
-      {showGoalTypeToggle ? (
-        <GoalTypeToggle goalType={form.goalType} onChange={form.setGoalType} />
-      ) : null}
-      <GoalAmountField
-        cursorStyle={form.cursorStyle}
-        displayAmount={form.displayAmount}
-        isAmountActive={form.numpadTarget === "amount"}
-        onPress={form.handleAmountPress}
+  const typeToggle = showGoalTypeToggle ? (
+    <GoalTypeToggle goalType={form.goalType} onChange={form.setGoalType} />
+  ) : null;
+  const amountField = (
+    <GoalAmountField
+      cursorStyle={form.cursorStyle}
+      digits={form.digits}
+      isAmountActive={form.numpadTarget === "amount"}
+      onPress={form.handleAmountPress}
+    />
+  );
+  const interestField =
+    form.goalType === "debt" ? (
+      <GoalInterestField
+        interestRate={form.interestRate}
+        onChange={form.setInterestRate}
+        onFocus={form.handleInterestRateFocus}
       />
-      {form.goalType === "debt" ? (
-        <GoalInterestField
-          interestRate={form.interestRate}
-          onChange={form.setInterestRate}
-          onFocus={form.handleInterestRateFocus}
-        />
-      ) : null}
+    ) : null;
+  const detailFields = (
+    <>
+      {interestField}
       <GoalNameField name={form.name} onChange={form.setName} onFocus={form.handleNameFocus} />
       <GoalDateField
         locale={locale}
@@ -58,7 +48,17 @@ export function GoalForm({
         showDatePicker={form.showDatePicker}
         targetDate={form.targetDate}
       />
-      {children}
-    </GoalFormFrame>
+    </>
+  );
+
+  return (
+    <GoalFormFrame
+      actionContent={children}
+      amountContent={amountField}
+      detailContent={detailFields}
+      numpadEnabled={form.numpadTarget != null}
+      onKeyPress={form.handleKey}
+      topContent={typeToggle}
+    />
   );
 }

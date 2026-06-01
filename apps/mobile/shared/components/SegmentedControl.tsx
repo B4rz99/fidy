@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import type { ViewProps } from "react-native";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { useColorScheme, useThemeColor } from "@/shared/hooks";
+import { getSubtleGlassCardTokens } from "./card-tokens";
 
 type SegmentedControlTone = "primary" | "success" | "danger";
 
@@ -22,12 +24,6 @@ type SegmentedControlProps<TValue extends string> = Omit<ViewProps, "children"> 
   readonly className?: string;
 };
 
-const ACTIVE_CLASS_NAMES: Record<SegmentedControlTone, string> = {
-  primary: "bg-action-primary dark:bg-action-primary-dark",
-  success: "bg-success dark:bg-success-dark",
-  danger: "bg-danger dark:bg-danger-dark",
-};
-
 export function SegmentedControl<TValue extends string>({
   options,
   value,
@@ -38,17 +34,36 @@ export function SegmentedControl<TValue extends string>({
   className,
   ...viewProps
 }: SegmentedControlProps<TValue>) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const tokens = getSubtleGlassCardTokens(isDark);
+  const primary = useThemeColor("primary");
+  const success = useThemeColor("success");
+  const danger = useThemeColor("danger");
+  const secondary = useThemeColor("secondary");
+  const toneColors: Record<SegmentedControlTone, string> = {
+    primary,
+    success,
+    danger,
+  };
+
   return (
     <View
       {...viewProps}
-      className={`h-10 flex-row rounded-full bg-surface-muted p-[3px] dark:bg-surface-muted-dark ${
-        className ?? ""
-      }`}
-      style={[{ gap: 4 }, viewProps.style]}
+      className={`h-10 flex-row rounded-full p-[3px] ${className ?? ""}`}
+      style={[
+        styles.container,
+        {
+          backgroundColor: tokens.fallbackBackgroundColor,
+          borderColor: tokens.borderColor,
+        },
+        viewProps.style,
+      ]}
     >
       {options.map((option) => {
         const selected = option.value === value;
         const activeTone = getOptionTone?.(option.value) ?? tone;
+        const activeColor = toneColors[activeTone];
 
         return (
           <Pressable
@@ -63,16 +78,21 @@ export function SegmentedControl<TValue extends string>({
               }
             }}
             className={`flex-1 flex-row items-center justify-center gap-1 rounded-full px-3 ${
-              selected ? ACTIVE_CLASS_NAMES[activeTone] : ""
-            } ${option.disabled ? "opacity-50" : ""}`}
+              option.disabled ? "opacity-50" : ""
+            }`}
+            style={
+              selected
+                ? [
+                    styles.selectedOption,
+                    { backgroundColor: tokens.tintColor, borderColor: activeColor },
+                  ]
+                : styles.option
+            }
           >
             {option.leading}
             <Text
-              className={`font-poppins-semibold text-label ${
-                selected
-                  ? "text-text-on-accent dark:text-text-on-accent-dark"
-                  : "text-text-secondary dark:text-text-secondary-dark"
-              }`}
+              className="font-poppins-semibold text-label"
+              style={{ color: selected ? activeColor : secondary }}
             >
               {option.label}
             </Text>
@@ -84,3 +104,18 @@ export function SegmentedControl<TValue extends string>({
 }
 
 export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlTone };
+
+const styles = StyleSheet.create({
+  container: {
+    borderCurve: "continuous",
+    borderWidth: 1,
+    gap: 4,
+  },
+  option: {
+    borderColor: "transparent",
+    borderWidth: 1,
+  },
+  selectedOption: {
+    borderWidth: 1,
+  },
+});
