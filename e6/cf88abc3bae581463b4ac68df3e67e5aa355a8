@@ -1,0 +1,40 @@
+apps/mobile/shared/components/index.ts
+  s_3da3e4b4c5ffcc::t_11c505fef12ee6 33-40
+apps/mobile/shared/components/MoneyEntryAmountField.tsx
+  s_3da3e4b4c5ffcc::t_57a32dce60af25 1-38
+apps/mobile/features/goals/components/goal-form/GoalAmountField.tsx
+  s_3da3e4b4c5ffcc::t_f977de20e43325 1,22
+apps/mobile/shared/components/MoneyEntryTextField.tsx
+  s_3da3e4b4c5ffcc::t_d45e7006fce1f7 1-51
+apps/mobile/features/goals/components/goal-form/GoalNameField.tsx
+  s_3da3e4b4c5ffcc::t_27024bbef3efe3 1-2,14
+apps/mobile/features/goals/components/goal-form/GoalDateField.tsx
+  s_3da3e4b4c5ffcc::t_2b3af8b44fc8e6 2,37-38,54
+apps/mobile/shared/components/MoneyEntryDateButton.tsx
+  s_3da3e4b4c5ffcc::t_a98bdbc544f1ae 1-33
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_3da3e4b4c5ffcc::t_027b270c6fb36b 494-508
+  s_3da3e4b4c5ffcc::t_53705bf20376ca 51-52,54,480-490,533-544
+apps/mobile/features/goals/components/AddPaymentScreen.tsx
+  s_3da3e4b4c5ffcc::t_9b8d6b20ca36ca 6-13,15,126,135-137,142,146,152-155
+apps/mobile/features/budget/components/create-budget/CreateBudgetFormContent.tsx
+  s_3da3e4b4c5ffcc::t_55e75ee1c7422a 4,93-108
+apps/mobile/features/goals/components/goal-form/GoalInterestField.tsx
+  s_3da3e4b4c5ffcc::t_2f6cb5a6db768b 1,20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "e6cf88abc3bae581463b4ac68df3e67e5aa355a8",
+  "prompts": {},
+  "sessions": {
+    "s_3da3e4b4c5ffcc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e808d-766b-7bc3-a1fb-a246d22913ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
