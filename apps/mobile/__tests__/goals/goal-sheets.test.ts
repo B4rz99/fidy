@@ -1,39 +1,61 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { expect, test } from "vitest";
+import { beforeAll, expect, test } from "vitest";
 import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
 }
 
-const createSheetSource = readSource("../../features/goals/components/GoalCreateScreen.tsx");
-const createGoalRouteSource = readSource("../../app/create-goal.tsx");
-const addPaymentRouteSource = readSource("../../app/add-payment.tsx");
-const editGoalRouteSource = readSource("../../app/edit-goal.tsx");
-const rootLayoutSource = readSource("../../app/_layout.tsx");
-const rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
-const goalsListSource = readSource("../../features/goals/components/GoalsListScreen.tsx");
-const goalCardSource = readSource("../../features/goals/components/GoalCard.tsx");
-const goalDetailSource = readSource("../../features/goals/components/GoalDetail.tsx");
-const addPaymentSource = readSource("../../features/goals/components/AddPaymentScreen.tsx");
-const editSheetSource = readSource("../../features/goals/components/GoalEditScreen.tsx");
-const editLoadedSource = readSource(
-  "../../features/goals/components/goal-form/GoalEditScreenLoaded.tsx"
-);
-const formSource = readSource("../../features/goals/components/goal-form/GoalForm.tsx");
-const frameSource = readSource("../../features/goals/components/goal-form/GoalFormFrame.tsx");
-const stylesSource = readSource("../../features/goals/components/goal-form/GoalForm.styles.ts");
-const numpadFormScreenSource = readSource("../../shared/components/NumpadFormScreen.tsx");
-const typeToggleSource = readSource("../../features/goals/components/goal-form/GoalTypeToggle.tsx");
-const dateFieldSource = readSource("../../features/goals/components/goal-form/GoalDateField.tsx");
-const formHookSource = readSource("../../features/goals/components/goal-form/useGoalForm.ts");
-const createActionsSource = readSource(
-  "../../features/goals/components/goal-form/useGoalCreateActions.ts"
-);
-const editActionsSource = readSource(
-  "../../features/goals/components/goal-form/useGoalEditActions.ts"
-);
+let createSheetSource = "";
+let createGoalRouteSource = "";
+let addPaymentRouteSource = "";
+let editGoalRouteSource = "";
+let rootLayoutSource = "";
+let rootStackRoutesSource = "";
+let goalsListSource = "";
+let goalCardSource = "";
+let goalDetailSource = "";
+let addPaymentSource = "";
+let editSheetSource = "";
+let editLoadedSource = "";
+let formSource = "";
+let frameSource = "";
+let stylesSource = "";
+let numpadFormScreenSource = "";
+let typeToggleSource = "";
+let dateFieldSource = "";
+let formHookSource = "";
+let createActionsSource = "";
+let editActionsSource = "";
+
+beforeAll(() => {
+  createSheetSource = readSource("../../features/goals/components/GoalCreateScreen.tsx");
+  createGoalRouteSource = readSource("../../app/create-goal.tsx");
+  addPaymentRouteSource = readSource("../../app/add-payment.tsx");
+  editGoalRouteSource = readSource("../../app/edit-goal.tsx");
+  rootLayoutSource = readSource("../../app/_layout.tsx");
+  rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
+  goalsListSource = readSource("../../features/goals/components/GoalsListScreen.tsx");
+  goalCardSource = readSource("../../features/goals/components/GoalCard.tsx");
+  goalDetailSource = readSource("../../features/goals/components/GoalDetail.tsx");
+  addPaymentSource = readSource("../../features/goals/components/AddPaymentScreen.tsx");
+  editSheetSource = readSource("../../features/goals/components/GoalEditScreen.tsx");
+  editLoadedSource = readSource(
+    "../../features/goals/components/goal-form/GoalEditScreenLoaded.tsx"
+  );
+  formSource = readSource("../../features/goals/components/goal-form/GoalForm.tsx");
+  frameSource = readSource("../../features/goals/components/goal-form/GoalFormFrame.tsx");
+  stylesSource = readSource("../../features/goals/components/goal-form/GoalForm.styles.ts");
+  numpadFormScreenSource = readSource("../../shared/components/NumpadFormScreen.tsx");
+  typeToggleSource = readSource("../../features/goals/components/goal-form/GoalTypeToggle.tsx");
+  dateFieldSource = readSource("../../features/goals/components/goal-form/GoalDateField.tsx");
+  formHookSource = readSource("../../features/goals/components/goal-form/useGoalForm.ts");
+  createActionsSource = readSource(
+    "../../features/goals/components/goal-form/useGoalCreateActions.ts"
+  );
+  editActionsSource = readSource("../../features/goals/components/goal-form/useGoalEditActions.ts");
+});
 
 test("keeps the create-goal sheet wired to the shared form without projection copy", () => {
   expect(createSheetSource).toContain("<GoalForm");

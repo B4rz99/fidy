@@ -1,27 +1,39 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { expect, test } from "vitest";
+import { beforeAll, expect, test } from "vitest";
 import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
 }
 
-const routeSource = readSource("../../app/add-bill.tsx");
-const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
-const rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
-const screenSource = readSource("../../features/calendar/components/add-bill/AddBillScreen.tsx");
-const formSource = readSource("../../features/calendar/components/add-bill/AddBillForm.tsx");
-const formContentSource = readSource(
-  "../../features/calendar/components/add-bill/AddBillFormContent.tsx"
-);
-const formStylesSource = readSource(
-  "../../features/calendar/components/add-bill/AddBillForm.styles.ts"
-);
-const authFormSource = readSource(
-  "../../features/calendar/components/add-bill/AuthenticatedAddBillForm.tsx"
-);
-const submitSource = readSource("../../features/calendar/components/add-bill/useAddBillSubmit.ts");
+let routeSource = "";
+let layoutSource = "";
+let rootStackRoutesSource = "";
+let screenSource = "";
+let formSource = "";
+let formContentSource = "";
+let formStylesSource = "";
+let authFormSource = "";
+let submitSource = "";
+
+beforeAll(() => {
+  routeSource = readSource("../../app/add-bill.tsx");
+  layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+  rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
+  screenSource = readSource("../../features/calendar/components/add-bill/AddBillScreen.tsx");
+  formSource = readSource("../../features/calendar/components/add-bill/AddBillForm.tsx");
+  formContentSource = readSource(
+    "../../features/calendar/components/add-bill/AddBillFormContent.tsx"
+  );
+  formStylesSource = readSource(
+    "../../features/calendar/components/add-bill/AddBillForm.styles.ts"
+  );
+  authFormSource = readSource(
+    "../../features/calendar/components/add-bill/AuthenticatedAddBillForm.tsx"
+  );
+  submitSource = readSource("../../features/calendar/components/add-bill/useAddBillSubmit.ts");
+});
 
 test("add-bill is registered in root layout as a full screen route", () => {
   expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
