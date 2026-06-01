@@ -1,0 +1,21 @@
+apps/mobile/__tests__/navigation/root-layout-query-provider.test.ts
+  s_3da3e4b4c5ffcc::t_f59e297ed0c4af 7-10,28,31-33
+apps/mobile/__tests__/navigation/root-layout-local-qa.test.ts
+  s_3da3e4b4c5ffcc::t_9261d50c02285d 7-10,22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "923469ffcd8bb74e21ad9116360a606272bed73f",
+  "prompts": {},
+  "sessions": {
+    "s_3da3e4b4c5ffcc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e808d-766b-7bc3-a1fb-a246d22913ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
