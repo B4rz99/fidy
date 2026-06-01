@@ -1,0 +1,28 @@
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_3da3e4b4c5ffcc::t_ebae8d39a3d841 3,10-36
+apps/mobile/__tests__/helpers/root-stack-routes.ts
+  s_3da3e4b4c5ffcc::t_e4e01997e6aa17 3-6,8-9,15-16
+apps/mobile/__tests__/calendar/day-detail-screen.test.ts
+  s_3da3e4b4c5ffcc::t_4685932090bea5 3,6-17
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_3da3e4b4c5ffcc::t_ed3aea03236043 3,10-50,52-55
+  s_3da3e4b4c5ffcc::t_d519856671fe94 51,57
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_3da3e4b4c5ffcc::t_0db3a15d3b3cde 3,7-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "195ac5c823a83d6d4dfbcef03bef39c1b6265f04",
+  "prompts": {},
+  "sessions": {
+    "s_3da3e4b4c5ffcc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e808d-766b-7bc3-a1fb-a246d22913ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
