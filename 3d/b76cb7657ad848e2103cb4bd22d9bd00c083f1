@@ -1,0 +1,40 @@
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_3da3e4b4c5ffcc::t_64b6f04b582b76 4,23,49-50,56,71
+apps/mobile/__tests__/navigation/root-layout-query-provider.test.ts
+  s_3da3e4b4c5ffcc::t_451b7484de8cb0 3,6-15
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_3da3e4b4c5ffcc::t_4470e8b9707b0b 4,15,117,130-131
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_3da3e4b4c5ffcc::t_52ed89b135e99a 4,31
+apps/mobile/shared/navigation/root-stack-routes.ts
+  s_3da3e4b4c5ffcc::t_739d5e2fbcd4da 9
+apps/mobile/__tests__/helpers/root-stack-routes.ts
+  s_3da3e4b4c5ffcc::t_0b0253e9b24146 1-13
+apps/mobile/shared/components/FeedList.tsx
+  s_3da3e4b4c5ffcc::t_cde33f11a9c38f 2,44-48,55
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_3da3e4b4c5ffcc::t_80ca54960e5ac8 4,37
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_3da3e4b4c5ffcc::t_5047d498ba2139 4,46,112
+apps/mobile/__tests__/calendar/day-detail-screen.test.ts
+  s_3da3e4b4c5ffcc::t_bc0bff186e9dce 4,17
+apps/mobile/__tests__/navigation/root-layout-local-qa.test.ts
+  s_3da3e4b4c5ffcc::t_2bda3083ae7bbc 3,7-16
+  s_3da3e4b4c5ffcc::t_c53f2d9a55d647 4,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "3db76cb7657ad848e2103cb4bd22d9bd00c083f1",
+  "prompts": {},
+  "sessions": {
+    "s_3da3e4b4c5ffcc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e808d-766b-7bc3-a1fb-a246d22913ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
