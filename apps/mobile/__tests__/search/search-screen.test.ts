@@ -23,8 +23,8 @@ const baseHookSource = readSource(
 const resultsListSource = readSource(
   "../../features/search/components/search-screen/SearchResultsList.tsx"
 );
-const listHeaderSource = readSource(
-  "../../features/search/components/search-screen/SearchListHeader.tsx"
+const filterControlsSource = readSource(
+  "../../features/search/components/search-screen/SearchFilterControls.tsx"
 );
 const summarySource = readSource("../../features/search/components/ResultsSummary.tsx");
 const transactionItemSource = readSource(
@@ -62,15 +62,17 @@ test("keeps search initialization wired to initial route filters and bootstrap s
 
 test("keeps content and results rendering wired to the extracted list modules", () => {
   expect(contentSource).toContain("<SearchResultsList");
-  expect(resultsListSource).toContain("<SearchListHeader");
+  expect(resultsListSource).toContain("<SearchFilterControls");
   expect(resultsListSource).toContain("<SearchTransactionItem");
+  expect(resultsListSource).toContain("<FeedList");
 });
 
 test("keeps the transaction search redesign surfaces wired into the screen", () => {
   expect(contentSource).toContain('variant="sub"');
   expect(contentSource).not.toContain("<SearchInputBar");
   expect(inputBarSource).toContain("placeholder={placeholder}");
-  expect(listHeaderSource).toContain("<SearchInputBar");
+  expect(filterControlsSource).toContain("<SearchInputBar");
+  expect(filterControlsSource).toContain("<FilterChipRow");
   expect(resultsListSource).toContain("handleTextChange={handleTextChange}");
   expect(controlsSource).not.toContain("previousCategoryCount > 0");
   expect(controlsSource).not.toContain("panel.setActivePanel(null)");

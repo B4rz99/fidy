@@ -14,6 +14,10 @@ const rootLayoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"
   /\r\n/g,
   "\n"
 );
+const rootStackRoutesSource = readFileSync(
+  resolve(__dirname, "../../shared/navigation/root-stack-routes.ts"),
+  "utf-8"
+).replace(/\r\n/g, "\n");
 
 describe("transaction callers", () => {
   test("edit screen surfaces save and delete failures before navigating away when auth/db is missing", () => {
@@ -32,13 +36,9 @@ describe("transaction callers", () => {
   });
 
   test("reclassification opens as a full screen transfer route", () => {
-    expect(rootLayoutSource).toContain('name="reclassify-transaction"');
-    const routeStart = rootLayoutSource.indexOf('name="reclassify-transaction"');
-    const routeBlock = rootLayoutSource.slice(
-      routeStart,
-      rootLayoutSource.indexOf("/>", routeStart)
-    );
-    expect(routeBlock).toContain("screenLayoutRouteOptions");
+    expect(rootStackRoutesSource).toContain('"reclassify-transaction"');
+    expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.screenLayout.map");
+    expect(rootLayoutSource).toContain("routeOptions.screenLayout");
     expect(reclassifyTransactionRouteSource).not.toContain("DialogRouteFrame");
     expect(reclassifyTransactionRouteSource).toContain("TransferFormScreen");
   });

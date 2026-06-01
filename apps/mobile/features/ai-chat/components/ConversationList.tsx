@@ -1,8 +1,7 @@
-import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { memo, useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { Card, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Card, FeedList, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -21,8 +20,6 @@ type ConversationListProps = {
   readonly onSelectSession: (id: ChatSessionId) => void;
   readonly onNewChat: () => void;
 };
-
-const ItemSeparator = () => <View style={{ height: 10 }} />;
 
 const sessionKeyExtractor = (item: ChatSessionListItem) =>
   item.type === "date" ? item.id : item.session.id;
@@ -136,18 +133,17 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
       includesNativeHeader={false}
       rightActions={<NewChatButton onPress={onNewChat} />}
     >
-      <FlashList
+      <FeedList
         data={groupedSessions}
         renderItem={renderItem}
         keyExtractor={sessionKeyExtractor}
-        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: 0,
           paddingHorizontal: 16,
         }}
         contentInset={{ bottom: TAB_BAR_CLEARANCE }}
-        ItemSeparatorComponent={ItemSeparator}
-        ListHeaderComponent={
+        itemSeparatorHeight={10}
+        header={
           <View style={{ paddingHorizontal: 4, paddingTop: 20, paddingBottom: 18, gap: 12 }}>
             <Text className="font-poppins-medium text-body" style={{ color: supportTextColor }}>
               {t("aiChat.conversationsSubtitle")}
@@ -176,7 +172,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
             ) : null}
           </View>
         }
-        ListFooterComponent={AndroidTabBarSpacer}
+        footer={<AndroidTabBarSpacer />}
       />
     </ScreenLayout>
   );

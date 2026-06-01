@@ -612,6 +612,22 @@ describe("shared UI kit", () => {
     expect(source).not.toContain("Pressable");
   });
 
+  it("keeps repeated feed screens on the shared FeedList primitive", () => {
+    const files = [
+      "../../features/budget/components/BudgetListScreen.tsx",
+      "../../features/goals/components/GoalsListScreen.tsx",
+      "../../features/ai-chat/components/ConversationList.tsx",
+      "../../features/search/components/search-screen/SearchResultsList.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "FeedList");
+      expect(source).toContain("<FeedList");
+    });
+  });
+
   it("keeps remaining list empty states and CTAs on shared primitives", () => {
     const budgetListSource = readFileSync(
       resolve(__dirname, "../../features/budget/components/BudgetListScreen.tsx"),

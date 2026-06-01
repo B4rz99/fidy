@@ -4,18 +4,18 @@ import { describe, expect, test } from "vitest";
 
 const source = readFileSync(resolve(__dirname, "../../app/day-detail.tsx"), "utf-8");
 const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+const rootStackRoutesSource = readFileSync(
+  resolve(__dirname, "../../shared/navigation/root-stack-routes.ts"),
+  "utf-8"
+);
 
 describe("day-detail screen", () => {
   test("is registered in root layout as a full screen route", () => {
-    expect(layoutSource).toContain('name="day-detail"');
+    expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
     expect(source).not.toContain("DialogRouteFrame");
-    const dayDetailStart = layoutSource.indexOf('name="day-detail"');
-    const themePickerStart = layoutSource.indexOf('name="theme-picker"');
-    expect(dayDetailStart).toBeGreaterThan(-1);
-    expect(themePickerStart).toBeGreaterThan(dayDetailStart);
-    const dayDetailBlock = layoutSource.slice(dayDetailStart, themePickerStart);
-    expect(dayDetailBlock).toContain("fullScreenHeaderOptions");
-    expect(dayDetailBlock).not.toContain("DIALOG_MODAL");
+    expect(rootStackRoutesSource).toContain('"day-detail"');
+    expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+    expect(layoutSource).toContain("routeOptions.fullScreen");
     expect(layoutSource).not.toContain("formSheet");
   });
 

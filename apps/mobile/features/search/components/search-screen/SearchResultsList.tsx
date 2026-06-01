@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from "react";
-import { TAB_BAR_CLEARANCE } from "@/shared/components";
-import { FlatList, StyleSheet } from "@/shared/components/rn";
+import { FeedList, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { StyleSheet } from "@/shared/components/rn";
 import { toIsoDate } from "@/shared/lib";
 import { hasActiveFilters } from "../../lib/filters";
 import type { SearchResult } from "../../lib/types";
 import { SearchEmptyState } from "../SearchEmptyState";
-import { SearchListHeader } from "./SearchListHeader";
+import { SearchFilterControls } from "./SearchFilterControls";
 import type { SearchScreenViewModel } from "./SearchScreen.types";
 import { SearchTransactionItem } from "./SearchTransactionItem";
 
@@ -74,15 +74,15 @@ export function SearchResultsList({
   );
 
   return (
-    <FlatList
+    <FeedList
       key={hasFilters ? "filtered-results" : "unfiltered-results"}
       data={results}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.3}
-      ListHeaderComponent={
-        <SearchListHeader
+      header={
+        <SearchFilterControls
           activePanel={activePanel}
           filterPanel={filterPanel}
           filters={filters}
@@ -99,11 +99,7 @@ export function SearchResultsList({
           summary={summary}
         />
       }
-      ListEmptyComponent={
-        hasFilters ? <SearchEmptyState onClearFilters={handleClearAll} /> : undefined
-      }
-      showsVerticalScrollIndicator={false}
-      contentInsetAdjustmentBehavior="automatic"
+      empty={hasFilters ? <SearchEmptyState onClearFilters={handleClearAll} /> : undefined}
       contentContainerStyle={styles.listContent}
     />
   );

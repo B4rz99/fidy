@@ -1,10 +1,10 @@
-import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
   Button,
   EmptyState,
+  FeedList,
   IconActionButton,
   ScreenLayout,
   TAB_BAR_CLEARANCE,
@@ -121,21 +121,17 @@ export function GoalsListScreen() {
       {!hasGoals && !isLoading ? (
         <GoalsEmpty onCreateGoal={handleCreateGoal} />
       ) : (
-        <FlashList
+        <FeedList
           data={goals}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           contentContainerStyle={[styles.listContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
-          showsVerticalScrollIndicator={false}
-          contentInsetAdjustmentBehavior="automatic"
-          ItemSeparatorComponent={GoalItemSeparator}
+          itemSeparatorHeight={12}
         />
       )}
     </ScreenLayout>
   );
 }
-
-const GoalItemSeparator = () => <View style={styles.itemSeparator} />;
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -144,8 +140,5 @@ const GoalItemSeparator = () => <View style={styles.itemSeparator} />;
 const styles = StyleSheet.create({
   listContent: {
     padding: 16,
-  },
-  itemSeparator: {
-    height: 12,
   },
 });

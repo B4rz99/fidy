@@ -70,8 +70,8 @@ test("goals proposal keeps the empty state and goal cards wired", () => {
   expect(goalsListSource).toContain("<EmptyState");
   expect(goalsListSource).toContain("<Button");
   expect(goalsListSource).not.toContain("styles.emptyCard");
-  expect(goalsListSource).toContain("ItemSeparatorComponent={GoalItemSeparator}");
-  expect(goalsListSource).toContain("itemSeparator");
+  expect(goalsListSource).toContain("<FeedList");
+  expect(goalsListSource).toContain("itemSeparatorHeight={12}");
   expect(goalCardSource).toContain("goal.iconName");
   expect(goalCardSource).toContain("percentPill");
   expect(goalCardSource).toContain('t("goals.card.detail")');
@@ -109,13 +109,9 @@ test("create-goal opens as a full screen route, not a dialog", () => {
   expect(createGoalRouteSource).not.toContain("DialogRouteFrame");
   expect(createGoalRouteSource).toContain('headerBackTitle: ""');
   expect(createGoalRouteSource).toContain('headerTitle: t("goals.create.title")');
-  const createGoalStart = rootLayoutSource.indexOf('name="create-goal"');
-  const addPaymentStart = rootLayoutSource.indexOf('name="add-payment"');
-  expect(createGoalStart).toBeGreaterThan(-1);
-  expect(addPaymentStart).toBeGreaterThan(createGoalStart);
-  const createGoalBlock = rootLayoutSource.slice(createGoalStart, addPaymentStart);
-  expect(createGoalBlock).toContain("fullScreenHeaderOptions");
-  expect(createGoalBlock).not.toContain("DIALOG_MODAL");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+  expect(rootLayoutSource).toContain("routeOptions.fullScreen");
 });
 
 test("goal payment and edit open as full screen routes, not dialogs", () => {
@@ -125,18 +121,9 @@ test("goal payment and edit open as full screen routes, not dialogs", () => {
   expect(editGoalRouteSource).not.toContain("DialogRouteFrame");
   expect(editGoalRouteSource).toContain('headerBackTitle: ""');
   expect(editGoalRouteSource).toContain('headerTitle: t("goals.edit.title")');
-  const addPaymentStart = rootLayoutSource.indexOf('name="add-payment"');
-  const editGoalStart = rootLayoutSource.indexOf('name="edit-goal"');
-  const addTransactionStart = rootLayoutSource.indexOf('name="add-transaction"');
-  expect(addPaymentStart).toBeGreaterThan(-1);
-  expect(editGoalStart).toBeGreaterThan(addPaymentStart);
-  expect(addTransactionStart).toBeGreaterThan(editGoalStart);
-  const addPaymentBlock = rootLayoutSource.slice(addPaymentStart, editGoalStart);
-  const editGoalBlock = rootLayoutSource.slice(editGoalStart, addTransactionStart);
-  expect(addPaymentBlock).toContain("fullScreenHeaderOptions");
-  expect(addPaymentBlock).not.toContain("DIALOG_MODAL");
-  expect(editGoalBlock).toContain("fullScreenHeaderOptions");
-  expect(editGoalBlock).not.toContain("DIALOG_MODAL");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
+  expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+  expect(rootLayoutSource).toContain("routeOptions.fullScreen");
 });
 
 test("create-goal full screen avoids nested card and uses debt red state", () => {

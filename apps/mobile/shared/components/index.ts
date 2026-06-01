@@ -9,6 +9,8 @@ export { ChoiceTray } from "./ChoiceTray";
 export { DialogCancelButton, DialogFrame, DialogPanel, DialogTitle } from "./DialogFrame";
 export { EmptyState } from "./EmptyState";
 export { ErrorFallback } from "./ErrorFallback";
+export { FeedList } from "./FeedList";
+export type { FeedListProps } from "./FeedList";
 export { FieldButton } from "./FieldButton";
 export type { FieldButtonProps } from "./FieldButton";
 export { FidyLogo } from "./FidyLogo";

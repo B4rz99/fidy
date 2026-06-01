@@ -8,6 +8,7 @@ function readSource(relativePath: string) {
 
 const routeSource = readSource("../../app/add-bill.tsx");
 const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+const rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
 const screenSource = readSource("../../features/calendar/components/add-bill/AddBillScreen.tsx");
 const formSource = readSource("../../features/calendar/components/add-bill/AddBillForm.tsx");
 const formContentSource = readSource(
@@ -22,17 +23,13 @@ const authFormSource = readSource(
 const submitSource = readSource("../../features/calendar/components/add-bill/useAddBillSubmit.ts");
 
 test("add-bill is registered in root layout as a full screen route", () => {
-  expect(layoutSource).toContain('name="add-bill"');
+  expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
   expect(routeSource).not.toContain("DialogRouteFrame");
   expect(routeSource).toContain('headerBackTitle: ""');
   expect(routeSource).toContain("headerTitle: title");
-  const addBillStart = layoutSource.indexOf('name="add-bill"');
-  const dayDetailStart = layoutSource.indexOf('name="day-detail"');
-  expect(addBillStart).toBeGreaterThan(-1);
-  expect(dayDetailStart).toBeGreaterThan(addBillStart);
-  const addBillBlock = layoutSource.slice(addBillStart, dayDetailStart);
-  expect(addBillBlock).toContain("fullScreenHeaderOptions");
-  expect(addBillBlock).not.toContain("DIALOG_MODAL");
+  expect(rootStackRoutesSource).toContain('"add-bill"');
+  expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
+  expect(layoutSource).toContain("routeOptions.fullScreen");
   expect(layoutSource).not.toContain("formSheet");
 });
 
