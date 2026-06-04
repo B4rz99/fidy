@@ -1,0 +1,21 @@
+dependency-policy.json
+  s_9512a8f7ea4793::t_261b05a0bfc32a 14-17
+bun.lock
+  ai_agent 893,895,899,903,2179,3161,3299,3423-3424
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "5270b16f470f5bd9a43f31be2942758f338506f8",
+  "prompts": {},
+  "sessions": {
+    "s_9512a8f7ea4793": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e92de-44a1-7a30-8fc1-de50ddd36f3d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
