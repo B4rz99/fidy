@@ -10,11 +10,8 @@ import {
 } from "@/features/qa/session.public";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
-import { readSupabaseSessionTokens, type SupabaseAuthTokens } from "./oauth-callback";
+import { type OAuthProvider, signInWithProvider } from "./provider-sign-in";
 import { cleanupPushTokenBeforeSignOut, signOutRemoteSession } from "./sign-out";
-
-// biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
-type OAuthProvider = "google" | "azure";
 
 type AuthState = {
   session: Session | null;
@@ -32,7 +29,6 @@ type AuthActions = {
 
 type SetAuthState = (nextState: Partial<AuthState>) => void;
 
-const REDIRECT_URI = "fidy://auth/callback";
 let authTransitionVersion = 0;
 
 function beginAuthTransition() {
@@ -130,24 +126,37 @@ async function handleMissingValidatedUser(
   await handleMissingRemoteSession(set, transitionVersion, errorMessage);
 }
 
+function hasMissingRemoteSession(error: unknown, session: Session | null): session is null {
+  return error != null || session == null;
+}
+
+function shouldHandleMissingValidatedUser(
+  userResult: Awaited<ReturnType<ReturnType<typeof getSupabase>["auth"]["getUser"]>>
+) {
+  return (
+    !userResult.data.user &&
+    (!userResult.error || isMissingRemoteUserError(userResult.error.message))
+  );
+}
+
 async function restoreSupabaseSession(set: SetAuthState, transitionVersion: number) {
   const supabase = getSupabase();
   const { data, error } = await supabase.auth.getSession();
   if (isStaleAuthTransition(transitionVersion)) return;
-  if (error || !data.session) {
+  const session = data.session;
+  if (hasMissingRemoteSession(error, session)) {
     await handleMissingRemoteSession(set, transitionVersion, error?.message);
     return;
   }
+  // shouldHandleMissingValidatedUser only clears the local session for missing users
+  // matched by isMissingRemoteUserError; unexpected getUser errors fall back to this session.
   const userResult = await supabase.auth.getUser();
   if (isStaleAuthTransition(transitionVersion)) return;
-  if (
-    !userResult.data.user &&
-    (!userResult.error || isMissingRemoteUserError(userResult.error.message))
-  ) {
+  if (shouldHandleMissingValidatedUser(userResult)) {
     await handleMissingValidatedUser(set, transitionVersion, userResult.error?.message);
     return;
   }
-  setRemoteAuthState(set, data.session);
+  setRemoteAuthState(set, session);
 }
 
 async function handleRestoreSessionException(
@@ -159,52 +168,6 @@ async function handleRestoreSessionException(
   captureAuthFailure("auth_restore_exception", err);
   setSignedOutAuthState(set);
   clearLocalOnboardingState();
-}
-
-async function requestOauthUrl(provider: OAuthProvider): Promise<string | null> {
-  await clearLocalQaSession().catch(() => undefined);
-  const supabase = getSupabase();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: { redirectTo: REDIRECT_URI, skipBrowserRedirect: true },
-  });
-  return error || !data.url ? null : data.url;
-}
-
-async function openOauthBrowser(url: string): Promise<string | null> {
-  const { openAuthSessionAsync } = await import("expo-web-browser");
-  const result = await openAuthSessionAsync(url, REDIRECT_URI);
-  return result.type === "success" && result.url ? result.url : null;
-}
-
-const getSupabaseSessionTokens = (url: string): SupabaseAuthTokens | null => {
-  return readSupabaseSessionTokens(url, REDIRECT_URI);
-};
-
-async function signInWithProvider(provider: OAuthProvider): Promise<Session | null> {
-  const authUrl = await requestOauthUrl(provider);
-  if (authUrl === null) return null;
-
-  return restoreProviderSession(authUrl);
-}
-
-async function restoreProviderSession(authUrl: string): Promise<Session | null> {
-  const sessionUrl = await openOauthBrowser(authUrl);
-  if (sessionUrl === null) return null;
-  return exchangeProviderSession(sessionUrl);
-}
-
-async function exchangeProviderSession(sessionUrl: string): Promise<Session | null> {
-  const sessionTokens = getSupabaseSessionTokens(sessionUrl);
-  if (sessionTokens === null) return null;
-  const supabase = getSupabase();
-  const { data } = await supabase.auth.setSession({
-    // biome-ignore lint/style/useNamingConvention: Supabase API
-    access_token: sessionTokens.accessToken,
-    // biome-ignore lint/style/useNamingConvention: Supabase API
-    refresh_token: sessionTokens.refreshToken,
-  });
-  return data.session ?? null;
 }
 
 async function signOutLocalQaSession(set: SetAuthState) {

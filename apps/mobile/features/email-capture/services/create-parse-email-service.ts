@@ -242,8 +242,9 @@ export function createParseEmailService({
 }: CreateParseEmailServiceDeps): ParseEmailService {
   const supabaseRuntime = bindAppSupabase(supabase);
   const telemetryRuntime = bindAppTelemetry(telemetry);
-  const runEffect = <A>(effect: Effect.Effect<A, unknown, AppSupabase | AppTelemetry>) =>
-    telemetryRuntime.run(supabaseRuntime.provide(effect));
+  function runEffect<A>(effect: Effect.Effect<A, unknown, AppSupabase | AppTelemetry>) {
+    return telemetryRuntime.run(supabaseRuntime.provide(effect));
+  }
 
   return {
     classifyMerchant: (merchant) => runEffect(classifyMerchantEffect(merchant, validCategoryIds)),

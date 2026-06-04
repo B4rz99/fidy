@@ -25,17 +25,18 @@ const newestReceivedAt = (result: EmailBatchLike) =>
     ""
   );
 
-export const sortFetchResultsByNewestEmail = <T extends EmailBatchLike>(
+export function sortFetchResultsByNewestEmail<T extends EmailBatchLike>(
   fetchResults: readonly T[]
-): readonly T[] =>
-  fetchResults.toSorted((left, right) =>
+): readonly T[] {
+  return fetchResults.toSorted((left, right) =>
     newestReceivedAt(right).localeCompare(newestReceivedAt(left))
   );
+}
 
-export const applyEmailCaptureCandidateLimit = <T extends EmailBatchLike>(
+export function applyEmailCaptureCandidateLimit<T extends EmailBatchLike>(
   fetchResults: readonly T[],
   maxCandidateEmails: number | null
-): readonly T[] => {
+): readonly T[] {
   if (maxCandidateEmails == null) {
     return fetchResults.map((result) => ({
       ...result,
@@ -55,7 +56,7 @@ export const applyEmailCaptureCandidateLimit = <T extends EmailBatchLike>(
       allowedExternalIds.has(email.externalId)
     ),
   }));
-};
+}
 
 export const resolveEmailCaptureSyncPolicy = (
   parseProfile: EmailCaptureParseProfile | undefined

@@ -62,27 +62,72 @@ const parseCardProductHint = (text: string): string | undefined => {
   return last4 ? `tarjeta ${last4}` : undefined;
 };
 
+type PurchaseNotificationFields = {
+  readonly merchant: string;
+  readonly amount: number;
+  readonly date: string;
+  readonly cardProductHint: string | undefined;
+};
+
+const parseMatchedMerchant = (match: RegExpMatchArray): string | null => {
+  const merchant = match[1]?.trim();
+  return merchant ? merchant : null;
+};
+
+const parseMatchedAmount = (match: RegExpMatchArray): number | null => {
+  const rawAmount = match[2];
+  return rawAmount ? parseCopAmount(rawAmount) : null;
+};
+
+const resolveMatchedPurchaseDate = (
+  match: RegExpMatchArray,
+  notification: NotificationData
+): string | null => {
+  const rawDate = match[3];
+  return rawDate ? parseDate(rawDate) : notificationDate(notification);
+};
+
+const parsePurchaseNotificationFields = (
+  text: string,
+  notification: NotificationData
+): PurchaseNotificationFields | null => {
+  const match = text.match(PURCHASE_PATTERN);
+  if (!match) return null;
+
+  const merchant = parseMatchedMerchant(match);
+  if (!merchant) return null;
+
+  const amount = parseMatchedAmount(match);
+  if (amount === null) return null;
+
+  const date = resolveMatchedPurchaseDate(match, notification);
+  if (date === null) return null;
+
+  return { merchant, amount, date, cardProductHint: parseCardProductHint(text) };
+};
+
+const toRawParsedPurchaseNotification = ({
+  merchant,
+  amount,
+  date,
+  cardProductHint,
+}: PurchaseNotificationFields): RawParsedNotification => ({
+  type: "expense",
+  amount,
+  categoryId: "other",
+  merchant,
+  date,
+  confidence: 0.92,
+  counterpartyHint: merchant,
+  ...(cardProductHint ? { cardProductHint } : {}),
+});
+
 const parsePurchaseNotification = (
   text: string,
   notification: NotificationData
 ): RawParsedNotification | null => {
-  const match = text.match(PURCHASE_PATTERN);
-  const merchant = match?.[1]?.trim();
-  const amount = match?.[2] ? parseCopAmount(match[2]) : null;
-  const date = match?.[3] ? parseDate(match[3]) : notificationDate(notification);
-  const cardProductHint = parseCardProductHint(text);
-  return merchant && amount && date
-    ? {
-        type: "expense",
-        amount,
-        categoryId: "other",
-        merchant,
-        date,
-        confidence: 0.92,
-        counterpartyHint: merchant,
-        ...(cardProductHint ? { cardProductHint } : {}),
-      }
-    : null;
+  const fields = parsePurchaseNotificationFields(text, notification);
+  return fields ? toRawParsedPurchaseNotification(fields) : null;
 };
 
 export const parseNotificationWithRegex = (

@@ -110,7 +110,9 @@ const buildAnomalyMove = ({
   };
 };
 
-const isPresent = <T>(value: T | null): value is T => value !== null;
+function isPresent<T>(value: T | null): value is T {
+  return value !== null;
+}
 
 /**
  * Detects spending anomalies per category using median weekly spend of prior weeks.

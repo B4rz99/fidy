@@ -66,6 +66,13 @@ function trackAddActionCreated(action: AddAction) {
   });
 }
 
+type AddActionContext = readonly [UserDb | null, OptionalUserId];
+type ResolvedAddActionContext = readonly [UserDb, NonNullable<OptionalUserId>];
+
+function hasAddActionContext(context: AddActionContext): context is ResolvedAddActionContext {
+  return Boolean(context[0] && context[1]);
+}
+
 async function saveAddActionTransaction(
   action: AddAction,
   db: UserDb,
@@ -77,9 +84,9 @@ async function saveAddActionTransaction(
 }
 
 async function executeAddAction(action: AddAction, db: UserDb | null, userId: OptionalUserId) {
-  if (!db || !userId) return;
-  const activeDb = db;
-  const activeUserId = userId;
+  const context = [db, userId] as const;
+  if (!hasAddActionContext(context)) return;
+  const [activeDb, activeUserId] = context;
   const store = populateTransactionDraft(action);
   return Promise.resolve(saveAddActionTransaction(action, activeDb, activeUserId)).finally(() =>
     store.resetForm()

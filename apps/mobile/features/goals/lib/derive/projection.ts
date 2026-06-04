@@ -137,6 +137,41 @@ export function deriveGoalProjection(
   return buildProjectedGoalResult(remaining, confidence, netMonthlySavings);
 }
 
+function deriveZeroRateDebtProjection(
+  remaining: number,
+  monthlyPayment: number
+): DebtProjectionResult {
+  if (monthlyPayment <= 0) return { status: "payment_too_low" };
+  const monthsToGo = Math.ceil(remaining / monthlyPayment);
+  return {
+    status: "zero_rate",
+    monthsToGo,
+    projectedDate: addMonths(new Date(), monthsToGo),
+  };
+}
+
+function deriveInterestDebtProjection(
+  remaining: number,
+  monthlyRate: number,
+  monthlyPayment: number
+): DebtProjectionResult {
+  if (monthlyPayment <= remaining * monthlyRate) return { status: "payment_too_low" };
+
+  const logArg = 1 - (remaining * monthlyRate) / monthlyPayment;
+  if (logArg <= 0) return { status: "payment_too_low" };
+
+  const monthsToGo = Math.ceil(-Math.log(logArg) / Math.log(1 + monthlyRate));
+  if (!Number.isFinite(monthsToGo) || Number.isNaN(monthsToGo)) {
+    return { status: "payment_too_low" };
+  }
+
+  return {
+    status: "ok",
+    monthsToGo,
+    projectedDate: addMonths(new Date(), monthsToGo),
+  };
+}
+
 export function deriveDebtProjection(
   goal: {
     readonly targetAmount: number;
@@ -153,36 +188,10 @@ export function deriveDebtProjection(
   }
 
   if (monthlyRate === 0) {
-    if (monthlyPayment <= 0) {
-      return { status: "payment_too_low" };
-    }
-    const monthsToGo = Math.ceil(remaining / monthlyPayment);
-    return {
-      status: "zero_rate",
-      monthsToGo,
-      projectedDate: addMonths(new Date(), monthsToGo),
-    };
+    return deriveZeroRateDebtProjection(remaining, monthlyPayment);
   }
 
-  if (monthlyPayment <= remaining * monthlyRate) {
-    return { status: "payment_too_low" };
-  }
-
-  const logArg = 1 - (remaining * monthlyRate) / monthlyPayment;
-  if (logArg <= 0) {
-    return { status: "payment_too_low" };
-  }
-
-  const monthsToGo = Math.ceil(-Math.log(logArg) / Math.log(1 + monthlyRate));
-  if (!Number.isFinite(monthsToGo) || Number.isNaN(monthsToGo)) {
-    return { status: "payment_too_low" };
-  }
-
-  return {
-    status: "ok",
-    monthsToGo,
-    projectedDate: addMonths(new Date(), monthsToGo),
-  };
+  return deriveInterestDebtProjection(remaining, monthlyRate, monthlyPayment);
 }
 
 export function deriveMonthlyMilestones(

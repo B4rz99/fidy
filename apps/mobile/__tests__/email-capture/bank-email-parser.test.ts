@@ -185,6 +185,29 @@ describe("known bank email parser", () => {
     );
   });
 
+  it("parses BBVA reference-only notifications when the operation line is absent", () => {
+    const result = parseKnownBankEmail(
+      makeEmail({
+        from: "BBVA <bbva@bbvanet.com.co>",
+        receivedAt: "2026-05-19T19:04:59.000Z",
+        subject: "BBVA - Notificacion Ref: $45.900",
+        body: "Fecha: 18/05/2026 Establecimiento: PANADERIA CENTRAL. Ref: $45.900",
+      })
+    );
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        kind: "parsed",
+        parsed: expect.objectContaining({
+          amount: 45900,
+          description: "PANADERIA CENTRAL",
+          date: "2026-05-18",
+          confidence: 0.84,
+        }),
+      })
+    );
+  });
+
   it("extracts Davibank transaction-line amount and date", () => {
     const result = parseKnownBankEmail(
       makeEmail({

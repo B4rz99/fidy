@@ -263,19 +263,3 @@ export async function addContribution(
     ? refreshSelectedGoalContributions({ db, ...session, goalId: input.goalId })
     : true;
 }
-
-async function deleteContribution(db: AnyDb, userId: UserId, id: string): Promise<boolean> {
-  const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
-  const didDelete = await createGoalMutationService({ db, userId }).deleteContribution(id);
-  if (!didDelete) return false;
-
-  const didRefreshGoals = await refreshGoalsForActiveSession({ db, ...session });
-  if (!didRefreshGoals) return false;
-
-  const { selectedGoalId } = useGoalStore.getState();
-  if (selectedGoalId == null) {
-    return true;
-  }
-
-  return refreshSelectedGoalContributions({ db, ...session, goalId: selectedGoalId });
-}

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addContribution,
   createGoal,
+  deleteGoal,
   initializeGoalSession,
   loadGoalsForUser,
   selectGoal,
@@ -101,6 +102,18 @@ const updatedGoalSnapshot = createGoalSnapshot({
   remaining: 500000,
   isComplete: false,
 });
+
+const selectedGoalContribution = {
+  id: "contrib-1",
+  goalId: "goal-1",
+  userId: "user-1",
+  amount: 250000,
+  note: "seed",
+  date: "2026-04-18",
+  createdAt: "2026-04-18T10:00:00.000Z",
+  updatedAt: "2026-04-18T10:00:00.000Z",
+  deletedAt: null,
+};
 
 const createGoalLoadDeferred = () => createDeferred<readonly GoalWithProgress[]>();
 
@@ -211,5 +224,28 @@ describe("goal store boundary", () => {
       expect.objectContaining({ kind: "goalContribution.save" })
     );
     expect(useGoalStore.getState().goals).toEqual([updatedGoalSnapshot]);
+  });
+
+  it("clears the selected goal after deleting it", async () => {
+    mockCommit.mockResolvedValueOnce({ success: true });
+    mockLoadGoals.mockResolvedValueOnce([]);
+
+    initializeGoalSession("user-1" as UserId);
+    useGoalStore.setState({
+      activeUserId: "user-1" as UserId,
+      goals: [baseGoalSnapshot],
+      selectedGoalId: "goal-1",
+      selectedGoalContributions: [selectedGoalContribution],
+      isLoading: false,
+    });
+
+    await expect(deleteGoal({} as never, "user-1" as UserId, "goal-1")).resolves.toBe(true);
+
+    expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "goal.delete" }));
+    expect(useGoalStore.getState()).toMatchObject({
+      goals: [],
+      selectedGoalId: null,
+      selectedGoalContributions: [],
+    });
   });
 });

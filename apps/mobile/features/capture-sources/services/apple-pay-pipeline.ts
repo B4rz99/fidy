@@ -27,7 +27,12 @@ import {
   trackTransactionCreated,
 } from "@/shared/lib";
 import { assertCopAmount, assertUserId } from "@/shared/types/assertions";
-import type { CategoryId, IsoDate, TransactionId } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  FinancialAccountId,
+  IsoDate,
+  TransactionId,
+} from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import type { ApplePayIntentData } from "../schema";
 
@@ -86,6 +91,18 @@ function resolveApplePayCategoryId(input: {
   }
 
   return requireAcceptedApplePayCategory(input);
+}
+
+function resolveApplePayAccountAttribution(input: {
+  readonly defaultAccountId: FinancialAccountId;
+  readonly matchedAccountId: FinancialAccountId | null;
+}) {
+  return {
+    accountId: input.matchedAccountId ?? input.defaultAccountId,
+    accountAttributionState: input.matchedAccountId
+      ? ("inferred" as const)
+      : ("unresolved" as const),
+  };
 }
 
 export async function processApplePayIntent(
@@ -184,6 +201,10 @@ export async function processApplePayIntent(
     const now = toIsoDateTime(new Date());
     const defaultAccount = ensureDefaultFinancialAccount(db, userId, { now });
     const matchedAccountId = findMatchingFinancialAccountId(db, userId, captureEvidence);
+    const accountAttribution = resolveApplePayAccountAttribution({
+      defaultAccountId: defaultAccount.id,
+      matchedAccountId,
+    });
 
     const recordResult = await recordAutomatedTransactionWithLocalLedger({
       db,
@@ -197,8 +218,8 @@ export async function processApplePayIntent(
         description: "",
         counterpartyName: intent.merchant,
         occurredOn: today,
-        accountId: matchedAccountId ?? defaultAccount.id,
-        accountAttributionState: matchedAccountId ? "inferred" : "unresolved",
+        accountId: accountAttribution.accountId,
+        accountAttributionState: accountAttribution.accountAttributionState,
         source: "apple_pay_capture",
       },
       afterRecord: (tx) => {

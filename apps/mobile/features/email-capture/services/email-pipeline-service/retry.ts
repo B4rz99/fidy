@@ -30,7 +30,9 @@ import type {
 const getRetryEmailProvider = (email: ProcessedSourceEventRow) =>
   email.sourceId.startsWith("email_outlook") ? "outlook" : "gmail";
 
-const nullableValue = <T>(value: T | null | undefined) => value ?? null;
+function nullableValue<T>(value: T | null | undefined) {
+  return value ?? null;
+}
 
 const toRetryEmailSnapshot = (email: ProcessedSourceEventRow): RetryEmailSnapshot => ({
   id: email.id,

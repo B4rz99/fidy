@@ -15,14 +15,14 @@ const GMAIL_BATCH_SIZE = 5;
 
 const toAuthorizationHeaders = (token: string) => ({ Authorization: `Bearer ${token}` });
 
-const fetchGmailJson = async <T>(url: string, token: string): Promise<GmailJsonResult<T>> => {
+async function fetchGmailJson<T>(url: string, token: string): Promise<GmailJsonResult<T>> {
   const response = await fetch(url, { headers: toAuthorizationHeaders(token) });
   if (!response.ok) {
     return { ok: false, status: response.status };
   }
 
   return { ok: true, data: (await response.json()) as T };
-};
+}
 
 const toMessageQuery = (since: string, senderEmails: string[]): string => {
   const epoch = Math.floor(new Date(since).getTime() / 1000);
@@ -48,13 +48,17 @@ const chunkMessageIds = (messageIds: string[]): string[][] =>
     messageIds.slice(index * GMAIL_BATCH_SIZE, (index + 1) * GMAIL_BATCH_SIZE)
   );
 
-const isNonNull = <T>(value: T | null): value is T => value !== null;
+function isNonNull<T>(value: T | null): value is T {
+  return value !== null;
+}
 
-const getHeader = (headers: GmailHeader[], name: string): string =>
-  headers.find((header) => header.name.toLowerCase() === name.toLowerCase())?.value ?? "";
+function getHeader(headers: GmailHeader[], name: string): string {
+  return headers.find((header) => header.name.toLowerCase() === name.toLowerCase())?.value ?? "";
+}
 
-const getMatchingPartData = (part: GmailPart, mime: string): string | null =>
-  part.mimeType === mime && part.body?.data ? decodeBase64Url(part.body.data) : null;
+function getMatchingPartData(part: GmailPart, mime: string): string | null {
+  return part.mimeType === mime && part.body?.data ? decodeBase64Url(part.body.data) : null;
+}
 
 const getNestedPartData = (part: GmailPart, mime: string): string | null =>
   part.parts ? findPartByMime(part.parts, mime) : null;

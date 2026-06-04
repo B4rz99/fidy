@@ -132,41 +132,85 @@ function handleSsePayload(input: {
   return "continue";
 }
 
+function processSseLines(
+  lines: readonly string[],
+  input: {
+    readonly callbacks: StreamCallbacks;
+    readonly captureCallbackError: (error: unknown) => void;
+  }
+): SsePayloadResult {
+  for (const line of lines) {
+    if (!line.startsWith("data: ")) continue;
+    const result = handleSsePayload({
+      payload: line.slice(6).trim(),
+      callbacks: input.callbacks,
+      captureCallbackError: input.captureCallbackError,
+    });
+    if (result === "done") return "done";
+  }
+  return "continue";
+}
+
+async function readSsePayloads(input: {
+  readonly reader: ReadableStreamDefaultReader<Uint8Array>;
+  readonly callbacks: StreamCallbacks;
+  readonly captureCallbackError: (error: unknown) => void;
+}): Promise<SsePayloadResult> {
+  const decoder = new TextDecoder();
+  // FP exemption: streaming SSE requires imperative buffering.
+  let buffer = "";
+
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- intentional streaming loop
+  while (true) {
+    const { done, value } = await input.reader.read();
+    if (done) {
+      buffer += decoder.decode();
+      return buffer.length > 0 ? processSseLines(buffer.split("\n"), input) : "continue";
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    if (processSseLines(lines, input) === "done") return "done";
+  }
+}
+
+function finishSseStream(result: SsePayloadResult, callbacks: StreamCallbacks): void {
+  if (result === "continue") {
+    callbacks.onDone();
+  }
+}
+
+function streamErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Stream error";
+}
+
+function isAbortSignalAborted(signal: AbortSignal | undefined): boolean {
+  return signal?.aborted === true;
+}
+
+function notifySseStreamError(
+  input: {
+    readonly callbacks: StreamCallbacks;
+    readonly signal?: AbortSignal;
+  },
+  error: unknown
+): void {
+  if (isAbortSignalAborted(input.signal)) return;
+  input.callbacks.onError(streamErrorMessage(error));
+}
+
 async function consumeSseStream(input: {
   readonly reader: ReadableStreamDefaultReader<Uint8Array>;
   readonly callbacks: StreamCallbacks;
   readonly signal?: AbortSignal;
   readonly captureCallbackError: (error: unknown) => void;
 }): Promise<void> {
-  const decoder = new TextDecoder();
-  // FP exemption: streaming SSE requires imperative buffering.
-  let buffer = "";
-
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- intentional streaming loop
-    while (true) {
-      const { done, value } = await input.reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const result = handleSsePayload({
-          payload: line.slice(6).trim(),
-          callbacks: input.callbacks,
-          captureCallbackError: input.captureCallbackError,
-        });
-        if (result === "done") return;
-      }
-    }
-
-    input.callbacks.onDone();
+    finishSseStream(await readSsePayloads(input), input.callbacks);
   } catch (error) {
-    if (input.signal?.aborted) return;
-    input.callbacks.onError(error instanceof Error ? error.message : "Stream error");
+    notifySseStreamError(input, error);
   }
 }
 
@@ -213,8 +257,9 @@ export function createAiChatApiService({
 }: CreateAiChatApiServiceDeps = {}): AiChatApiService {
   const supabaseRuntime = bindAppSupabase(supabase);
   const telemetryRuntime = bindAppTelemetry(telemetry);
-  const runSupabaseEffect = <A>(effect: Effect.Effect<A, unknown, AppSupabase>) =>
-    supabaseRuntime.run(effect);
+  function runSupabaseEffect<A>(effect: Effect.Effect<A, unknown, AppSupabase>) {
+    return supabaseRuntime.run(effect);
+  }
   const captureCallbackError = (error: unknown) =>
     telemetryRuntime.run(captureErrorEffect(error)).catch(() => undefined);
 

@@ -90,6 +90,44 @@ describe("buildTransaction", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  test("preserves existing transaction metadata when rebuilding", () => {
+    const existing: StoredTransaction = {
+      id: "tx-existing" as TransactionId,
+      userId: "user-1" as UserId,
+      type: "expense",
+      amount: 500 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Old",
+      counterpartyName: "Cafe",
+      date: new Date(2026, 1, 1),
+      createdAt: new Date(2026, 1, 1, 9, 0, 0),
+      updatedAt: new Date(2026, 1, 1, 10, 0, 0),
+      voidedAt: new Date(2026, 1, 2, 10, 0, 0),
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "inferred",
+      supersededAt: new Date(2026, 1, 3, 10, 0, 0),
+      supersededByTransferId: "tr-existing" as never,
+      source: "email_capture",
+    };
+
+    const result = buildTransaction({
+      input: validInput,
+      userId: "user-1" as UserId,
+      id: "tx-6" as TransactionId,
+      now: NOW,
+      existing,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.transaction.createdAt).toBe(existing.createdAt);
+    expect(result.transaction.voidedAt).toBe(existing.voidedAt);
+    expect(result.transaction.accountAttributionState).toBe("inferred");
+    expect(result.transaction.supersededAt).toBe(existing.supersededAt);
+    expect(result.transaction.supersededByTransferId).toBe("tr-existing");
+    expect(result.transaction.source).toBe("email_capture");
+  });
 });
 
 describe("toStoredTransaction branch coverage", () => {

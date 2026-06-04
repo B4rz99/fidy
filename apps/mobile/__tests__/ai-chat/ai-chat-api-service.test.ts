@@ -61,6 +61,58 @@ describe("createAiChatApiService", () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
+  it("flushes a final SSE chunk when the stream closes without a trailing newline", async () => {
+    const encoder = new TextEncoder();
+    const payload = encoder.encode('data: {"content":"Caf\u00e9"}');
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(payload.slice(0, -1));
+        controller.enqueue(payload.slice(-1));
+        controller.close();
+      },
+    });
+    const fetchImpl = vi.fn<(...args: any[]) => any>().mockResolvedValue(
+      new Response(stream, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" },
+      })
+    );
+
+    const service = createAiChatApiService({
+      fetchImpl: fetchImpl as never,
+      getBaseUrl: () => "https://example.supabase.co",
+      supabase: {
+        getSupabase: () =>
+          ({
+            auth: {
+              getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+                data: { session: { access_token: "token-123" } },
+              }),
+            },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+      },
+    });
+
+    const onChunk = vi.fn<(...args: any[]) => any>();
+    const onDone = vi.fn<(...args: any[]) => any>();
+    const onError = vi.fn<(...args: any[]) => any>();
+
+    await service.streamChat([{ role: "user", content: "hello" }], {
+      onChunk,
+      onDone,
+      onError,
+    });
+
+    expect(onChunk).toHaveBeenCalledWith("Caf\u00e9");
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
   it("sends an app-built financial context packet with chat messages", async () => {
     const fetchImpl = vi.fn<(...args: any[]) => any>().mockResolvedValue(
       new Response("data: [DONE]\n\n", {
@@ -217,6 +269,40 @@ describe("createAiChatApiService", () => {
     });
 
     expect(onError).toHaveBeenCalledWith("HTTP 503");
+  });
+
+  it("reports network failures when posting chat messages", async () => {
+    const fetchImpl = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("offline"));
+
+    const service = createAiChatApiService({
+      fetchImpl: fetchImpl as never,
+      getBaseUrl: () => "https://example.supabase.co",
+      supabase: {
+        getSupabase: () =>
+          ({
+            auth: {
+              getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+                data: { session: { access_token: "token-123" } },
+              }),
+            },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+      },
+    });
+
+    const onError = vi.fn<(...args: any[]) => any>();
+
+    await service.streamChat([{ role: "user", content: "hello" }], {
+      onChunk: vi.fn<(...args: any[]) => any>(),
+      onDone: vi.fn<(...args: any[]) => any>(),
+      onError,
+    });
+
+    expect(onError).toHaveBeenCalledWith("offline");
   });
 
   it("reports auth header resolution failures through onError", async () => {

@@ -39,6 +39,16 @@ function mockRecordedWidgetTransaction(input: any) {
   });
 }
 
+function createDeferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  let reject: (reason?: unknown) => void = () => undefined;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
 }));
@@ -351,6 +361,26 @@ describe("processWidgetTransactions", () => {
       expect.objectContaining({ status: "duplicate", failureReason: null })
     );
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["seen-before"]);
+  });
+
+  it("does not remove entries already locked by another widget processor", async () => {
+    const dedupCheck = createDeferred<boolean>();
+    mockIsCaptureProcessed.mockReturnValueOnce(dedupCheck.promise);
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "race-entry", amount: 5000, createdAt: "2026-03-27T10:00:00Z" },
+    ]);
+
+    const primary = processWidgetTransactions(mockDb, USER_ID);
+    await vi.waitFor(() => expect(mockIsCaptureProcessed).toHaveBeenCalledOnce());
+
+    const concurrent = await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(concurrent).toEqual({ saved: 0, skippedDuplicate: 1, errors: 0 });
+    expect(mockRemovePendingTransactions).not.toHaveBeenCalled();
+
+    dedupCheck.resolve(false);
+    await expect(primary).resolves.toEqual({ saved: 1, skippedDuplicate: 0, errors: 0 });
+    expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["race-entry"]);
   });
 
   it("does not cross-source dedup widget descriptions as inferred counterparty text", async () => {
