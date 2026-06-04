@@ -11,6 +11,11 @@
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
+      "name": "@react-navigation/bottom-tabs",
+      "until": "2026-07-15",
+      "reason": "Held at 7.15.10 because 7.16.x pulls a newer React Navigation native/core pair and fails Expo doctor duplicate native-module checks under SDK 55."
+    },
+    {
       "name": "@sentry/react-native",
       "until": "2026-07-15",
       "reason": "Major v8 migration needs a dedicated Sentry PR with config review, source map verification, and native QA."
