@@ -16,7 +16,7 @@ describe("ai chat callers", () => {
   test("session cleanup resubscribes when auth-scoped runtime becomes available", () => {
     expect(sessionCleanupSource).toContain("useSubscription(");
     expect(sessionCleanupSource).toContain("[db, userId]");
-    expect(sessionCleanupSource).toContain("Boolean(db && userId)");
+    expect(sessionCleanupSource).toContain("hasCleanupContext(cleanupContext)");
     expect(sessionCleanupSource).not.toContain("useMountEffect(");
   });
 

@@ -1,4 +1,5 @@
 // biome-ignore-all lint/style/useNamingConvention: mock exports must match Supabase API names
+import * as Sentry from "@sentry/react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/features/auth/store";
 import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
@@ -352,6 +353,22 @@ describe("useAuthStore", () => {
     });
     const { session } = useAuthStore.getState();
     expect(session).toEqual(mockSession);
+  });
+
+  it("signIn logs and skips session when Supabase rejects the provider token exchange", async () => {
+    mockSetSession.mockResolvedValueOnce({
+      data: { session: null },
+      error: { message: "invalid refresh token" },
+    });
+
+    await useAuthStore.getState().signIn("google");
+
+    expect(mockSetSession).toHaveBeenCalledWith({
+      access_token: "tok",
+      refresh_token: "ref",
+    });
+    expect(Sentry.captureMessage).toHaveBeenCalledWith("auth_provider_session_exchange_failed");
+    expect(useAuthStore.getState().session).toBeNull();
   });
 
   it("signIn sets isSigningIn during flow and resets after", async () => {

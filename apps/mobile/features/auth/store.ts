@@ -148,6 +148,8 @@ async function restoreSupabaseSession(set: SetAuthState, transitionVersion: numb
     await handleMissingRemoteSession(set, transitionVersion, error?.message);
     return;
   }
+  // shouldHandleMissingValidatedUser only clears the local session for missing users
+  // matched by isMissingRemoteUserError; unexpected getUser errors fall back to this session.
   const userResult = await supabase.auth.getUser();
   if (isStaleAuthTransition(transitionVersion)) return;
   if (shouldHandleMissingValidatedUser(userResult)) {

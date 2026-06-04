@@ -23,53 +23,47 @@ const logParseImprovementSharingForDebug = (input: {
   console.log("[email-capture] parse-improvement.summary", input);
 };
 
-export async function shareEmailParseImprovementRequests(input: {
-  readonly db: AnyDb;
+const logDisabledParseImprovementSharing = (requestCount: number): void => {
+  logParseImprovementSharingForDebug({
+    enabled: false,
+    requestCount,
+    enqueued: 0,
+    shared: 0,
+    failed: 0,
+  });
+};
+
+const shouldShareParseImprovements = (input: {
   readonly enabled: boolean;
-  readonly userId: UserId;
-  readonly requests: readonly EmailParseImprovementRequest[];
   readonly isSharingEnabled?: () => boolean;
-}): Promise<void> {
-  if (!input.enabled) {
-    logParseImprovementSharingForDebug({
-      enabled: false,
-      requestCount: input.requests.length,
-      enqueued: 0,
-      shared: 0,
-      failed: 0,
+}): boolean => input.enabled && (!input.isSharingEnabled || input.isSharingEnabled());
+
+const enqueueParseImprovementRequest = (input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly request: EmailParseImprovementRequest;
+}): number => {
+  try {
+    return enqueueEmailParseImprovementRequests({
+      db: input.db,
+      userId: input.userId,
+      requests: [input.request],
     });
-    return;
-  }
-
-  if (input.isSharingEnabled && !input.isSharingEnabled()) {
-    logParseImprovementSharingForDebug({
-      enabled: false,
-      requestCount: input.requests.length,
-      enqueued: 0,
-      shared: 0,
-      failed: 0,
+  } catch (error) {
+    captureError(error);
+    captureWarning("email_parse_improvement_sample_enqueue_failed", {
+      errorType: getErrorName(error),
     });
-    return;
+    return 0;
   }
+};
 
-  const enqueueRequest = (request: EmailParseImprovementRequest): number => {
-    try {
-      return enqueueEmailParseImprovementRequests({
-        db: input.db,
-        userId: input.userId,
-        requests: [request],
-      });
-    } catch (error) {
-      captureError(error);
-      captureWarning("email_parse_improvement_sample_enqueue_failed", {
-        errorType: getErrorName(error),
-      });
-      return 0;
-    }
-  };
-  const enqueued = input.requests.reduce((total, request) => total + enqueueRequest(request), 0);
-
-  const result = await flushPendingEmailParseImprovementSamples({
+const flushParseImprovementRequests = (input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly isSharingEnabled?: () => boolean;
+}) =>
+  flushPendingEmailParseImprovementSamples({
     db: input.db,
     userId: input.userId,
     ...(input.isSharingEnabled ? { isSharingEnabled: input.isSharingEnabled } : {}),
@@ -80,6 +74,25 @@ export async function shareEmailParseImprovementRequests(input: {
     });
     return { shared: 0, failed: 0, warningCaptured: true };
   });
+
+export async function shareEmailParseImprovementRequests(input: {
+  readonly db: AnyDb;
+  readonly enabled: boolean;
+  readonly userId: UserId;
+  readonly requests: readonly EmailParseImprovementRequest[];
+  readonly isSharingEnabled?: () => boolean;
+}): Promise<void> {
+  if (!shouldShareParseImprovements(input)) {
+    logDisabledParseImprovementSharing(input.requests.length);
+    return;
+  }
+
+  const enqueued = input.requests.reduce(
+    (total, request) => total + enqueueParseImprovementRequest({ ...input, request }),
+    0
+  );
+
+  const result = await flushParseImprovementRequests(input);
   if (result.failed > 0 && !("warningCaptured" in result)) {
     captureWarning("email_parse_improvement_sample_share_failed", {
       errorType: result.failureTypes?.join(",") ?? "unknown",

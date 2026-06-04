@@ -96,4 +96,26 @@ describe("email pipeline telemetry", () => {
     expect(Object.values(diagnostics).join(" ")).not.toContain("alerts@");
     expect(Object.values(diagnostics).join(" ")).not.toContain("bank.example.com");
   });
+
+  it("groups skipped-email subject and body lengths into bounded buckets", () => {
+    const cases = [
+      { subject: "short", body: "x".repeat(19), header: "0_19", content: "0_19" },
+      { subject: "x".repeat(20), body: "x".repeat(49), header: "20_49", content: "20_49" },
+      { subject: "x".repeat(50), body: "x".repeat(99), header: "50_99", content: "50_99" },
+      { subject: "x".repeat(100), body: "x".repeat(249), header: "100_249", content: "100_249" },
+      { subject: "x".repeat(250), body: "x".repeat(499), header: "250_499", content: "250_499" },
+      { subject: "x".repeat(500), body: "x".repeat(501), header: "500_plus", content: "500_plus" },
+    ];
+
+    const buckets = cases.map(({ subject, body }) =>
+      buildSkippedEmailDiagnostics({
+        email: { ...rawEmail, subject, body },
+        reason: "failed",
+      })
+    );
+
+    expect(
+      buckets.map((bucket) => [bucket.headerLengthBucket, bucket.contentLengthBucket])
+    ).toEqual(cases.map(({ header, content }) => [header, content]));
+  });
 });

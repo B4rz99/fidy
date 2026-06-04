@@ -132,4 +132,25 @@ describe("useNotificationStore", () => {
       })
     );
   });
+
+  it("loads notifications for the active user and clears the loading state", async () => {
+    const rows = [{ id: "notif-1", titleKey: "title" }];
+    mockGetNotifications.mockReturnValueOnce(rows);
+
+    const {
+      initializeNotificationStore,
+      loadNotificationsForUser,
+      useNotificationStore: store,
+    } = await getStore();
+    await initializeNotificationStore(mockDb, USER_1);
+
+    loadNotificationsForUser(mockDb, USER_1);
+
+    expect(mockGetNotifications).toHaveBeenCalledWith(mockDb, USER_1);
+    expect(store.getState()).toMatchObject({
+      notifications: rows,
+      isLoading: false,
+      activeUserId: USER_1,
+    });
+  });
 });
