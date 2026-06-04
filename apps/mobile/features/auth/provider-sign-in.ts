@@ -1,7 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { clearLocalQaSession } from "@/features/qa/session.public";
 import { getSupabase } from "@/shared/db/supabase";
-import { captureWarning } from "@/shared/lib";
 import { readSupabaseSessionTokens, type SupabaseAuthTokens } from "./oauth-callback";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
@@ -39,20 +38,12 @@ async function exchangeProviderSession(sessionUrl: string): Promise<Session | nu
   const sessionTokens = getSupabaseSessionTokens(sessionUrl);
   if (sessionTokens === null) return null;
   const supabase = getSupabase();
-  const { data, error } = await supabase.auth.setSession({
+  const { data } = await supabase.auth.setSession({
     // biome-ignore lint/style/useNamingConvention: Supabase API
     access_token: sessionTokens.accessToken,
     // biome-ignore lint/style/useNamingConvention: Supabase API
     refresh_token: sessionTokens.refreshToken,
   });
-  if (error) {
-    captureWarning("auth_provider_session_exchange_failed", {
-      errorMessage: error.message,
-      hasAccessToken: sessionTokens.accessToken.length > 0,
-      hasRefreshToken: sessionTokens.refreshToken.length > 0,
-    });
-    return null;
-  }
   return data.session ?? null;
 }
 
