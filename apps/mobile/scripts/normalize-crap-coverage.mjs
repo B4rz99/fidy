@@ -2,42 +2,12 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractComplexity } from "crap4ts/complexity";
+import { CRAP_SRC } from "../crap-scope.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(scriptDir, "..");
 const inputCoveragePath = resolve(projectRoot, "coverage/coverage-final.json");
 const outputCoveragePath = resolve(projectRoot, "coverage/crap-normalized-coverage-final.json");
-
-const sourceDirs = [
-  "features/account-suggestions",
-  "features/activity",
-  "features/advisor",
-  "features/analytics",
-  "features/auth",
-  "features/backup",
-  "features/budget",
-  "features/calendar",
-  "features/capture-evidence",
-  "features/capture-interpreter",
-  "features/capture-sources",
-  "features/categories",
-  "features/dashboard",
-  "features/financial-accounts",
-  "features/goals",
-  "features/onboarding",
-  "features/qa",
-  "features/review-queues",
-  "features/search",
-  "features/settings",
-  "features/transactions",
-  "features/transfers",
-  "shared/constants",
-  "shared/hooks",
-  "shared/i18n",
-  "shared/lib",
-  "shared/mutations",
-  "shared/types",
-];
 
 const toProjectPath = (path) => relative(projectRoot, path).split("\\").join("/");
 
@@ -91,7 +61,7 @@ function normalizeFunctionLocation(fnEntry, complexity) {
 }
 
 const sourceFiles = (
-  await Promise.all(sourceDirs.map((dir) => collectSourceFiles(resolve(projectRoot, dir))))
+  await Promise.all(CRAP_SRC.map((dir) => collectSourceFiles(resolve(projectRoot, dir))))
 ).flat();
 
 const complexities = (

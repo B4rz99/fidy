@@ -49,7 +49,7 @@ const userAuthoredWidgetDescription = (description: string | undefined): string 
   description ?? "";
 const widgetCounterpartyName = (): string => "";
 
-type ProcessWidgetEntryResult = "saved" | "duplicate" | "failed";
+type ProcessWidgetEntryResult = "saved" | "duplicate" | "in_flight" | "failed";
 
 function resolveWidgetCategoryId(category: string | undefined): CategoryId {
   const fallbackCategoryId = "other";
@@ -103,7 +103,7 @@ async function processWidgetEntry(input: {
   const counterpartyName = widgetCounterpartyName();
   const fingerprint = widgetFingerprint(item.id, amount, date);
 
-  if (inFlightFingerprints.has(fingerprint)) return "duplicate";
+  if (inFlightFingerprints.has(fingerprint)) return "in_flight";
 
   inFlightFingerprints.add(fingerprint);
 
@@ -227,6 +227,8 @@ export async function processWidgetTransactions(
     } else if (result === "duplicate") {
       skippedDuplicate += 1;
       succeededEntryIds.push(item.id);
+    } else if (result === "in_flight") {
+      skippedDuplicate += 1;
     } else {
       errors += 1;
     }

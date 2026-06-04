@@ -103,6 +103,18 @@ const updatedGoalSnapshot = createGoalSnapshot({
   isComplete: false,
 });
 
+const selectedGoalContribution = {
+  id: "contrib-1",
+  goalId: "goal-1",
+  userId: "user-1",
+  amount: 250000,
+  note: "seed",
+  date: "2026-04-18",
+  createdAt: "2026-04-18T10:00:00.000Z",
+  updatedAt: "2026-04-18T10:00:00.000Z",
+  deletedAt: null,
+};
+
 const createGoalLoadDeferred = () => createDeferred<readonly GoalWithProgress[]>();
 
 describe("goal store boundary", () => {
@@ -223,7 +235,7 @@ describe("goal store boundary", () => {
       activeUserId: "user-1" as UserId,
       goals: [baseGoalSnapshot],
       selectedGoalId: "goal-1",
-      selectedGoalContributions: [],
+      selectedGoalContributions: [selectedGoalContribution],
       isLoading: false,
     });
 
