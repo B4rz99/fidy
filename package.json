@@ -38,6 +38,7 @@
     "test:mutation:mobile": "bun run --cwd apps/mobile --shell=bun test:mutation",
     "test": "bun run test:mobile",
     "test:coverage": "bun run --cwd apps/mobile --shell=bun test:coverage",
+    "test:crap": "bun run --cwd apps/mobile --shell=bun test:crap",
     "perf:bundle:mobile": "bun run --cwd apps/mobile --shell=bun bundle:atlas",
     "doctor:expo": "bunx expo-doctor apps/mobile",
     "doctor:react": "bunx react-doctor . --offline --full --verbose --project @fidy/mobile --fail-on warning",

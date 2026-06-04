@@ -130,24 +130,35 @@ async function handleMissingValidatedUser(
   await handleMissingRemoteSession(set, transitionVersion, errorMessage);
 }
 
+function hasMissingRemoteSession(error: unknown, session: Session | null): session is null {
+  return error != null || session == null;
+}
+
+function shouldHandleMissingValidatedUser(
+  userResult: Awaited<ReturnType<ReturnType<typeof getSupabase>["auth"]["getUser"]>>
+) {
+  return (
+    !userResult.data.user &&
+    (!userResult.error || isMissingRemoteUserError(userResult.error.message))
+  );
+}
+
 async function restoreSupabaseSession(set: SetAuthState, transitionVersion: number) {
   const supabase = getSupabase();
   const { data, error } = await supabase.auth.getSession();
   if (isStaleAuthTransition(transitionVersion)) return;
-  if (error || !data.session) {
+  const session = data.session;
+  if (hasMissingRemoteSession(error, session)) {
     await handleMissingRemoteSession(set, transitionVersion, error?.message);
     return;
   }
   const userResult = await supabase.auth.getUser();
   if (isStaleAuthTransition(transitionVersion)) return;
-  if (
-    !userResult.data.user &&
-    (!userResult.error || isMissingRemoteUserError(userResult.error.message))
-  ) {
+  if (shouldHandleMissingValidatedUser(userResult)) {
     await handleMissingValidatedUser(set, transitionVersion, userResult.error?.message);
     return;
   }
-  setRemoteAuthState(set, data.session);
+  setRemoteAuthState(set, session);
 }
 
 async function handleRestoreSessionException(

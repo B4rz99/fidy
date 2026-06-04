@@ -94,14 +94,29 @@ function addManualIdentifier(
   });
 }
 
+const resolveNow = (now: CreateFinancialAccountManagementServiceDeps["now"]) =>
+  now ?? (() => toIsoDateTime(new Date()));
+
+const resolveCreateAccountId = (
+  createAccountId: CreateFinancialAccountManagementServiceDeps["createAccountId"]
+) => createAccountId ?? generateFinancialAccountId;
+
+const resolveCreateOpeningBalanceId = (
+  createOpeningBalanceId: CreateFinancialAccountManagementServiceDeps["createOpeningBalanceId"]
+) => createOpeningBalanceId ?? generateOpeningBalanceId;
+
+const resolveCreateIdentifierId = (
+  createIdentifierId: CreateFinancialAccountManagementServiceDeps["createIdentifierId"]
+) => createIdentifierId ?? generateFinancialAccountIdentifierId;
+
 function resolveManagementDeps(
   deps: CreateFinancialAccountManagementServiceDeps
 ): FinancialAccountManagementDeps {
   return {
-    now: deps.now ?? (() => toIsoDateTime(new Date())),
-    createAccountId: deps.createAccountId ?? generateFinancialAccountId,
-    createOpeningBalanceId: deps.createOpeningBalanceId ?? generateOpeningBalanceId,
-    createIdentifierId: deps.createIdentifierId ?? generateFinancialAccountIdentifierId,
+    now: resolveNow(deps.now),
+    createAccountId: resolveCreateAccountId(deps.createAccountId),
+    createOpeningBalanceId: resolveCreateOpeningBalanceId(deps.createOpeningBalanceId),
+    createIdentifierId: resolveCreateIdentifierId(deps.createIdentifierId),
   };
 }
 

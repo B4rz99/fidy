@@ -1,0 +1,48 @@
+import baseConfig from "./vitest.config";
+
+export default {
+  ...baseConfig,
+  test: {
+    ...baseConfig.test,
+    coverage: {
+      ...baseConfig.test?.coverage,
+      include: [
+        "features/account-suggestions/**/*.ts",
+        "features/activity/**/*.ts",
+        "features/advisor/**/*.ts",
+        "features/analytics/**/*.ts",
+        "features/auth/**/*.ts",
+        "features/backup/**/*.ts",
+        "features/budget/**/*.ts",
+        "features/calendar/**/*.ts",
+        "features/capture-evidence/**/*.ts",
+        "features/capture-interpreter/**/*.ts",
+        "features/capture-sources/**/*.ts",
+        "features/categories/**/*.ts",
+        "features/dashboard/**/*.ts",
+        "features/financial-accounts/**/*.ts",
+        "features/goals/**/*.ts",
+        "features/onboarding/**/*.ts",
+        "features/qa/**/*.ts",
+        "features/review-queues/**/*.ts",
+        "features/search/**/*.ts",
+        "features/settings/**/*.ts",
+        "features/transactions/**/*.ts",
+        "features/transfers/**/*.ts",
+        "shared/constants/**/*.ts",
+        "shared/hooks/**/*.ts",
+        "shared/i18n/**/*.ts",
+        "shared/lib/**/*.ts",
+        "shared/mutations/**/*.ts",
+        "shared/types/**/*.ts",
+      ],
+      exclude: [
+        ...(baseConfig.test?.coverage?.exclude ?? []),
+        "**/components/**",
+        "**/ui/**",
+        "**/*.tsx",
+      ],
+      thresholds: undefined,
+    },
+  },
+};

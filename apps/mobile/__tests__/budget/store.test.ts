@@ -20,6 +20,8 @@ const mockRefreshMonth =
 const mockLoadAutoSuggestions = vi.fn<BudgetMonitoringModule["loadAutoSuggestions"]>();
 const mockAcknowledgeAlert = vi.fn<BudgetMonitoringModule["acknowledgeAlert"]>();
 const mockInsertNotificationRecord = vi.fn<(...args: any[]) => any>();
+const mockCommit = vi.fn<(...args: any[]) => Promise<{ success: boolean }>>();
+const mockCommitBatch = vi.fn<(...args: any[]) => Promise<readonly { success: boolean }[]>>();
 
 vi.mock("@/features/budget/lib/monitoring", () => ({
   createBudgetMonitoringModule: mockCreateBudgetMonitoringModule.mockImplementation(() => ({
@@ -27,6 +29,13 @@ vi.mock("@/features/budget/lib/monitoring", () => ({
     loadAutoSuggestions: mockLoadAutoSuggestions,
     acknowledgeAlert: mockAcknowledgeAlert,
   })),
+}));
+
+vi.mock("@/mutations", () => ({
+  createWriteThroughMutationModule: () => ({
+    commit: (...args: any[]) => mockCommit(...args),
+    commitBatch: (...args: any[]) => mockCommitBatch(...args),
+  }),
 }));
 
 vi.mock("@/features/notifications", () => ({
@@ -129,6 +138,9 @@ async function initializeBudgetStore(month: Month = "2026-03" as Month) {
 describe("useBudgetStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCommit.mockResolvedValue({ success: true });
+    mockCommitBatch.mockResolvedValue([{ success: true }]);
+    mockRefreshMonth.mockResolvedValue(EMPTY_BUDGET_REFRESH_SNAPSHOT);
   });
 
   afterEach(() => {
@@ -240,5 +252,63 @@ describe("useBudgetStore", () => {
     });
     expect(mockRefreshMonth).not.toHaveBeenCalled();
     expect(useBudgetStore.getState().autoSuggestions).toEqual(suggestions);
+  });
+
+  it("creates, updates, and deletes budgets through write-through mutations", async () => {
+    const { createBudget, deleteBudget, updateBudget } = await initializeBudgetStore();
+
+    await expect(
+      createBudget(mockDb, USER_ID, "food" as CategoryId, requireCopAmount(120000))
+    ).resolves.toBe(true);
+    await expect(
+      updateBudget({
+        db: mockDb,
+        userId: USER_ID,
+        id: "budget-1" as BudgetId,
+        amount: requireCopAmount(130000),
+      })
+    ).resolves.toBe(true);
+    await expect(deleteBudget(mockDb, USER_ID, "budget-1" as BudgetId)).resolves.toBe(true);
+
+    expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "budget.save" }));
+    expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "budget.update" }));
+    expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "budget.delete" }));
+  });
+
+  it("returns false when budget creation input is invalid or write-through fails", async () => {
+    const { createBudget } = await initializeBudgetStore();
+
+    await expect(
+      createBudget(mockDb, USER_ID, "food" as CategoryId, requireCopAmount(0))
+    ).resolves.toBe(false);
+
+    mockCommit.mockResolvedValueOnce({ success: false });
+    await expect(
+      createBudget(mockDb, USER_ID, "food" as CategoryId, requireCopAmount(120000))
+    ).resolves.toBe(false);
+  });
+
+  it("copies budgets forward and accepts budget suggestions", async () => {
+    const { acceptBudgetSuggestions, copyBudgetsForward, useBudgetStore } =
+      await initializeBudgetStore("2026-03" as Month);
+
+    await expect(copyBudgetsForward(mockDb, USER_ID, "2026-04" as Month)).resolves.toBe(true);
+    await expect(
+      acceptBudgetSuggestions(
+        mockDb,
+        USER_ID,
+        new Map([["food" as CategoryId, requireCopAmount(150000)]])
+      )
+    ).resolves.toBe(true);
+    await expect(acceptBudgetSuggestions(mockDb, USER_ID, new Map())).resolves.toBe(true);
+
+    expect(useBudgetStore.getState().currentMonth).toBe("2026-04");
+    expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "budget.copy" }));
+    expect(mockCommitBatch).toHaveBeenCalledWith([
+      expect.objectContaining({
+        kind: "budget.save",
+        row: expect.objectContaining({ categoryId: "food", amount: 150000 }),
+      }),
+    ]);
   });
 });

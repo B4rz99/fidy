@@ -41,7 +41,7 @@ export default defineConfig({
     },
     coverage: {
       provider: "v8",
-      reporter: ["text", "html", "json-summary"],
+      reporter: ["text", "html", "json-summary", "json"],
       include: [
         "features/**/lib/**",
         "features/**/data/**",

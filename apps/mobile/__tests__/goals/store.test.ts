@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addContribution,
   createGoal,
+  deleteGoal,
   initializeGoalSession,
   loadGoalsForUser,
   selectGoal,
@@ -211,5 +212,28 @@ describe("goal store boundary", () => {
       expect.objectContaining({ kind: "goalContribution.save" })
     );
     expect(useGoalStore.getState().goals).toEqual([updatedGoalSnapshot]);
+  });
+
+  it("clears the selected goal after deleting it", async () => {
+    mockCommit.mockResolvedValueOnce({ success: true });
+    mockLoadGoals.mockResolvedValueOnce([]);
+
+    initializeGoalSession("user-1" as UserId);
+    useGoalStore.setState({
+      activeUserId: "user-1" as UserId,
+      goals: [baseGoalSnapshot],
+      selectedGoalId: "goal-1",
+      selectedGoalContributions: [],
+      isLoading: false,
+    });
+
+    await expect(deleteGoal({} as never, "user-1" as UserId, "goal-1")).resolves.toBe(true);
+
+    expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "goal.delete" }));
+    expect(useGoalStore.getState()).toMatchObject({
+      goals: [],
+      selectedGoalId: null,
+      selectedGoalContributions: [],
+    });
   });
 });

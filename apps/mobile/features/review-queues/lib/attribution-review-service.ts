@@ -62,10 +62,12 @@ function scoreLast4Kind(kind: FinancialAccountRow["kind"]) {
 }
 
 function scoreAccountHintKind(kind: FinancialAccountRow["kind"]) {
-  if (kind === "wallet") {
-    return 4;
-  }
-  return kind === "checking" ? 2 : 0;
+  return (
+    {
+      wallet: 4,
+      checking: 2,
+    }[kind] ?? 0
+  );
 }
 
 function getSuggestedKindScore(
