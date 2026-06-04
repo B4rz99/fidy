@@ -163,7 +163,10 @@ async function readSsePayloads(input: {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- intentional streaming loop
   while (true) {
     const { done, value } = await input.reader.read();
-    if (done) return "continue";
+    if (done) {
+      buffer += decoder.decode();
+      return buffer.length > 0 ? processSseLines(buffer.split("\n"), input) : "continue";
+    }
 
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
