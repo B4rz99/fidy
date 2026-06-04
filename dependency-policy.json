@@ -2,222 +2,207 @@
   "deferredUpdates": [
     {
       "name": "@react-native-community/datetimepicker",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "@react-native-community/netinfo",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "@react-navigation/bottom-tabs",
-      "until": "2026-06-01",
-      "reason": "Navigation minor update should land separately from the SDK 55 restoration."
+      "until": "2026-07-15",
+      "reason": "Held at 7.15.10 because 7.16.x pulls a newer React Navigation native/core pair and fails Expo doctor duplicate native-module checks under SDK 55."
     },
     {
       "name": "@sentry/react-native",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Major v8 migration needs a dedicated Sentry PR with config review, source map verification, and native QA."
     },
     {
       "name": "@shopify/flash-list",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Expo SDK 56 expects 2.0.2; newer native versions need Expo compatibility confirmation."
     },
     {
       "name": "better-sqlite3",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Native test database addon update should land in a dedicated dependency PR with install and DB test verification."
     },
     {
-      "name": "posthog-react-native",
-      "until": "2026-06-01",
-      "reason": "React Native analytics update should land separately from the SDK 55 restoration."
-    },
-    {
       "name": "react-native",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible React Native version; newer React Native versions require an SDK migration PR."
     },
     {
       "name": "react-native-gesture-handler",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "react-native-reanimated",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "react-native-safe-area-context",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "react-native-screens",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "react-native-worklets",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "dependency-cruiser",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Minor dependency update should land in a dedicated tooling PR so architecture reports can be reviewed separately."
     },
     {
       "name": "babel-preset-expo",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "eslint-config-expo",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-background-task",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-blur",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-constants",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-crypto",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-dev-client",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-font",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-glass-effect",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-haptics",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-image",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-linking",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-localization",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-notifications",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-router",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-secure-store",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-splash-screen",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-sqlite",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-status-bar",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-symbols",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-system-ui",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-task-manager",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-updates",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "expo-web-browser",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
       "name": "eslint",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."
     },
     {
-      "name": "oxfmt",
-      "until": "2026-06-01",
-      "reason": "Minor formatter update should land in a dedicated tooling PR so formatting churn can be reviewed separately."
-    },
-    {
-      "name": "oxlint",
-      "until": "2026-06-01",
-      "reason": "Minor lint tooling update should land in a dedicated tooling PR so rule and diagnostic changes can be reviewed separately."
-    },
-    {
       "name": "tailwindcss",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Tailwind 4 requires NativeWind compatibility proof and a dedicated styling migration."
     },
     {
       "name": "xcodebuildmcp",
-      "until": "2026-06-01",
+      "until": "2026-07-15",
       "reason": "Minor native tooling update should land in a dedicated tooling PR so simulator and Xcode workflow changes can be reviewed separately."
     }
   ]

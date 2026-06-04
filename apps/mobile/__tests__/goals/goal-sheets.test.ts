@@ -125,6 +125,8 @@ test("goal payment date opens the shared calendar picker instead of editing raw 
   expect(addPaymentSource).toContain("TransactionDatePickerDialog");
   expect(addPaymentSource).toContain("showDatePicker");
   expect(addPaymentSource).toContain("setShowDatePicker(true)");
+  expect(addPaymentSource).toContain("toLocaleDateString(locale)");
+  expect(addPaymentSource).toContain("value={dateLabel}");
   expect(addPaymentSource).toContain("setDate(toIsoDate(nextDate))");
   expect(addPaymentSource).not.toContain('placeholder="YYYY-MM-DD"');
 });

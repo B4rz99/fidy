@@ -1,9 +1,7 @@
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
-import { FieldButton } from "@/shared/components";
-import { View } from "@/shared/components/rn";
+import { MoneyEntryDateButton } from "@/shared/components";
 import { useCurrentDate, useTranslation } from "@/shared/hooks";
 import { getMinimumGoalDate } from "./GoalDateField.helpers";
-import { styles } from "./GoalForm.styles";
 
 type GoalDateFieldProps = {
   readonly locale: string;
@@ -36,8 +34,8 @@ export function GoalDateField({
     : "";
 
   return (
-    <View style={styles.fieldGroup}>
-      <FieldButton
+    <>
+      <MoneyEntryDateButton
         label={t("goals.create.targetDate")}
         value={dateLabel}
         placeholder={t("goals.create.targetDate")}
@@ -53,6 +51,6 @@ export function GoalDateField({
         onClose={onClose}
         visible={showDatePicker}
       />
-    </View>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { CategoryPill } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { Button, ChoiceTray, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
+import { Button, ChoiceTray, MoneyEntryAmountField, MoneyEntryScreen } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -90,23 +90,22 @@ export function CreateBudgetFormContent({
         </>
       }
       amountContent={
-        <View style={styles.amountSection}>
-          <MoneyAmountDisplay
-            color={primaryColor}
-            cursorStyle={cursorStyle}
-            cursorVisible
-            digits={digits}
-            size="hero"
-          />
-          {selectedSuggestion && selectedCategory ? (
-            <Text style={[styles.suggestionHint, { color: secondaryColor }]}>
-              {t("budgets.create.lastMonthHint", {
-                amount: formatMoney(selectedSuggestion.suggestedAmount),
-                category: getCategoryLabel(selectedCategory, locale),
-              })}
-            </Text>
-          ) : null}
-        </View>
+        <MoneyEntryAmountField
+          color={primaryColor}
+          cursorStyle={cursorStyle}
+          cursorVisible
+          digits={digits}
+          helper={
+            selectedSuggestion && selectedCategory ? (
+              <Text style={[styles.suggestionHint, { color: secondaryColor }]}>
+                {t("budgets.create.lastMonthHint", {
+                  amount: formatMoney(selectedSuggestion.suggestedAmount),
+                  category: getCategoryLabel(selectedCategory, locale),
+                })}
+              </Text>
+            ) : null
+          }
+        />
       }
       onKeyPress={handleKey}
     />
