@@ -29,6 +29,12 @@ Synthesize findings before editing. Fix important issues when the user asked you
 
 Do not defer findings that would make the PR unsafe, misleading, or difficult to review.
 
-## Step 4 — Report
+## Step 4 — Optional Structured Autoreview
+
+For non-trivial changes, optionally run the project-local autoreview helper if it is installed at `.agents/skills/autoreview/scripts/autoreview`. Treat its output as advisory: verify each accepted finding against the real code path and the Fidy review lenses above before fixing or reporting it.
+
+If an autoreview-triggered fix changes code, rerun the focused tests and rerun autoreview until no accepted actionable findings remain, or clearly report why a remaining finding was consciously rejected.
+
+## Step 5 — Report
 
 Lead with findings, ordered by severity, with file and line references where possible. If no issues are found, say so clearly and mention any remaining test gaps or residual risk.
