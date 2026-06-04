@@ -62,7 +62,7 @@ const parseIsoBankDate = (rawDate: string): string | null => {
   });
 };
 
-const parseColombianDayMonthYearDate = (rawDate: string): string | null => {
+export const parseColombianDayMonthYearDate = (rawDate: string): string | null => {
   const match = rawDate.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/);
   if (!match?.[1] || !match[2] || !match[3]) return null;
   const year = Number(match[3].length === 2 ? `20${match[3]}` : match[3]);
