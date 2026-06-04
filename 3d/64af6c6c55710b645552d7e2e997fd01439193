@@ -1,0 +1,35 @@
+apps/mobile/vitest.crap.config.ts
+  s_932544e6acf14f::t_16c22091fd91ad 2,10-11
+apps/mobile/crap4ts.config.ts
+  s_932544e6acf14f::t_16c22091fd91ad 2,8-9
+apps/mobile/crap-scope.mjs
+  s_932544e6acf14f::t_16c22091fd91ad 1-32
+apps/mobile/features/auth/store.ts
+  s_932544e6acf14f::t_16c22091fd91ad 13
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_932544e6acf14f::t_16c22091fd91ad 52,106,230-231
+apps/mobile/__tests__/goals/store.test.ts
+  s_932544e6acf14f::t_16c22091fd91ad 106-117,238
+apps/mobile/scripts/normalize-crap-coverage.mjs
+  s_932544e6acf14f::t_16c22091fd91ad 5,64
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_932544e6acf14f::t_cc5093b88dd3a0 42-51,366-383
+apps/mobile/features/auth/provider-sign-in.ts
+  s_932544e6acf14f::t_16c22091fd91ad 1-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "3d64af6c6c55710b645552d7e2e997fd01439193",
+  "prompts": {},
+  "sessions": {
+    "s_932544e6acf14f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9335-da94-71a1-9b07-ef50c847978c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
