@@ -1,0 +1,19 @@
+apps/mobile/features/email-capture/services/bank-email-parser-helpers.ts
+  s_932544e6acf14f::t_8d4f164e234d9b 65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "72a15b50a65a9adea4c5039470a309eff3e0463f",
+  "prompts": {},
+  "sessions": {
+    "s_932544e6acf14f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9335-da94-71a1-9b07-ef50c847978c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
