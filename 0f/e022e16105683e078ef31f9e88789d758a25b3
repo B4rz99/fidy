@@ -1,0 +1,167 @@
+apps/mobile/features/categories/components/category-form/CreateCategoryScreenContent.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 56
+apps/mobile/app/connected-accounts.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 14,96,128-133,137,170-176,179,191
+apps/mobile/shared/components/Callout.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 4,6,87,89-92,116,129-138
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 6-12,89,102,129,131
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3,50,91,171,199
+apps/mobile/shared/components/MoneyEntryTextField.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,4,9,12-15,17-18,21-22,25-75
+apps/mobile/shared/components/FormSection.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 5,18-19,60
+docs/adr/0006-mobile-ui-kit-and-semantic-theme-tokens.md
+  s_7e714903e184aa::t_3640f340e1f26d 23,34-43
+apps/mobile/shared/components/GlassSurface.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3,5-6,11-12,14-15,21-22,24,28-45,47,51-56,64,69-70
+apps/mobile/features/qa/components/qa-tools/QaToolsContent.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,130,140,155,160
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 21,43-46,50-56,228-229
+  s_7e714903e184aa::t_c275f0dc409a6f 23
+apps/mobile/features/email-capture/components/EmailConnectBanner.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 50,59
+apps/mobile/features/transactions/components/TransactionAccountPickerDialog.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,17-35
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsHero.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1,30,34
+apps/mobile/features/search/components/search-screen/SearchFilterControls.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1,58-60,64,74-75
+  s_7e714903e184aa::t_c275f0dc409a6f 2
+apps/mobile/features/qa/components/LocalQaProfileTools.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 30,40,49
+apps/mobile/shared/components/IconActionButton.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3-4,18,31-41,51-57,63-71
+apps/mobile/app/delete-account.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 28
+apps/mobile/features/transactions/components/TransactionDatePickerDialog.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 23
+apps/mobile/shared/components/EntryField.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,5,51-56,59,63-64
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailSection.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,19-21
+apps/mobile/features/calendar/components/CalendarGrid.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,74,107
+apps/mobile/shared/components/index.ts
+  s_7e714903e184aa::t_3640f340e1f26d 16-17,39-40,50-53
+apps/mobile/features/design-system/ui.public.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3-10,61,159-164
+apps/mobile/__tests__/transactions/add-screen-source.test.ts
+  s_7e714903e184aa::t_3640f340e1f26d 136-138,183-185
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 102
+apps/mobile/features/capture-sources/components/ApplePaySetupCard.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,8,12-15,19,24,27,75-78,80-82,88,93,100,116
+apps/mobile/features/transactions/components/transaction-form/TransactionAccountSection.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 32
+apps/mobile/features/analytics/components/IncomeExpenseStrip.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1,19,49
+apps/mobile/features/settings/components/PrivateBackupScreen.tsx
+  s_7e714903e184aa::t_c275f0dc409a6f 13
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 11,18-19,46,61-62,136-147,160-162,168-250
+apps/mobile/shared/components/FieldButton.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 6,90-91,93-111
+apps/mobile/features/auth/components/OAuthButton.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2-3,11,23,27-35,42-48,52-60
+apps/mobile/shared/components/Button.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3,5,20-24,28,30,56-57,62-80,87-91,93-107,111-122
+apps/mobile/shared/components/DialogRouteFrame.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 7,35-38,67
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_7e714903e184aa::t_c275f0dc409a6f 3
+  s_7e714903e184aa::t_3640f340e1f26d 6,52,54-57,91,99,107-108,110-111
+apps/mobile/shared/components/AppToastHost.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 8,58,67-78,104-108
+apps/mobile/features/goals/components/goal-detail/GoalDetailAiPlanTab.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1,16,28
+apps/mobile/shared/components/DialogFrame.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 5,42,44-56,69-80,95-103,106-109
+apps/mobile/features/transfers/components/transfer-form/TransferSidePicker.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 6,8,34,37-44,47-51,53-72,84,86-88,90-106
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 7,120-129
+apps/mobile/features/account-suggestions/components/LinkSuggestedAccountScreen.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 7,30,33-41
+apps/mobile/features/transfers/components/transfer-form/TransferSideCard.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 106-112
+apps/mobile/features/transactions/components/transaction-form/TransactionMetadataRow.tsx
+  s_7e714903e184aa::t_0b6780ce3d7067 43-48
+  s_7e714903e184aa::t_3640f340e1f26d 1,35,59
+apps/mobile/shared/components/FilterPill.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3,5,31-33,46-64,70-79
+apps/mobile/shared/components/MoneyEntryDateButton.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1-3,5-6,13-17,20-27,29-30,32-33,35-40,42-81
+apps/mobile/features/transactions/components/TransactionCategoryPickerDialog.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1-3,18-36
+apps/mobile/features/calendar/components/CalendarMonthBoard.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 4,90,92-94,166
+apps/mobile/features/qa/components/LocalQaLoginButton.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 22-23
+apps/mobile/features/search/components/search-screen/SearchInputBar.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1,25,39
+apps/mobile/features/search/components/search-screen/SearchTransactionItem.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 5-6,45,79,84-90
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 12,179,210,232,237
+apps/mobile/features/qa/components/qa-tools/QaToolsCardButton.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1,31-48
+apps/mobile/shared/components/Chip.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3-5,20-23,35-45,66-67,70-86,99-113
+apps/mobile/features/ai-chat/components/StarterSuggestions.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,60-69,82-84
+  s_7e714903e184aa::t_c275f0dc409a6f 5
+apps/mobile/app/language-picker.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 26
+apps/mobile/features/goals/components/CelebrationModal.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,68-70,151
+apps/mobile/features/onboarding/components/ConnectEmailStep.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 11,111,127,132
+  s_7e714903e184aa::t_0b6780ce3d7067 98-103
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2,4,31-32,61,64-82
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3,43,60,84-86,113
+apps/mobile/features/search/components/ResultsSummary.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 1,16,33,41-43
+apps/mobile/shared/components/Card.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3-4,47-60,63,68
+apps/mobile/shared/components/FormTextField.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 11,59-82
+apps/mobile/app/auto-suggest-budgets.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 72
+apps/mobile/features/ai-chat/components/ActionCard.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 44
+apps/mobile/shared/components/FilterTextField.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 4,32-44
+apps/mobile/features/transfers/components/TransferEntryContent.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3-12,15,101,103-104,106-118,120-121,123-133
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 6,70-73,76-86,88-89,92-100
+apps/mobile/app/theme-picker.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 28
+apps/mobile/shared/components/SettingsSection.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 3,19
+apps/mobile/shared/components/FormScreen.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 4-6,24,28-48
+apps/mobile/features/review-queues/components/shared.tsx
+  s_7e714903e184aa::t_3640f340e1f26d 2-8,82-83,85-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "0fe022e16105683e078ef31f9e88789d758a25b3",
+  "prompts": {},
+  "sessions": {
+    "s_7e714903e184aa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e92ef-6bec-7b40-b8a6-a4735a155983",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
