@@ -2,10 +2,7 @@ import type { FormTextFieldProps } from "./FormTextField";
 import { FormTextField } from "./FormTextField";
 import { useThemeColor } from "@/shared/hooks";
 
-type MoneyEntryTextFieldProps = Omit<FormTextFieldProps, "inputStyle" | "labelStyle"> & {
-  readonly inputStyle?: FormTextFieldProps["inputStyle"];
-  readonly labelStyle?: FormTextFieldProps["labelStyle"];
-};
+type MoneyEntryTextFieldProps = FormTextFieldProps;
 
 export function MoneyEntryTextField({
   inputStyle,

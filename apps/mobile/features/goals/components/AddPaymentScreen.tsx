@@ -58,7 +58,7 @@ function addPaymentReducer(state: AddPaymentState, action: AddPaymentAction): Ad
 
 export function AddPaymentScreen() {
   const { back } = useRouter();
-  const { t } = useTranslation();
+  const { locale, t } = useTranslation();
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const userId = useOptionalUserId();
@@ -79,6 +79,7 @@ export function AddPaymentScreen() {
 
   const selectedDate = new Date(`${date}T00:00:00`);
   const datePickerDate = Number.isNaN(selectedDate.getTime()) ? new Date() : selectedDate;
+  const dateLabel = datePickerDate.toLocaleDateString(locale);
 
   const handleKey = useCallback((key: string) => {
     dispatch({ type: "pressKey", key });
@@ -134,7 +135,7 @@ export function AddPaymentScreen() {
 
             <MoneyEntryDateButton
               label={t("goals.payment.date")}
-              value={date}
+              value={dateLabel}
               onPress={() => {
                 Keyboard.dismiss();
                 dispatch({ type: "openDatePicker" });
