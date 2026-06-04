@@ -1,0 +1,25 @@
+apps/mobile/__tests__/ai-chat/ai-chat-api-service.test.ts
+  s_932544e6acf14f::t_f96d1e29fcd77d 64-65,67-110,112-115
+  s_932544e6acf14f::t_a4e913203bcee2 66,111
+apps/mobile/__tests__/ai-chat/callers.test.ts
+  s_932544e6acf14f::t_c9a5d70ac706a2 3-5,7-37,45-53,55-81
+  s_932544e6acf14f::t_aa69dad1db70bc 54
+apps/mobile/features/ai-chat/services/create-ai-chat-api-service.ts
+  s_932544e6acf14f::t_17d0b5c1bb8ba1 166-169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c5aa84eeca9bd9a6298ead1b874f328eef50e0f1",
+  "prompts": {},
+  "sessions": {
+    "s_932544e6acf14f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9335-da94-71a1-9b07-ef50c847978c",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
