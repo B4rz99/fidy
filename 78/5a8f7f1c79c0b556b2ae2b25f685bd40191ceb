@@ -1,0 +1,77 @@
+apps/mobile/features/email-capture/services/bank-email-parser-helpers.ts
+  s_932544e6acf14f::t_74a3ec58855706 1-123
+apps/mobile/features/ai-chat/hooks/use-session-cleanup.ts
+  s_932544e6acf14f::t_fe3a37679be844 12-13,19-20,28-30,34,50,55
+  s_932544e6acf14f::t_4ba5507131c02a 10-11,14-18,21-27,31-33,35-45,49,53
+apps/mobile/__tests__/ai-chat/ai-chat-api-service.test.ts
+  s_932544e6acf14f::t_6e120150278f96 222-255
+apps/mobile/features/email-capture/services/email-capture-sync-policy.ts
+  s_932544e6acf14f::t_9a38324e695ca8 28,30-31,34,36,39,59
+apps/mobile/__tests__/email-capture/bank-email-parser.test.ts
+  s_932544e6acf14f::t_844348aef709da 188-210
+apps/mobile/__tests__/notifications/store.test.ts
+  s_932544e6acf14f::t_efa42b9ed9ab30 140-144
+  s_932544e6acf14f::t_5ceffaf75319bf 145-147
+  s_932544e6acf14f::t_7445d623d6e8cc 135-139,148-155
+apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts
+  s_932544e6acf14f::t_9c11d853af60b1 69-73,87-89
+  s_932544e6acf14f::t_4ba5507131c02a 74-75
+apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts
+  s_932544e6acf14f::t_656622b9a2bb86 1-135
+apps/mobile/features/email-capture/services/gmail-adapter.ts
+  s_932544e6acf14f::t_9a38324e695ca8 51-53
+  s_932544e6acf14f::t_c5bf221f653a92 18,25
+  s_932544e6acf14f::t_1399ef317613d1 55-57,59-61
+apps/mobile/features/auth/store.ts
+  s_932544e6acf14f::t_1e62d21631790d 151-152
+apps/mobile/features/email-capture/services/bank-email-parser.ts
+  s_932544e6acf14f::t_74a3ec58855706 7-22
+  s_932544e6acf14f::t_324b6383690860 81-108,112,116,154-164,179-180,182,186,188-190,193
+  s_932544e6acf14f::t_d845f7364c17fa 165-178,181,183-185,187
+apps/mobile/crap-scope.mjs
+  s_932544e6acf14f::t_1e62d21631790d 5,8,17,20
+apps/mobile/__tests__/auth/store.test.ts
+  s_932544e6acf14f::t_7888941433a84f 2,358-371
+apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts
+  s_932544e6acf14f::t_9a38324e695ca8 33-35
+apps/mobile/__tests__/email-capture/email-telemetry.test.ts
+  s_932544e6acf14f::t_efa42b9ed9ab30 117-119
+  s_932544e6acf14f::t_d5cd00669c595e 99-116,120
+apps/mobile/__tests__/ai-chat/callers.test.ts
+  s_932544e6acf14f::t_3b0696bced4aa0 19
+apps/mobile/features/auth/provider-sign-in.ts
+  s_932544e6acf14f::t_1e62d21631790d 4,42,48-55
+apps/mobile/features/email-capture/services/create-parse-email-service.ts
+  s_932544e6acf14f::t_9d20f888f1565b 245-247
+apps/mobile/__tests__/email-capture/source-event-review-repository.test.ts
+  s_932544e6acf14f::t_4749fda94e23df 1-67
+apps/mobile/features/ai-chat/services/create-ai-chat-api-service.ts
+  s_932544e6acf14f::t_19fd35bd752811 257-259
+  s_932544e6acf14f::t_d5fa7b126bf04e 176-185,190-196,198-200,208,210
+  s_932544e6acf14f::t_45062023eebdc2 154,158,163-166,168-174,201-206
+  s_932544e6acf14f::t_8b887da30732af 135-153
+  s_932544e6acf14f::t_e45b7ca655250c 186-189,197
+apps/mobile/features/notifications/lib/derive.ts
+  s_932544e6acf14f::t_9a38324e695ca8 113-115
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_932544e6acf14f::t_4be9d10128176b 26-36,39,41-50,52-57,59,61-66,77-95
+apps/mobile/__tests__/ai-chat/store.test.ts
+  s_932544e6acf14f::t_c41094fce51d84 2,20,22-23
+  s_932544e6acf14f::t_1399ef317613d1 4-6,8,12,100-112,243-382
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "785a8f7f1c79c0b556b2ae2b25f685bd40191ceb",
+  "prompts": {},
+  "sessions": {
+    "s_932544e6acf14f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9335-da94-71a1-9b07-ef50c847978c",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
