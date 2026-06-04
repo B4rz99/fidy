@@ -18,9 +18,9 @@ import {
 } from "@/features/calendar/ui.public";
 import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/routes.public";
-import { AppAuroraBackground, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { AppAuroraBackground, SegmentedControl, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Alert, Platform, Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
@@ -39,33 +39,21 @@ function SegmentControl({
   onSwitch: (tab: FinanceTab) => void;
 }) {
   const { t } = useTranslation();
-  const card = useThemeColor("card");
-  const accentGreen = useThemeColor("accentGreen");
-  const secondary = useThemeColor("secondary");
 
-  const tabs: readonly { key: FinanceTab; label: string }[] = [
-    { key: "analytics", label: t("analytics.title") },
-    { key: "goals", label: t("goals.title") },
-    { key: "calendar", label: t("calendar.title") },
+  const tabs: readonly { value: FinanceTab; label: string }[] = [
+    { value: "analytics", label: t("analytics.title") },
+    { value: "goals", label: t("goals.title") },
+    { value: "calendar", label: t("calendar.title") },
   ];
 
   return (
-    <View style={[styles.segmentContainer, { backgroundColor: card }]}>
-      {tabs.map((tab) => (
-        <Pressable
-          key={tab.key}
-          style={[
-            styles.segmentButton,
-            active === tab.key ? { backgroundColor: accentGreen } : undefined,
-          ]}
-          onPress={() => onSwitch(tab.key)}
-        >
-          <Text style={[styles.segmentText, { color: active === tab.key ? "#FFFFFF" : secondary }]}>
-            {tab.label}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
+    <SegmentedControl
+      options={tabs}
+      value={active}
+      onChange={onSwitch}
+      tone="success"
+      style={styles.headerSegment}
+    />
   );
 }
 
@@ -233,26 +221,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  segmentContainer: {
-    flexDirection: "row",
-    borderRadius: 12,
-    padding: 4,
-    width: 320,
-  },
-  segmentButton: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    height: 32,
-  },
-  segmentText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 13,
-  },
   androidSegmentWrap: {
     alignItems: "center",
     paddingVertical: 8,
+  },
+  headerSegment: {
+    width: 320,
   },
   calendarPanel: {
     flex: 1,

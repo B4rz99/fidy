@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { Button, EmptyState, FormTextField, ScreenLayout } from "@/shared/components";
+import { Button, EmptyState, FormTextField, GlassSurface, ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -40,8 +40,6 @@ function ResolvedCreateSuggestedAccountForm({
   const service = useMemo(() => createAccountSuggestionService(), []);
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
 
@@ -105,8 +103,6 @@ function ResolvedCreateSuggestedAccountForm({
           inputStyle={[
             styles.input,
             {
-              backgroundColor: card,
-              borderColor: borderSubtle,
               color: primary,
             },
           ]}
@@ -121,20 +117,16 @@ function ResolvedCreateSuggestedAccountForm({
               const isSelected = option === kind;
 
               return (
-                <Pressable
-                  key={option}
-                  style={[
-                    styles.kindPill,
-                    {
-                      backgroundColor: isSelected ? accentGreenLight : card,
-                      borderColor: isSelected ? accentGreen : borderSubtle,
-                    },
-                  ]}
-                  onPress={() => setKind(option)}
-                >
-                  <Text style={[styles.kindText, { color: primary }]}>
-                    {t(`financialAccounts.kinds.${option}`)}
-                  </Text>
+                <Pressable key={option} onPress={() => setKind(option)}>
+                  <GlassSurface
+                    padded={false}
+                    radius={12}
+                    style={[styles.kindPill, isSelected ? { borderColor: accentGreen } : null]}
+                  >
+                    <Text style={[styles.kindText, { color: primary }]}>
+                      {t(`financialAccounts.kinds.${option}`)}
+                    </Text>
+                  </GlassSurface>
                 </Pressable>
               );
             })}

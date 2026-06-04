@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { Modal, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { GlassSurface } from "./GlassSurface";
 
 type DialogFrameProps = {
   readonly children: ReactNode;
@@ -32,40 +33,27 @@ export function DialogFrame({ children, onClose, testID, visible }: DialogFrameP
 }
 
 type DialogPanelProps = {
-  readonly backgroundRole?: "card" | "page";
   readonly children: ReactNode;
   readonly maxHeight?: "72%" | "88%";
   readonly showHandle?: boolean;
   readonly style?: StyleProp<ViewStyle>;
 };
 
-export function DialogPanel({
-  backgroundRole = "page",
-  children,
-  maxHeight,
-  showHandle = false,
-  style,
-}: DialogPanelProps) {
-  const backgroundColor = useThemeColor(backgroundRole);
+export function DialogPanel({ children, maxHeight, showHandle = false, style }: DialogPanelProps) {
   const borderSubtle = useThemeColor("borderSubtle");
-
-  return (
-    <View
-      style={[
-        {
-          gap: 12,
-          width: "100%",
-          maxWidth: 480,
-          alignSelf: "center",
-          borderRadius: 24,
-          padding: 16,
-          backgroundColor,
-          maxHeight,
-        },
-        style,
-      ]}
-      onStartShouldSetResponder={() => true}
-    >
+  const panelStyle = [
+    {
+      gap: 12,
+      width: "100%" as const,
+      maxWidth: 480,
+      alignSelf: "center" as const,
+      padding: 16,
+      maxHeight,
+    },
+    style,
+  ];
+  const content = (
+    <>
       {showHandle ? (
         <View
           style={{
@@ -78,7 +66,18 @@ export function DialogPanel({
         />
       ) : null}
       {children}
-    </View>
+    </>
+  );
+
+  return (
+    <GlassSurface
+      padded={false}
+      radius={24}
+      style={panelStyle}
+      onStartShouldSetResponder={() => true}
+    >
+      {content}
+    </GlassSurface>
   );
 }
 
@@ -93,25 +92,21 @@ export function DialogTitle({ children }: { readonly children: ReactNode }) {
 export function DialogCancelButton({ onPress }: { readonly onPress: () => void }) {
   const { t } = useTranslation();
   const secondary = useThemeColor("secondary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
+  const buttonStyle = {
+    alignItems: "center" as const,
+    paddingVertical: 14,
+  };
+  const label = (
+    <Text style={{ color: secondary, fontFamily: "Poppins_600SemiBold", fontSize: 15 }}>
+      {t("common.cancel")}
+    </Text>
+  );
 
   return (
-    <Pressable
-      style={{
-        alignItems: "center",
-        borderRadius: 16,
-        backgroundColor: card,
-        borderWidth: 1,
-        borderColor: borderSubtle,
-        paddingVertical: 14,
-      }}
-      onPress={onPress}
-      accessibilityRole="button"
-    >
-      <Text style={{ color: secondary, fontFamily: "Poppins_600SemiBold", fontSize: 15 }}>
-        {t("common.cancel")}
-      </Text>
+    <Pressable onPress={onPress} accessibilityRole="button">
+      <GlassSurface isInteractive padded={false} radius={16} style={buttonStyle}>
+        {label}
+      </GlassSurface>
     </Pressable>
   );
 }

@@ -27,7 +27,6 @@ export function ProfileScreen() {
 
   const accentGreen = useThemeColor("accentGreen");
   const secondaryColor = useThemeColor("secondary");
-  const borderColor = useThemeColor("borderSubtle");
 
   const handleLogOut = () => {
     Alert.alert(t("settings.logoutConfirmTitle"), t("settings.logoutConfirmMessage"), [
@@ -100,8 +99,7 @@ export function ProfileScreen() {
             onPress={handleLogOut}
             variant="secondary"
             icon={<LogOut size={20} color={secondaryColor} />}
-            className="w-full rounded-2xl bg-card dark:bg-card-dark"
-            style={{ borderColor }}
+            className="w-full rounded-2xl"
           />
 
           <LocalQaProfileTools />

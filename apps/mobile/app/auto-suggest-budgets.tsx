@@ -39,7 +39,6 @@ export default function AutoSuggestBudgetsScreen() {
   const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
     useSuggestionSelection(autoSuggestions);
 
-  const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -70,7 +69,7 @@ export default function AutoSuggestBudgetsScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: cardBg }]}
+      style={[styles.flex, { backgroundColor: pageBg }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView

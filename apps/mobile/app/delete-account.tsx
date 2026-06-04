@@ -25,10 +25,7 @@ export default function DeleteAccountDialogRoute() {
 
   return (
     <DialogRouteFrame>
-      <View
-        className="bg-card dark:bg-card-dark"
-        style={{ padding: 24, alignItems: "center", gap: 16 }}
-      >
+      <View style={{ padding: 24, alignItems: "center", gap: 16 }}>
         <View
           style={{
             width: 64,

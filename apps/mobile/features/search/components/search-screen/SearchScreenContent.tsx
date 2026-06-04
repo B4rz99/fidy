@@ -15,7 +15,6 @@ export function SearchScreenContent({
   inputRef,
   inputText,
   onBack,
-  peachLight,
   primary,
   ready,
   results,
@@ -40,7 +39,6 @@ export function SearchScreenContent({
             handleTogglePanel={handleTogglePanel}
             inputRef={inputRef}
             inputText={inputText}
-            peachLight={peachLight}
             placeholder={t("search.placeholder")}
             primary={primary}
             results={results}

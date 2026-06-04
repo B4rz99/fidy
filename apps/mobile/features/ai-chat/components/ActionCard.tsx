@@ -41,7 +41,7 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
           onPress={onDismiss}
           variant="secondary"
           size="compact"
-          className="h-9 flex-1 bg-page dark:bg-page-dark"
+          className="h-9 flex-1"
         />
         <Button
           label={t("common.delete")}

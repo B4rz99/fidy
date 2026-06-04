@@ -1,6 +1,13 @@
 import { Stack, useRouter } from "expo-router";
 import type { ReactNode } from "react";
-import { Button, Card, ProgressBar, ScreenLayout, SettingsSection } from "@/shared/components";
+import {
+  Button,
+  Card,
+  GlassSurface,
+  ProgressBar,
+  ScreenLayout,
+  SettingsSection,
+} from "@/shared/components";
 import { Bell, CheckCircle, Sparkles, Wallet } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -51,7 +58,7 @@ export function DesignSystemScreen() {
           <View className="p-4" style={{ gap: 12 }}>
             <View className="flex-row" style={{ gap: 12 }}>
               <ColorSwatch label="accent" className="bg-accent-green dark:bg-accent-green-dark" />
-              <ColorSwatch label="card" className="bg-card dark:bg-card-dark" bordered />
+              <GlassSwatch label="glass" />
               <ColorSwatch label="peach" className="bg-peach-light dark:bg-peach-light-dark" />
             </View>
             <View className="flex-row" style={{ gap: 12 }}>
@@ -142,6 +149,19 @@ function ColorSwatch({
           bordered ? "border border-border-subtle dark:border-border-subtle-dark" : ""
         }`}
       />
+      <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function GlassSwatch({ label }: { label: string }) {
+  return (
+    <View className="flex-1" style={{ gap: 6 }}>
+      <GlassSurface padded={false} radius={12} style={{ height: 48 }}>
+        <View />
+      </GlassSurface>
       <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
         {label}
       </Text>

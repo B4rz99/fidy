@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { useMemo } from "react";
 import { getBuiltInCategory } from "@/shared/categories";
+import { GlassSurface } from "@/shared/components";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -44,12 +45,10 @@ export function CalendarMonthBoard({
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
-  const cardBg = useThemeColor("card");
   const peach = useThemeColor("peach");
   const peachBg = useThemeColor("peachLight");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const borderColor = useThemeColor("borderSubtle");
 
   const monthSummary = useMemo(
     () => buildCalendarMonthSummary({ bills, currentMonth, payments }),
@@ -88,15 +87,11 @@ export function CalendarMonthBoard({
               const { bill, dueDate, isPaid } = occurrence;
               const category = getBuiltInCategory(bill.categoryId);
               return (
-                <View
+                <GlassSurface
                   key={`${bill.id}-${dueDate}`}
-                  style={[
-                    styles.billCard,
-                    {
-                      backgroundColor: isPaid ? accentGreenLight : cardBg,
-                      borderColor,
-                    },
-                  ]}
+                  padded={false}
+                  radius={18}
+                  style={[styles.billCard, isPaid ? { backgroundColor: accentGreenLight } : null]}
                 >
                   <View style={styles.billRow}>
                     <View style={styles.billMain}>
@@ -168,7 +163,7 @@ export function CalendarMonthBoard({
                       </Pressable>
                     </View>
                   </View>
-                </View>
+                </GlassSurface>
               );
             })}
           </View>

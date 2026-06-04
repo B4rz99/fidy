@@ -10,7 +10,7 @@ import {
 import { Card, FormTextField, ScreenLayout } from "@/shared/components";
 import { CheckCircle, KeyRound, RefreshCcw, Shield, Smartphone } from "@/shared/components/icons";
 import { Alert, Platform, ScrollView, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { captureError } from "@/shared/lib";
 import { uploadConfirmedPrivateBackup } from "../lib/private-backup-upload";
@@ -54,8 +54,6 @@ export function PrivateBackupScreen() {
   );
   const markPrivateBackupUploadFailed = useSettingsStore((s) => s.markPrivateBackupUploadFailed);
   const markPrivateBackupUploadReady = useSettingsStore((s) => s.markPrivateBackupUploadReady);
-  const borderColor = useThemeColor("borderSubtle");
-  const cardColor = useThemeColor("card");
 
   const startSetup = () => {
     beginPrivateBackupSetup(generateBackupRecoveryKey());
@@ -191,8 +189,6 @@ export function PrivateBackupScreen() {
                 minHeight: 52,
                 borderRadius: 16,
                 borderWidth: 1,
-                borderColor,
-                backgroundColor: cardColor,
                 paddingHorizontal: 16,
                 fontFamily: "Poppins_400Regular",
                 fontSize: 14,

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
+import { GlassSurface } from "@/shared/components";
 import { ChevronRight } from "@/shared/components/icons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useTranslation } from "@/shared/hooks";
 import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
 type StarterSuggestionsProps = {
@@ -10,7 +11,6 @@ type StarterSuggestionsProps = {
 
 export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
   const { t } = useTranslation();
-  const borderSubtle = useThemeColor("borderSubtle");
   const supportTextColor = useAiSupportTextColor();
   const suggestions = useMemo(
     () => [
@@ -57,19 +57,16 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
       </View>
       <View style={{ width: "100%", gap: 10 }}>
         {suggestions.map((suggestion) => (
-          <Pressable
-            key={suggestion}
-            onPress={() => onSelect(suggestion)}
-            className="bg-card/80 dark:bg-card-dark/80"
-            style={[styles.suggestionButton, { borderColor: borderSubtle }]}
-          >
-            <Text
-              className="font-poppins-semibold text-label text-primary dark:text-primary-dark"
-              style={{ flex: 1 }}
-            >
-              {suggestion}
-            </Text>
-            <ChevronRight size={18} color={supportTextColor} />
+          <Pressable key={suggestion} onPress={() => onSelect(suggestion)}>
+            <GlassSurface padded={false} radius={18} style={styles.suggestionButton}>
+              <Text
+                className="font-poppins-semibold text-label text-primary dark:text-primary-dark"
+                style={{ flex: 1 }}
+              >
+                {suggestion}
+              </Text>
+              <ChevronRight size={18} color={supportTextColor} />
+            </GlassSurface>
           </Pressable>
         ))}
       </View>
@@ -79,13 +76,11 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
 
 const styles = StyleSheet.create({
   suggestionButton: {
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "center",
     gap: 10,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
 });

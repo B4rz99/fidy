@@ -19,7 +19,8 @@ export function LocalQaLoginButton() {
           .startLocalQaSession()
           .catch(() => undefined);
       }}
-      containerClassName="bg-card dark:bg-card-dark border border-border-subtle dark:border-border-subtle-dark"
+      containerClassName=""
+      useGlassSurface
       textClassName="text-primary dark:text-primary-dark"
     />
   );

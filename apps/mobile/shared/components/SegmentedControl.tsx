@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import type { ViewProps } from "react-native";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor } from "@/shared/hooks";
 import { getSubtleGlassCardTokens } from "./card-tokens";
+import { GlassSurface } from "./GlassSurface";
 
 type SegmentedControlTone = "primary" | "success" | "danger";
 
@@ -48,17 +49,12 @@ export function SegmentedControl<TValue extends string>({
   };
 
   return (
-    <View
+    <GlassSurface
       {...viewProps}
-      className={`h-10 flex-row rounded-full p-[3px] ${className ?? ""}`}
-      style={[
-        styles.container,
-        {
-          backgroundColor: tokens.fallbackBackgroundColor,
-          borderColor: tokens.borderColor,
-        },
-        viewProps.style,
-      ]}
+      className={className}
+      padded={false}
+      radius={999}
+      style={[styles.container, viewProps.style]}
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -92,6 +88,7 @@ export function SegmentedControl<TValue extends string>({
             {option.leading}
             <Text
               className="font-poppins-semibold text-label"
+              numberOfLines={1}
               style={{ color: selected ? activeColor : secondary }}
             >
               {option.label}
@@ -99,7 +96,7 @@ export function SegmentedControl<TValue extends string>({
           </Pressable>
         );
       })}
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -107,9 +104,11 @@ export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlTon
 
 const styles = StyleSheet.create({
   container: {
-    borderCurve: "continuous",
-    borderWidth: 1,
+    borderRadius: 999,
+    flexDirection: "row",
     gap: 4,
+    height: 40,
+    padding: 3,
   },
   option: {
     borderColor: "transparent",

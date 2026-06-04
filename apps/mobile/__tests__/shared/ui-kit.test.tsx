@@ -8,12 +8,15 @@ import { Callout } from "@/shared/components/Callout";
 import { Chip } from "@/shared/components/Chip";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { FieldButton } from "@/shared/components/FieldButton";
+import { FieldSurface } from "@/shared/components/FieldSurface";
 import { FilterPill } from "@/shared/components/FilterPill";
 import { FormTextField } from "@/shared/components/FormTextField";
 import { IconActionButton } from "@/shared/components/IconActionButton";
 import { MetricCard } from "@/shared/components/MetricCard";
 import { MoneyAmountDisplay } from "@/shared/components/MoneyAmountDisplay";
 import { MonthNavigator } from "@/shared/components/MonthNavigator";
+import { PickerDialog } from "@/shared/components/PickerDialog";
+import { PickerOptionRow } from "@/shared/components/PickerOptionRow";
 import { Row } from "@/shared/components/Row";
 import { SegmentedControl } from "@/shared/components/SegmentedControl";
 import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
@@ -40,6 +43,7 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { Callout } from "./Callout"');
     expect(source).toContain('export { EmptyState } from "./EmptyState"');
     expect(source).toContain('export { FieldButton } from "./FieldButton"');
+    expect(source).toContain('export { FieldSurface } from "./FieldSurface"');
     expect(source).toContain('export { FilterPill } from "./FilterPill"');
     expect(source).toContain('export { FilterTextField } from "./FilterTextField"');
     expect(source).toContain('export { FormTextField } from "./FormTextField"');
@@ -54,6 +58,8 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { MoneyEntryTextField } from "./MoneyEntryTextField"');
     expect(source).toContain('export { NumpadActionFooter } from "./NumpadActionFooter"');
     expect(source).toContain('export { NumpadFormScreen } from "./NumpadFormScreen"');
+    expect(source).toContain('export { PickerOptionRow } from "./PickerOptionRow"');
+    expect(source).toContain('export { PickerDialog } from "./PickerDialog"');
     expect(source).toContain('export { PinnedFormStack } from "./PinnedFormStack"');
     expect(source).toContain('export { ChoiceTray } from "./ChoiceTray"');
   });
@@ -127,6 +133,18 @@ describe("shared UI kit", () => {
           selected
           onPress={() => actions.push("filter")}
         />
+        <PickerOptionRow
+          title="Savings"
+          subtitle="Account"
+          selected
+          onPress={() => actions.push("picker")}
+        />
+        <PickerDialog visible={false} title="Choose" onClose={() => actions.push("picker-close")}>
+          <Text>Picker content</Text>
+        </PickerDialog>
+        <FieldSurface>
+          <Text>Field surface</Text>
+        </FieldSurface>
         <FormTextField label="Name" value="" onChangeText={() => undefined} placeholder="Account" />
         <TextActionButton label="See all" onPress={() => actions.push("text-action")} />
       </>
@@ -139,9 +157,97 @@ describe("shared UI kit", () => {
     expect(screen.getByText("Target date")).toBeTruthy();
     expect(screen.getByText("Choose")).toBeTruthy();
     expect(screen.getByText("Monthly spend")).toBeTruthy();
+    expect(screen.getByText("Savings")).toBeTruthy();
+    expect(screen.getByText("Account")).toBeTruthy();
+    expect(screen.getByText("Field surface")).toBeTruthy();
     expect(screen.getByText("Name")).toBeTruthy();
     expect(screen.getByA11yLabel("Name")).toBeTruthy();
     expect(actions).toEqual(["clear", "filter", "text-action"]);
+  });
+
+  it("keeps shared surface styling behind glass modules", () => {
+    const sharedDir = resolve(__dirname, "../../shared/components");
+    const sources = [
+      "Card.tsx",
+      "Button.tsx",
+      "Chip.tsx",
+      "DialogFrame.tsx",
+      "FieldSurface.tsx",
+      "FieldButton.tsx",
+      "FilterPill.tsx",
+      "FilterTextField.tsx",
+      "FormTextField.tsx",
+      "FormSection.tsx",
+      "MoneyEntryFieldSurface.tsx",
+      "PickerDialog.tsx",
+      "PickerOptionRow.tsx",
+      "SettingsSection.tsx",
+    ].map((file) => [file, readFileSync(resolve(sharedDir, file), "utf-8")] as const);
+
+    for (const [file, source] of sources) {
+      expect(source, file).not.toMatch(
+        /\bbg-card\b|\bbg-card-dark\b|\bbg-surface\b|\bbg-surface-dark\b/
+      );
+      expect(source, file).not.toContain('useThemeColor("card")');
+      expect(source, file).not.toContain('useThemeColor("peachLight")');
+      expect(source, file).not.toMatch(/backgroundColor:\s*(card|peachLight)/);
+    }
+
+    expect(readFileSync(resolve(sharedDir, "FieldSurface.tsx"), "utf-8")).toContain(
+      "<GlassSurface"
+    );
+    expect(readFileSync(resolve(sharedDir, "FormTextField.tsx"), "utf-8")).toContain(
+      "<FieldSurface"
+    );
+    expect(readFileSync(resolve(sharedDir, "FieldButton.tsx"), "utf-8")).toContain("<FieldSurface");
+    expect(readFileSync(resolve(sharedDir, "FilterTextField.tsx"), "utf-8")).toContain(
+      "<FieldSurface"
+    );
+    expect(readFileSync(resolve(sharedDir, "PickerDialog.tsx"), "utf-8")).toContain("<DialogFrame");
+    expect(readFileSync(resolve(sharedDir, "Button.tsx"), "utf-8")).not.toMatch(
+      /\bbg-action-primary\b|\bbg-danger\b|\bbg-page\b|\bbg-peach-btn\b/
+    );
+    expect(readFileSync(resolve(sharedDir, "Chip.tsx"), "utf-8")).not.toMatch(
+      /\bbg-action-primary\b|\bbg-danger\b|\bbg-success\b|\bbg-warning\b/
+    );
+  });
+
+  it("keeps numpad entry screens behind the money entry module", () => {
+    const sharedDir = resolve(__dirname, "../../shared/components");
+    const moneyEntrySource = readFileSync(resolve(sharedDir, "MoneyEntryScreen.tsx"), "utf-8");
+    const createBudgetSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx"
+      ),
+      "utf-8"
+    );
+    const addPaymentSource = readFileSync(
+      resolve(__dirname, "../../features/goals/components/AddPaymentScreen.tsx"),
+      "utf-8"
+    );
+    const goalFrameSource = readFileSync(
+      resolve(__dirname, "../../features/goals/components/goal-form/GoalFormFrame.tsx"),
+      "utf-8"
+    );
+    const transactionFormSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/transactions/components/transaction-form/TransactionFormContent.tsx"
+      ),
+      "utf-8"
+    );
+
+    expect(moneyEntrySource).toContain("<NumpadFormScreen");
+    for (const source of [
+      createBudgetSource,
+      addPaymentSource,
+      goalFrameSource,
+      transactionFormSource,
+    ]) {
+      expect(source).toContain("MoneyEntryScreen");
+      expect(source).not.toContain("NumpadFormScreen");
+    }
   });
 
   it("renders money amount display with formatted digits and empty fallback", () => {

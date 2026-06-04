@@ -11,7 +11,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { Button, Card, ScreenLayout } from "@/shared/components";
+import { Button, Card, GlassSurface, ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Platform, ScrollView, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -93,6 +93,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
   const { t, locale } = useTranslation();
   const iconColor = useThemeColor("primary");
   const greenColor = useThemeColor("accentGreen");
+  const primaryColor = useThemeColor("primary");
   const tertiaryColor = useThemeColor("tertiary");
 
   const { pulsingStyle: dotAnimatedStyle } = usePulsingOpacity(isSyncing);
@@ -124,11 +125,16 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
               {provider}
             </Text>
           </View>
-          <View className="rounded-lg bg-accent-green-light px-2.5 py-1 dark:bg-accent-green-light-dark">
+          <GlassSurface
+            nativeGlass={false}
+            padded={false}
+            radius={8}
+            style={{ paddingHorizontal: 10, paddingVertical: 4, borderColor: greenColor }}
+          >
             <Text className="font-poppins-semibold text-[11px] text-accent-green dark:text-accent-green-dark">
               {t("connectedAccounts.connected")}
             </Text>
-          </View>
+          </GlassSurface>
         </View>
 
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark">
@@ -161,11 +167,16 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
             {provider}
           </Text>
         </View>
-        <View className="rounded-lg bg-peach-btn px-2.5 py-1 dark:bg-peach-btn-dark">
-          <Text className="font-poppins-semibold text-[11px] text-tertiary dark:text-tertiary-dark">
+        <GlassSurface
+          nativeGlass={false}
+          padded={false}
+          radius={8}
+          style={{ paddingHorizontal: 10, paddingVertical: 4, borderColor: primaryColor }}
+        >
+          <Text className="font-poppins-semibold text-[11px] text-primary dark:text-primary-dark">
             {t("connectedAccounts.notConnected")}
           </Text>
-        </View>
+        </GlassSurface>
       </View>
 
       <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
@@ -177,7 +188,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
         onPress={onConnect}
         variant="secondary"
         icon={<Mail size={18} color={iconColor} />}
-        className="h-11 rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
+        className="h-11 rounded-icon"
       />
     </Card>
   );

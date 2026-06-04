@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import { CATEGORY_MAP } from "@/shared/categories";
+import { GlassSurface } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -27,11 +28,9 @@ export function PeriodShiftContent({
   const { t, locale } = useTranslation();
   const secondaryColor = useThemeColor("secondary");
   const primaryColor = useThemeColor("primary");
-  const cardBg = useThemeColor("card");
   const peachLight = useThemeColor("peachLight");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const borderSubtle = useThemeColor("borderSubtle");
   const selectedBar =
     shiftView.categoryBars.find((item) => item.categoryId === selectedCategoryId) ??
     shiftView.categoryBars[0] ??
@@ -48,7 +47,7 @@ export function PeriodShiftContent({
 
   return (
     <>
-      <View style={[styles.heroCard, { backgroundColor: cardBg, borderColor: borderSubtle }]}>
+      <GlassSurface padded={false} style={styles.heroCard}>
         <Text style={[styles.eyebrow, { color: secondaryColor }]}>
           {t("analytics.vsPreviousPeriodLabel")}
         </Text>
@@ -89,7 +88,7 @@ export function PeriodShiftContent({
             </Text>
           </View>
         )}
-      </View>
+      </GlassSurface>
 
       <CategoryChangesCard changes={shiftView.categoryChanges.slice(0, 4)} />
       <IncomeExpenseStrip incomeExpense={incomeExpense} />
@@ -165,13 +164,11 @@ function CategoryChangesCard({ changes }: CategoryChangesCardProps) {
   const { t, locale } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const cardBg = useThemeColor("card");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const borderSubtle = useThemeColor("borderSubtle");
 
   return (
-    <View style={[styles.card, { backgroundColor: cardBg, borderColor: borderSubtle }]}>
+    <GlassSurface padded={false} style={styles.card}>
       <Text style={[styles.cardTitle, { color: primaryColor }]}>{t("analytics.whatChanged")}</Text>
       {changes.map((item) => {
         const category = CATEGORY_MAP[item.categoryId];
@@ -199,7 +196,7 @@ function CategoryChangesCard({ changes }: CategoryChangesCardProps) {
           </View>
         );
       })}
-    </View>
+    </GlassSurface>
   );
 }
 

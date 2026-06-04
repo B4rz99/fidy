@@ -8,6 +8,7 @@ import type {
 } from "react-native";
 import { Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { FieldSurface } from "./FieldSurface";
 
 type FormTextFieldProps = Omit<ViewProps, "children"> &
   Omit<
@@ -40,8 +41,6 @@ export function FormTextField({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const card = useThemeColor("card");
 
   return (
     <View className={className} style={[{ gap: 6 }, style]}>
@@ -57,31 +56,30 @@ export function FormTextField({
       >
         {label}
       </Text>
-      <TextInput
-        {...inputProps}
-        ref={ref}
-        accessible
-        accessibilityLabel={label}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={tertiary}
-        style={[
-          {
-            minHeight: 48,
-            borderWidth: 1,
-            borderRadius: 8,
-            borderCurve: "continuous" as const,
-            paddingHorizontal: 12,
-            fontFamily: "Poppins_800ExtraBold",
-            fontSize: 15,
-            backgroundColor: card,
-            borderColor: borderSubtle,
-            color: primary,
-          },
-          inputStyle,
-        ]}
-        value={value}
-      />
+      <FieldSurface contentStyle={{ paddingHorizontal: 0 }}>
+        <TextInput
+          {...inputProps}
+          ref={ref}
+          accessible
+          accessibilityLabel={label}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={tertiary}
+          style={[
+            {
+              minHeight: 50,
+              paddingHorizontal: 14,
+              fontFamily: "Poppins_800ExtraBold",
+              fontSize: 15,
+              backgroundColor: "transparent",
+              color: primary,
+            },
+            inputStyle,
+            { backgroundColor: "transparent", borderWidth: 0 },
+          ]}
+          value={value}
+        />
+      </FieldSurface>
       {helperText ? (
         <Text
           style={{

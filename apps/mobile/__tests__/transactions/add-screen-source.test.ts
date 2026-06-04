@@ -133,8 +133,9 @@ test("Entry picker backdrops are translucent and do not slide the screen", () =>
   expect(sharedDialogSource).toContain("maxWidth: 480");
   expect(sharedDialogSource).toContain('animationType="fade"');
   expect(transferSidePickerSource).not.toContain('animationType="slide"');
-  expect(transferSidePickerSource).toContain("DialogFrame");
-  expect(transferSidePickerSource).toContain("DialogPanel");
+  expect(transferSidePickerSource).toContain("PickerDialog");
+  expect(transferSidePickerSource).not.toContain("DialogFrame");
+  expect(transferSidePickerSource).not.toContain("DialogPanel");
 });
 
 test("Transaction entry supports expense income transfer and calendar", () => {
@@ -179,7 +180,9 @@ test("Transfer entry supports transfer side pickers and calendar", () => {
   expect(transferEntrySource).not.toContain('replace("/add-transaction');
   expect(transferEntryContentSource).toContain("DateTimePicker");
   expect(transferEntryContentSource).toContain("showCategoryPicker");
-  expect(transferEntryContentSource).toContain("Modal");
+  expect(transferEntryContentSource).toContain("DialogFrame");
+  expect(transferEntryContentSource).toContain("DialogPanel");
+  expect(transferEntryContentSource).toContain("PickerOptionRow");
   expect(transferEntryContentSource).toContain("calendar-picker.backdrop");
   expect(transferEntryContentSource).toContain("category-picker.backdrop");
 });

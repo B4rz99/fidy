@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
+import { GlassSurface } from "@/shared/components";
 import { SendHorizonal } from "@/shared/components/icons";
-import { Pressable, TextInput, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { resolveChatComposerSend } from "../lib/chat-composer";
 import { useAiSupportTextColor } from "./use-ai-support-text-color";
@@ -13,7 +14,6 @@ type ChatInputProps = {
 export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
-  const borderSubtle = useThemeColor("borderSubtle");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
   const supportTextColor = useAiSupportTextColor();
@@ -28,22 +28,8 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const canSend = !disabled && text.trim().length > 0;
 
   return (
-    <View
-      className="flex-row items-end gap-2 bg-card dark:bg-card-dark"
-      style={{
-        marginHorizontal: 12,
-        padding: 10,
-        borderRadius: 24,
-        borderWidth: 1,
-        borderTopColor: borderSubtle,
-        borderColor: borderSubtle,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-      }}
-    >
-      <View
-        className="flex-1 flex-row items-center bg-page dark:bg-page-dark"
-        style={{ borderRadius: 20, paddingVertical: 10, paddingHorizontal: 16 }}
-      >
+    <GlassSurface padded={false} radius={24} style={styles.composer}>
+      <View style={styles.inputWrap}>
         <TextInput
           className="flex-1 text-primary dark:text-primary-dark"
           style={{ fontFamily: "poppins-medium", fontSize: 14, maxHeight: 100, padding: 0 }}
@@ -72,6 +58,25 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
       >
         <SendHorizonal size={18} color="#fff" />
       </Pressable>
-    </View>
+    </GlassSurface>
   );
 }
+
+const styles = StyleSheet.create({
+  composer: {
+    alignItems: "flex-end",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+    flexDirection: "row",
+    gap: 8,
+    marginHorizontal: 12,
+    padding: 10,
+  },
+  inputWrap: {
+    alignItems: "center",
+    borderRadius: 20,
+    flex: 1,
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+});

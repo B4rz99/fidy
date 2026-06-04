@@ -1,5 +1,5 @@
+import { FormTextField, GlassSurface } from "@/shared/components";
 import { Calendar } from "@/shared/components/icons";
-import { FormTextField } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { styles } from "./TransactionForm.styles";
 
@@ -16,7 +16,6 @@ type TransactionMetadataRowProps = {
 };
 
 export function TransactionMetadataRow({
-  borderSubtle,
   dateLabel,
   description,
   descriptionPlaceholder,
@@ -33,7 +32,7 @@ export function TransactionMetadataRow({
         label={descriptionPlaceholder}
         labelStyle={{ display: "none" }}
         style={{ flex: 1, gap: 0 }}
-        inputStyle={[styles.descriptionInput, { borderColor: borderSubtle, color: primaryColor }]}
+        inputStyle={[styles.descriptionInput, { color: primaryColor }]}
         placeholder={descriptionPlaceholder}
         value={description}
         onChangeText={onDescriptionChange}
@@ -41,7 +40,12 @@ export function TransactionMetadataRow({
         onBlur={onDescriptionBlur}
         maxLength={200}
       />
-      <View testID="transaction-form.date" style={[styles.dateChip, { borderColor: borderSubtle }]}>
+      <GlassSurface
+        testID="transaction-form.date"
+        padded={false}
+        radius={10}
+        style={styles.dateChip}
+      >
         <Calendar size={14} color={secondaryColor} />
         <Text
           style={{
@@ -52,7 +56,7 @@ export function TransactionMetadataRow({
         >
           {dateLabel}
         </Text>
-      </View>
+      </GlassSurface>
     </View>
   );
 }

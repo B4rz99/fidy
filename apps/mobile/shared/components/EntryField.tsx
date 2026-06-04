@@ -1,7 +1,8 @@
 import type { ComponentType, ReactNode } from "react";
-import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
+import { Pressable, Text, TextInput } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./EntryScaffold.styles";
+import { MoneyEntryFieldSurface } from "./MoneyEntryFieldSurface";
 
 export type EntryFieldProps = {
   readonly icon: ComponentType<{ size?: number; color?: string }>;
@@ -40,8 +41,6 @@ export function EntryField({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const card = useThemeColor("card");
   const toneColor = getToneColor({ primary, secondary, tertiary, value, valueTone });
   const content = children ?? (
     <Text
@@ -49,21 +48,20 @@ export function EntryField({
       style={[styles.fieldText, { color: toneColor }]}
     >{`${label}${value ? ` ${value}` : ""}`}</Text>
   );
-  const fieldStyle = [styles.fieldCard, { backgroundColor: card, borderColor: borderSubtle }];
+  const surface = (
+    <MoneyEntryFieldSurface testID={onPress ? undefined : testID}>
+      <Icon size={18} color={secondary} />
+      {content}
+    </MoneyEntryFieldSurface>
+  );
 
   if (!onPress) {
-    return (
-      <View testID={testID} style={fieldStyle}>
-        <Icon size={18} color={secondary} />
-        {content}
-      </View>
-    );
+    return surface;
   }
 
   return (
-    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" style={fieldStyle}>
-      <Icon size={18} color={secondary} />
-      {content}
+    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" style={{ flex: 1 }}>
+      {surface}
     </Pressable>
   );
 }

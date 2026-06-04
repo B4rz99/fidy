@@ -20,7 +20,7 @@ export function TransactionDatePickerDialog(props: {
 
   return (
     <DialogFrame visible={props.visible} testID="calendar-picker.backdrop" onClose={props.onClose}>
-      <DialogPanel backgroundRole="card">
+      <DialogPanel>
         <DialogTitle>{t("common.date")}</DialogTitle>
         <DateTimePicker
           value={props.date}

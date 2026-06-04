@@ -1,17 +1,24 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
-import { ArrowLeftRight, Calendar, Pencil, Tag } from "@/shared/components/icons";
-import { EntryField, EntryTextInputField } from "@/shared/components/EntryScaffold";
-import { Modal, Platform, Pressable, Text, View } from "@/shared/components/rn";
-import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatInputDisplay, showSuccessToast } from "@/shared/lib";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
+import {
+  Button,
+  DialogCancelButton,
+  DialogFrame,
+  DialogPanel,
+  DialogTitle,
+  PickerOptionRow,
+} from "@/shared/components";
+import { ArrowLeftRight, Calendar, Pencil, Tag } from "@/shared/components/icons";
+import { EntryField, EntryTextInputField } from "@/shared/components/EntryScaffold";
+import { Platform, View } from "@/shared/components/rn";
+import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
+import { formatInputDisplay, showSuccessToast } from "@/shared/lib";
 import type { TransferSide } from "../lib/build-transfer";
 import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
 import { TRANSFER_FORM_TEST_IDS } from "./transfer-form/TransferForm.types";
 import { useTransferForm } from "./transfer-form/useTransferForm";
-import { transferEntryStyles } from "./TransferEntryScreen.styles";
 
 function getTransferSideTitle(
   side: TransferSide | null,
@@ -31,14 +38,7 @@ export function useTransferEntry(props: { readonly enabled?: boolean } = {}) {
   });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const maximumDate = useCurrentDate();
-  const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const card = useThemeColor("card");
-  const page = useThemeColor("page");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const accentGreen = useThemeColor("accentGreen");
-  const modalBackdrop = useThemeColor("modalBackdrop");
-  const onAccent = useThemeColor("onAccent");
 
   return {
     amount: formatInputDisplay(form.digits),
@@ -98,132 +98,39 @@ export function useTransferEntry(props: { readonly enabled?: boolean } = {}) {
           onClose={form.handlePickerClose}
           onSelect={form.applySelectedSide}
         />
-        <Modal
+        <DialogFrame
           visible={form.showDatePicker}
-          transparent
-          animationType="fade"
-          onRequestClose={() => form.setShowDatePicker(false)}
+          testID="calendar-picker.backdrop"
+          onClose={() => form.setShowDatePicker(false)}
         >
-          <Pressable
-            testID="calendar-picker.backdrop"
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              backgroundColor: `${modalBackdrop}40`,
-              padding: 24,
-            }}
-            onPress={() => form.setShowDatePicker(false)}
-          >
-            <View
-              style={{
-                gap: 12,
-                width: "100%",
-                maxWidth: 480,
-                alignSelf: "center",
-                borderRadius: 24,
-                backgroundColor: card,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <Text style={{ color: primary, fontFamily: "Poppins_700Bold", fontSize: 22 }}>
-                {t("common.date")}
-              </Text>
-              <DateTimePicker
-                value={form.date}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                maximumDate={maximumDate}
-                onChange={form.handleDateChange}
-              />
-              <Pressable
-                style={{
-                  alignItems: "center",
-                  borderRadius: 16,
-                  backgroundColor: accentGreen,
-                  paddingVertical: 14,
-                }}
-                onPress={() => form.setShowDatePicker(false)}
-                accessibilityRole="button"
-              >
-                <Text style={{ color: onAccent, fontFamily: "Poppins_600SemiBold", fontSize: 15 }}>
-                  {t("common.confirm")}
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Modal>
-        <Modal
+          <DialogPanel>
+            <DialogTitle>{t("common.date")}</DialogTitle>
+            <DateTimePicker
+              value={form.date}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              maximumDate={maximumDate}
+              onChange={form.handleDateChange}
+            />
+            <Button label={t("common.confirm")} onPress={() => form.setShowDatePicker(false)} />
+          </DialogPanel>
+        </DialogFrame>
+        <DialogFrame
           visible={showCategoryPicker}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowCategoryPicker(false)}
+          testID="category-picker.backdrop"
+          onClose={() => setShowCategoryPicker(false)}
         >
-          <Pressable
-            testID="category-picker.backdrop"
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              backgroundColor: `${modalBackdrop}40`,
-              padding: 24,
-            }}
-            onPress={() => setShowCategoryPicker(false)}
-          >
-            <View
-              style={{
-                gap: 12,
-                width: "100%",
-                maxWidth: 480,
-                alignSelf: "center",
-                borderRadius: 24,
-                backgroundColor: page,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <Text style={{ color: primary, fontFamily: "Poppins_700Bold", fontSize: 22 }}>
-                {t("common.category")}
-              </Text>
-              <Pressable
-                style={[
-                  transferEntryStyles.categoryRow,
-                  { borderColor: accentGreen, backgroundColor: card },
-                ]}
-                onPress={() => setShowCategoryPicker(false)}
-                accessibilityRole="button"
-              >
-                <Tag size={20} color={secondary} />
-                <Text
-                  style={{
-                    flex: 1,
-                    color: primary,
-                    fontFamily: "Poppins_600SemiBold",
-                    fontSize: 15,
-                  }}
-                >
-                  {t("transfers.activity.generic")}
-                </Text>
-                <Text style={{ color: accentGreen, fontFamily: "Poppins_700Bold" }}>✓</Text>
-              </Pressable>
-              <Pressable
-                style={{
-                  alignItems: "center",
-                  borderRadius: 16,
-                  backgroundColor: card,
-                  borderWidth: 1,
-                  borderColor: borderSubtle,
-                  paddingVertical: 14,
-                }}
-                onPress={() => setShowCategoryPicker(false)}
-                accessibilityRole="button"
-              >
-                <Text style={{ color: secondary, fontFamily: "Poppins_600SemiBold", fontSize: 15 }}>
-                  {t("common.cancel")}
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Modal>
+          <DialogPanel maxHeight="72%">
+            <DialogTitle>{t("common.category")}</DialogTitle>
+            <PickerOptionRow
+              selected
+              leading={<Tag size={20} color={secondary} />}
+              title={t("transfers.activity.generic")}
+              onPress={() => setShowCategoryPicker(false)}
+            />
+            <DialogCancelButton onPress={() => setShowCategoryPicker(false)} />
+          </DialogPanel>
+        </DialogFrame>
       </>
     ),
   };

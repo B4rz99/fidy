@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { PressableProps, ViewProps } from "react-native";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { GlassSurface } from "./GlassSurface";
 
 type FilterPillProps = Omit<ViewProps, "children"> & {
   readonly label?: string;
@@ -27,18 +28,9 @@ export function FilterPill({
   ...viewProps
 }: FilterPillProps) {
   const primary = useThemeColor("primary");
-  const peachLight = useThemeColor("peachLight");
-  const backgroundColor = selected ? (selectedColor ?? primary) : peachLight;
-
-  return (
-    <Pressable
-      {...viewProps}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ ...viewProps.accessibilityState, selected }}
-      className={`items-center justify-center rounded-full px-3 ${className ?? ""}`}
-      style={[{ backgroundColor }, style]}
-    >
+  const backgroundColor = selectedColor ?? primary;
+  const content = (
+    <>
       {leading ? <View>{leading}</View> : null}
       {label ? (
         <Text
@@ -51,8 +43,37 @@ export function FilterPill({
           {label}
         </Text>
       ) : null}
+    </>
+  );
+
+  return (
+    <Pressable
+      {...viewProps}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ ...viewProps.accessibilityState, selected }}
+      className={className}
+      style={style}
+    >
+      {selected ? (
+        <View style={[styles.surface, { backgroundColor }]}>{content}</View>
+      ) : (
+        <GlassSurface padded={false} radius={999} style={styles.surface}>
+          {content}
+        </GlassSurface>
+      )}
     </Pressable>
   );
 }
 
 export type { FilterPillProps };
+
+const styles = StyleSheet.create({
+  surface: {
+    alignItems: "center",
+    borderRadius: 999,
+    justifyContent: "center",
+    minHeight: 32,
+    paddingHorizontal: 12,
+  },
+});

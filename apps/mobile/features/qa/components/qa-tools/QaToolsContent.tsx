@@ -1,5 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button } from "@/shared/components";
+import { Button, GlassSurface } from "@/shared/components";
 import { ActivityIndicator, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { FLAG_KEYS, QA_PROFILES, QA_TARGET_LABEL_KEYS, QA_TARGET_LIST } from "./QaTools.constants";
@@ -17,8 +17,6 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
   const { bottom } = useSafeAreaInsets();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const card = useThemeColor("card");
 
   return (
     <ScrollView
@@ -129,10 +127,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
             .slice()
             .reverse()
             .map((entry) => (
-              <View
-                key={entry.id}
-                style={[styles.eventCard, { borderColor: borderSubtle, backgroundColor: card }]}
-              >
+              <GlassSurface key={entry.id} padded={false} radius={12} style={styles.eventCard}>
                 <Text style={[styles.eventTitle, { color: primary }]}>
                   {`${entry.level.toUpperCase()} · ${entry.message}`}
                 </Text>
@@ -142,7 +137,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
                     {JSON.stringify(entry.context)}
                   </Text>
                 ) : null}
-              </View>
+              </GlassSurface>
             ))
         )}
       </QaToolsSection>
@@ -157,15 +152,12 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
             .slice()
             .reverse()
             .map((event) => (
-              <View
-                key={event.id}
-                style={[styles.eventCard, { borderColor: borderSubtle, backgroundColor: card }]}
-              >
+              <GlassSurface key={event.id} padded={false} radius={12} style={styles.eventCard}>
                 <Text style={[styles.eventTitle, { color: primary }]}>
                   {`${event.method} · ${event.outcome.toUpperCase()}${event.status ? ` · ${event.status}` : ""}`}
                 </Text>
                 <Text style={[styles.eventSubtitle, { color: secondary }]}>{event.url}</Text>
-              </View>
+              </GlassSurface>
             ))
         )}
       </QaToolsSection>

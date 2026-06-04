@@ -3,6 +3,7 @@ import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-nati
 import { X } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { FieldSurface } from "./FieldSurface";
 import { IconActionButton } from "./IconActionButton";
 
 type FieldButtonProps = Omit<ViewProps, "children"> & {
@@ -48,8 +49,6 @@ export function FieldButton({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const card = useThemeColor("card");
   const valueNode =
     typeof value === "string" ? (
       <Text
@@ -88,29 +87,28 @@ export function FieldButton({
         accessible={accessible}
         importantForAccessibility={importantForAccessibility}
         testID={testID}
-        className={`min-h-10 flex-row items-center rounded-lg px-3 ${disabled ? "opacity-60" : ""}`}
-        style={[
-          {
-            backgroundColor: card,
-            borderColor: active ? primary : borderSubtle,
-            borderWidth: 1,
-            gap: 10,
-          },
-          buttonStyle,
-        ]}
+        className={`${disabled ? "opacity-60" : ""}`}
+        style={{ minHeight: 40 }}
       >
-        {leading}
-        <View className="flex-1">{valueNode}</View>
-        {handleClear ? (
-          <IconActionButton
-            accessibilityLabel={clearAccessibilityLabel ?? t("common.clear")}
-            icon={<X size={14} color={tertiary} />}
-            onPress={handleClear}
-            size="size-7"
-          />
-        ) : (
-          trailing
-        )}
+        <FieldSurface
+          size="button"
+          radius={8}
+          style={buttonStyle}
+          surfaceStyle={[buttonStyle, active ? { borderColor: primary } : null]}
+        >
+          {leading}
+          <View className="flex-1">{valueNode}</View>
+          {handleClear ? (
+            <IconActionButton
+              accessibilityLabel={clearAccessibilityLabel ?? t("common.clear")}
+              icon={<X size={14} color={tertiary} />}
+              onPress={handleClear}
+              size="size-7"
+            />
+          ) : (
+            trailing
+          )}
+        </FieldSurface>
       </Pressable>
     </View>
   );

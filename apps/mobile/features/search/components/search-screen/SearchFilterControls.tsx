@@ -1,4 +1,5 @@
-import { StyleSheet, View } from "@/shared/components/rn";
+import { GlassSurface } from "@/shared/components";
+import { StyleSheet } from "@/shared/components/rn";
 import { FilterChipRow } from "../FilterChipRow";
 import { ResultsSummary } from "../ResultsSummary";
 import { SearchInputBar } from "./SearchInputBar";
@@ -14,7 +15,6 @@ type SearchFilterControlsProps = Pick<
   | "handleTogglePanel"
   | "inputRef"
   | "inputText"
-  | "peachLight"
   | "primary"
   | "secondary"
   | "showSummary"
@@ -32,7 +32,6 @@ export function SearchFilterControls({
   handleTogglePanel,
   inputRef,
   inputText,
-  peachLight,
   placeholder,
   primary,
   secondary,
@@ -45,7 +44,6 @@ export function SearchFilterControls({
         handleTextChange={handleTextChange}
         inputRef={inputRef}
         inputText={inputText}
-        peachLight={peachLight}
         placeholder={placeholder}
         primary={primary}
         secondary={secondary}
@@ -57,12 +55,13 @@ export function SearchFilterControls({
         onClearAll={handleClearAll}
       />
       {filterPanel ? (
-        <View
-          className="mx-4 mb-3 rounded-lg bg-card/90 dark:bg-card-dark/90"
+        <GlassSurface
+          padded={false}
+          radius={8}
           style={[styles.filterDock, activePanel === "dateRange" ? styles.dateFilterDock : null]}
         >
           {filterPanel}
-        </View>
+        </GlassSurface>
       ) : null}
       {showSummary && summary ? <ResultsSummary summary={summary} /> : null}
     </>
@@ -71,10 +70,9 @@ export function SearchFilterControls({
 
 const styles = StyleSheet.create({
   filterDock: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(15, 23, 42, 0.08)",
-    overflow: "hidden",
     boxShadow: "0 8px 12px rgba(15,23,42,0.05)",
+    marginBottom: 12,
+    marginHorizontal: 16,
   },
   dateFilterDock: {
     minHeight: 140,

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { EmptyState, ScreenLayout } from "@/shared/components";
+import { EmptyState, GlassSurface, ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -27,23 +27,18 @@ function AccountRow({
 }) {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
+  const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <Pressable
-      style={[
-        styles.accountRow,
-        {
-          backgroundColor: isLikelyMatch ? accentGreenLight : card,
-          borderColor: borderSubtle,
-        },
-      ]}
-      onPress={onPress}
-    >
-      <Text style={[styles.accountName, { color: primary }]}>{name}</Text>
-      <Text style={[styles.accountSubtitle, { color: secondary }]}>{subtitle}</Text>
+    <Pressable onPress={onPress}>
+      <GlassSurface
+        padded={false}
+        radius={16}
+        style={[styles.accountRow, isLikelyMatch ? { borderColor: accentGreen } : null]}
+      >
+        <Text style={[styles.accountName, { color: primary }]}>{name}</Text>
+        <Text style={[styles.accountSubtitle, { color: secondary }]}>{subtitle}</Text>
+      </GlassSurface>
     </Pressable>
   );
 }

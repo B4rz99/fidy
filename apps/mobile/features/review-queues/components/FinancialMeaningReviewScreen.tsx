@@ -9,7 +9,7 @@ import {
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
 import { refreshTransactions } from "@/features/transactions/store.public";
-import { ScreenLayout } from "@/shared/components";
+import { GlassSurface, ScreenLayout } from "@/shared/components";
 import { ArrowLeftRight, TriangleAlert } from "@/shared/components/icons";
 import { ScrollView, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -64,8 +64,6 @@ export function FinancialMeaningReviewScreen() {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
 
@@ -178,7 +176,7 @@ export function FinancialMeaningReviewScreen() {
           subtitle={t("financialMeaningReview.reviewSubtitle")}
         />
 
-        <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
+        <GlassSurface padded={false} radius={20} style={styles.card}>
           <Text style={[styles.metaLabel, { color: tertiary }]}>{subject}</Text>
           <View style={styles.titleRow}>
             <View style={styles.titleWrap}>
@@ -209,7 +207,7 @@ export function FinancialMeaningReviewScreen() {
               {t("financialMeaningReview.transferHint")}
             </Text>
           </View>
-        </View>
+        </GlassSurface>
 
         <View style={styles.actionColumn}>
           <ActionButton
@@ -231,12 +229,12 @@ export function FinancialMeaningReviewScreen() {
           />
         </View>
 
-        <View style={[styles.transferTip, { backgroundColor: card, borderColor: borderSubtle }]}>
+        <GlassSurface padded={false} radius={18} style={styles.transferTip}>
           <ArrowLeftRight size={18} color={secondary} />
           <Text style={[styles.transferTipCopy, { color: secondary }]}>
             {t("financialMeaningReview.transferExplanation")}
           </Text>
-        </View>
+        </GlassSurface>
       </ScrollView>
     </ScreenLayout>
   );

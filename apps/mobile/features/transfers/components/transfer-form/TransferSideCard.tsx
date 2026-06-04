@@ -45,7 +45,6 @@ export function TransferSideCard(props: {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const card = useThemeColor("card");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const peachLight = useThemeColor("peachLight");
@@ -104,12 +103,13 @@ export function TransferSideCard(props: {
         accessible
         accessibilityLabel={t("transfers.a11y.selectSide", { side: props.label })}
         accessibilityHint={subtitle}
-        buttonStyle={{
-          backgroundColor: props.side?.kind === "external" ? peachLight : card,
-          borderColor: props.isConflict ? accentRed : undefined,
-          minHeight: 74,
-          paddingVertical: 12,
-        }}
+        buttonStyle={[
+          {
+            minHeight: 74,
+            paddingVertical: 12,
+          },
+          props.isConflict ? { borderColor: accentRed } : null,
+        ]}
       />
     </View>
   );

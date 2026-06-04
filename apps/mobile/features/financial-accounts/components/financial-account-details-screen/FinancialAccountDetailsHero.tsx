@@ -1,3 +1,4 @@
+import { GlassSurface } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountDetailsScreen.styles";
@@ -14,7 +15,6 @@ export function FinancialAccountDetailsHero({
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const card = useThemeColor("card");
   const nav = useThemeColor("nav");
   const accentGreenLight = useThemeColor("accentGreenLight");
 
@@ -27,11 +27,11 @@ export function FinancialAccountDetailsHero({
         </View>
 
         {isDefault ? (
-          <View style={[styles.badge, { backgroundColor: card }]}>
+          <GlassSurface padded={false} radius={999} style={styles.badge}>
             <Text style={[styles.badgeText, { color: nav }]}>
               {t("financialAccounts.labels.default")}
             </Text>
-          </View>
+          </GlassSurface>
         ) : null}
       </View>
     </View>

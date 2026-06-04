@@ -8,6 +8,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture/public";
+import { GlassSurface } from "@/shared/components";
 import { CheckCircle, Mail, Shield } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -48,7 +49,6 @@ export function ConnectEmailStep() {
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-  const cardBg = useThemeColor("card");
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
@@ -95,7 +95,12 @@ export function ConnectEmailStep() {
         <View style={styles.buttons}>
           {checklist.map((item) =>
             item.connected ? (
-              <View key={item.provider} style={[styles.connectedCard, { backgroundColor: cardBg }]}>
+              <GlassSurface
+                key={item.provider}
+                padded={false}
+                radius={12}
+                style={styles.connectedCard}
+              >
                 <View style={styles.providerRow}>
                   <View style={styles.providerIcon}>{PROVIDER_ICONS[item.provider]}</View>
                   <Text style={[styles.connectedText, { color: primaryColor }]}>
@@ -103,7 +108,7 @@ export function ConnectEmailStep() {
                   </Text>
                 </View>
                 <CheckCircle size={22} color={accentGreen} />
-              </View>
+              </GlassSurface>
             ) : (
               <OAuthButton
                 key={item.provider}
@@ -119,12 +124,12 @@ export function ConnectEmailStep() {
           )}
         </View>
 
-        <View style={[styles.trustBadge, { backgroundColor: cardBg }]}>
+        <GlassSurface padded={false} radius={12} style={styles.trustBadge}>
           <Shield size={18} color={accentGreen} />
           <Text style={[styles.trustText, { color: secondaryColor }]}>
             {t("onboarding.connectEmail.trustBadge")}
           </Text>
-        </View>
+        </GlassSurface>
       </View>
 
       <Pressable

@@ -5,6 +5,7 @@ import { CheckCircle } from "@/shared/components/icons";
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { subscribeAppToasts } from "@/shared/lib";
+import { GlassSurface } from "./GlassSurface";
 
 type AppToast = Parameters<Parameters<typeof subscribeAppToasts>[0]>[0];
 
@@ -15,7 +16,6 @@ export function AppToastHost() {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(-80);
   const { top } = useSafeAreaInsets();
-  const card = useThemeColor("card");
   const primary = useThemeColor("primary");
   const accentGreen = useThemeColor("accentGreen");
   const onAccent = useThemeColor("onAccent");
@@ -55,24 +55,27 @@ export function AppToastHost() {
       <Animated.View
         pointerEvents="none"
         style={[
-          styles.toast,
+          styles.toastPosition,
           {
             top: top + 12,
-            backgroundColor: card,
-            borderColor: accentGreen,
-            boxShadow: `0 8px 24px ${primary}29`,
             ...getAndroidShadowFallback(),
           },
           animatedToastStyle,
         ]}
         accessibilityLiveRegion="polite"
       >
-        <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
-          {toast.message}
-        </Text>
-        <View style={[styles.icon, { backgroundColor: accentGreen }]}>
-          <CheckCircle size={16} color={onAccent} strokeWidth={2.5} />
-        </View>
+        <GlassSurface
+          padded={false}
+          radius={18}
+          style={[styles.toast, { borderColor: accentGreen, boxShadow: `0 8px 24px ${primary}29` }]}
+        >
+          <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
+            {toast.message}
+          </Text>
+          <View style={[styles.icon, { backgroundColor: accentGreen }]}>
+            <CheckCircle size={16} color={onAccent} strokeWidth={2.5} />
+          </View>
+        </GlassSurface>
       </Animated.View>
     </View>
   );
@@ -94,15 +97,15 @@ const styles = StyleSheet.create({
   },
   toast: {
     alignItems: "center",
-    alignSelf: "center",
-    borderRadius: 18,
-    borderWidth: 1,
     flexDirection: "row",
     gap: 12,
-    maxWidth: 360,
-    minHeight: 52,
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  toastPosition: {
+    alignSelf: "center",
+    maxWidth: 360,
+    minHeight: 52,
     position: "absolute",
     width: "88%",
   },

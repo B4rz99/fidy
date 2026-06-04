@@ -25,7 +25,7 @@ export default function ThemePickerDialogRoute() {
 
   return (
     <DialogRouteFrame>
-      <View className="bg-card dark:bg-card-dark" style={{ padding: 24 }}>
+      <View style={{ padding: 24 }}>
         <Text
           className="font-poppins-semibold text-primary dark:text-primary-dark"
           style={{ fontSize: 16, textAlign: "center", marginBottom: 20 }}
