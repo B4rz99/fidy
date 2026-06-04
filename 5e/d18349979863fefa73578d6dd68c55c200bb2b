@@ -1,0 +1,54 @@
+apps/mobile/features/review-queues/lib/attribution-review-service.ts
+  s_932544e6acf14f::t_45201cbe69d862 65-70
+.github/workflows/ci.yml
+  s_932544e6acf14f::t_45201cbe69d862 105-120,173
+apps/mobile/__tests__/capture-sources/capture-hooks.test.ts
+  s_932544e6acf14f::t_5b6b002e992d86 1-98
+apps/mobile/features/capture-sources/services/notification-regex-parser.ts
+  s_932544e6acf14f::t_45201cbe69d862 65-124,129-130
+apps/mobile/__tests__/financial-accounts/opening-balance-rows.test.ts
+  s_932544e6acf14f::t_5b6b002e992d86 1-78
+apps/mobile/vitest.config.ts
+  s_932544e6acf14f::t_45201cbe69d862 44
+apps/mobile/package.json
+  s_932544e6acf14f::t_45201cbe69d862 16,96
+apps/mobile/features/financial-accounts/lib/management-service.ts
+  s_932544e6acf14f::t_45201cbe69d862 97-111,116-119
+apps/mobile/__tests__/goals/store.test.ts
+  s_932544e6acf14f::t_45201cbe69d862 5,216-237
+apps/mobile/__tests__/transactions/build-transaction.test.ts
+  s_932544e6acf14f::t_45201cbe69d862 93-130
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_932544e6acf14f::t_5b6b002e992d86 30-35,102-104
+  s_932544e6acf14f::t_45201cbe69d862 96-101,105-107,204-207,221-222
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_932544e6acf14f::t_45201cbe69d862 8,19,52-197,223-225,227-228,230-231,235
+package.json
+  s_932544e6acf14f::t_45201cbe69d862 41
+apps/mobile/__tests__/budget/store.test.ts
+  s_932544e6acf14f::t_45201cbe69d862 23-24,34-40,141-143,256-312
+apps/mobile/features/goals/lib/derive/projection.ts
+  s_932544e6acf14f::t_45201cbe69d862 140-174,191,194
+apps/mobile/__tests__/account-suggestions/dismissals-repository.test.ts
+  s_932544e6acf14f::t_5b6b002e992d86 1-72
+apps/mobile/__tests__/auth/oauth-callback.test.ts
+  s_932544e6acf14f::t_5b6b002e992d86 1-31
+apps/mobile/features/auth/store.ts
+  s_932544e6acf14f::t_45201cbe69d862 133-145,150-151,157,161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "5ed18349979863fefa73578d6dd68c55c200bb2b",
+  "prompts": {},
+  "sessions": {
+    "s_932544e6acf14f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9335-da94-71a1-9b07-ef50c847978c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
