@@ -1,0 +1,64 @@
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_7e714903e184aa::t_c8c038a118f8b0 52-55,61
+apps/mobile/features/search/components/ResultsSummary.tsx
+  s_7e714903e184aa::t_35816c428c497a 40-44
+apps/mobile/shared/components/FormTextField.tsx
+  s_7e714903e184aa::t_154a87a6a8daba 8,10,29-41,74-75,78
+  s_7e714903e184aa::t_9364f95bd46af7 58,76-77
+apps/mobile/shared/components/FormSection.tsx
+  s_7e714903e184aa::t_35816c428c497a 24-28
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_7e714903e184aa::t_35816c428c497a 68-72
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_7e714903e184aa::t_35816c428c497a 120-125
+apps/mobile/features/qa/components/qa-tools/QaToolsContent.tsx
+  s_7e714903e184aa::t_d00f1f69901df8 130,155
+apps/mobile/__tests__/navigation/tab-layout.test.ts
+  s_7e714903e184aa::t_d7759333aa07f4 89-91
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_7e714903e184aa::t_d00f1f69901df8 179,232
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountForm.styles.ts
+  s_7e714903e184aa::t_35816c428c497a 39-43
+apps/mobile/features/qa/components/qa-tools/QaToolsCardButton.tsx
+  s_7e714903e184aa::t_d7759333aa07f4 34
+apps/mobile/features/search/components/search-screen/SearchFilterControls.tsx
+  s_7e714903e184aa::t_35816c428c497a 73-77
+apps/mobile/features/auth/components/OAuthButton.tsx
+  s_7e714903e184aa::t_35816c428c497a 40,43
+apps/mobile/shared/components/FieldButton.tsx
+  s_7e714903e184aa::t_154a87a6a8daba 97
+apps/mobile/shared/components/Button.tsx
+  s_7e714903e184aa::t_154a87a6a8daba 53,90
+  s_7e714903e184aa::t_47acfeba579faf 2,66-67,104
+apps/mobile/shared/components/FilterPill.tsx
+  s_7e714903e184aa::t_154a87a6a8daba 57-59
+  s_7e714903e184aa::t_5f3f63f4db9436 61-66
+apps/mobile/shared/components/AppToastHost.tsx
+  s_7e714903e184aa::t_35816c428c497a 70,104-106
+apps/mobile/shared/components/MoneyEntryTextField.tsx
+  s_7e714903e184aa::t_2e448228522fdc 27,41,63
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_7e714903e184aa::t_d7759333aa07f4 42
+apps/mobile/shared/components/GlassSurface.tsx
+  s_7e714903e184aa::t_d00f1f69901df8 50
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreen.styles.ts
+  s_7e714903e184aa::t_d00f1f69901df8 57-61
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_7e714903e184aa::t_3aaa64c10aa4be 4,16-24,110-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "affb23ffe06f93a34d9fe5f38b5d1b818a1cd335",
+  "prompts": {},
+  "sessions": {
+    "s_7e714903e184aa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e92ef-6bec-7b40-b8a6-a4735a155983",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
