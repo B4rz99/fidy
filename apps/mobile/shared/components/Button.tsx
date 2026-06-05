@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { PressableProps } from "react-native";
+import type { PressableProps, StyleProp, ViewStyle } from "react-native";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassSurface } from "./GlassSurface";
@@ -50,6 +50,7 @@ export function Button({
   icon,
   disabled,
   className,
+  style,
   ...pressableProps
 }: ButtonProps) {
   const isDisabled = disabled || loading;
@@ -62,6 +63,8 @@ export function Button({
         ? accentRed
         : accentGreen;
   const usesGlassSurface = variant !== "ghost";
+  const surfaceStyle =
+    usesGlassSurface && typeof style !== "function" ? (style as StyleProp<ViewStyle>) : null;
   const semanticBorderColor =
     variant === "primary"
       ? accentGreen
@@ -84,6 +87,7 @@ export function Button({
       {...pressableProps}
       accessibilityRole={pressableProps.accessibilityRole ?? "button"}
       disabled={isDisabled}
+      style={style}
       className={`${SIZE_CLASS_NAMES[size]} ${
         usesGlassSurface
           ? "rounded-xl"
@@ -97,6 +101,7 @@ export function Button({
           radius={12}
           style={[
             styles.glassContent,
+            surfaceStyle,
             semanticBorderColor ? { borderColor: semanticBorderColor } : null,
           ]}
         >

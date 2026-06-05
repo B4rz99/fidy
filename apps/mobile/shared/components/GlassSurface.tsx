@@ -47,6 +47,7 @@ export function GlassSurface({
   if (canUseLiquidGlass) {
     return (
       <GlassView
+        key={isInteractive ? "interactive" : "static"}
         {...viewProps}
         glassEffectStyle="clear"
         tintColor={tokens.tintColor}

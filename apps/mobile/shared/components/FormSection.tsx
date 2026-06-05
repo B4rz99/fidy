@@ -21,7 +21,11 @@ export function FormSection({ children, optionalLabel, style, title }: FormSecti
         {
           padding: 16,
           gap: 14,
-          boxShadow: "0 12px 20px rgba(0,0,0,0.18)",
+          shadowColor: "#000000",
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.18,
+          shadowRadius: 20,
+          elevation: 8,
         },
         style,
       ]}

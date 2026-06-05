@@ -195,8 +195,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderRadius: 12,
-    borderCurve: "continuous",
     paddingHorizontal: 16,
   },
   providerRow: {
@@ -220,8 +218,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 12,
-    borderCurve: "continuous",
     marginTop: 8,
   },
   trustText: {

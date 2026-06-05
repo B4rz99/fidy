@@ -202,9 +202,6 @@ function CategoryChangesCard({ changes }: CategoryChangesCardProps) {
 
 const styles = StyleSheet.create({
   heroCard: {
-    borderRadius: 16,
-    borderCurve: "continuous",
-    borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
     gap: 8,
   },
@@ -261,9 +258,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   card: {
-    borderRadius: 16,
-    borderCurve: "continuous",
-    borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
     gap: 7,
   },

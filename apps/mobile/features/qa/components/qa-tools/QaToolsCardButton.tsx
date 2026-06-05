@@ -31,7 +31,7 @@ export function QaToolsCardButton({
     <Pressable onPress={onPress} testID={testId}>
       <GlassSurface
         padded={false}
-        radius={16}
+        radius={scenario ? 18 : 16}
         style={[
           styles.cardButton,
           scenario ? styles.scenarioButton : undefined,

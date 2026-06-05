@@ -174,7 +174,6 @@ const styles = StyleSheet.create({
   },
   accountRow: {
     borderWidth: 1,
-    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 4,

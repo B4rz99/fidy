@@ -52,13 +52,18 @@ export function FilterPill({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ ...viewProps.accessibilityState, selected }}
-      className={className}
-      style={style}
     >
       {selected ? (
-        <View style={[styles.surface, { backgroundColor }]}>{content}</View>
+        <View className={className} style={[styles.surface, style, { backgroundColor }]}>
+          {content}
+        </View>
       ) : (
-        <GlassSurface padded={false} radius={999} style={styles.surface}>
+        <GlassSurface
+          className={className}
+          padded={false}
+          radius={999}
+          style={[styles.surface, style]}
+        >
           {content}
         </GlassSurface>
       )}

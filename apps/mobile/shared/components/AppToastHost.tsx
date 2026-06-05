@@ -67,7 +67,7 @@ export function AppToastHost() {
         <GlassSurface
           padded={false}
           radius={18}
-          style={[styles.toast, { borderColor: accentGreen, boxShadow: `0 8px 24px ${primary}29` }]}
+          style={[styles.toast, { borderColor: accentGreen, shadowColor: primary }]}
         >
           <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
             {toast.message}
@@ -101,6 +101,9 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
   },
   toastPosition: {
     alignSelf: "center",

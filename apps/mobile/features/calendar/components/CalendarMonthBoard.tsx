@@ -198,8 +198,6 @@ const styles = StyleSheet.create({
   },
   billCard: {
     borderWidth: 1,
-    borderRadius: 12,
-    borderCurve: "continuous",
     padding: 12,
     gap: 10,
   },

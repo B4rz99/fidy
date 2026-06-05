@@ -52,9 +52,6 @@ export function IncomeExpenseStrip({ incomeExpense }: IncomeExpenseStripProps) {
 
 const styles = StyleSheet.create({
   strip: {
-    borderRadius: 16,
-    borderCurve: "continuous",
-    borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
     gap: 7,
   },

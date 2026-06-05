@@ -24,11 +24,10 @@ export function MoneyEntryTextField({
   return (
     <View style={[{ gap: 4 }, style]}>
       <Text
+        className="font-poppins-semibold text-caption"
         style={[
           {
             color: primary,
-            fontFamily: "Poppins_600SemiBold",
-            fontSize: 12,
           },
           labelStyle,
         ]}
@@ -39,6 +38,7 @@ export function MoneyEntryTextField({
         <TextInput
           {...inputProps}
           ref={ref}
+          className="font-poppins-medium text-[14px]"
           accessible
           accessibilityLabel={label}
           onChangeText={onChangeText}
@@ -50,8 +50,6 @@ export function MoneyEntryTextField({
               borderWidth: 0,
               color: primary,
               flex: 1,
-              fontFamily: "Poppins_500Medium",
-              fontSize: 14,
               height: 44,
               padding: 0,
             },
@@ -62,11 +60,9 @@ export function MoneyEntryTextField({
       </MoneyEntryFieldSurface>
       {helperText ? (
         <Text
+          className="font-poppins-medium text-caption leading-[18px]"
           style={{
             color: secondary,
-            fontFamily: "Poppins_500Medium",
-            fontSize: 12,
-            lineHeight: 18,
           }}
         >
           {helperText}

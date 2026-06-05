@@ -37,10 +37,10 @@ export function OAuthButton({
     <Pressable
       onPress={onPress}
       testID={testID}
-      className={`h-[52px] items-center justify-center rounded-xl ${containerClassName}`}
+      className={`h-[52px] items-center justify-center ${useGlassSurface ? "" : "rounded-xl"} ${containerClassName}`}
     >
       {useGlassSurface ? (
-        <GlassSurface isInteractive padded={false} radius={12} style={styles.glassContent}>
+        <GlassSurface padded={false} radius={12} style={styles.glassContent}>
           {content}
         </GlassSurface>
       ) : (

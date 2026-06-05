@@ -86,9 +86,9 @@ describe("Tab layout", () => {
     );
 
     expect(financeSource).toContain('useState<FinanceTab>("analytics")');
-    const analyticsIndex = financeSource.indexOf('{ key: "analytics"');
-    const goalsIndex = financeSource.indexOf('{ key: "goals"');
-    const calendarIndex = financeSource.indexOf('{ key: "calendar"');
+    const analyticsIndex = financeSource.indexOf('{ value: "analytics"');
+    const goalsIndex = financeSource.indexOf('{ value: "goals"');
+    const calendarIndex = financeSource.indexOf('{ value: "calendar"');
 
     expect(analyticsIndex).toBeGreaterThanOrEqual(0);
     expect(goalsIndex).toBeGreaterThanOrEqual(0);

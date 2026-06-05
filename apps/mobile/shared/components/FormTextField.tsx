@@ -5,8 +5,9 @@ import type {
   TextInputProps,
   TextStyle,
   ViewProps,
+  ViewStyle,
 } from "react-native";
-import { Text, TextInput, View } from "@/shared/components/rn";
+import { StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { FieldSurface } from "./FieldSurface";
 
@@ -25,6 +26,19 @@ type FormTextFieldProps = Omit<ViewProps, "children"> &
     readonly ref?: Ref<RNTextInput>;
   };
 
+function getFieldSurfaceStyle(inputStyle: StyleProp<TextStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(inputStyle);
+  if (!flattened) return null;
+
+  return {
+    borderColor: flattened.borderColor,
+    borderRadius: flattened.borderRadius,
+    borderWidth: flattened.borderWidth,
+    height: flattened.height,
+    minHeight: flattened.minHeight,
+  };
+}
+
 export function FormTextField({
   label,
   value,
@@ -41,6 +55,7 @@ export function FormTextField({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
+  const fieldSurfaceStyle = getFieldSurfaceStyle(inputStyle);
 
   return (
     <View className={className} style={[{ gap: 6 }, style]}>
@@ -56,7 +71,11 @@ export function FormTextField({
       >
         {label}
       </Text>
-      <FieldSurface contentStyle={{ paddingHorizontal: 0 }}>
+      <FieldSurface
+        contentStyle={{ paddingHorizontal: 0 }}
+        style={fieldSurfaceStyle}
+        surfaceStyle={fieldSurfaceStyle}
+      >
         <TextInput
           {...inputProps}
           ref={ref}
@@ -71,7 +90,6 @@ export function FormTextField({
               paddingHorizontal: 14,
               fontFamily: "Poppins_800ExtraBold",
               fontSize: 15,
-              backgroundColor: "transparent",
               color: primary,
             },
             inputStyle,

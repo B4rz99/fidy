@@ -94,7 +94,7 @@ export function FieldButton({
           size="button"
           radius={8}
           style={buttonStyle}
-          surfaceStyle={[buttonStyle, active ? { borderColor: primary } : null]}
+          surfaceStyle={active ? { borderColor: primary } : null}
         >
           {leading}
           <View className="flex-1">{valueNode}</View>

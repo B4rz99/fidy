@@ -176,7 +176,7 @@ export function FinancialMeaningReviewScreen() {
           subtitle={t("financialMeaningReview.reviewSubtitle")}
         />
 
-        <GlassSurface padded={false} radius={20} style={styles.card}>
+        <GlassSurface radius={20} style={styles.card}>
           <Text style={[styles.metaLabel, { color: tertiary }]}>{subject}</Text>
           <View style={styles.titleRow}>
             <View style={styles.titleWrap}>
@@ -229,7 +229,7 @@ export function FinancialMeaningReviewScreen() {
           />
         </View>
 
-        <GlassSurface padded={false} radius={18} style={styles.transferTip}>
+        <GlassSurface radius={18} style={styles.transferTip}>
           <ArrowLeftRight size={18} color={secondary} />
           <Text style={[styles.transferTipCopy, { color: secondary }]}>
             {t("financialMeaningReview.transferExplanation")}

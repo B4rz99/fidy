@@ -37,7 +37,11 @@ export const ResultsSummary = ({ summary }: ResultsSummaryProps) => {
 
 const styles = StyleSheet.create({
   summaryCard: {
-    boxShadow: "0 8px 12px rgba(15,23,42,0.05)",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingVertical: 12,

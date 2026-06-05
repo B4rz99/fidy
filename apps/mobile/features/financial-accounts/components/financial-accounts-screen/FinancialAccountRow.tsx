@@ -49,16 +49,16 @@ export function FinancialAccountRow({
   const numpadSpecialKey = useThemeColor("numpadSpecialKey");
   const kind = readFinancialAccountKind(item.account.kind);
   const icon = getKindIcon(kind);
-  const iconPalette = {
+  const iconPalette: Record<
+    FinancialAccountKind,
+    { readonly backgroundColor: string; readonly color: string }
+  > = {
     checking: { backgroundColor: accentGreenLight, color: accentGreen },
     savings: { backgroundColor: peachLight, color: peach },
     wallet: { backgroundColor: chartBg, color: secondary },
     cash: { backgroundColor: numpadKey, color: tertiary },
     credit_card: { backgroundColor: numpadSpecialKey, color: peach },
-  } satisfies Record<
-    FinancialAccountKind,
-    { readonly backgroundColor: string; readonly color: string }
-  >;
+  };
   const subtitleParts = [
     t(`financialAccounts.kinds.${kind}`),
     canFinancialAccountHaveIdentifiers(kind) && item.identifiersCount > 0

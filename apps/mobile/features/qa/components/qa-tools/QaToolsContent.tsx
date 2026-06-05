@@ -127,7 +127,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
             .slice()
             .reverse()
             .map((entry) => (
-              <GlassSurface key={entry.id} padded={false} radius={12} style={styles.eventCard}>
+              <GlassSurface key={entry.id} padded={false} radius={16} style={styles.eventCard}>
                 <Text style={[styles.eventTitle, { color: primary }]}>
                   {`${entry.level.toUpperCase()} · ${entry.message}`}
                 </Text>
@@ -152,7 +152,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
             .slice()
             .reverse()
             .map((event) => (
-              <GlassSurface key={event.id} padded={false} radius={12} style={styles.eventCard}>
+              <GlassSurface key={event.id} padded={false} radius={16} style={styles.eventCard}>
                 <Text style={[styles.eventTitle, { color: primary }]}>
                   {`${event.method} · ${event.outcome.toUpperCase()}${event.status ? ` · ${event.status}` : ""}`}
                 </Text>

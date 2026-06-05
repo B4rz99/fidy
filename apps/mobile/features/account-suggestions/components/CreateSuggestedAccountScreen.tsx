@@ -117,7 +117,12 @@ function ResolvedCreateSuggestedAccountForm({
               const isSelected = option === kind;
 
               return (
-                <Pressable key={option} onPress={() => setKind(option)}>
+                <Pressable
+                  key={option}
+                  onPress={() => setKind(option)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: isSelected }}
+                >
                   <GlassSurface
                     padded={false}
                     radius={12}
@@ -210,8 +215,6 @@ const styles = StyleSheet.create({
   },
   kindPill: {
     minHeight: 40,
-    borderWidth: 1,
-    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     justifyContent: "center",
