@@ -48,10 +48,11 @@ export function FieldSurface({
       ]}
     >
       <GlassSurface
+        nativeGlass={false}
         pointerEvents="none"
         padded={false}
         radius={radius ?? defaults.radius}
-        style={[StyleSheet.absoluteFillObject, surfaceStyle]}
+        style={[StyleSheet.absoluteFillObject, styles.surface, surfaceStyle]}
       >
         <View />
       </GlassSurface>
@@ -75,6 +76,9 @@ const styles = StyleSheet.create({
   shell: {
     overflow: "hidden",
     position: "relative",
+  },
+  surface: {
+    backgroundColor: "transparent",
   },
   content: {
     alignItems: "center",

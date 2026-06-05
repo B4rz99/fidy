@@ -3,6 +3,7 @@ import {
   financialAccountKindSchema,
 } from "@/features/financial-accounts/schema";
 import { getKindEmoji } from "@/features/financial-accounts/lib/kind-display";
+import { GlassSurface } from "@/shared/components/GlassSurface";
 import { Pressable, Text } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountForm.styles";
@@ -21,25 +22,28 @@ export function KindChip({
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
   const onAccent = useThemeColor("onAccent");
-  const peachLight = useThemeColor("peachLight");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
 
   return (
     <Pressable
-      style={[
-        styles.kindChip,
-        isSelected ? styles.kindChipSelected : null,
-        {
-          backgroundColor: isSelected ? accentGreen : peachLight,
-          borderColor: isSelected ? accentGreen : borderSubtle,
-        },
-      ]}
       onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: isSelected }}
     >
-      <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
-        {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
-      </Text>
+      <GlassSurface
+        nativeGlass={false}
+        padded={false}
+        radius={999}
+        style={[
+          styles.kindChip,
+          { backgroundColor: "transparent" },
+          isSelected ? { backgroundColor: accentGreen } : null,
+        ]}
+      >
+        <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
+          {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
+        </Text>
+      </GlassSurface>
     </Pressable>
   );
 }

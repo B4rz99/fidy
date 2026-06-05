@@ -1,7 +1,18 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { ComponentType } from "react";
 import ts from "typescript";
-import { expect, test } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { renderFidy } from "@/__tests__/helpers/render";
+import { i18n, useLocaleStore } from "@/shared/i18n";
+import { createFinancialAccountFixture } from "./fixtures";
+
+vi.mock("expo-router", () => ({
+  Stack: {
+    Screen: "Stack.Screen",
+  },
+  useRouter: () => ({ back: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+}));
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -22,6 +33,75 @@ const sectionSource = readSource(
 const rowSource = readSource(
   "../../features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx"
 );
+
+type TestFinancialAccountListItem = {
+  readonly account: ReturnType<typeof createFinancialAccountFixture>;
+  readonly identifiersCount: number;
+  readonly hasBillingProfileGap: boolean;
+};
+
+type FinancialAccountRowProps = {
+  readonly item: TestFinancialAccountListItem;
+  readonly onPress: () => void;
+};
+
+type FinancialAccountsSectionProps = {
+  readonly items: readonly TestFinancialAccountListItem[];
+  readonly label: string;
+  readonly onOpenAccount: (accountId: TestFinancialAccountListItem["account"]["id"]) => void;
+};
+
+type FinancialAccountsScreenContentProps = {
+  readonly creditCardAccounts: readonly TestFinancialAccountListItem[];
+  readonly onAddAccount: () => void;
+  readonly onBack: () => void;
+  readonly onOpenAccount: (accountId: TestFinancialAccountListItem["account"]["id"]) => void;
+  readonly regularAccounts: readonly TestFinancialAccountListItem[];
+};
+
+let FinancialAccountRowComponent: ComponentType<FinancialAccountRowProps>;
+let FinancialAccountsSectionComponent: ComponentType<FinancialAccountsSectionProps>;
+let FinancialAccountsScreenContentComponent: ComponentType<FinancialAccountsScreenContentProps>;
+
+const regularAccountItem: TestFinancialAccountListItem = {
+  account: createFinancialAccountFixture({
+    id: "fa-regular" as TestFinancialAccountListItem["account"]["id"],
+    name: "Cash",
+    kind: "checking",
+    isDefault: true,
+  }),
+  identifiersCount: 2,
+  hasBillingProfileGap: false,
+};
+
+const creditCardAccountItem: TestFinancialAccountListItem = {
+  account: createFinancialAccountFixture({
+    id: "fa-credit" as TestFinancialAccountListItem["account"]["id"],
+    name: "Visa gold",
+    kind: "credit_card",
+    isDefault: false,
+  }),
+  identifiersCount: 1,
+  hasBillingProfileGap: true,
+};
+
+beforeAll(async () => {
+  const rowModule =
+    await import("@/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow");
+  const sectionModule =
+    await import("@/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsSection");
+  const contentModule =
+    await import("@/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent");
+
+  FinancialAccountRowComponent = rowModule.FinancialAccountRow;
+  FinancialAccountsSectionComponent = sectionModule.FinancialAccountsSection;
+  FinancialAccountsScreenContentComponent = contentModule.FinancialAccountsScreenContent;
+});
+
+beforeEach(() => {
+  i18n.locale = "en";
+  useLocaleStore.setState({ locale: "en" });
+});
 
 function parseSource(source: string) {
   return ts.createSourceFile(
@@ -126,4 +206,70 @@ test("keeps financial accounts content composed from sections and rows", () => {
   expect(rowSource).toContain("financialAccounts.list.identifiersCount");
   expect(rowSource).toContain("financialAccounts.labels.default");
   expect(rowSource).toContain("financialAccounts.list.billingGap");
+});
+
+describe("financial account list extracted components", () => {
+  test("renders content sections, add action, and empty state", () => {
+    const withItems = renderFidy(
+      <FinancialAccountsScreenContentComponent
+        regularAccounts={[regularAccountItem]}
+        creditCardAccounts={[creditCardAccountItem]}
+        onAddAccount={vi.fn()}
+        onBack={vi.fn()}
+        onOpenAccount={vi.fn()}
+      />
+    );
+
+    expect(withItems.getByText("Cash")).toBeTruthy();
+    expect(withItems.getByText("Visa gold")).toBeTruthy();
+    expect(withItems.getByA11yLabel("Add account")).toBeTruthy();
+
+    const empty = renderFidy(
+      <FinancialAccountsScreenContentComponent
+        regularAccounts={[]}
+        creditCardAccounts={[]}
+        onAddAccount={vi.fn()}
+        onBack={vi.fn()}
+        onOpenAccount={vi.fn()}
+      />
+    );
+
+    expect(empty.getByText("No financial accounts yet")).toBeTruthy();
+  });
+
+  test("renders rows and opens the selected account from a section", () => {
+    const onOpenAccount = vi.fn();
+    const screen = renderFidy(
+      <FinancialAccountsSectionComponent
+        label="Regular accounts"
+        items={[regularAccountItem]}
+        onOpenAccount={onOpenAccount}
+      />
+    );
+
+    expect(screen.getByText("Regular accounts")).toBeTruthy();
+    expect(screen.getByText("Cash")).toBeTruthy();
+
+    screen.pressByText("Cash");
+
+    expect(onOpenAccount).toHaveBeenCalledWith("fa-regular");
+  });
+
+  test("renders financial account row glass content and status labels", () => {
+    const screen = renderFidy(
+      <FinancialAccountRowComponent item={creditCardAccountItem} onPress={vi.fn()} />
+    );
+
+    expect(screen.getByText("Visa gold")).toBeTruthy();
+    expect(screen.getByText(/Credit card.*1 identifier/)).toBeTruthy();
+    expect(screen.getByText("Card cycle dates missing")).toBeTruthy();
+  });
+
+  test("renders the default badge on default account rows", () => {
+    const screen = renderFidy(
+      <FinancialAccountRowComponent item={regularAccountItem} onPress={vi.fn()} />
+    );
+
+    expect(screen.getByText("Default")).toBeTruthy();
+  });
 });

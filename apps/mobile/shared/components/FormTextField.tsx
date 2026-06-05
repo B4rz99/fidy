@@ -31,9 +31,18 @@ function getFieldSurfaceStyle(inputStyle: StyleProp<TextStyle>): StyleProp<ViewS
   if (!flattened) return null;
 
   return {
+    backgroundColor: flattened.backgroundColor,
     borderColor: flattened.borderColor,
     borderRadius: flattened.borderRadius,
     borderWidth: flattened.borderWidth,
+  };
+}
+
+function getFieldContainerStyle(inputStyle: StyleProp<TextStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(inputStyle);
+  if (!flattened) return null;
+
+  return {
     height: flattened.height,
     minHeight: flattened.minHeight,
   };
@@ -56,6 +65,7 @@ export function FormTextField({
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
   const fieldSurfaceStyle = getFieldSurfaceStyle(inputStyle);
+  const fieldContainerStyle = getFieldContainerStyle(inputStyle);
 
   return (
     <View className={className} style={[{ gap: 6 }, style]}>
@@ -73,7 +83,7 @@ export function FormTextField({
       </Text>
       <FieldSurface
         contentStyle={{ paddingHorizontal: 0 }}
-        style={fieldSurfaceStyle}
+        style={fieldContainerStyle}
         surfaceStyle={fieldSurfaceStyle}
       >
         <TextInput

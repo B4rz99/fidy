@@ -48,17 +48,11 @@ export const styles = StyleSheet.create({
     fontSize: 12,
   },
   accountCard: {
-    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 8,
   },
   accountIcon: {
     width: 40,

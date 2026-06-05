@@ -2,14 +2,12 @@ import { useState } from "react";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CheckCircle } from "@/shared/components/icons";
-import { AccessibilityInfo, Platform, StyleSheet, Text, View } from "@/shared/components/rn";
+import { AccessibilityInfo, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { subscribeAppToasts } from "@/shared/lib";
 import { GlassSurface } from "./GlassSurface";
 
 type AppToast = Parameters<Parameters<typeof subscribeAppToasts>[0]>[0];
-
-const getAndroidShadowFallback = () => (Platform.OS === "android" ? { elevation: 8 } : null);
 
 export function AppToastHost() {
   const [toast, setToast] = useState<AppToast | null>(null);
@@ -58,7 +56,6 @@ export function AppToastHost() {
           styles.toastPosition,
           {
             top: top + 12,
-            ...getAndroidShadowFallback(),
           },
           animatedToastStyle,
         ]}
@@ -67,7 +64,7 @@ export function AppToastHost() {
         <GlassSurface
           padded={false}
           radius={18}
-          style={[styles.toast, { borderColor: accentGreen, shadowColor: primary }]}
+          style={[styles.toast, { borderColor: accentGreen }]}
         >
           <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
             {toast.message}
@@ -101,12 +98,10 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
   },
   toastPosition: {
     alignSelf: "center",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
     maxWidth: 360,
     minHeight: 52,
     position: "absolute",

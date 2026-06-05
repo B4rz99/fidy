@@ -3,7 +3,7 @@ import {
   readFinancialAccountKind,
 } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/schema";
-import { GlassSurface } from "@/shared/components";
+import { GlassSurface } from "@/shared/components/GlassSurface";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountsScreen.styles";

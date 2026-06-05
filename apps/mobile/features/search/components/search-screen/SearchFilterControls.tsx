@@ -70,11 +70,6 @@ export function SearchFilterControls({
 
 const styles = StyleSheet.create({
   filterDock: {
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
     marginBottom: 12,
     marginHorizontal: 16,
   },

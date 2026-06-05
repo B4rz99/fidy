@@ -65,11 +65,6 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 const styles = StyleSheet.create({
   composer: {
     alignItems: "flex-end",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
     flexDirection: "row",
     gap: 8,
     marginHorizontal: 12,
