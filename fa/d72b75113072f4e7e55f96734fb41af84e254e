@@ -1,0 +1,49 @@
+apps/mobile/shared/components/Button.tsx
+  s_c5de1adbad9fac::t_cdd1f387a47834 2
+  s_c5de1adbad9fac::t_7a1b1508d1c3b1 90
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountForm.styles.ts
+  s_c5de1adbad9fac::t_fd4d4ad0b47006 62
+  s_c5de1adbad9fac::t_77d3984810ff57 84
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_c5de1adbad9fac::t_2778a65cfc4de2 10-15
+  s_c5de1adbad9fac::t_0307e23418a5c9 262
+  s_c5de1adbad9fac::t_7a1b1508d1c3b1 89-94
+  s_c5de1adbad9fac::t_bbfc69280f70ec 211,225,240,257,266-268
+  s_c5de1adbad9fac::t_e9349d34653488 261
+  s_c5de1adbad9fac::t_965a5f67e6da17 3,5,37-66,68,77,79,87-88,95-96
+  s_c5de1adbad9fac::t_168dc224685ccc 6-8,67,69-76,78,80-86,97-105,210,212-224,226-239,241-256,258-260,263-265,269-271
+apps/mobile/shared/components/AppToastHost.tsx
+  s_c5de1adbad9fac::t_fd4d4ad0b47006 5,67,104
+apps/mobile/shared/components/FormTextField.tsx
+  s_c5de1adbad9fac::t_b54ee1c6968ace 34,38-45,68,86
+apps/mobile/shared/components/FieldSurface.tsx
+  s_c5de1adbad9fac::t_87359cf497c10f 55,80-81
+  s_c5de1adbad9fac::t_c8c2953761cbfc 51
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_c5de1adbad9fac::t_54cce7418c6394 6
+apps/mobile/app/bills-calendar.tsx
+  s_c5de1adbad9fac::t_79a6d83227b859 3,18,20,34-35,115
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreen.types.ts
+  s_c5de1adbad9fac::t_b7c54f33877bc6 2,4-13
+  s_c5de1adbad9fac::t_0307e23418a5c9 3
+  s_c5de1adbad9fac::t_7a1b1508d1c3b1 1
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_c5de1adbad9fac::t_ee2625b0e8e648 6,30-31,33,35-36,42-46
+  s_c5de1adbad9fac::t_33c4c289cc18fd 34,37-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "fad72b75113072f4e7e55f96734fb41af84e254e",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
