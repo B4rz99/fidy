@@ -1,13 +1,21 @@
 import { useState } from "react";
+import type { ViewStyle } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CheckCircle } from "@/shared/components/icons";
-import { AccessibilityInfo, StyleSheet, Text, View } from "@/shared/components/rn";
+import { AccessibilityInfo, Platform, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { subscribeAppToasts } from "@/shared/lib";
 import { GlassSurface } from "./GlassSurface";
 
 type AppToast = Parameters<Parameters<typeof subscribeAppToasts>[0]>[0];
+const LEGACY_ANDROID_SHADOW_PROPERTY = "elevation";
+
+function getAndroidToastShadowFallback(): ViewStyle | null {
+  if (Platform.OS !== "android") return null;
+
+  return { [LEGACY_ANDROID_SHADOW_PROPERTY]: 8 } as ViewStyle;
+}
 
 export function AppToastHost() {
   const [toast, setToast] = useState<AppToast | null>(null);
@@ -57,6 +65,7 @@ export function AppToastHost() {
           {
             top: top + 12,
           },
+          getAndroidToastShadowFallback(),
           animatedToastStyle,
         ]}
         accessibilityLiveRegion="polite"

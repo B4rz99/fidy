@@ -1,17 +1,18 @@
-import type { FinancialAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
+import type { FinancialAccountRow } from "@/features/financial-accounts/lib/repository";
 
-type FinancialAccountListRow = {
-  readonly id: FinancialAccountId;
-  readonly userId: UserId;
-  readonly name: string;
-  readonly kind: string;
-  readonly isDefault: boolean;
-  readonly createdAt: IsoDateTime;
-  readonly updatedAt: IsoDateTime;
-  readonly deletedAt: IsoDateTime | null;
-  readonly statementClosingDay?: number | null;
-  readonly paymentDueDay?: number | null;
-};
+type FinancialAccountListRow = Pick<
+  FinancialAccountRow,
+  | "id"
+  | "userId"
+  | "name"
+  | "kind"
+  | "isDefault"
+  | "createdAt"
+  | "updatedAt"
+  | "deletedAt"
+  | "statementClosingDay"
+  | "paymentDueDay"
+>;
 
 export type FinancialAccountListItem = {
   readonly account: FinancialAccountListRow;
