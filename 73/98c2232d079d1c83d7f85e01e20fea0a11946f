@@ -1,0 +1,26 @@
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_c5de1adbad9fac::t_96b9cdee28e6d3 31
+apps/mobile/shared/components/FieldButton.tsx
+  s_c5de1adbad9fac::t_b257bd35bd2c37 47-56
+  s_c5de1adbad9fac::t_08204627323436 42-46,57-71,100-101,146,148
+apps/mobile/app/bills-calendar.tsx
+  s_c5de1adbad9fac::t_54d32c8505b683 3,27-28,36-37
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_c5de1adbad9fac::t_fd3cd4d17555b1 43,85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7398c2232d079d1c83d7f85e01e20fea0a11946f",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
