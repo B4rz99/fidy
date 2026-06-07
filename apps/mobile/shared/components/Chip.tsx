@@ -72,11 +72,10 @@ export function Chip({
   const content = (
     <GlassSurface
       {...contentProps}
-      className={className}
+      className={`h-8 flex-row items-center justify-center gap-1.5 rounded-full px-3 ${className ?? ""}`}
       padded={false}
       radius={999}
       style={[
-        styles.surface,
         toneBorderColor[tone] ? { borderColor: toneBorderColor[tone] } : null,
         selected ? styles.selectedSurface : null,
         contentProps.style,
@@ -98,15 +97,6 @@ export function Chip({
 }
 
 const styles = StyleSheet.create({
-  surface: {
-    alignItems: "center",
-    borderRadius: 999,
-    flexDirection: "row",
-    gap: 6,
-    height: 32,
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
   selectedSurface: {
     borderWidth: 1.5,
   },

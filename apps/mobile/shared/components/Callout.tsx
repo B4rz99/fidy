@@ -57,6 +57,16 @@ export function Callout({
   ...viewProps
 }: CalloutProps) {
   const secondaryColor = useThemeColor("secondary");
+  const neutralBorderColor = useThemeColor("borderSubtle");
+  const successBorderColor = useThemeColor("success");
+  const dangerBorderColor = useThemeColor("danger");
+  const warningBorderColor = useThemeColor("warning");
+  const toneBorderColor: Record<CalloutTone, string> = {
+    neutral: neutralBorderColor,
+    success: successBorderColor,
+    danger: dangerBorderColor,
+    warning: warningBorderColor,
+  };
   const {
     accessibilityHint,
     accessibilityLabel,
@@ -89,7 +99,7 @@ export function Callout({
       className={className}
       padded={false}
       radius={12}
-      style={[styles.surface, contentProps.style]}
+      style={[styles.surface, { borderColor: toneBorderColor[tone] }, contentProps.style]}
     >
       {icon}
       <View className="flex-1" style={{ gap: 2 }}>

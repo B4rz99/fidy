@@ -51,10 +51,10 @@ export function SegmentedControl<TValue extends string>({
   return (
     <GlassSurface
       {...viewProps}
-      className={className}
+      className={`h-10 flex-row gap-1 rounded-full p-[3px] ${className ?? ""}`}
       padded={false}
       radius={999}
-      style={[styles.container, viewProps.style]}
+      style={viewProps.style}
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -103,13 +103,6 @@ export function SegmentedControl<TValue extends string>({
 export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlTone };
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: 999,
-    flexDirection: "row",
-    gap: 4,
-    height: 40,
-    padding: 3,
-  },
   option: {
     borderColor: "transparent",
     borderWidth: 1,

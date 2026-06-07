@@ -96,6 +96,7 @@ export function FormTextField({
           placeholderTextColor={tertiary}
           style={[
             {
+              flex: 1,
               minHeight: 50,
               paddingHorizontal: 14,
               fontFamily: "Poppins_800ExtraBold",

@@ -14,7 +14,9 @@ const LEGACY_ANDROID_SHADOW_PROPERTY = "elevation";
 function getAndroidToastShadowFallback(): ViewStyle | null {
   if (Platform.OS !== "android") return null;
 
-  return { [LEGACY_ANDROID_SHADOW_PROPERTY]: 8 } as ViewStyle;
+  return typeof Platform.Version === "number" && Platform.Version < 28
+    ? ({ [LEGACY_ANDROID_SHADOW_PROPERTY]: 8 } as ViewStyle)
+    : null;
 }
 
 export function AppToastHost() {

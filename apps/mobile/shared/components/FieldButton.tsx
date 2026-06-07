@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { X } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { FieldSurface } from "./FieldSurface";
 import { IconActionButton } from "./IconActionButton";
@@ -21,6 +21,23 @@ type FieldButtonProps = Omit<ViewProps, "children"> & {
   readonly buttonStyle?: StyleProp<ViewStyle>;
   readonly valueClassName?: string;
 };
+
+function getFieldButtonContentStyle(buttonStyle: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(buttonStyle);
+  if (!flattened) return null;
+
+  return {
+    height: flattened.height,
+    minHeight: flattened.minHeight,
+    padding: flattened.padding,
+    paddingBottom: flattened.paddingBottom,
+    paddingHorizontal: flattened.paddingHorizontal,
+    paddingLeft: flattened.paddingLeft,
+    paddingRight: flattened.paddingRight,
+    paddingTop: flattened.paddingTop,
+    paddingVertical: flattened.paddingVertical,
+  };
+}
 
 export function FieldButton({
   label,
@@ -49,6 +66,7 @@ export function FieldButton({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
+  const contentStyle = getFieldButtonContentStyle(buttonStyle);
   const valueNode =
     typeof value === "string" ? (
       <Text
@@ -94,6 +112,7 @@ export function FieldButton({
           size="button"
           radius={8}
           style={buttonStyle}
+          contentStyle={contentStyle}
           surfaceStyle={active ? { borderColor: primary } : null}
         >
           {leading}

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { PressableProps } from "react-native";
+import type { PressableProps, StyleProp, ViewStyle } from "react-native";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassSurface } from "./GlassSurface";
@@ -15,6 +15,26 @@ type ButtonProps = Omit<PressableProps, "children"> & {
   icon?: ReactNode;
   className?: string;
 };
+
+function getButtonSurfaceStyle(style: PressableProps["style"]): StyleProp<ViewStyle> {
+  if (typeof style === "function") return null;
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    backgroundColor: flattened.backgroundColor,
+    borderColor: flattened.borderColor,
+    borderRadius: flattened.borderRadius,
+    borderWidth: flattened.borderWidth,
+    padding: flattened.padding,
+    paddingBottom: flattened.paddingBottom,
+    paddingHorizontal: flattened.paddingHorizontal,
+    paddingLeft: flattened.paddingLeft,
+    paddingRight: flattened.paddingRight,
+    paddingTop: flattened.paddingTop,
+    paddingVertical: flattened.paddingVertical,
+  };
+}
 
 const CONTAINER_CLASS_NAMES: Record<ButtonVariant, string> = {
   primary: "",
@@ -63,6 +83,7 @@ export function Button({
         ? accentRed
         : accentGreen;
   const usesGlassSurface = variant !== "ghost";
+  const buttonSurfaceStyle = getButtonSurfaceStyle(style);
   const semanticBorderColor =
     variant === "primary"
       ? accentGreen
@@ -98,6 +119,7 @@ export function Button({
           style={[
             styles.glassContent,
             semanticBorderColor ? { borderColor: semanticBorderColor } : null,
+            buttonSurfaceStyle,
           ]}
         >
           {content}

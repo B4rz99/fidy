@@ -1,6 +1,6 @@
+import { useHeaderHeight } from "@react-navigation/elements";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
   deleteBill,
@@ -15,7 +15,7 @@ import {
   type Bill,
   type CalendarBillOccurrence,
 } from "@/features/calendar/ui.public";
-import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
+import { ScreenLayout } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Alert, Platform, Pressable } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
@@ -31,8 +31,8 @@ export default function BillsCalendarScreen() {
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
-  const insets = useSafeAreaInsets();
-  const headerClearance = Platform.OS === "ios" ? insets.top + HEADER_HEIGHT : 0;
+  const headerHeight = useHeaderHeight();
+  const headerClearance = Platform.OS === "ios" ? headerHeight : 0;
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
