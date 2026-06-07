@@ -1,0 +1,21 @@
+apps/mobile/shared/navigation/use-native-header-height.ts
+  s_c5de1adbad9fac::t_e9d9a9b4b70b6b 1-2,5
+apps/mobile/shared/components/FormTextField.tsx
+  s_c5de1adbad9fac::t_bf322db8cb5d8c 51-70,89-90,107,129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e676c7bbdda6a0852d569d08ffa8a688f64bba0f",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
