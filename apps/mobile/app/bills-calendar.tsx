@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
   deleteBill,
@@ -22,9 +21,8 @@ import { Colors } from "@/shared/constants/theme";
 import { getDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
+import { useNativeHeaderHeight } from "@/shared/navigation/use-native-header-height";
 import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
-
-const IOS_NATIVE_HEADER_CONTENT_HEIGHT = 44;
 
 export default function BillsCalendarScreen() {
   const { back, push } = useRouter();
@@ -33,8 +31,8 @@ export default function BillsCalendarScreen() {
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
-  const insets = useSafeAreaInsets();
-  const headerClearance = Platform.OS === "ios" ? insets.top + IOS_NATIVE_HEADER_CONTENT_HEIGHT : 0;
+  const nativeHeaderHeight = useNativeHeaderHeight();
+  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;

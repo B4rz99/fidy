@@ -24,12 +24,12 @@ import { Alert, Platform, Pressable, StyleSheet, View } from "@/shared/component
 import { tryGetDb } from "@/shared/db";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
+import { useNativeHeaderHeight } from "@/shared/navigation/use-native-header-height";
 import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
 
 type FinanceTab = "calendar" | "goals" | "analytics";
 
 const FINANCE_NATIVE_TAB_BAR_OFFSET = 72;
-const FINANCE_IOS_HEADER_CONTENT_HEIGHT = 44;
 
 function SegmentControl({
   active,
@@ -65,8 +65,8 @@ function FinanceCalendarPanel() {
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
-  const headerClearance =
-    Platform.OS === "ios" ? insets.top + FINANCE_IOS_HEADER_CONTENT_HEIGHT : 0;
+  const nativeHeaderHeight = useNativeHeaderHeight();
+  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 

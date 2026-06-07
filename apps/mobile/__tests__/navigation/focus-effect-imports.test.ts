@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(__dirname, "../..");
+const allowedReactNavigationAdapters = new Set(["shared/navigation/use-native-header-height.ts"]);
 
 function collectSourceFiles(dir: string): readonly string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -24,7 +25,11 @@ describe("navigation imports", () => {
     const offenders = collectSourceFiles(appRoot).filter((filePath) => {
       const source = readFileSync(filePath, "utf-8");
 
-      return /from\s+["']@react-navigation\//.test(source);
+      const relativePath = filePath.replace(`${appRoot}/`, "");
+      return (
+        /from\s+["']@react-navigation\//.test(source) &&
+        !allowedReactNavigationAdapters.has(relativePath)
+      );
     });
 
     expect(offenders.map((filePath) => filePath.replace(`${appRoot}/`, ""))).toEqual([]);

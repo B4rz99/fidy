@@ -97,10 +97,9 @@ describe("calendar screen", () => {
   });
 
   test("finance calendar starts after the native header and leaves room for the tab bar", () => {
-    expect(financeTabSource).toContain("useSafeAreaInsets");
+    expect(financeTabSource).toContain("useNativeHeaderHeight");
     expect(financeTabSource).toContain("FINANCE_NATIVE_TAB_BAR_OFFSET = 72");
-    expect(financeTabSource).toContain("FINANCE_IOS_HEADER_CONTENT_HEIGHT = 44");
-    expect(financeTabSource).toContain("insets.top + FINANCE_IOS_HEADER_CONTENT_HEIGHT");
+    expect(financeTabSource).toContain("nativeHeaderHeight");
     expect(financeTabSource).toContain(
       'Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE'
     );
