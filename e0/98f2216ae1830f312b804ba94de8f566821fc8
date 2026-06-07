@@ -1,0 +1,27 @@
+apps/mobile/__tests__/navigation/focus-effect-imports.test.ts
+  s_c5de1adbad9fac::t_adbb2a23cda21b 6,28-32
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_c5de1adbad9fac::t_8a22e9381350dc 100,102
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_c5de1adbad9fac::t_eeabf89c73f764 27,68-69
+apps/mobile/shared/navigation/use-native-header-height.ts
+  s_c5de1adbad9fac::t_250a24b286915b 1-5
+apps/mobile/app/bills-calendar.tsx
+  s_c5de1adbad9fac::t_4dc1e98693521e 24,34-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e098f2216ae1830f312b804ba94de8f566821fc8",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
