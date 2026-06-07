@@ -1,0 +1,35 @@
+apps/mobile/package.json
+  s_c5de1adbad9fac::t_85af7729213017 40
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_c5de1adbad9fac::t_b3865a969bd833 54,57
+apps/mobile/shared/components/FieldButton.tsx
+  s_c5de1adbad9fac::t_a345e1b6f22154 4,25-41,69,115
+apps/mobile/shared/components/Callout.tsx
+  s_c5de1adbad9fac::t_c9aadc9d8cd641 60-69,102
+apps/mobile/app/bills-calendar.tsx
+  s_c5de1adbad9fac::t_cabbb47848b08d 1,18,34-35
+apps/mobile/shared/components/Chip.tsx
+  s_c5de1adbad9fac::t_0be19092fb9f9d 75
+apps/mobile/shared/components/Button.tsx
+  s_c5de1adbad9fac::t_04b2f3e23c4af0 2,19-38,86,122
+apps/mobile/shared/components/FormTextField.tsx
+  s_c5de1adbad9fac::t_c9aafe4ca89c6e 99
+apps/mobile/shared/components/AppToastHost.tsx
+  s_c5de1adbad9fac::t_0e9b2cdeb42576 17-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "9f771a2cf461fddd094640d379d1d1971206a808",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
