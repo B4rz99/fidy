@@ -1,6 +1,6 @@
 import { HeaderHeightContext } from "@react-navigation/elements";
-import { useContext } from "react";
+import { use } from "react";
 
 export function useNativeHeaderHeight() {
-  return useContext(HeaderHeightContext) ?? 0;
+  return use(HeaderHeightContext) ?? 0;
 }

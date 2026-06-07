@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { PressableProps, ViewProps } from "react-native";
+import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassSurface } from "./GlassSurface";
@@ -15,6 +15,48 @@ type FilterPillProps = Omit<ViewProps, "children"> & {
   readonly labelClassName?: string;
 };
 
+function getPressableLayoutStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    alignSelf: flattened.alignSelf,
+    flex: flattened.flex,
+    flexBasis: flattened.flexBasis,
+    flexGrow: flattened.flexGrow,
+    flexShrink: flattened.flexShrink,
+    margin: flattened.margin,
+    marginBottom: flattened.marginBottom,
+    marginHorizontal: flattened.marginHorizontal,
+    marginLeft: flattened.marginLeft,
+    marginRight: flattened.marginRight,
+    marginTop: flattened.marginTop,
+    marginVertical: flattened.marginVertical,
+  };
+}
+
+function getSurfaceStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    backgroundColor: flattened.backgroundColor,
+    borderColor: flattened.borderColor,
+    borderRadius: flattened.borderRadius,
+    borderWidth: flattened.borderWidth,
+    height: flattened.height,
+    minHeight: flattened.minHeight,
+    padding: flattened.padding,
+    paddingBottom: flattened.paddingBottom,
+    paddingHorizontal: flattened.paddingHorizontal,
+    paddingLeft: flattened.paddingLeft,
+    paddingRight: flattened.paddingRight,
+    paddingTop: flattened.paddingTop,
+    paddingVertical: flattened.paddingVertical,
+    width: flattened.width,
+  };
+}
+
 export function FilterPill({
   label,
   leading,
@@ -29,6 +71,8 @@ export function FilterPill({
 }: FilterPillProps) {
   const primary = useThemeColor("primary");
   const backgroundColor = selectedColor ?? primary;
+  const pressableStyle = getPressableLayoutStyle(style);
+  const surfaceStyle = getSurfaceStyle(style);
   const content = (
     <>
       {leading ? <View>{leading}</View> : null}
@@ -52,9 +96,10 @@ export function FilterPill({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ ...viewProps.accessibilityState, selected }}
+      style={pressableStyle}
     >
       {selected ? (
-        <View className={className} style={[styles.surface, style, { backgroundColor }]}>
+        <View className={className} style={[styles.surface, surfaceStyle, { backgroundColor }]}>
           {content}
         </View>
       ) : (
@@ -62,7 +107,7 @@ export function FilterPill({
           className={className}
           padded={false}
           radius={999}
-          style={[styles.surface, style]}
+          style={[styles.surface, surfaceStyle]}
         >
           {content}
         </GlassSurface>
