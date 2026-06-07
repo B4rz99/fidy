@@ -48,6 +48,26 @@ function getFieldContainerStyle(inputStyle: StyleProp<TextStyle>): StyleProp<Vie
   };
 }
 
+function getFieldContentStyle(inputStyle: StyleProp<TextStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(inputStyle);
+  if (!flattened) return { paddingHorizontal: 0 };
+
+  return {
+    height: flattened.height,
+    minHeight: flattened.minHeight ?? flattened.height,
+    paddingHorizontal: 0,
+  };
+}
+
+function getTextInputSizingStyle(inputStyle: StyleProp<TextStyle>): StyleProp<TextStyle> {
+  const flattened = StyleSheet.flatten(inputStyle);
+  if (!flattened?.height) return null;
+
+  return {
+    minHeight: flattened.height,
+  };
+}
+
 export function FormTextField({
   label,
   value,
@@ -66,6 +86,8 @@ export function FormTextField({
   const tertiary = useThemeColor("tertiary");
   const fieldSurfaceStyle = getFieldSurfaceStyle(inputStyle);
   const fieldContainerStyle = getFieldContainerStyle(inputStyle);
+  const fieldContentStyle = getFieldContentStyle(inputStyle);
+  const textInputSizingStyle = getTextInputSizingStyle(inputStyle);
 
   return (
     <View className={className} style={[{ gap: 6 }, style]}>
@@ -82,7 +104,7 @@ export function FormTextField({
         {label}
       </Text>
       <FieldSurface
-        contentStyle={{ paddingHorizontal: 0 }}
+        contentStyle={fieldContentStyle}
         style={fieldContainerStyle}
         surfaceStyle={fieldSurfaceStyle}
       >
@@ -104,6 +126,7 @@ export function FormTextField({
               color: primary,
             },
             inputStyle,
+            textInputSizingStyle,
             { backgroundColor: "transparent", borderWidth: 0 },
           ]}
           value={value}
