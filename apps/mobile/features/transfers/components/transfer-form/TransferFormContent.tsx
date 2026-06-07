@@ -40,7 +40,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
       >
         <Text style={[styles.subtitle, { color: secondary }]}>{props.form.subtitle}</Text>
 
-        <GlassSurface padded={false} radius={18} style={styles.amountCard}>
+        <GlassSurface nativeGlass={false} padded={false} radius={18} style={styles.amountCard}>
           <Text style={[styles.sectionEyebrow, { color: tertiary }]}>
             {t("transfers.amountLabel")}
           </Text>
@@ -82,6 +82,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
         <View style={{ gap: 8 }}>
           <Text style={[styles.sectionLabel, { color: primary }]}>{t("transfers.dateLabel")}</Text>
           <GlassSurface
+            nativeGlass={false}
             padded={false}
             radius={16}
             style={[

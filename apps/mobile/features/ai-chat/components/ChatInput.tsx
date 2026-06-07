@@ -28,7 +28,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const canSend = !disabled && text.trim().length > 0;
 
   return (
-    <GlassSurface padded={false} radius={24} style={styles.composer}>
+    <GlassSurface nativeGlass={false} padded={false} radius={24} style={styles.composer}>
       <View style={styles.inputWrap}>
         <TextInput
           className="flex-1 text-primary dark:text-primary-dark"

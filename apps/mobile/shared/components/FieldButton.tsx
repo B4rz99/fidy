@@ -39,6 +39,36 @@ function getFieldButtonContentStyle(buttonStyle: StyleProp<ViewStyle>): StylePro
   };
 }
 
+function getFieldButtonContainerStyle(buttonStyle: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(buttonStyle);
+  if (!flattened) return null;
+
+  return {
+    alignSelf: flattened.alignSelf,
+    flex: flattened.flex,
+    margin: flattened.margin,
+    marginBottom: flattened.marginBottom,
+    marginHorizontal: flattened.marginHorizontal,
+    marginLeft: flattened.marginLeft,
+    marginRight: flattened.marginRight,
+    marginTop: flattened.marginTop,
+    marginVertical: flattened.marginVertical,
+    width: flattened.width,
+  };
+}
+
+function getFieldButtonSurfaceStyle(buttonStyle: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(buttonStyle);
+  if (!flattened) return null;
+
+  return {
+    backgroundColor: flattened.backgroundColor,
+    borderColor: flattened.borderColor,
+    borderRadius: flattened.borderRadius,
+    borderWidth: flattened.borderWidth,
+  };
+}
+
 export function FieldButton({
   label,
   value,
@@ -67,6 +97,8 @@ export function FieldButton({
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
   const contentStyle = getFieldButtonContentStyle(buttonStyle);
+  const containerStyle = getFieldButtonContainerStyle(buttonStyle);
+  const surfaceStyle = getFieldButtonSurfaceStyle(buttonStyle);
   const valueNode =
     typeof value === "string" ? (
       <Text
@@ -111,9 +143,9 @@ export function FieldButton({
         <FieldSurface
           size="button"
           radius={8}
-          style={buttonStyle}
+          style={containerStyle}
           contentStyle={contentStyle}
-          surfaceStyle={active ? { borderColor: primary } : null}
+          surfaceStyle={[surfaceStyle, active ? { borderColor: primary } : null]}
         >
           {leading}
           <View className="flex-1">{valueNode}</View>

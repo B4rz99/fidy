@@ -26,13 +26,6 @@ function getButtonSurfaceStyle(style: PressableProps["style"]): StyleProp<ViewSt
     borderColor: flattened.borderColor,
     borderRadius: flattened.borderRadius,
     borderWidth: flattened.borderWidth,
-    padding: flattened.padding,
-    paddingBottom: flattened.paddingBottom,
-    paddingHorizontal: flattened.paddingHorizontal,
-    paddingLeft: flattened.paddingLeft,
-    paddingRight: flattened.paddingRight,
-    paddingTop: flattened.paddingTop,
-    paddingVertical: flattened.paddingVertical,
   };
 }
 
