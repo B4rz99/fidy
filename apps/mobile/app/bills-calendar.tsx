@@ -34,8 +34,7 @@ export default function BillsCalendarScreen() {
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
-  const headerClearance =
-    Platform.OS === "ios" ? insets.top + IOS_NATIVE_HEADER_CONTENT_HEIGHT : 0;
+  const headerClearance = Platform.OS === "ios" ? insets.top + IOS_NATIVE_HEADER_CONTENT_HEIGHT : 0;
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
