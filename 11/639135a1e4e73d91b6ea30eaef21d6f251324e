@@ -1,0 +1,21 @@
+apps/mobile/shared/navigation/use-native-header-height.ts
+  s_c5de1adbad9fac::t_e00dbbdd84bb26 2,5
+apps/mobile/shared/components/FilterPill.tsx
+  s_c5de1adbad9fac::t_b0c93bdd59e259 2,18-59,74-75,99,102,110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "11639135a1e4e73d91b6ea30eaef21d6f251324e",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
