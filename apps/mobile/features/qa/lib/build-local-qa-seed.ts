@@ -104,14 +104,57 @@ function buildTransactions(
   accounts: readonly FinancialAccountRow[],
   profile: LocalQaProfile
 ): readonly TransactionRow[] {
-  if (profile !== "transfer-ready" && profile !== "home-activity") return [];
+  if (profile !== "default" && profile !== "transfer-ready" && profile !== "home-activity") {
+    return [];
+  }
 
   const defaultAccountId = buildDefaultFinancialAccountId(userId);
-  const bankAccountId = accounts[1]?.id ?? defaultAccountId;
+
+  if (profile === "default") {
+    const priorMonth = new Date(now.getFullYear(), now.getMonth() - 1, 12);
+    const createdAt = toIsoDateTime(now);
+
+    return [
+      {
+        id: generateTransactionId(),
+        userId,
+        type: "expense",
+        amount: requireCopAmount(280_000),
+        categoryId: getBuiltInCategoryId("food"),
+        description: "Prior month groceries",
+        date: toIsoDate(priorMonth),
+        accountId: defaultAccountId,
+        accountAttributionState: "confirmed",
+        createdAt,
+        updatedAt: createdAt,
+        voidedAt: null,
+        supersededAt: null,
+        source: "manual",
+      },
+      {
+        id: generateTransactionId(),
+        userId,
+        type: "expense",
+        amount: requireCopAmount(96_000),
+        categoryId: getBuiltInCategoryId("transport"),
+        description: "Prior month rides",
+        date: toIsoDate(priorMonth),
+        accountId: defaultAccountId,
+        accountAttributionState: "confirmed",
+        createdAt,
+        updatedAt: createdAt,
+        voidedAt: null,
+        supersededAt: null,
+        source: "manual",
+      },
+    ];
+  }
 
   if (profile === "home-activity") {
     return buildHomeActivityTransactions(userId, now, accounts);
   }
+
+  const bankAccountId = accounts[1]?.id ?? defaultAccountId;
 
   return [
     {

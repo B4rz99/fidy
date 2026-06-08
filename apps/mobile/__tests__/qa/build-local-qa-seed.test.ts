@@ -5,7 +5,7 @@ import { buildLocalQaSeed } from "@/features/qa/lib/build-local-qa-seed";
 describe("buildLocalQaSeed", () => {
   const now = new Date("2026-04-19T15:00:00.000Z");
 
-  it("builds a clean default scenario with a single default account", () => {
+  it("builds a default scenario with prior-month spending for budget suggestion QA", () => {
     const seed = buildLocalQaSeed("default", now);
 
     expect(seed.session.profile).toBe("default");
@@ -17,7 +17,23 @@ describe("buildLocalQaSeed", () => {
         name: "Cash",
       }),
     ]);
-    expect(seed.transactions).toEqual([]);
+    expect(seed.transactions).toHaveLength(2);
+    expect(seed.transactions).toEqual([
+      expect.objectContaining({
+        amount: 280_000,
+        categoryId: "food",
+        date: "2026-03-12",
+        description: "Prior month groceries",
+        type: "expense",
+      }),
+      expect.objectContaining({
+        amount: 96_000,
+        categoryId: "transport",
+        date: "2026-03-12",
+        description: "Prior month rides",
+        type: "expense",
+      }),
+    ]);
     expect(seed.transfers).toEqual([]);
   });
 
