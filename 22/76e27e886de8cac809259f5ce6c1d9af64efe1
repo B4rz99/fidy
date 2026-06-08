@@ -1,0 +1,21 @@
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_ac9411f3c63c72::t_3a2903a79aae81 38
+  s_ac9411f3c63c72::t_d829b1592465ef 1-2,4-37,39-83,85-112
+  s_ac9411f3c63c72::t_03c39416631e83 84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "2276e27e886de8cac809259f5ce6c1d9af64efe1",
+  "prompts": {},
+  "sessions": {
+    "s_ac9411f3c63c72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea5cf-0767-7f82-9f64-b6f9d73b41c2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
