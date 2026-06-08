@@ -1,0 +1,23 @@
+apps/mobile/shared/components/Card.tsx
+  s_c5de1adbad9fac::t_c3b3093e35481d 8-10,22-24,59-61
+package.json
+  s_c5de1adbad9fac::t_94165b35a159d5 57-58
+apps/mobile/features/review-queues/components/shared.tsx
+  s_c5de1adbad9fac::t_e10360ae1c2bb1 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "91bd3406e2e30e5734e0004c95abb4853cb3e24e",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
