@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { PressableProps, StyleProp, ViewStyle } from "react-native";
+import type { PressableProps } from "react-native";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassSurface } from "./GlassSurface";
@@ -13,21 +13,9 @@ type ButtonProps = Omit<PressableProps, "children"> & {
   size?: ButtonSize;
   loading?: boolean;
   icon?: ReactNode;
+  borderColor?: string;
   className?: string;
 };
-
-function getButtonSurfaceStyle(style: PressableProps["style"]): StyleProp<ViewStyle> {
-  if (typeof style === "function") return null;
-  const flattened = StyleSheet.flatten(style);
-  if (!flattened) return null;
-
-  return {
-    backgroundColor: flattened.backgroundColor,
-    borderColor: flattened.borderColor,
-    borderRadius: flattened.borderRadius,
-    borderWidth: flattened.borderWidth,
-  };
-}
 
 const CONTAINER_CLASS_NAMES: Record<ButtonVariant, string> = {
   primary: "",
@@ -61,6 +49,7 @@ export function Button({
   size = "default",
   loading = false,
   icon,
+  borderColor,
   disabled,
   className,
   style,
@@ -76,13 +65,13 @@ export function Button({
         ? accentRed
         : accentGreen;
   const usesGlassSurface = variant !== "ghost";
-  const buttonSurfaceStyle = getButtonSurfaceStyle(style);
   const semanticBorderColor =
-    variant === "primary"
+    borderColor ??
+    (variant === "primary"
       ? accentGreen
       : variant === "danger" || variant === "dangerSecondary"
         ? accentRed
-        : undefined;
+        : undefined);
   const content = (
     <>
       {loading ? <ActivityIndicator color={loadingIndicatorColor} /> : icon}
@@ -109,11 +98,8 @@ export function Button({
           nativeGlass={false}
           padded={false}
           radius={12}
-          style={[
-            styles.glassContent,
-            semanticBorderColor ? { borderColor: semanticBorderColor } : null,
-            buttonSurfaceStyle,
-          ]}
+          borderColor={semanticBorderColor}
+          style={styles.glassContent}
         >
           {content}
         </GlassSurface>

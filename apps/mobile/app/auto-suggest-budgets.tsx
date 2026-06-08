@@ -21,11 +21,7 @@ import {
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import {
-  formatMoney,
-  trackBudgetSuggestionAccepted,
-  trackBudgetSuggestionRejected,
-} from "@/shared/lib";
+import { trackBudgetSuggestionAccepted, trackBudgetSuggestionRejected } from "@/shared/lib";
 
 export default function AutoSuggestBudgetsScreen() {
   const { back } = useRouter();
@@ -100,10 +96,6 @@ export default function AutoSuggestBudgetsScreen() {
                   <View>
                     <Text style={[styles.categoryName, { color: primaryColor }]}>
                       {categoryLabel}
-                    </Text>
-                    <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
-                      {formatMoney(suggestion.suggestedAmount)}{" "}
-                      {t("search.lastMonth").toLowerCase()}
                     </Text>
                   </View>
                 </View>
@@ -205,10 +197,6 @@ const styles = StyleSheet.create({
   categoryName: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
-  },
-  lastMonthLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 10,
   },
   amountInput: {
     fontFamily: "Poppins_600SemiBold",

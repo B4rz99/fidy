@@ -85,7 +85,7 @@ test("keeps the transaction search redesign surfaces wired into the screen", () 
 
 test("keeps search filters aligned with the requested mobile interactions", () => {
   expect(categoryFilterSource).not.toContain("<Check");
-  expect(categoryFilterSource).toContain('className="size-11');
+  expect(categoryFilterSource).toContain("style={{ height: 44, paddingHorizontal: 0, width: 44 }}");
   expect(categoryFilterSource).toContain('className="h-0.5 w-5 rounded-full"');
   expect(categoryFilterSource).toContain("backgroundColor: peachLight");
   expect(categoryFilterSource).not.toContain(
@@ -94,7 +94,7 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   expect(dateFilterSource).toContain("TransactionDatePickerDialog");
   expect(dateFilterSource).not.toContain("<TextInput");
   expect(dateFilterSource).toMatch(
-    /preset\.key\s*===\s*["']lastMonth["']\s*\?\s*\{\s*flex\s*:\s*1\.35\s*\}\s*:\s*\{\s*flex\s*:\s*1\s*\}/
+    /preset\.key\s*===\s*["']lastMonth["']\s*\?\s*\{\s*flex\s*:\s*1\.35,\s*minHeight\s*:\s*32,\s*paddingHorizontal\s*:\s*8\s*\}\s*:\s*\{\s*flex\s*:\s*1,\s*minHeight\s*:\s*32,\s*paddingHorizontal\s*:\s*8\s*\}/
   );
   expect(typeFilterSource).not.toContain('style={getStyle("all")}');
   expect(typeFilterSource).toContain("SegmentedControl");

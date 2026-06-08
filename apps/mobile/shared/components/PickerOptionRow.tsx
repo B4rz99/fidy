@@ -34,7 +34,7 @@ export function PickerOptionRow({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-  const rowStyle = [styles.row, selected ? { borderColor: accentGreen } : null, style];
+  const rowStyle = [styles.row, style];
 
   const titleNode =
     typeof title === "string" ? (
@@ -63,7 +63,12 @@ export function PickerOptionRow({
       accessibilityHint={accessibilityHint}
       accessibilityState={{ selected }}
     >
-      <GlassSurface padded={false} radius={18} style={rowStyle}>
+      <GlassSurface
+        padded={false}
+        radius={18}
+        borderColor={selected ? accentGreen : undefined}
+        style={rowStyle}
+      >
         {leading}
         <View style={styles.textWrap}>
           {titleNode}

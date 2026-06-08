@@ -26,25 +26,21 @@ type FormTextFieldProps = Omit<ViewProps, "children"> &
     readonly ref?: Ref<RNTextInput>;
   };
 
-function getFieldSurfaceStyle(inputStyle: StyleProp<TextStyle>): StyleProp<ViewStyle> {
-  const flattened = StyleSheet.flatten(inputStyle);
-  if (!flattened) return null;
-
-  return {
-    backgroundColor: flattened.backgroundColor,
-    borderColor: flattened.borderColor,
-    borderRadius: flattened.borderRadius,
-    borderWidth: flattened.borderWidth,
-  };
-}
-
 function getFieldContainerStyle(inputStyle: StyleProp<TextStyle>): StyleProp<ViewStyle> {
   const flattened = StyleSheet.flatten(inputStyle);
   if (!flattened) return null;
 
   return {
+    alignSelf: flattened.alignSelf,
+    flex: flattened.flex,
+    flexBasis: flattened.flexBasis,
+    flexGrow: flattened.flexGrow,
+    flexShrink: flattened.flexShrink,
     height: flattened.height,
+    maxWidth: flattened.maxWidth,
     minHeight: flattened.minHeight,
+    minWidth: flattened.minWidth,
+    width: flattened.width,
   };
 }
 
@@ -84,7 +80,6 @@ export function FormTextField({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const fieldSurfaceStyle = getFieldSurfaceStyle(inputStyle);
   const fieldContainerStyle = getFieldContainerStyle(inputStyle);
   const fieldContentStyle = getFieldContentStyle(inputStyle);
   const textInputSizingStyle = getTextInputSizingStyle(inputStyle);
@@ -103,11 +98,7 @@ export function FormTextField({
       >
         {label}
       </Text>
-      <FieldSurface
-        contentStyle={fieldContentStyle}
-        style={fieldContainerStyle}
-        surfaceStyle={fieldSurfaceStyle}
-      >
+      <FieldSurface contentStyle={fieldContentStyle} style={fieldContainerStyle}>
         <TextInput
           {...inputProps}
           ref={ref}

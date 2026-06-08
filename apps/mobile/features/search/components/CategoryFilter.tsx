@@ -31,10 +31,10 @@ const CategoryFilterPill = memo(
 
     return (
       <SharedFilterPill
-        className="size-11 px-0"
         onPress={handlePress}
         selected={isSelected}
         accessibilityLabel={getCategoryLabel(category, locale)}
+        style={{ height: 44, paddingHorizontal: 0, width: 44 }}
         leading={
           <View className="items-center" style={{ gap: 3 }}>
             <View

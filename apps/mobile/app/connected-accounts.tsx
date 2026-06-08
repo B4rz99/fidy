@@ -129,7 +129,8 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
             nativeGlass={false}
             padded={false}
             radius={8}
-            style={{ paddingHorizontal: 10, paddingVertical: 4, borderColor: greenColor }}
+            borderColor={greenColor}
+            style={{ paddingHorizontal: 10, paddingVertical: 4 }}
           >
             <Text className="font-poppins-semibold text-[11px] text-accent-green dark:text-accent-green-dark">
               {t("connectedAccounts.connected")}
@@ -171,7 +172,8 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
           nativeGlass={false}
           padded={false}
           radius={8}
-          style={{ paddingHorizontal: 10, paddingVertical: 4, borderColor: primaryColor }}
+          borderColor={primaryColor}
+          style={{ paddingHorizontal: 10, paddingVertical: 4 }}
         >
           <Text className="font-poppins-semibold text-[11px] text-primary dark:text-primary-dark">
             {t("connectedAccounts.notConnected")}

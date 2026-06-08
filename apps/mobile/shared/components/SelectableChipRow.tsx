@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ViewProps } from "react-native";
+import type { StyleProp, ViewProps, ViewStyle } from "react-native";
 import { View } from "@/shared/components/rn";
 import { Chip } from "./Chip";
 
@@ -21,6 +21,7 @@ type SelectableChipRowProps<TValue extends string> = Omit<ViewProps, "children">
   readonly unselectedTone?: SelectableChipRowTone;
   readonly className?: string;
   readonly chipClassName?: string;
+  readonly chipStyle?: StyleProp<ViewStyle>;
   readonly getOptionTestID?: (value: TValue) => string;
 };
 
@@ -32,6 +33,7 @@ export function SelectableChipRow<TValue extends string>({
   unselectedTone = "neutral",
   className,
   chipClassName,
+  chipStyle,
   getOptionTestID,
   style,
   ...viewProps
@@ -57,6 +59,7 @@ export function SelectableChipRow<TValue extends string>({
             accessibilityLabel={option.accessibilityLabel ?? option.label}
             accessibilityState={{ selected, disabled: option.disabled }}
             className={`${chipClassName ?? ""} ${option.disabled ? "opacity-50" : ""}`}
+            style={chipStyle}
           />
         );
       })}

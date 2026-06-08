@@ -85,7 +85,7 @@ export function DetailRow({ label, title, subtitle, icon, emphasis = "neutral" }
     <GlassSurface
       padded={false}
       radius={18}
-      style={emphasis === "green" ? { borderColor: accentGreen } : undefined}
+      borderColor={emphasis === "green" ? accentGreen : undefined}
     >
       <Row
         title={

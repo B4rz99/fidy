@@ -43,7 +43,6 @@ export const PeriodSelector = memo(function PeriodSelector({
 
   return (
     <SegmentedControl
-      className="h-8"
       options={PERIOD_OPTIONS.map(({ accessibilityLabelKey, labelKey, period }) => ({
         value: period,
         label: t(labelKey),
@@ -52,6 +51,7 @@ export const PeriodSelector = memo(function PeriodSelector({
       value={activePeriod}
       onChange={onSelect}
       tone="success"
+      style={{ height: 32 }}
     />
   );
 });

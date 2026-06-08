@@ -114,7 +114,7 @@ export function AddBillFormContent({
               }))}
               value={frequency}
               onChange={handleFrequencyPress}
-              chipClassName="h-auto rounded-full px-4 py-2"
+              chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
             />
           </View>
 
@@ -143,7 +143,7 @@ export function AddBillFormContent({
               }))}
               value={category}
               onChange={handleCategoryPress}
-              chipClassName="h-auto rounded-full px-4 py-2"
+              chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
             />
           </View>
         </View>

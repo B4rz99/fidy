@@ -81,13 +81,19 @@ function AccountSuggestionCardInner({
               : "accountSuggestions.card.confidenceMedium"
           )}
           leading={<Sparkles size={12} color={tertiary} />}
-          className="h-auto rounded-icon px-2 py-1.5"
+          style={{ minHeight: 28, paddingHorizontal: 8, paddingVertical: 6 }}
         />
       </View>
 
       <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-        <Chip label={draft.sourceLabel} className="h-auto rounded-icon px-2.5 py-1.5" />
-        <Chip label={draft.evidenceLabel} className="h-auto rounded-icon px-2.5 py-1.5" />
+        <Chip
+          label={draft.sourceLabel}
+          style={{ minHeight: 28, paddingHorizontal: 10, paddingVertical: 6 }}
+        />
+        <Chip
+          label={draft.evidenceLabel}
+          style={{ minHeight: 28, paddingHorizontal: 10, paddingVertical: 6 }}
+        />
       </View>
 
       <View className="flex-row items-center" style={{ gap: 10 }}>

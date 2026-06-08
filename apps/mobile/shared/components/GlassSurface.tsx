@@ -1,12 +1,15 @@
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import type { ReactNode } from "react";
 import type { StyleProp, ViewProps, ViewStyle } from "react-native";
-import { Platform, View } from "@/shared/components/rn";
+import { Platform, StyleSheet, View } from "@/shared/components/rn";
 import { useColorScheme } from "@/shared/hooks";
 import { getSubtleGlassCardTokens } from "./card-tokens";
 
 type GlassSurfaceProps = ViewProps & {
   children: ReactNode;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
   className?: string;
   isInteractive?: boolean;
   nativeGlass?: boolean;
@@ -15,7 +18,50 @@ type GlassSurfaceProps = ViewProps & {
   style?: StyleProp<ViewStyle>;
 };
 
+function getLayoutStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  const {
+    backgroundColor: _backgroundColor,
+    borderBlockColor: _borderBlockColor,
+    borderBlockEndColor: _borderBlockEndColor,
+    borderBlockStartColor: _borderBlockStartColor,
+    borderBottomColor: _borderBottomColor,
+    borderBottomEndRadius: _borderBottomEndRadius,
+    borderBottomLeftRadius: _borderBottomLeftRadius,
+    borderBottomRightRadius: _borderBottomRightRadius,
+    borderBottomStartRadius: _borderBottomStartRadius,
+    borderBottomWidth: _borderBottomWidth,
+    borderColor: _borderColor,
+    borderCurve: _borderCurve,
+    borderEndColor: _borderEndColor,
+    borderEndWidth: _borderEndWidth,
+    borderLeftColor: _borderLeftColor,
+    borderLeftWidth: _borderLeftWidth,
+    borderRadius: _borderRadius,
+    borderRightColor: _borderRightColor,
+    borderRightWidth: _borderRightWidth,
+    borderStartColor: _borderStartColor,
+    borderStartWidth: _borderStartWidth,
+    borderTopColor: _borderTopColor,
+    borderTopEndRadius: _borderTopEndRadius,
+    borderTopLeftRadius: _borderTopLeftRadius,
+    borderTopRightRadius: _borderTopRightRadius,
+    borderTopStartRadius: _borderTopStartRadius,
+    borderTopWidth: _borderTopWidth,
+    borderWidth: _borderWidth,
+    overflow: _overflow,
+    ...layoutStyle
+  } = flattened;
+
+  return layoutStyle;
+}
+
 export function GlassSurface({
+  backgroundColor,
+  borderColor,
+  borderWidth,
   children,
   className,
   isInteractive = false,
@@ -31,17 +77,20 @@ export function GlassSurface({
   const canUseLiquidGlass = nativeGlass && Platform.OS === "ios" && isLiquidGlassAvailable();
   const fallbackBackgroundColor =
     !nativeGlass && isDark ? "rgba(255, 255, 255, 0.10)" : tokens.fallbackBackgroundColor;
+  const layoutStyle = getLayoutStyle(style);
   const surfaceStyle = [
     {
-      backgroundColor: canUseLiquidGlass ? "transparent" : fallbackBackgroundColor,
-      borderColor: tokens.borderColor,
+      backgroundColor: canUseLiquidGlass
+        ? "transparent"
+        : (backgroundColor ?? fallbackBackgroundColor),
+      borderColor: borderColor ?? tokens.borderColor,
       borderCurve: "continuous" as const,
       borderRadius: radius,
-      borderWidth: 1,
+      borderWidth: borderWidth ?? 1,
       overflow: "hidden" as const,
       padding: padded ? 16 : 0,
     },
-    style,
+    layoutStyle,
   ];
 
   if (canUseLiquidGlass) {

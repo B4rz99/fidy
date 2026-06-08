@@ -34,7 +34,8 @@ function AccountRow({
       <GlassSurface
         padded={false}
         radius={16}
-        style={[styles.accountRow, isLikelyMatch ? { borderColor: accentGreen } : null]}
+        borderColor={isLikelyMatch ? accentGreen : undefined}
+        style={styles.accountRow}
       >
         <Text style={[styles.accountName, { color: primary }]}>{name}</Text>
         <Text style={[styles.accountSubtitle, { color: secondary }]}>{subtitle}</Text>

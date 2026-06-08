@@ -40,10 +40,6 @@ function getSurfaceStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
   if (!flattened) return null;
 
   return {
-    backgroundColor: flattened.backgroundColor,
-    borderColor: flattened.borderColor,
-    borderRadius: flattened.borderRadius,
-    borderWidth: flattened.borderWidth,
     height: flattened.height,
     minHeight: flattened.minHeight,
     padding: flattened.padding,
@@ -63,14 +59,14 @@ export function FilterPill({
   selected = false,
   onPress,
   selectedColor,
-  selectedTextColor = "#FFFFFF",
+  selectedTextColor,
   className,
   labelClassName,
   style,
   ...viewProps
 }: FilterPillProps) {
   const primary = useThemeColor("primary");
-  const backgroundColor = selectedColor ?? primary;
+  const selectedBorderColor = selectedColor ?? primary;
   const pressableStyle = getPressableLayoutStyle(style);
   const surfaceStyle = getSurfaceStyle(style);
   const content = (
@@ -82,7 +78,7 @@ export function FilterPill({
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.82}
-          style={{ color: selected ? selectedTextColor : primary }}
+          style={{ color: selected ? (selectedTextColor ?? selectedBorderColor) : primary }}
         >
           {label}
         </Text>
@@ -98,20 +94,16 @@ export function FilterPill({
       accessibilityState={{ ...viewProps.accessibilityState, selected }}
       style={pressableStyle}
     >
-      {selected ? (
-        <View className={className} style={[styles.surface, surfaceStyle, { backgroundColor }]}>
-          {content}
-        </View>
-      ) : (
-        <GlassSurface
-          className={className}
-          padded={false}
-          radius={999}
-          style={[styles.surface, surfaceStyle]}
-        >
-          {content}
-        </GlassSurface>
-      )}
+      <GlassSurface
+        className={className}
+        padded={false}
+        radius={999}
+        borderColor={selected ? selectedBorderColor : undefined}
+        borderWidth={selected ? 1.5 : undefined}
+        style={[styles.surface, surfaceStyle]}
+      >
+        {content}
+      </GlassSurface>
     </Pressable>
   );
 }

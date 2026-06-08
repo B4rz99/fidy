@@ -13,10 +13,10 @@ const StepList = ({ steps, circleColor }: { steps: readonly string[]; circleColo
           nativeGlass={false}
           padded={false}
           radius={12}
+          borderColor={circleColor}
           style={{
             width: 24,
             height: 24,
-            borderColor: circleColor,
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -76,10 +76,10 @@ export const ApplePaySetupCard = () => {
             nativeGlass={false}
             padded={false}
             radius={999}
+            borderColor={isApplePaySetupComplete ? greenColor : primaryColor}
             style={{
               paddingHorizontal: 8,
               paddingVertical: 2,
-              borderColor: isApplePaySetupComplete ? greenColor : primaryColor,
             }}
           >
             <Text

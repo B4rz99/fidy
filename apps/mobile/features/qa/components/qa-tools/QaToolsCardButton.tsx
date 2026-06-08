@@ -25,18 +25,14 @@ export function QaToolsCardButton({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
 
   return (
     <Pressable onPress={onPress} testID={testId}>
       <GlassSurface
         padded={false}
         radius={scenario ? 18 : 16}
-        style={[
-          styles.cardButton,
-          scenario ? styles.scenarioButton : undefined,
-          highlighted ? { borderColor: accentGreen, backgroundColor: accentGreenLight } : null,
-        ]}
+        borderColor={highlighted ? accentGreen : undefined}
+        style={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
       >
         <Text style={[styles.cardTitle, { color: primary }]}>{title}</Text>
         {description ? (

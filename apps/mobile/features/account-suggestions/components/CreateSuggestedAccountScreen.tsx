@@ -126,7 +126,8 @@ function ResolvedCreateSuggestedAccountForm({
                   <GlassSurface
                     padded={false}
                     radius={12}
-                    style={[styles.kindPill, isSelected ? { borderColor: accentGreen } : null]}
+                    borderColor={isSelected ? accentGreen : undefined}
+                    style={styles.kindPill}
                   >
                     <Text style={[styles.kindText, { color: primary }]}>
                       {t(`financialAccounts.kinds.${option}`)}

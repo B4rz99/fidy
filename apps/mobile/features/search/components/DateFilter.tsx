@@ -86,8 +86,11 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
               label={t(preset.labelKey)}
               selected={isActive}
               selectedColor="#2F7D32"
-              className="h-8 px-2"
-              style={preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }}
+              style={
+                preset.key === "lastMonth"
+                  ? { flex: 1.35, minHeight: 32, paddingHorizontal: 8 }
+                  : { flex: 1, minHeight: 32, paddingHorizontal: 8 }
+              }
               onPress={() => handlePreset(preset.key)}
               labelClassName="text-[12px]"
             />

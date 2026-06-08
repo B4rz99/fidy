@@ -36,7 +36,7 @@ export function FilterChipItem({
       label={label}
       tone={isClearAll ? "danger" : isActive ? "primary" : "neutral"}
       selected={!isClearAll && isOpen}
-      className="px-4"
+      style={{ marginRight: 8, paddingHorizontal: 16 }}
       onPress={handlePress}
     />
   );

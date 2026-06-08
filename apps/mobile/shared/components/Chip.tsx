@@ -13,6 +13,7 @@ type ChipProps = Omit<ViewProps, "children"> & {
   leading?: ReactNode;
   onPress?: PressableProps["onPress"];
   className?: string;
+  labelClassName?: string;
 };
 
 const LABEL_CLASS_NAMES: Record<ChipTone, string> = {
@@ -30,6 +31,7 @@ export function Chip({
   leading,
   onPress,
   className,
+  labelClassName,
   ...viewProps
 }: ChipProps) {
   const accentGreen = useThemeColor("accentGreen");
@@ -66,20 +68,22 @@ export function Chip({
   const contentBody = (
     <>
       {leading}
-      <Text className={`font-poppins-medium text-caption ${LABEL_CLASS_NAMES[tone]}`}>{label}</Text>
+      <Text
+        className={`font-poppins-medium text-caption ${LABEL_CLASS_NAMES[tone]} ${labelClassName ?? ""}`}
+      >
+        {label}
+      </Text>
     </>
   );
   const content = (
     <GlassSurface
       {...contentProps}
-      className={`h-8 flex-row items-center justify-center gap-1.5 rounded-full px-3 ${className ?? ""}`}
+      className={className}
       padded={false}
       radius={999}
-      style={[
-        toneBorderColor[tone] ? { borderColor: toneBorderColor[tone] } : null,
-        selected ? styles.selectedSurface : null,
-        contentProps.style,
-      ]}
+      borderColor={toneBorderColor[tone]}
+      borderWidth={selected ? 1.5 : undefined}
+      style={[styles.surface, contentProps.style]}
     >
       {contentBody}
     </GlassSurface>
@@ -97,7 +101,12 @@ export function Chip({
 }
 
 const styles = StyleSheet.create({
-  selectedSurface: {
-    borderWidth: 1.5,
+  surface: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center",
+    minHeight: 32,
+    paddingHorizontal: 12,
   },
 });

@@ -20,6 +20,7 @@ const {
   withPodsDeploymentTarget,
 } = require("./withFidyWidget.deploymentTarget");
 const { markAppDelegateIos26Compatibility } = require("./withFidyWidget.appDelegate");
+const { withXcodeWarningCleanup } = require("./withFidyWidget.xcodeWarnings");
 const {
   copyWidgetFiles,
   deploymentTarget: DEPLOYMENT_TARGET,
@@ -73,6 +74,7 @@ const buildSettings = (config) => {
   const developmentTeam = getDevelopmentTeam(config);
   const settings = {
     ...BASE_EXTENSION_BUILD_SETTINGS,
+    MARKETING_VERSION: config.version ?? "1.0",
     PRODUCT_BUNDLE_IDENTIFIER: getExtensionBundleId(config),
   };
   return developmentTeam ? { ...settings, DEVELOPMENT_TEAM: developmentTeam } : settings;
@@ -289,7 +291,7 @@ const withFidyWidget = (config) => {
   );
   const configWithExtension = withWidgetExtensionTarget(configWithPodsDeploymentTarget);
   const configWithAppDelegateCompatibility = markAppDelegateIos26Compatibility(configWithExtension);
-  return configWithAppDelegateCompatibility;
+  return withXcodeWarningCleanup(configWithAppDelegateCompatibility);
 };
 
-module.exports = createRunOncePlugin(withFidyWidget, "withFidyWidget", "1.0.0");
+module.exports = createRunOncePlugin(withFidyWidget, "withFidyWidget", "1.0.1");

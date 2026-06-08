@@ -14,6 +14,7 @@ type FieldButtonProps = Omit<ViewProps, "children"> & {
   readonly trailing?: ReactNode;
   readonly onPress: PressableProps["onPress"];
   readonly onClear?: PressableProps["onPress"];
+  readonly borderColor?: string;
   readonly clearAccessibilityLabel?: string;
   readonly active?: boolean;
   readonly disabled?: boolean;
@@ -57,18 +58,6 @@ function getFieldButtonContainerStyle(buttonStyle: StyleProp<ViewStyle>): StyleP
   };
 }
 
-function getFieldButtonSurfaceStyle(buttonStyle: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
-  const flattened = StyleSheet.flatten(buttonStyle);
-  if (!flattened) return null;
-
-  return {
-    backgroundColor: flattened.backgroundColor,
-    borderColor: flattened.borderColor,
-    borderRadius: flattened.borderRadius,
-    borderWidth: flattened.borderWidth,
-  };
-}
-
 export function FieldButton({
   label,
   value,
@@ -79,6 +68,7 @@ export function FieldButton({
   onClear,
   clearAccessibilityLabel,
   active = false,
+  borderColor,
   disabled = false,
   className,
   buttonStyle,
@@ -98,7 +88,6 @@ export function FieldButton({
   const tertiary = useThemeColor("tertiary");
   const contentStyle = getFieldButtonContentStyle(buttonStyle);
   const containerStyle = getFieldButtonContainerStyle(buttonStyle);
-  const surfaceStyle = getFieldButtonSurfaceStyle(buttonStyle);
   const valueNode =
     typeof value === "string" ? (
       <Text
@@ -143,9 +132,9 @@ export function FieldButton({
         <FieldSurface
           size="button"
           radius={8}
+          borderColor={borderColor ?? (active ? primary : undefined)}
           style={containerStyle}
           contentStyle={contentStyle}
-          surfaceStyle={[surfaceStyle, active ? { borderColor: primary } : null]}
         >
           {leading}
           <View className="flex-1">{valueNode}</View>

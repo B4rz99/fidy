@@ -72,11 +72,7 @@ export function AppToastHost() {
         ]}
         accessibilityLiveRegion="polite"
       >
-        <GlassSurface
-          padded={false}
-          radius={18}
-          style={[styles.toast, { borderColor: accentGreen }]}
-        >
+        <GlassSurface padded={false} radius={18} borderColor={accentGreen} style={styles.toast}>
           <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
             {toast.message}
           </Text>

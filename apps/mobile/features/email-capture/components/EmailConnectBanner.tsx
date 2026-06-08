@@ -16,7 +16,6 @@ export const EmailConnectBanner = ({
   const dismissBanner = useEmailCaptureStore((s) => s.dismissBanner);
   const iconColor = useThemeColor("accentRed");
   const closeColor = useThemeColor("tertiary");
-  const borderColor = useThemeColor("borderSubtle");
 
   if (accounts.length > 0 || bannerDismissed) return null;
 
@@ -48,7 +47,6 @@ export const EmailConnectBanner = ({
           variant="secondary"
           icon={<Mail size={18} color={iconColor} />}
           className="h-11 flex-1 rounded-icon"
-          style={{ borderColor }}
         />
 
         <Button
@@ -57,7 +55,6 @@ export const EmailConnectBanner = ({
           variant="secondary"
           icon={<Mail size={18} color="#4A90D9" />}
           className="h-11 flex-1 rounded-icon"
-          style={{ borderColor }}
         />
       </View>
     </Card>

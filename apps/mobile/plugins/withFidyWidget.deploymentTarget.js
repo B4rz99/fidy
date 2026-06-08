@@ -17,6 +17,22 @@ const buildPodsDeploymentTargetPatch = (deploymentTarget) => `
           config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '${deploymentTarget}'
         end
       end
+
+      if target.name == 'EXUpdates'
+        target.shell_script_build_phases.each do |phase|
+          if phase.name == '[CP-User] Generate updates resources for expo-updates'
+            phase.always_out_of_date = '1'
+          end
+        end
+      end
+
+      if target.name == 'hermes-engine'
+        target.shell_script_build_phases.each do |phase|
+          if phase.name == '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed'
+            phase.always_out_of_date = '1'
+          end
+        end
+      end
     end
     ${PODS_DEPLOYMENT_TARGET_PATCH_END}
 `;

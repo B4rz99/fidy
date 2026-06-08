@@ -99,17 +99,15 @@ export function TransferSideCard(props: {
           </View>
         }
         onPress={props.onPress}
+        borderColor={props.isConflict ? accentRed : undefined}
         testID={props.testID}
         accessible
         accessibilityLabel={t("transfers.a11y.selectSide", { side: props.label })}
         accessibilityHint={subtitle}
-        buttonStyle={[
-          {
-            minHeight: 74,
-            paddingVertical: 12,
-          },
-          props.isConflict ? { borderColor: accentRed } : null,
-        ]}
+        buttonStyle={{
+          minHeight: 74,
+          paddingVertical: 12,
+        }}
       />
     </View>
   );

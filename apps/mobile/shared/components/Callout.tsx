@@ -99,7 +99,8 @@ export function Callout({
       className={className}
       padded={false}
       radius={12}
-      style={[styles.surface, { borderColor: toneBorderColor[tone] }, contentProps.style]}
+      borderColor={toneBorderColor[tone]}
+      style={[styles.surface, contentProps.style]}
     >
       {icon}
       <View className="flex-1" style={{ gap: 2 }}>

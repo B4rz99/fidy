@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ViewProps } from "react-native";
+import type { StyleProp, ViewProps, ViewStyle } from "react-native";
 import { Pressable, StyleSheet, Text } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor } from "@/shared/hooks";
 import { getSubtleGlassCardTokens } from "./card-tokens";
@@ -22,7 +22,7 @@ type SegmentedControlProps<TValue extends string> = Omit<ViewProps, "children"> 
   readonly tone?: SegmentedControlTone;
   readonly getOptionTone?: (value: TValue) => SegmentedControlTone;
   readonly allowReselect?: boolean;
-  readonly className?: string;
+  readonly style?: StyleProp<ViewStyle>;
 };
 
 export function SegmentedControl<TValue extends string>({
@@ -32,7 +32,7 @@ export function SegmentedControl<TValue extends string>({
   tone = "primary",
   getOptionTone,
   allowReselect = false,
-  className,
+  style,
   ...viewProps
 }: SegmentedControlProps<TValue>) {
   const colorScheme = useColorScheme();
@@ -49,13 +49,7 @@ export function SegmentedControl<TValue extends string>({
   };
 
   return (
-    <GlassSurface
-      {...viewProps}
-      className={`h-10 flex-row gap-1 rounded-full p-[3px] ${className ?? ""}`}
-      padded={false}
-      radius={999}
-      style={viewProps.style}
-    >
+    <GlassSurface {...viewProps} padded={false} radius={999} style={[styles.container, style]}>
       {options.map((option) => {
         const selected = option.value === value;
         const activeTone = getOptionTone?.(option.value) ?? tone;
@@ -73,17 +67,16 @@ export function SegmentedControl<TValue extends string>({
                 onChange(option.value);
               }
             }}
-            className={`flex-1 flex-row items-center justify-center gap-1 rounded-full px-3 ${
-              option.disabled ? "opacity-50" : ""
-            }`}
-            style={
+            style={[
+              styles.optionBase,
+              option.disabled ? styles.disabledOption : null,
               selected
                 ? [
                     styles.selectedOption,
                     { backgroundColor: tokens.tintColor, borderColor: activeColor },
                   ]
-                : styles.option
-            }
+                : styles.option,
+            ]}
           >
             {option.leading}
             <Text
@@ -103,6 +96,24 @@ export function SegmentedControl<TValue extends string>({
 export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlTone };
 
 const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    gap: 4,
+    height: 40,
+    padding: 3,
+  },
+  optionBase: {
+    alignItems: "center",
+    borderRadius: 999,
+    flex: 1,
+    flexDirection: "row",
+    gap: 4,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  disabledOption: {
+    opacity: 0.5,
+  },
   option: {
     borderColor: "transparent",
     borderWidth: 1,
