@@ -1,0 +1,111 @@
+apps/mobile/features/goals/lib/route-params.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 18
+apps/mobile/features/review-queues/hooks/use-financial-meaning-review-queue.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 33-35
+apps/mobile/features/settings/lib/private-backup-settings-state.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 109-110,112-114,116,135-136,139-144,146-151,154,158-159,161-162
+apps/mobile/features/onboarding/store.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 24-28
+apps/mobile/features/transactions/lib/build-transaction.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 62,70-75,142,185
+apps/mobile/features/transfers/lib/build-transfer-helpers.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 79-82
+apps/mobile/__tests__/search/route-params.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 5-6,11-12,18
+apps/mobile/features/capture-evidence/index.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 5
+apps/mobile/features/email-capture/schema.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 7,9-10
+apps/mobile/features/review-queues/lib/attribution-review-service.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 27,150-155,160,189-206
+apps/mobile/features/settings/store.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 85-95
+apps/mobile/features/review-queues/hooks/use-attribution-review-queue.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 36
+apps/mobile/__tests__/review-queues/attribution-review-service.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 247,258,265
+apps/mobile/__tests__/account-suggestions/presentation.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 89,92-93,96,101-102,104
+apps/mobile/__tests__/financial-accounts/repository.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 50,55,63,65-66,69,72,75-76,87,93-94
+apps/mobile/features/capture-sources/services/notification-pipeline/context.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 4,73,107
+apps/mobile/features/transactions/lib/repository.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 37
+apps/mobile/features/account-suggestions/hooks/use-account-suggestions.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 28-35
+apps/mobile/__tests__/capture-interpreter/candidates.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 30,41
+apps/mobile/__tests__/email-capture/parse-email-service.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 47,74
+apps/mobile/features/email-capture/services/email-pipeline-service/runtime.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 88
+apps/mobile/features/search/lib/route-params.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 20
+apps/mobile/__tests__/account-suggestions/service.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 232,234-235,240-241,248,251-252,258-259,266-267,274-275,282,285-286,292-293,300-301,308-309,316,319-320,326-327,561,563,572-573,579,582,588-589,595,598,604-605
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 353,1143,1155
+apps/mobile/features/qa/lib/build-local-qa-seed.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 190
+apps/mobile/__tests__/email-capture/schema-compat.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 96
+apps/mobile/features/dashboard/lib/get-activity-account-names.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 10-12
+apps/mobile/features/financial-accounts/lib/default-account-bootstrap.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 15,20-24
+apps/mobile/features/transfers/lib/repository.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 5
+apps/mobile/features/email-capture/services/email-pipeline-service/public-types.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 99
+apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 57,77,189,200,206
+apps/mobile/features/account-suggestions/components/AccountSuggestionCard.tsx
+  s_823790b9024764::t_bde7f37a0dcd9d 29
+apps/mobile/__tests__/onboarding/store.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 83,86
+apps/mobile/__tests__/capture-sources/notification-pipeline-context.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 54,56
+apps/mobile/features/transfers/lib/transfer-row-mappers.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 38
+apps/mobile/__tests__/transactions/build-transaction.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 143-144,162-163,255,265,273
+apps/mobile/features/review-queues/components/AttributionReviewScreen.tsx
+  s_823790b9024764::t_bde7f37a0dcd9d 58,112-115
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 254,259,261-262,265,270,272-273
+apps/mobile/features/financial-accounts/lib/kind.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 4
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 18,55-56,58-63,114
+apps/mobile/__tests__/goals/route-params.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 5-6,9-10,14
+apps/mobile/__tests__/email-capture/types.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 40,42-45
+apps/mobile/features/financial-accounts/lib/repository.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 46,107
+apps/mobile/features/account-suggestions/lib/derive-account-suggestions.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 13,75,91
+apps/mobile/__tests__/review-queues/account-presentation.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 19
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_823790b9024764::t_bde7f37a0dcd9d 39,130-131,170,182,192-193,230,244,257,266,293,302,325,372,466,480,503,516,539,557
+apps/mobile/features/review-queues/components/AttributionQueueCard.tsx
+  s_823790b9024764::t_bde7f37a0dcd9d 78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "819732511ea5cd3f8fd305b384efdabc7f7d54c2",
+  "prompts": {},
+  "sessions": {
+    "s_823790b9024764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea7d4-e3f0-7cb0-9375-c6153bce12d8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
