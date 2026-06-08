@@ -81,18 +81,22 @@ const parseStoredNotificationPreferences = (
     return null;
   }
 
-  const raw: unknown = JSON.parse(value);
-  if (
-    typeof raw !== "object" ||
-    raw === null ||
-    typeof (raw as Record<string, unknown>).budgetAlerts !== "boolean" ||
-    typeof (raw as Record<string, unknown>).goalMilestones !== "boolean" ||
-    typeof (raw as Record<string, unknown>).spendingAnomalies !== "boolean"
-  ) {
-    throw new Error("Invalid notification preferences");
-  }
+  try {
+    const raw: unknown = JSON.parse(value);
+    if (
+      typeof raw !== "object" ||
+      raw === null ||
+      typeof (raw as Record<string, unknown>).budgetAlerts !== "boolean" ||
+      typeof (raw as Record<string, unknown>).goalMilestones !== "boolean" ||
+      typeof (raw as Record<string, unknown>).spendingAnomalies !== "boolean"
+    ) {
+      return null;
+    }
 
-  return raw as NotificationPreferences;
+    return raw as NotificationPreferences;
+  } catch {
+    return null;
+  }
 };
 
 const loadStoredSettings = async () => {

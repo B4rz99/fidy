@@ -79,8 +79,13 @@ export const persistPrivateBackupState = (privateBackup: PrivateBackupSettingsSt
   });
 };
 
-export const loadPrivateBackupSettingsState = async () =>
-  parseStoredPrivateBackupState(await SecureStore.getItemAsync(PRIVATE_BACKUP_KEY));
+export const loadPrivateBackupSettingsState = async () => {
+  try {
+    return parseStoredPrivateBackupState(await SecureStore.getItemAsync(PRIVATE_BACKUP_KEY));
+  } catch {
+    return null;
+  }
+};
 
 const toPersistedPrivateBackupState = ({
   health: _health,

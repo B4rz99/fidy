@@ -30,11 +30,13 @@ export function useFinancialMeaningReviewQueue({
       return;
     }
 
-    const nextItems = await getFinancialMeaningReviewItems(db, userId);
-    setItems(nextItems);
-    await loadNeedsReviewEmails(db, userId);
-
-    setHasLoadedQueue(true);
+    try {
+      const nextItems = await getFinancialMeaningReviewItems(db, userId);
+      setItems(nextItems);
+      await loadNeedsReviewEmails(db, userId);
+    } finally {
+      setHasLoadedQueue(true);
+    }
   }, [db, userId]);
 
   useFocusEffect(

@@ -139,6 +139,26 @@ describe("useSettingsStore", () => {
     });
   });
 
+  test("ignores invalid Private Backup storage without dropping unrelated settings", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation((key) =>
+      Promise.resolve(
+        key === "theme_preference"
+          ? "dark"
+          : key === "share_anonymized_parse_samples"
+            ? "true"
+            : key === "private_backup"
+              ? "{"
+              : null
+      )
+    );
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().privateBackup.health.status).toBe("not_set_up");
+    expect(useSettingsStore.getState().themePreference).toBe("dark");
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+  });
+
   test("keeps failed Private Backup uploads retryable", () => {
     useSettingsStore.getState().markPrivateBackupUploadFailed("2026-04-25T12:05:00.000Z");
     expect(useSettingsStore.getState().privateBackup.health).toMatchObject({
