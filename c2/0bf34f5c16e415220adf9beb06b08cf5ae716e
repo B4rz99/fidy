@@ -1,0 +1,34 @@
+apps/mobile/plugins/withFidyWidget.xcodeWarnings.js
+  s_057bd0ebcfafbe::t_aefad81ec3f823 23-24,30-42
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_057bd0ebcfafbe::t_aefad81ec3f823 34,38
+apps/mobile/shared/components/FormSection.tsx
+  s_057bd0ebcfafbe::t_aefad81ec3f823 19
+apps/mobile/plugins/withFidyWidget.appDelegate.js
+  s_057bd0ebcfafbe::t_aefad81ec3f823 22-23
+  s_057bd0ebcfafbe::t_3abb160184839f 26-30
+apps/mobile/shared/components/AppToastHost.tsx
+  s_057bd0ebcfafbe::t_aefad81ec3f823 114-117
+apps/mobile/features/search/components/FilterChipItem.tsx
+  s_057bd0ebcfafbe::t_aefad81ec3f823 39
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_057bd0ebcfafbe::t_aefad81ec3f823 77,84-106
+apps/mobile/__tests__/plugins/with-fidy-widget-files.test.ts
+  s_057bd0ebcfafbe::t_d6df00c6ff92d5 79-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c20bf34f5c16e415220adf9beb06b08cf5ae716e",
+  "prompts": {},
+  "sessions": {
+    "s_057bd0ebcfafbe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea447-dd2d-7a92-ae6a-234f34891060",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
