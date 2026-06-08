@@ -1,0 +1,30 @@
+apps/mobile/features/account-suggestions/components/LinkSuggestedAccountScreen.tsx
+  s_c5de1adbad9fac::t_f6fc7f1a824968 7-8,33-41
+apps/mobile/shared/components/Chip.tsx
+  s_c5de1adbad9fac::t_3a739fd252f360 85-89,98,116
+  s_c5de1adbad9fac::t_6d4c6775a7dece 3,5,109-115,117-119
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_c5de1adbad9fac::t_f6fc7f1a824968 7-14,126,131-133,135-138
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_c5de1adbad9fac::t_6d4c6775a7dece 6-7,28,32-35,37-40
+apps/mobile/shared/components/DialogFrame.tsx
+  s_c5de1adbad9fac::t_6d4c6775a7dece 5,107-109
+apps/mobile/shared/components/FilterPill.tsx
+  s_c5de1adbad9fac::t_6d4c6775a7dece 3,5,90,95-100,102-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c4451fd30cf5ed83eae5b47fb5285ef2acef82ea",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
