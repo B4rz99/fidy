@@ -30,7 +30,7 @@ const financialAccountIdSchema = z
     }
   });
 
-export { categoryIdSchema, makeCategoryIdSchema } from "@/shared/categories";
+export { categoryIdSchema } from "@/shared/categories";
 
 export const createTransactionSchema = z.object({
   type: transactionTypeSchema,

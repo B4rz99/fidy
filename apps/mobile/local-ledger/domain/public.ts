@@ -31,14 +31,6 @@ export type LocalLedgerMoney = {
   readonly currency: "COP";
 };
 
-export type LocalLedgerEntry = {
-  readonly id: LocalLedgerEntryId;
-  readonly occurredAt: string;
-  readonly money: LocalLedgerMoney;
-  readonly description: string;
-  readonly sourceId: LocalLedgerSourceId | null;
-};
-
 export type LocalLedgerTransferSide =
   | {
       readonly kind: "account";

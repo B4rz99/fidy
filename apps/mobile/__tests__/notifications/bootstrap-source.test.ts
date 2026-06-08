@@ -11,7 +11,6 @@ describe("notification bootstrap", () => {
   it("does not subscribe to push-token changes that recursively fetch Expo tokens", () => {
     expect(source).toContain("registerCurrentPushToken(userId)");
     expect(source).not.toContain("addPushTokenListener");
-    expect(source).not.toContain("registerKnownPushToken(userId, token.data)");
   });
 
   it("keeps notification response navigation subscribed", () => {

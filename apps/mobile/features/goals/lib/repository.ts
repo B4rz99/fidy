@@ -32,11 +32,6 @@ export function getGoalsForUser(db: AnyDb, userId: string) {
     .all();
 }
 
-export function getGoalById(db: AnyDb, id: string) {
-  const rows = db.select().from(goals).where(eq(goals.id, id)).all();
-  return rows[0] ?? null;
-}
-
 export function updateGoal(input: UpdateGoalInput) {
   input.db
     .update(goals)
@@ -53,11 +48,6 @@ export function softDeleteGoal(db: AnyDb, id: string, now: string) {
 
 export function insertContribution(db: AnyDb, row: GoalContributionRow) {
   db.insert(goalContributions).values(row).run();
-}
-
-export function getContributionById(db: AnyDb, id: string) {
-  const rows = db.select().from(goalContributions).where(eq(goalContributions.id, id)).all();
-  return rows[0] ?? null;
 }
 
 export function getContributionsForGoal(db: AnyDb, goalId: string) {

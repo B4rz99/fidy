@@ -120,7 +120,6 @@ describe("ai chat store boundary", () => {
       messages: [],
       isStreaming: false,
       streamingContent: "",
-      expiredSessionCount: 0,
     });
   });
 
@@ -378,7 +377,6 @@ describe("ai chat store boundary", () => {
       sessions: [fresh],
       currentSessionId: null,
       messages: [],
-      expiredSessionCount: 1,
     });
   });
 });

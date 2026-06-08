@@ -4,10 +4,8 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  getContributionById,
   getContributionMonthCount,
   getContributionsForGoal,
-  getGoalById,
   getGoalCurrentAmount,
   getGoalsForUser,
   insertContribution,
@@ -22,6 +20,12 @@ let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 
 const testDb = () => db as unknown as AnyDb;
+const getGoalRowById = (id: string) =>
+  sqlite.prepare("select * from goals where id = ?").get(id) as Record<string, unknown> | undefined;
+const getContributionRowById = (id: string) =>
+  sqlite.prepare("select * from goal_contributions where id = ?").get(id) as
+    | Record<string, unknown>
+    | undefined;
 
 const USER_ID = "user-1";
 const CREATED_AT = "2026-03-01T00:00:00.000Z";
@@ -138,13 +142,13 @@ describe("goals repository", () => {
     contributionSummaryRows.forEach(insertContributionRow);
 
     expect(getGoalsForUser(testDb(), USER_ID)).toHaveLength(2);
-    expect(getGoalById(testDb(), "goal-1")).toMatchObject({
+    expect(getGoalRowById("goal-1")).toMatchObject({
       id: "goal-1",
       name: "Emergency fund",
     });
-    expect(getContributionById(testDb(), "contribution-2")).toMatchObject({
+    expect(getContributionRowById("contribution-2")).toMatchObject({
       id: "contribution-2",
-      goalId: "goal-1",
+      goal_id: "goal-1",
       amount: 150000,
     });
 
@@ -178,7 +182,19 @@ describe("goals repository", () => {
       now: "2026-04-01T12:00:00.000Z",
     });
 
-    expect(getGoalById(testDb(), "goal-1")).toMatchObject(updatedGoalExpectation);
+    expect(getGoalRowById("goal-1")).toMatchObject({
+      id: updatedGoalExpectation.id,
+      name: updatedGoalExpectation.name,
+      type: updatedGoalExpectation.type,
+      target_amount: updatedGoalExpectation.targetAmount,
+      target_date: updatedGoalExpectation.targetDate,
+      interest_rate_percent: updatedGoalExpectation.interestRatePercent,
+      icon_name: updatedGoalExpectation.iconName,
+      color_hex: updatedGoalExpectation.colorHex,
+      created_at: updatedGoalExpectation.createdAt,
+      updated_at: updatedGoalExpectation.updatedAt,
+      deleted_at: updatedGoalExpectation.deletedAt,
+    });
   });
 
   it("soft deletes a goal so it disappears from active listings but remains queryable by id", () => {
@@ -194,10 +210,10 @@ describe("goals repository", () => {
     softDeleteGoal(testDb(), "goal-1", DELETED_AT);
 
     expect(getGoalsForUser(testDb(), USER_ID).map(({ id }) => id)).toEqual(["goal-2"]);
-    expect(getGoalById(testDb(), "goal-1")).toMatchObject({
+    expect(getGoalRowById("goal-1")).toMatchObject({
       id: "goal-1",
-      deletedAt: DELETED_AT,
-      updatedAt: DELETED_AT,
+      deleted_at: DELETED_AT,
+      updated_at: DELETED_AT,
     });
   });
 });

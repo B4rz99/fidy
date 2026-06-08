@@ -17,10 +17,3 @@ export type NotificationBootstrapContext = {
   readonly navigateToRoute: (route: string) => void;
   readonly userId: UserId;
 };
-
-export type SyncBootstrapContext = {
-  readonly db: AnyDb;
-  readonly enableRemoteEffects: boolean;
-  readonly migrationsReady: boolean;
-  readonly userId: UserId;
-};

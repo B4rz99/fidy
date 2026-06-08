@@ -44,7 +44,6 @@ type CreateTransactionMutationServiceDeps = {
 
 export type TransactionMutationService = {
   save: (input: TransactionFormInput) => Promise<TransactionMutationResult>;
-  update: (id: TransactionId, input: TransactionFormInput) => Promise<TransactionMutationResult>;
   updateDirect: (
     id: TransactionId,
     input: TransactionFormInput
@@ -127,28 +126,6 @@ export function createTransactionMutationService(
         return result;
       }
 
-      await deps.refresh();
-      return result;
-    },
-
-    update: async (id, input) => {
-      const userId = deps.getUserId();
-      if (!userId) {
-        return fail("Store not initialized");
-      }
-
-      const result = await amendManualTransaction(deps, {
-        userId,
-        transactionId: id,
-        form: input,
-        now: now(),
-      });
-      if (!result.success) {
-        return result;
-      }
-
-      deps.trackEdited({ category: String(result.transaction.categoryId) });
-      deps.resetForm();
       await deps.refresh();
       return result;
     },

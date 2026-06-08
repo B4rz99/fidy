@@ -33,24 +33,9 @@ const applyRedactionRule = (text: string, rule: RedactionRule): string =>
   text.replace(rule.pattern, rule.replacement);
 
 const truncateEmailBody = (text: string): string => text.slice(0, 2000);
-const EMAIL_PAYMENT_METHOD_LABEL_PATTERN = /m[eé]todo\s+de\s+pago/i;
 
 const sanitizeEmailBody = (text: string): string =>
   truncateEmailBody(REDACTION_RULES.reduce(applyRedactionRule, text));
-
-export function summarizeLlmEmailInputDiagnostics(input: {
-  readonly rawText: string;
-  readonly sanitizedText: string;
-}) {
-  return {
-    rawLength: input.rawText.length,
-    sanitizedLength: input.sanitizedText.length,
-    wasTruncated:
-      input.sanitizedText.length >= 2000 && input.rawText.length > input.sanitizedText.length,
-    sanitizedHasPaymentMethodLabel: EMAIL_PAYMENT_METHOD_LABEL_PATTERN.test(input.sanitizedText),
-    sanitizedCardPlaceholderCount: Array.from(input.sanitizedText.matchAll(/\[CARD\]/g)).length,
-  };
-}
 
 const sanitizeEmailBodyForLlm = (text: string): string => sanitizeEmailBody(text);
 

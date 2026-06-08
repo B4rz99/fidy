@@ -7,10 +7,8 @@ import { MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "./lib/constants";
 import { ICON_MAP } from "./lib/icon-map";
 import {
   type CategoryRegistryRow,
-  type CategoryRegistryScope,
   type CategoryRegistrySnapshot,
   createCategoryRegistrySnapshot,
-  isCategoryIdValid,
 } from "./lib/registry";
 import { getUserCategoriesForUser, type UserCategoryRow } from "./lib/repository";
 
@@ -20,7 +18,6 @@ type CategoriesState = CategoryRegistrySnapshot;
 
 type CategoriesActions = {
   replaceSnapshot: (snapshot: CategoryRegistrySnapshot) => void;
-  isValid(id: string, scope?: CategoryRegistryScope): boolean;
 };
 
 type CustomCategoryInput = {
@@ -41,12 +38,10 @@ const toCustomCategoryRow = (row: {
   colorHex: row.colorHex,
 });
 
-export const useCategoriesStore = create<CategoriesState & CategoriesActions>((set, get) => ({
+export const useCategoriesStore = create<CategoriesState & CategoriesActions>((set) => ({
   ...createCategoryRegistrySnapshot([]),
 
   replaceSnapshot: (snapshot) => set(snapshot),
-
-  isValid: (id, scope = "built_in") => isCategoryIdValid(get(), id, scope),
 }));
 
 function isValidCustomCategoryInput(input: CustomCategoryInput): boolean {

@@ -73,7 +73,6 @@ describe("ai chat store state helper", () => {
       messages: [activeMessage, otherMessage],
       isStreaming: false,
       streamingContent: "",
-      expiredSessionCount: 0,
     });
 
     store.getState().setMessageActionStatus(activeMessage.id, "confirmed");

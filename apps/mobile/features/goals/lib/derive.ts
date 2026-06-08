@@ -1,4 +1,3 @@
-export { deriveBudgetNudges, deriveGoalAlerts } from "./derive/budget";
 export { deriveGoalCardStatus, deriveGoalPaceGuidance } from "./derive/pace";
 export {
   computeMedian,
@@ -9,10 +8,8 @@ export {
   deriveMonthlyMilestones,
 } from "./derive/projection";
 export type {
-  BudgetNudge,
   ConfidenceTier,
   DebtProjectionResult,
-  GoalAlert,
   GoalCardStatus,
   GoalPaceGuidance,
   GoalProgress,

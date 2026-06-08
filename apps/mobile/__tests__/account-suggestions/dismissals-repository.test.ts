@@ -6,7 +6,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   getAccountSuggestionDismissalsForUser,
-  upsertAccountSuggestionDismissal,
+  saveAccountSuggestionDismissal,
 } from "@/features/account-suggestions/lib/dismissals-repository";
 import type { AccountSuggestionDismissalId, IsoDateTime, UserId } from "@/shared/types/branded";
 
@@ -38,25 +38,16 @@ const dismissal = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("account suggestion dismissals repository", () => {
-  it("persists a new dismissal and skips older duplicate upserts", () => {
-    upsertAccountSuggestionDismissal(db as any, dismissal());
-    upsertAccountSuggestionDismissal(
-      db as any,
-      dismissal({
-        id: "dismissal-2",
-        dismissedScore: 3,
-        updatedAt: "2026-04-19T09:00:00.000Z" as IsoDateTime,
-      })
-    );
-
+  it("persists a new dismissal", () => {
+    saveAccountSuggestionDismissal(db as any, dismissal());
     expect(getAccountSuggestionDismissalsForUser(db as any, USER_ID)).toEqual([
       expect.objectContaining({ id: "dismissal-1", dismissedScore: 8 }),
     ]);
   });
 
-  it("replaces an older active duplicate with the newer row", () => {
-    upsertAccountSuggestionDismissal(db as any, dismissal());
-    upsertAccountSuggestionDismissal(
+  it("preserves the existing duplicate id when saving a matching dismissal", () => {
+    saveAccountSuggestionDismissal(db as any, dismissal());
+    saveAccountSuggestionDismissal(
       db as any,
       dismissal({
         id: "dismissal-2",
@@ -66,7 +57,7 @@ describe("account suggestion dismissals repository", () => {
     );
 
     expect(getAccountSuggestionDismissalsForUser(db as any, USER_ID)).toEqual([
-      expect.objectContaining({ id: "dismissal-2", dismissedScore: 10 }),
+      expect.objectContaining({ id: "dismissal-1", dismissedScore: 10 }),
     ]);
   });
 });

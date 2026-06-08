@@ -159,15 +159,6 @@ export function acceptSourceEventFinancialMeaningReviewByIdInTransaction(
   return true;
 }
 
-export function acceptSourceEventFinancialMeaningReviewById(
-  db: AnyDb,
-  input: Parameters<typeof acceptSourceEventFinancialMeaningReviewByIdInTransaction>[1]
-) {
-  return db.transaction((tx) => {
-    return acceptSourceEventFinancialMeaningReviewByIdInTransaction(tx, input);
-  });
-}
-
 const rejectPendingReviewCandidate = (
   tx: AnyDb,
   input: {

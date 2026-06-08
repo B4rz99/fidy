@@ -94,13 +94,6 @@ export function getFinancialAccountsForUser(db: AnyDb, userId: FinancialAccountR
   return getActiveFinancialAccountRowsForUser(db, userId);
 }
 
-export function getDefaultFinancialAccountForUser(
-  db: AnyDb,
-  userId: FinancialAccountRow["userId"]
-) {
-  return findExistingDefaultFinancialAccount(getActiveFinancialAccountRowsForUser(db, userId));
-}
-
 export function ensureDefaultFinancialAccount(
   db: AnyDb,
   userId: FinancialAccountRow["userId"],

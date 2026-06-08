@@ -357,13 +357,9 @@ describe("createBudgetMonitoringModule", () => {
 
     vi.doMock("@/features/transactions/query.public", () => ({
       getSpendingByCategoryAggregate: getSpendingByCategoryAggregateMock,
-      getSpendingByCategoryDateRangeAggregate: vi.fn<() => unknown[]>(() => []),
     }));
     vi.doMock("@/features/transactions/lib/repository", () => ({
       getSpendingByCategoryAggregate: () => {
-        throw new Error("budget monitoring should not import transaction internals");
-      },
-      getSpendingByCategoryDateRangeAggregate: () => {
         throw new Error("budget monitoring should not import transaction internals");
       },
     }));

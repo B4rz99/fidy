@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getUserCategoriesForUser, insertUserCategory } from "@/features/categories/lib/repository";
-import { CATEGORIES, CATEGORY_ROWS } from "@/features/transactions/lib/categories";
+import { CATEGORIES } from "@/features/transactions/lib/categories";
 import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
 
 // Mock the repository
@@ -47,27 +47,15 @@ describe("useCategoriesStore", () => {
     return import("@/features/categories/store");
   }
 
-  it("exposes built-in and merged snapshots before refresh", async () => {
+  it("exposes built-in and custom snapshots before refresh", async () => {
     const { useCategoriesStore: store } = await loadCategoriesModule();
     const state = store.getState();
 
     expect(state.builtIn).toEqual(CATEGORIES);
     expect(state.custom).toEqual([]);
-    expect(state.merged).toEqual(CATEGORIES);
-    expect(state.builtInRows).toEqual(CATEGORY_ROWS);
-    expect(state.byId.get("food")).toEqual(CATEGORIES[0]);
   });
 
-  it("isValid defaults to built-in scope", async () => {
-    const { useCategoriesStore: store } = await loadCategoriesModule();
-    const state = store.getState();
-
-    expect(state.isValid("food")).toBe(true);
-    expect(state.isValid("transport")).toBe(true);
-    expect(state.isValid("nonexistent")).toBe(false);
-  });
-
-  it("refresh loads user categories into the merged registry only", async () => {
+  it("refresh loads user categories into the custom registry", async () => {
     const fakeRow = {
       id: "ucat-custom-1" as UserCategoryId,
       userId: "user-1" as UserId,
@@ -85,14 +73,10 @@ describe("useCategoriesStore", () => {
 
     const state = store.getState();
     expect(state.custom).toHaveLength(1);
-    expect(state.merged).toHaveLength(CATEGORIES.length + 1);
-    expect(state.merged.slice(0, CATEGORIES.length)).toEqual(CATEGORIES);
-    expect(state.byId.get("ucat-custom-1")).toMatchObject({
+    expect(state.custom[0]).toMatchObject({
       label: { en: "Groceries", es: "Groceries" },
       color: "#FF5722",
     });
-    expect(state.isValid("ucat-custom-1")).toBe(false);
-    expect(state.isValid("ucat-custom-1", "merged")).toBe(true);
   });
 
   it("createCustom inserts to DB", async () => {

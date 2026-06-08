@@ -257,14 +257,9 @@ export async function cleanupExpiredChatSessions(
     const isActiveExpired = state.currentSessionId ? expiredIds.has(state.currentSessionId) : false;
     return {
       sessions: state.sessions.filter((session) => !expiredIds.has(session.id)),
-      expiredSessionCount: expired.length,
       ...(isActiveExpired ? { currentSessionId: null, messages: [] } : {}),
     };
   });
 
   return expired;
-}
-
-function dismissExpiredChatBanner(): void {
-  useChatStore.getState().dismissExpiredBanner();
 }

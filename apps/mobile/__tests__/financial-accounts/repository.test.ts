@@ -6,7 +6,6 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   ensureDefaultFinancialAccount,
-  getDefaultFinancialAccountForUser,
   getFinancialAccountsForUser,
   saveFinancialAccount,
 } from "@/features/financial-accounts";
@@ -45,7 +44,6 @@ describe("financial accounts repository", () => {
       isDefault: true,
     });
     expect(second).toEqual(first);
-    expect(getDefaultFinancialAccountForUser(db as any, USER_ID)).toEqual(first);
     expect(getFinancialAccountsForUser(db as any, USER_ID)).toHaveLength(1);
   });
 
@@ -89,7 +87,7 @@ describe("financial accounts repository", () => {
       kind: "cash",
       isDefault: true,
     });
-    expect(getDefaultFinancialAccountForUser(db as any, USER_ID)).toMatchObject({
+    expect(getFinancialAccountsForUser(db as any, USER_ID)[0]).toMatchObject({
       id: "fa-default-user-1",
       isDefault: true,
     });

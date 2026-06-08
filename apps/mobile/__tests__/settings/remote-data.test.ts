@@ -4,9 +4,7 @@ import { resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   deleteAccountRequest,
-  fetchNotificationPreferences,
   saveNotificationPreferences,
-  toNotificationPreferences,
 } from "@/features/settings/data/notification-preferences";
 import { getSupabase } from "@/shared/db";
 import en from "@/shared/i18n/locales/en";
@@ -17,14 +15,8 @@ vi.mock("@/shared/db", () => ({
   getSupabase: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockSelect = vi.fn<(...args: any[]) => any>();
-const mockEq = vi.fn<(...args: any[]) => any>();
-const mockMaybeSingle = vi.fn<(...args: any[]) => any>();
 const mockUpsert = vi.fn<(...args: any[]) => any>();
 const mockFrom = vi.fn<(...args: any[]) => any>((_table: string) => ({
-  select: mockSelect.mockReturnValue({
-    eq: mockEq.mockReturnValue({ maybeSingle: mockMaybeSingle }),
-  }),
   upsert: mockUpsert,
 }));
 
@@ -32,28 +24,6 @@ describe("settings remote data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSupabase).mockReturnValue({ from: mockFrom } as never);
-  });
-
-  test("maps a remote row to NotificationPreferences", () => {
-    expect(
-      toNotificationPreferences({
-        budget_alerts: false,
-        goal_milestones: true,
-        spending_anomalies: false,
-        weekly_digest: true,
-      })
-    ).toEqual({
-      budgetAlerts: false,
-      goalMilestones: true,
-      spendingAnomalies: false,
-      weeklyDigest: true,
-    });
-  });
-
-  test("remote fetch returns null when no row exists", async () => {
-    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
-
-    await expect(fetchNotificationPreferences("user-1" as UserId)).resolves.toBeNull();
   });
 
   test("remote save upserts the correct Supabase shape", async () => {

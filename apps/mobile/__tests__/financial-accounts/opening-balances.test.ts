@@ -4,11 +4,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  getOpeningBalanceForAccount,
-  saveOpeningBalance,
-  upsertOpeningBalance,
-} from "@/features/financial-accounts";
+import { getOpeningBalanceForAccount, saveOpeningBalance } from "@/features/financial-accounts";
 import type {
   CopAmount,
   FinancialAccountId,
@@ -36,10 +32,6 @@ afterEach(() => {
 
 function saveBalance(overrides: Partial<ReturnType<typeof createOpeningBalanceFixture>> = {}) {
   saveOpeningBalance(db as any, createOpeningBalanceFixture(overrides));
-}
-
-function upsertBalance(overrides: Partial<ReturnType<typeof createOpeningBalanceFixture>> = {}) {
-  upsertOpeningBalance(db as any, createOpeningBalanceFixture(overrides));
 }
 
 function expectOpeningBalanceForAccount(
@@ -78,22 +70,6 @@ describe("opening balances repository", () => {
     });
   });
 
-  it("replaces a local duplicate id with the pulled server row for the same account", () => {
-    saveBalance({ id: "ob-local" as OpeningBalanceId });
-    upsertBalance({
-      id: "ob-server" as OpeningBalanceId,
-      amount: 750000 as CopAmount,
-      effectiveDate: "2026-04-02" as IsoDate,
-      updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
-    });
-
-    expectOpeningBalanceForAccount(ACCOUNT_ID, {
-      id: "ob-server",
-      amount: 750000,
-      effectiveDate: "2026-04-02",
-    });
-  });
-
   it("updates the same row id when an opening balance moves to a different account", () => {
     saveBalance();
     saveBalance({
@@ -106,22 +82,6 @@ describe("opening balances repository", () => {
     expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toBeNull();
     expectOpeningBalanceForAccount("fa-2" as FinancialAccountId, {
       id: "ob-1",
-      amount: 750000,
-      effectiveDate: "2026-04-02",
-    });
-  });
-
-  it("keeps a newer local duplicate when the pulled server row is older", () => {
-    saveBalance({
-      id: "ob-local" as OpeningBalanceId,
-      amount: 750000 as CopAmount,
-      effectiveDate: "2026-04-02" as IsoDate,
-      updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
-    });
-    upsertBalance({ id: "ob-server" as OpeningBalanceId });
-
-    expectOpeningBalanceForAccount(ACCOUNT_ID, {
-      id: "ob-local",
       amount: 750000,
       effectiveDate: "2026-04-02",
     });

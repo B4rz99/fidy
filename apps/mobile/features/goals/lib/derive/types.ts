@@ -46,19 +46,6 @@ export type InstallmentProgress = {
   readonly total: number;
 };
 
-export type BudgetNudge = {
-  readonly categoryId: string;
-  readonly currentSpending: number;
-  readonly suggestedReduction: number;
-  readonly monthsSaved: number;
-};
-
-export type GoalAlert = {
-  readonly goalId: string;
-  readonly goalName: string;
-  readonly shiftMonths: number;
-};
-
 export type GoalPaceGuidance =
   | { readonly type: "pace_ahead"; readonly amountAhead: CopAmount }
   | {

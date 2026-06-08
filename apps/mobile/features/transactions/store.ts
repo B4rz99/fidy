@@ -238,22 +238,6 @@ export function loadTransactionIntoForm(db: AnyDb, userId: UserId, id: Transacti
   }
 }
 
-export async function updateCurrentTransaction(
-  db: AnyDb,
-  userId: UserId,
-  id: TransactionId
-): Promise<TransactionMutationResult> {
-  const sessionId = transactionsSessionId;
-  if (!isActiveTransactionSession(userId, sessionId)) {
-    return { success: false, error: "Store not initialized" };
-  }
-
-  return createLiveTransactionMutationService(db, userId, sessionId).update(
-    id,
-    toTransactionFormInput(useTransactionStore.getState())
-  );
-}
-
 export async function updateTransactionDirect(
   input: UpdateTransactionDirectInput
 ): Promise<TransactionMutationResult> {

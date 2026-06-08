@@ -41,6 +41,7 @@ const chatScreenSource = readFileSync(
   "utf-8"
 );
 
+
 describe("ai chat callers", () => {
   beforeEach(() => {
     vi.clearAllMocks();

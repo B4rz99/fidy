@@ -9,11 +9,9 @@ export {
   markSourceEventPermanentlyFailed,
   markSourceEventRetrySuccess,
   updateProcessedSourceEventStatus,
-  updateProcessedSourceEventStatusInTransaction,
   type ProcessedSourceEventRow,
 } from "./source-event-repository";
 export {
-  acceptSourceEventFinancialMeaningReviewById,
   acceptSourceEventFinancialMeaningReviewByIdInTransaction,
   dismissSourceEventFinancialMeaningReviewById,
   getFinancialMeaningSourceEventReviewRows,

@@ -53,15 +53,6 @@ export function deriveEffectiveUserId({
   return requireUserId(session.user.id);
 }
 
-export function deriveAuthIdentity({ session, localQaSession }: EffectiveAuthInput) {
-  return {
-    fullName: deriveAuthFullName({ session, localQaSession }),
-    email: deriveAuthEmail({ session, localQaSession }),
-    accountCreatedAt: deriveAccountCreatedAt({ session, localQaSession }),
-    profileImageUrl: deriveAuthProfileImageUrl({ session, localQaSession }),
-  };
-}
-
 export function deriveEffectiveOnboardingComplete(input: EffectiveOnboardingInput) {
   if (input.localQaSession) return input.localQaSession.onboardingComplete;
   return (

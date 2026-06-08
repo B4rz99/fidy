@@ -4,7 +4,6 @@ import {
   classifyMerchantApi,
   parseEmailApi,
   stripPii,
-  summarizeLlmEmailInputDiagnostics,
 } from "@/features/email-capture/services/parse-email-api";
 
 const mockInvoke = vi.fn<(...args: any[]) => any>();
@@ -75,26 +74,6 @@ describe("stripPii", () => {
 
   it("preserves single-letter X reference codes", () => {
     expect(stripPii("Referencia X-2024 aprobada")).toBe("Referencia X-2024 aprobada");
-  });
-
-  it("summarizes LLM input shape without exposing card suffixes", () => {
-    const sanitizedText = stripPii(
-      "Método de pago\nRappiCard Crédito **** 0746\nAutorizacion 446288"
-    );
-    const diagnostics = summarizeLlmEmailInputDiagnostics({
-      rawText: "Método de pago\nRappiCard Crédito **** 0746\nAutorizacion 446288",
-      sanitizedText,
-    });
-
-    expect(diagnostics).toEqual({
-      rawLength: expect.any(Number),
-      sanitizedLength: expect.any(Number),
-      wasTruncated: false,
-      sanitizedHasPaymentMethodLabel: true,
-      sanitizedCardPlaceholderCount: 1,
-    });
-    expect(JSON.stringify(diagnostics)).not.toContain("0746");
-    expect(JSON.stringify(diagnostics)).not.toContain("446288");
   });
 
   it("removes full card numbers", () => {

@@ -81,20 +81,6 @@ async function registerPushTokenOnce(userId: UserId): Promise<string | null> {
   }
 }
 
-export async function registerKnownPushToken(
-  userId: UserId,
-  token: string
-): Promise<string | null> {
-  try {
-    return await upsertPushToken(userId, token);
-  } catch (err) {
-    captureWarning("push_token_register_failed", {
-      errorType: err instanceof Error ? err.message : "unknown",
-    });
-    return null;
-  }
-}
-
 /**
  * Delete the current device's push token from Supabase.
  * Called on signOut. Best-effort — does not throw.

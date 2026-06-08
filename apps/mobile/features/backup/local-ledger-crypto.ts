@@ -37,20 +37,6 @@ export async function encryptAesGcm(
   return new Uint8Array(encrypted);
 }
 
-export async function decryptAesGcm(
-  rawKey: Uint8Array,
-  nonce: Uint8Array,
-  ciphertext: Uint8Array
-): Promise<Uint8Array> {
-  const key = await importAesGcmKey(rawKey, ["decrypt"]);
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: toPlainBufferSource(nonce) },
-    key,
-    toPlainBufferSource(ciphertext)
-  );
-  return new Uint8Array(decrypted);
-}
-
 export const getRandomBytes = (length: number): Uint8Array => {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
@@ -59,10 +45,6 @@ export const getRandomBytes = (length: number): Uint8Array => {
 
 export const encodeJson = (value: unknown): Uint8Array => {
   return encodeUtf8(JSON.stringify(value));
-};
-
-export const decodeUtf8 = (value: Uint8Array): string => {
-  return new TextDecoder().decode(value);
 };
 
 export const toBase64 = (value: Uint8Array): string => {

@@ -9,7 +9,6 @@ export {
   refreshTransactions,
   removeTransaction,
   saveCurrentTransaction,
-  updateCurrentTransaction,
   updateTransactionDirect,
   useTransactionStore,
 } from "./store";

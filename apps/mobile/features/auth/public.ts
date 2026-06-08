@@ -34,11 +34,6 @@ export const useAuthIdentity = () => {
   return { fullName, email, accountCreatedAt, profileImageUrl };
 };
 
-const useAccountCreatedAt = () =>
-  useAuthStore((state) =>
-    deriveAccountCreatedAt({ session: state.session, localQaSession: state.localQaSession })
-  );
-
 export const useEffectiveOnboardingComplete = () =>
   deriveEffectiveOnboardingComplete({
     session: useAuthStore((state) => state.session),

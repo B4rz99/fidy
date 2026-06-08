@@ -9,7 +9,6 @@ export type ChatState = {
   readonly messages: readonly ChatMessage[];
   readonly isStreaming: boolean;
   readonly streamingContent: string;
-  readonly expiredSessionCount: number;
 };
 
 export type ChatActions = {
@@ -23,9 +22,7 @@ export type ChatActions = {
   setMessageActionStatus: (messageId: ChatMessageId, status: ActionStatus) => void;
   setStreaming: (isStreaming: boolean) => void;
   setStreamingContent: (content: string) => void;
-  setExpiredSessionCount: (count: number) => void;
   clearCurrentConversation: () => void;
-  dismissExpiredBanner: () => void;
 };
 
 export type ChatStore = ChatState & ChatActions;
@@ -39,7 +36,6 @@ export function createChatState(activeUserId: UserId | null): ChatState {
     messages: [],
     isStreaming: false,
     streamingContent: "",
-    expiredSessionCount: 0,
   };
 }
 
@@ -89,7 +85,6 @@ function createChatActions(set: ChatSetState): ChatActions {
     setMessageActionStatus: setChatMessageActionStatus(set),
     setStreaming: (isStreaming) => set({ isStreaming }),
     setStreamingContent: (streamingContent) => set({ streamingContent }),
-    setExpiredSessionCount: (expiredSessionCount) => set({ expiredSessionCount }),
     clearCurrentConversation: () =>
       set({
         currentSessionId: null,
@@ -97,7 +92,6 @@ function createChatActions(set: ChatSetState): ChatActions {
         isStreaming: false,
         streamingContent: "",
       }),
-    dismissExpiredBanner: () => set({ expiredSessionCount: 0 }),
   };
 }
 

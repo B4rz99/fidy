@@ -6,7 +6,6 @@ import {
   getOnboardingCompleteFromStore,
   isOnboardingComplete,
   markOnboardingComplete,
-  resetOnboarding,
 } from "@/features/onboarding/lib/check-onboarding";
 
 const { mockDeleteItemAsync, mockGetItem, mockSetItemAsync, mockUpdateUser } = vi.hoisted(() => ({
@@ -101,18 +100,5 @@ describe("isOnboardingComplete", () => {
     await expect(clearOnboardingFromStore()).resolves.toBeUndefined();
 
     expect(mockDeleteItemAsync).toHaveBeenCalledWith("onboarding_completed");
-  });
-
-  test("resets onboarding locally and best-effort remotely", async () => {
-    await resetOnboarding();
-
-    expect(mockDeleteItemAsync).toHaveBeenCalledWith("onboarding_completed");
-    expect(mockUpdateUser).toHaveBeenCalledWith({ data: { onboarding_completed: null } });
-  });
-
-  test("does not fail reset when the remote metadata update fails", async () => {
-    mockUpdateUser.mockRejectedValueOnce(new Error("network down"));
-
-    await expect(resetOnboarding()).resolves.toBeUndefined();
   });
 });

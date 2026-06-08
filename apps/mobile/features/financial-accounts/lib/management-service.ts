@@ -19,7 +19,6 @@ import {
   type CreateAccountResult,
   type CreateFinancialAccountManagementServiceDeps,
   type FinancialAccountManagementDeps,
-  MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
   type UpdateAccountInput,
 } from "./management-service/types";
 import { planAccountUpdate } from "./management-service/update-plan";
@@ -119,8 +118,6 @@ function resolveManagementDeps(
     createIdentifierId: resolveCreateIdentifierId(deps.createIdentifierId),
   };
 }
-
-export { MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE };
 
 export function createFinancialAccountManagementService(
   deps: CreateFinancialAccountManagementServiceDeps = {}

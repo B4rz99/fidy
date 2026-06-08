@@ -8,7 +8,7 @@ function mondayOfWeek(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() - offset);
 }
 
-export type DatePreset = {
+type DatePreset = {
   readonly key: string;
   readonly labelKey: string;
   readonly getRange: (today: Date) => { from: string; to: string };

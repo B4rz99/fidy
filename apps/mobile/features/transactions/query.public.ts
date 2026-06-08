@@ -10,7 +10,6 @@ export {
   getMonthlyTotalsByType,
   getRecentTransactions,
   getSpendingByCategoryAggregate,
-  getSpendingByCategoryDateRangeAggregate,
   getTransactionById,
   getTransactionsPaginated,
 } from "./lib/repository";

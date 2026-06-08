@@ -7,19 +7,16 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   getFinancialAccountById,
   getFinancialAccountIdentifiersForAccount,
-  getOpeningBalanceById,
   getOpeningBalanceForAccount,
 } from "@/features/financial-accounts";
-import {
-  createFinancialAccountManagementService,
-  MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
-} from "@/features/financial-accounts/lib/management-service";
+import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import type { FinancialAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 
 const USER_ID = "user-1" as UserId;
+const MANUAL_IDENTIFIER_SCOPE = "manual:account_hint";
 
 type FinancialAccountService = ReturnType<typeof createFinancialAccountManagementService>;
 type CreateAccountInput = Parameters<FinancialAccountService["createAccount"]>[0];
@@ -79,7 +76,7 @@ function expectManualIdentifier(accountId: FinancialAccountId) {
   expect(getFinancialAccountIdentifiersForAccount(db as any, accountId)).toEqual([
     expect.objectContaining({
       id: "fai-new",
-      scope: MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
+      scope: MANUAL_IDENTIFIER_SCOPE,
       value: "Ahorros casa",
     }),
   ]);
@@ -94,15 +91,14 @@ function expectUpdatedCreditCardAccount(accountId: FinancialAccountId, openingBa
   expect(getFinancialAccountIdentifiersForAccount(db as any, accountId)).toEqual([
     expect.objectContaining({
       id: "fai-later",
-      scope: MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
+      scope: MANUAL_IDENTIFIER_SCOPE,
       value: "MC gold",
     }),
   ]);
   expect(getOpeningBalanceForAccount(db as any, accountId)).toBeNull();
-  expect(getOpeningBalanceById(db as any, openingBalanceId as never)).toMatchObject({
-    id: "ob-card-2",
-    deletedAt: "2026-04-19T13:00:00.000Z",
-  });
+  expect(
+    sqlite.prepare("select id, deleted_at from opening_balances where id = ?").get(openingBalanceId)
+  ).toEqual({ id: "ob-card-2", deleted_at: "2026-04-19T13:00:00.000Z" });
 }
 
 function createManagedCreditCard(service: ReturnType<typeof createService>) {

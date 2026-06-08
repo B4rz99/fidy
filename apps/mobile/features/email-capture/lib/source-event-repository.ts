@@ -113,33 +113,3 @@ export async function updateProcessedSourceEventStatus(input: {
     transactionId: input.transactionId,
   });
 }
-export function updateProcessedSourceEventStatusInTransaction(input: {
-  readonly db: AnyDb;
-  readonly id: ProcessedSourceEventId;
-  readonly userId: UserId;
-  readonly status: string;
-  readonly transactionId: TransactionId | null;
-  readonly updatedAt: IsoDateTime;
-}) {
-  const update = input.db
-    .update(processedSourceEvents)
-    .set({
-      status: input.status,
-      transactionId: input.transactionId,
-      updatedAt: input.updatedAt,
-    })
-    .where(
-      and(
-        eq(processedSourceEvents.id, input.id),
-        eq(processedSourceEvents.userId, input.userId),
-        eq(processedSourceEvents.sourceFamily, "email"),
-        eq(processedSourceEvents.status, "needs_review"),
-        isNull(processedSourceEvents.deletedAt)
-      )
-    )
-    .run();
-
-  if (update.changes !== 1) {
-    throw new Error("Processed source event reclassification target was not found");
-  }
-}

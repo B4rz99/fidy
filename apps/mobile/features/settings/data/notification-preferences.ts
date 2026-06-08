@@ -2,44 +2,6 @@ import { getSupabase } from "@/shared/db";
 import type { UserId } from "@/shared/types/branded";
 import type { NotificationPreferences } from "../store";
 
-type NotificationPreferencesRow = {
-  // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly budget_alerts: boolean;
-  // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly goal_milestones: boolean;
-  // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly spending_anomalies: boolean;
-  // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly weekly_digest: boolean;
-};
-
-export function toNotificationPreferences(
-  row: NotificationPreferencesRow
-): NotificationPreferences {
-  return {
-    budgetAlerts: row.budget_alerts,
-    goalMilestones: row.goal_milestones,
-    spendingAnomalies: row.spending_anomalies,
-    weeklyDigest: row.weekly_digest,
-  };
-}
-
-export async function fetchNotificationPreferences(
-  userId: UserId
-): Promise<NotificationPreferences | null> {
-  const { data, error } = await getSupabase()
-    .from("notification_preferences")
-    .select("budget_alerts, goal_milestones, spending_anomalies, weekly_digest")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error != null) {
-    throw new Error(error.message);
-  }
-
-  return data ? toNotificationPreferences(data as NotificationPreferencesRow) : null;
-}
-
 export async function saveNotificationPreferences(
   userId: UserId,
   preferences: NotificationPreferences

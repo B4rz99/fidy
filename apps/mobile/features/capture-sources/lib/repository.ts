@@ -1,24 +1,13 @@
 import { addDays } from "date-fns";
-import { and, count, desc, eq, gte, isNull, lt } from "drizzle-orm";
+import { and, count, eq, gte, isNull, lt } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
 import { detectedSmsEvents, notificationSources, processedSourceEvents } from "@/shared/db/schema";
 import { toIsoDate } from "@/shared/lib/format-date";
 import { generateNotificationSourceId } from "@/shared/lib/generate-id";
 import { requireIsoDateTime } from "@/shared/types/assertions";
-import type {
-  DetectedSmsEventId,
-  IsoDateTime,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import type { IsoDateTime, UserId } from "@/shared/types/branded";
 
 // -- notificationSources CRUD --
-
-export type NotificationSourceRow = typeof notificationSources.$inferInsert;
-
-export async function getNotificationSources(db: AnyDb, userId: UserId) {
-  return db.select().from(notificationSources).where(eq(notificationSources.userId, userId));
-}
 
 export async function getEnabledPackages(db: AnyDb, userId: UserId): Promise<string[]> {
   const rows = await db
@@ -81,14 +70,6 @@ export async function insertDetectedSmsEvent(db: AnyDb, row: DetectedSmsEventRow
   await db.insert(detectedSmsEvents).values(row);
 }
 
-export async function getUndismissedSmsEvents(db: AnyDb, userId: UserId) {
-  return db
-    .select()
-    .from(detectedSmsEvents)
-    .where(and(eq(detectedSmsEvents.userId, userId), eq(detectedSmsEvents.dismissed, false)))
-    .orderBy(desc(detectedSmsEvents.detectedAt));
-}
-
 export async function getTodaySmsEventCount(db: AnyDb, userId: UserId, now: Date): Promise<number> {
   const today = toIsoDate(now);
   const tomorrow = toIsoDate(addDays(now, 1));
@@ -106,22 +87,4 @@ export async function getTodaySmsEventCount(db: AnyDb, userId: UserId, now: Date
       )
     );
   return rows[0]?.total ?? 0;
-}
-
-export async function dismissSmsEvent(db: AnyDb, id: DetectedSmsEventId) {
-  await db.update(detectedSmsEvents).set({ dismissed: true }).where(eq(detectedSmsEvents.id, id));
-}
-
-export async function linkSmsEventToTransaction(
-  db: AnyDb,
-  id: DetectedSmsEventId,
-  transactionId: TransactionId
-) {
-  await db
-    .update(detectedSmsEvents)
-    .set({
-      linkedTransactionId: transactionId,
-      dismissed: true,
-    })
-    .where(eq(detectedSmsEvents.id, id));
 }

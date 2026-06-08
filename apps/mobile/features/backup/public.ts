@@ -1,21 +1,15 @@
 export type {
-  BackupDecryptFailure,
   BackupWrappedDataKey,
   BackupWrappedDataKeyKind,
-  DecryptLocalLedgerBackupSnapshotOptions,
   EncryptedLocalLedgerBackupSnapshot,
   EncryptLocalLedgerBackupSnapshotOptions,
-  RotateLocalLedgerBackupRecoveryKeyOptions,
 } from "./local-ledger-encryption";
 export {
   assertLocalLedgerBackupSecretSafeForLog,
   assertLocalLedgerBackupSecretSafeForRemote,
-  BackupDecryptError,
-  decryptLocalLedgerBackupSnapshot,
   encryptLocalLedgerBackupSnapshot,
   generateBackupRecoveryKey,
   LOCAL_LEDGER_ENCRYPTED_BACKUP_VERSION,
-  rotateLocalLedgerBackupRecoveryKey,
 } from "./local-ledger-encryption";
 export type {
   BackupSnapshot,
@@ -33,23 +27,7 @@ export type {
   PrivateBackupHealth,
   PrivateBackupHealthInput,
   PrivateBackupHealthStatus,
-  RotatePrivateBackupRecoveryKeySafelyInput,
-  RotatePrivateBackupRecoveryKeySafelyResult,
 } from "./private-backup";
-export {
-  createPrivateBackup,
-  derivePrivateBackupHealth,
-  rotatePrivateBackupRecoveryKeySafely,
-} from "./private-backup";
-export type {
-  DeleteEncryptedRemoteBackupInput,
-  DownloadEncryptedRemoteBackupInput,
-  RemoteBackupMetadata,
-  UploadEncryptedRemoteBackupInput,
-} from "./remote-storage";
-export {
-  deleteEncryptedRemoteBackup,
-  downloadEncryptedRemoteBackup,
-  listEncryptedRemoteBackups,
-  uploadEncryptedRemoteBackup,
-} from "./remote-storage";
+export { createPrivateBackup, derivePrivateBackupHealth } from "./private-backup";
+export type { RemoteBackupMetadata, UploadEncryptedRemoteBackupInput } from "./remote-storage";
+export { uploadEncryptedRemoteBackup } from "./remote-storage";

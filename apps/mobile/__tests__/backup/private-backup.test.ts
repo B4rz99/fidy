@@ -4,11 +4,7 @@ import type {
   EncryptedLocalLedgerBackupSnapshot,
   RemoteBackupMetadata,
 } from "@/features/backup/public";
-import {
-  createPrivateBackup,
-  derivePrivateBackupHealth,
-  rotatePrivateBackupRecoveryKeySafely,
-} from "@/features/backup/public";
+import { createPrivateBackup, derivePrivateBackupHealth } from "@/features/backup/public";
 import { requireBackupId, requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 
 const METADATA = {
@@ -227,26 +223,3 @@ function privateBackupInput(
     ...overrides,
   };
 }
-
-describe("rotatePrivateBackupRecoveryKeySafely", () => {
-  it("keeps the old backup metadata when replacement upload fails", async () => {
-    const rotate = vi.fn<(...args: any[]) => any>().mockResolvedValue(ENCRYPTED_BACKUP);
-    const uploadReplacement = vi
-      .fn<(...args: any[]) => any>()
-      .mockRejectedValue(new Error("network down"));
-
-    await expect(
-      rotatePrivateBackupRecoveryKeySafely({
-        currentBackup: ENCRYPTED_BACKUP,
-        currentMetadata: METADATA,
-        currentRecoveryKey: "RK-old",
-        newRecoveryKey: "RK-new",
-        confirmedNewRecoveryKey: "RK-new",
-        rotate,
-        uploadReplacement,
-      })
-    ).rejects.toThrow("network down");
-
-    expect(uploadReplacement).toHaveBeenCalledWith(ENCRYPTED_BACKUP);
-  });
-});

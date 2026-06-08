@@ -183,10 +183,6 @@ export const useQaDevtoolsStore = create<QaDevtoolsState & QaDevtoolsActions>((s
   },
 }));
 
-export const qaFeatureFlags = {
-  defaults: DEFAULT_QA_FEATURE_FLAGS,
-};
-
 function persistFlags(flags: QaFeatureFlags) {
   if (!isLocalQaAvailable()) return;
   writeStoredFlags(flags);
