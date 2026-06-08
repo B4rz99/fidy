@@ -76,11 +76,7 @@ export function DetailRow({ label, title, subtitle, icon, emphasis = "neutral" }
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <Card
-      padded={false}
-      radius={18}
-      surfaceStyle={emphasis === "green" ? { borderColor: accentGreen } : undefined}
-    >
+    <Card padded={false} radius={18} borderColor={emphasis === "green" ? accentGreen : undefined}>
       <Row
         title={
           <View style={{ gap: 2 }}>
