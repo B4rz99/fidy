@@ -85,7 +85,8 @@ describe("withFidyWidget warning cleanup", () => {
     );
 
     expect(source).toContain("makeSceneLessFallbackRootWindow");
-    expect(source).toContain("(UIWindow.self as NSObject.Type).init() as! UIWindow");
+    expect(source).toContain("UIWindow(frame: UIScreen.main.bounds)");
+    expect(source).not.toContain("(UIWindow.self as NSObject.Type).init() as! UIWindow");
     expect(source).not.toContain("fatalError");
   });
 

@@ -22,6 +22,9 @@ describe("glass layout contracts", () => {
     expect(chipSource).toMatch(/surface:\s*\{[\s\S]*flexDirection:\s*"row"/);
     expect(chipSource).toMatch(/surface:\s*\{[\s\S]*minHeight:\s*32/);
     expect(chipSource).toMatch(/surface:\s*\{[\s\S]*paddingHorizontal:\s*12/);
+    expect(chipSource).toContain('size = "default"');
+    expect(chipSource).toContain("compactSurface");
+    expect(chipSource).toContain("toneBorderColor[tone] ?? neutralBorderColor");
     expect(chipSource).not.toMatch(/className=\{`[^`]*(?:flex-row|h-\d|px-\d|gap-)/);
 
     expect(segmentedSource).toContain("StyleSheet.create");
@@ -100,15 +103,16 @@ describe("glass layout contracts", () => {
     expect(accountKindSource).not.toMatch(/style=\{\[[\s\S]*backgroundColor:/);
   });
 
-  it("keeps toast shadows on React Native shadow props", () => {
+  it("keeps toast shadows on new architecture boxShadow with Android fallback", () => {
     const toastSource = readShared("AppToastHost.tsx");
 
-    expect(toastSource).not.toContain("boxShadow");
-    expect(toastSource).toContain("shadowColor");
-    expect(toastSource).toContain("shadowOffset");
-    expect(toastSource).toContain("shadowOpacity");
-    expect(toastSource).toContain("shadowRadius");
+    expect(toastSource).toContain("boxShadow");
+    expect(toastSource).not.toContain("shadowColor");
+    expect(toastSource).not.toContain("shadowOffset");
+    expect(toastSource).not.toContain("shadowOpacity");
+    expect(toastSource).not.toContain("shadowRadius");
     expect(toastSource).toContain("getAndroidToastShadowFallback()");
+    expect(toastSource).toContain("{ [LEGACY_ANDROID_SHADOW_PROPERTY]: 8 }");
   });
 
   it("keeps shared transaction rows on glass surfaces", () => {

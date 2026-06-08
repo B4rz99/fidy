@@ -27,7 +27,7 @@ const rootWindowHelpers =
   "}\n" +
   "\n" +
   "private func makeSceneLessFallbackRootWindow() -> UIWindow {\n" +
-  "  (UIWindow.self as NSObject.Type).init() as! UIWindow\n" +
+  "  UIWindow(frame: UIScreen.main.bounds)\n" +
   "}\n" +
   "#endif\n";
 

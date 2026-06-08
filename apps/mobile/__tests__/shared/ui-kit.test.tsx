@@ -504,6 +504,8 @@ describe("shared UI kit", () => {
     expect(source).toContain("<Button");
     expect(source).toContain("<Card");
     expect(source).toContain("<Chip");
+    expect(source).toContain('size="compact"');
+    expect(source).not.toContain("minHeight: 28");
     expect(source).not.toContain("StyleSheet");
     expect(source).not.toContain("Pressable");
   });

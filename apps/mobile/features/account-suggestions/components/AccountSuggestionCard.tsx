@@ -81,19 +81,13 @@ function AccountSuggestionCardInner({
               : "accountSuggestions.card.confidenceMedium"
           )}
           leading={<Sparkles size={12} color={tertiary} />}
-          style={{ minHeight: 28, paddingHorizontal: 8, paddingVertical: 6 }}
+          size="compact"
         />
       </View>
 
       <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-        <Chip
-          label={draft.sourceLabel}
-          style={{ minHeight: 28, paddingHorizontal: 10, paddingVertical: 6 }}
-        />
-        <Chip
-          label={draft.evidenceLabel}
-          style={{ minHeight: 28, paddingHorizontal: 10, paddingVertical: 6 }}
-        />
+        <Chip label={draft.sourceLabel} size="compact" />
+        <Chip label={draft.evidenceLabel} size="compact" />
       </View>
 
       <View className="flex-row items-center" style={{ gap: 10 }}>

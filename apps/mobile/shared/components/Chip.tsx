@@ -9,6 +9,7 @@ type ChipTone = "neutral" | "primary" | "success" | "danger" | "warning";
 type ChipProps = Omit<ViewProps, "children"> & {
   label: string;
   tone?: ChipTone;
+  size?: "default" | "compact";
   selected?: boolean;
   leading?: ReactNode;
   onPress?: PressableProps["onPress"];
@@ -27,6 +28,7 @@ const LABEL_CLASS_NAMES: Record<ChipTone, string> = {
 export function Chip({
   label,
   tone = "neutral",
+  size = "default",
   selected = false,
   leading,
   onPress,
@@ -38,6 +40,7 @@ export function Chip({
   const success = useThemeColor("success");
   const danger = useThemeColor("danger");
   const warning = useThemeColor("warning");
+  const neutralBorderColor = useThemeColor("borderSubtle");
   const toneBorderColor: Record<ChipTone, string | undefined> = {
     neutral: undefined,
     primary: accentGreen,
@@ -55,6 +58,9 @@ export function Chip({
     testID,
     ...containerProps
   } = viewProps;
+  const borderColor = selected
+    ? (toneBorderColor[tone] ?? neutralBorderColor)
+    : toneBorderColor[tone];
   const pressableProps = {
     accessibilityHint,
     accessibilityLabel,
@@ -81,9 +87,13 @@ export function Chip({
       className={className}
       padded={false}
       radius={999}
-      borderColor={toneBorderColor[tone]}
+      borderColor={borderColor}
       borderWidth={selected ? 1.5 : undefined}
-      style={[styles.surface, contentProps.style]}
+      style={[
+        styles.surface,
+        size === "compact" ? styles.compactSurface : null,
+        contentProps.style,
+      ]}
     >
       {contentBody}
     </GlassSurface>
@@ -108,5 +118,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 32,
     paddingHorizontal: 12,
+  },
+  compactSurface: {
+    minHeight: 28,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
 });
