@@ -1,0 +1,23 @@
+apps/mobile/babel.config.js
+  s_823790b9024764::t_1ae2209a2394b7 14-19
+apps/mobile/__tests__/review-queues/attribution-review-service.test.ts
+  s_823790b9024764::t_2b5f6b2d9477be 161,163,219,221,251-258,265-274,288-294,301,308-317,353,355
+  s_823790b9024764::t_469d8afc6268d2 11,121-129,131-137,139-140
+  s_823790b9024764::t_779c68909c59f4 130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "4e55fa921b423646ecfa35c0e2e99a824ef7fb11",
+  "prompts": {},
+  "sessions": {
+    "s_823790b9024764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea7d4-e3f0-7cb0-9375-c6153bce12d8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
