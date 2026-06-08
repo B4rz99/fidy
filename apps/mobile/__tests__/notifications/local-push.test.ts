@@ -80,10 +80,8 @@ describe("scheduleLocalPush", () => {
   test("checks the correct preference key for each type", async () => {
     vi.mocked(Notifications.scheduleNotificationAsync).mockResolvedValue("notif-789");
 
-    // Disable only weeklyDigest
-    useSettingsStore.getState().setNotificationPreference("weeklyDigest", false);
+    useSettingsStore.getState().setNotificationPreference("spendingAnomalies", false);
 
-    // budgetAlerts should still work
     const budgetResult = await scheduleLocalPush({
       title: "Budget alert",
       body: "test",
@@ -91,12 +89,11 @@ describe("scheduleLocalPush", () => {
     });
     expect(budgetResult).toBe("notif-789");
 
-    // weeklyDigest should be blocked
-    const digestResult = await scheduleLocalPush({
-      title: "Weekly digest",
+    const spendingResult = await scheduleLocalPush({
+      title: "Spending alert",
       body: "test",
-      preferenceKey: "weeklyDigest",
+      preferenceKey: "spendingAnomalies",
     });
-    expect(digestResult).toBeNull();
+    expect(spendingResult).toBeNull();
   });
 });

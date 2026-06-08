@@ -811,11 +811,9 @@ const es = {
     notSetupBody:
       "Fidy puede guardar una copia que solo tu Llave de recuperación o un dispositivo confiable pueden abrir.",
     confirmTitle: "Guarda tu Llave de recuperación ahora",
-    confirmBody:
-      "Este celular puede restaurar sin pedir la llave, pero un celular nuevo necesita tu Llave de recuperación guardada. Fidy no puede recrearla después.",
+    confirmBody: "Guarda esta llave en un gestor de contraseñas. Fidy no puede recrearla después.",
     readyTitle: "Tu copia está saludable",
-    readyBody:
-      "Este dispositivo puede restaurar sin pedir la llave, y un celular nuevo puede abrir la misma copia con tu Llave de recuperación guardada.",
+    readyBody: "Fidy está guardando copias cifradas para esta cuenta.",
     failedTitle: "Falló la subida de la copia",
     failedBody:
       "Tu celular actual todavía tiene tus datos. Reintenta cuando la conexión esté estable.",
@@ -834,10 +832,10 @@ const es = {
     encryptedBackupBody: "Última copia %{backupDate}",
     recoveryKeySavedTitle: "Llave guardada",
     recoveryKeySavedBody: "Guardada en tu gestor de contraseñas",
-    newPhoneTitle: "Restaurar en celular nuevo",
-    newPhoneBody: "Pega la llave después de iniciar sesión",
+    newPhoneTitle: "Llave de recuperación",
+    newPhoneBody: "Mantén esta llave disponible fuera de Fidy",
     privacyNote:
-      "Iniciar sesión encuentra la cuenta de la copia. Solo la Llave de recuperación o un dispositivo confiable la abren.",
+      "Iniciar sesión encuentra la cuenta de la copia. Solo la Llave de recuperación o un dispositivo confiable puede abrir la copia cifrada.",
     keyUnavailable: "Esta Llave de recuperación ya no está disponible en la app.",
     confirmMismatchTitle: "Esa llave no coincide",
     confirmMismatchBody:
@@ -1130,17 +1128,6 @@ const es = {
     spendingAnomalyMsg: "Tu gasto semanal es más alto de lo usual",
     budgetPaceMsg: "Proyectado %{projected} vs %{budget} presupuesto",
     goalMilestoneMsg: "Has ahorrado el %{percent}% de tu meta",
-    weeklyDigest: {
-      title: "Tu semana en resumen",
-      reminderTitle: "Tu resumen semanal está listo",
-      reminderBody: "Abre Fidy para generarlo en privado desde este dispositivo.",
-      spending: "Gastaste %{amount} esta semana",
-      categoryOne: " principalmente en %{firstCategory}",
-      categoryTwo: " principalmente en %{firstCategory} y %{secondCategory}",
-      budgetOver: ". Superaste tu presupuesto - considera ajustar la proxima semana",
-      budgetOnTrack: ". Vas al dia con tus presupuestos",
-      goalContribution: ". Ahorraste %{amount} para tus metas",
-    },
 
     // Encabezados de sección
     weeklyMovesHeader: "TUS MOVIMIENTOS · %{weekRange}",
@@ -1168,15 +1155,13 @@ const es = {
       goalMilestonesDesc: "Actualizaciones sobre tus metas de ahorro y deuda",
       spendingAnomalies: "Alertas de Gasto",
       spendingAnomaliesDesc: "Patrones de gasto inusuales detectados",
-      weeklyDigest: "Resumen Semanal",
-      weeklyDigestDesc: "Resumen semanal cada domingo en la noche",
     },
 
     // Pantalla de pre-permiso
     enableNotifications: {
       title: "Mantente al día con tus finanzas",
       description:
-        "Fidy puede alertarte cuando te acerques a tu límite de presupuesto, celebrar los hitos de tus metas, y enviarte un resumen semanal de tus finanzas.",
+        "Fidy puede alertarte cuando te acerques a tu límite de presupuesto y celebrar los hitos de tus metas.",
       enable: "Activar notificaciones",
       notNow: "Ahora no",
     },
