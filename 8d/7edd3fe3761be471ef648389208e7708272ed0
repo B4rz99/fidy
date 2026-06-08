@@ -1,0 +1,47 @@
+apps/mobile/features/ai-chat/components/StarterSuggestions.tsx
+  s_c5de1adbad9fac::t_39800d119512e3 2,4,60-73
+apps/mobile/shared/components/GlassPressable.tsx
+  s_c5de1adbad9fac::t_7db982ef654746 2-7,25-36,60
+  s_c5de1adbad9fac::t_8173b18e201626 1,8-24,37-59,61-79
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_c5de1adbad9fac::t_f66f34764cbaa3 52,183
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_c5de1adbad9fac::t_a97d875c74bd29 205
+apps/mobile/features/ai-chat/components/NewChatButton.tsx
+  s_c5de1adbad9fac::t_6da97882bde5f4 2-3,11,17,19-20
+  s_c5de1adbad9fac::t_e842c53c2ddd0b 16
+apps/mobile/shared/components/Button.tsx
+  s_c5de1adbad9fac::t_0d5663d3f0895b 5,86-87,89-92,96-97,99-101,103,108-114,116-117
+  s_c5de1adbad9fac::t_6c834e328d2c76 88,93-95,98
+apps/mobile/shared/components/index.ts
+  s_c5de1adbad9fac::t_ca8517476372d0 29-30
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_c5de1adbad9fac::t_c542e0abdcd198 5,102-125
+apps/mobile/features/auth/components/OAuthButton.tsx
+  s_c5de1adbad9fac::t_460a7e57006908 54
+  s_c5de1adbad9fac::t_ddcaee9346a5dd 2,37,39-45,47,49-53,55,57
+apps/mobile/shared/components/IconActionButton.tsx
+  s_c5de1adbad9fac::t_63e52f1befe425 4,42-45,47-56,66
+  s_c5de1adbad9fac::t_c917febb14c04e 46
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_c5de1adbad9fac::t_c74205d2095a0b 6-7,76-89,92,94-96,98-99,101-102
+  s_c5de1adbad9fac::t_301491bb4b4210 70-75
+apps/mobile/features/qa/components/qa-tools/QaToolsCardButton.tsx
+  s_c5de1adbad9fac::t_d91e842fe1bc03 1-2,30-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "8d7edd3fe3761be471ef648389208e7708272ed0",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
