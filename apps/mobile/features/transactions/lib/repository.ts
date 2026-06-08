@@ -34,15 +34,8 @@ type RecentTransactionsInput = {
 
 export type TransactionRow = Omit<
   TransactionStorageRow,
-  | "accountId"
-  | "accountAttributionState"
-  | "counterpartyName"
-  | "supersededAt"
-  | "supersededByTransferId"
-  | "source"
+  "counterpartyName" | "supersededAt" | "supersededByTransferId" | "source"
 > & {
-  readonly accountId?: TransactionStorageRow["accountId"];
-  readonly accountAttributionState?: TransactionStorageRow["accountAttributionState"];
   readonly counterpartyName?: TransactionStorageRow["counterpartyName"];
   readonly supersededAt?: TransactionStorageRow["supersededAt"];
   readonly supersededByTransferId?: TransactionStorageRow["supersededByTransferId"];

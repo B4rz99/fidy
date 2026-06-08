@@ -344,20 +344,16 @@ function expectCaptureEvidenceBuiltFromEmailContent() {
   expect(mockBuildEmailCaptureEvidence).toHaveBeenCalledWith({
     from: "notificaciones@bancolombia.com.co",
     body: "Su compra por $50.000 fue aprobada",
-    fromAccountHint: undefined,
-    toAccountHint: undefined,
     cardProductHint: undefined,
     accountTypeHint: undefined,
     counterpartyHint: undefined,
   });
 }
 
-function expectCaptureEvidenceBuiltFromLlmAccountHint() {
+function expectCaptureEvidenceBuiltFromTypedLlmHint() {
   expect(mockBuildEmailCaptureEvidence).toHaveBeenCalledWith({
     from: "notificaciones@bancolombia.com.co",
     body: "Su compra por $50.000 fue aprobada",
-    fromAccountHint: undefined,
-    toAccountHint: undefined,
     cardProductHint: "Visa Oro",
     accountTypeHint: "Tarjeta credito",
     counterpartyHint: "Exito",
@@ -1144,7 +1140,7 @@ describe("email processing pipeline", () => {
     expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
   });
 
-  it("uses typed LLM account hints as capture evidence for account suggestions", async () => {
+  it("uses typed typed LLM hints as capture evidence for account suggestions", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(
       makeParsedEmailResult({
@@ -1156,7 +1152,7 @@ describe("email processing pipeline", () => {
 
     await processEmails(mockDb, USER_ID, emails);
 
-    expectCaptureEvidenceBuiltFromLlmAccountHint();
+    expectCaptureEvidenceBuiltFromTypedLlmHint();
   });
 
   it("uses cached category from merchant rule hit", async () => {

@@ -251,30 +251,26 @@ describe("processWidgetTransactions", () => {
     );
   });
 
-  it("falls back to 'other' when category is invalid", async () => {
+  it("marks entries failed when category is invalid", async () => {
     mockGetPendingTransactions.mockResolvedValue([
       { id: "bad-cat", amount: 5000, createdAt: "2026-03-27T10:00:00Z", category: "invalid" },
     ]);
 
-    await processWidgetTransactions(mockDb, USER_ID);
+    const result = await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({ categoryId: "other" })
-    );
+    expect(result).toEqual({ saved: 0, skippedDuplicate: 0, errors: 1 });
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
   });
 
-  it("falls back to 'other' for stale transfer widget categories", async () => {
+  it("marks transfer widget categories failed", async () => {
     mockGetPendingTransactions.mockResolvedValue([
       { id: "transfer-cat", amount: 5000, createdAt: "2026-03-27T10:00:00Z", category: "transfer" },
     ]);
 
-    await processWidgetTransactions(mockDb, USER_ID);
+    const result = await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({ categoryId: "other" })
-    );
+    expect(result).toEqual({ saved: 0, skippedDuplicate: 0, errors: 1 });
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
   });
 
   it("uses type=income when specified", async () => {

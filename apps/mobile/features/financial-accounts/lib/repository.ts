@@ -4,12 +4,9 @@ import { financialAccounts } from "@/shared/db";
 import { useLocaleStore } from "@/shared/i18n";
 import { toIsoDateTime } from "@/shared/lib";
 import type { IsoDateTime } from "@/shared/types/branded";
-import { buildDefaultFinancialAccountId } from "./default-account";
 import {
   buildDefaultFinancialAccountRow,
-  findCanonicalFinancialAccount,
   findExistingDefaultFinancialAccount,
-  promoteFinancialAccountToDefault,
 } from "./default-account-bootstrap";
 
 export type FinancialAccountRow = typeof financialAccounts.$inferInsert;
@@ -46,19 +43,7 @@ function resolveExistingDefaultFinancialAccount(
   context: EnsureDefaultFinancialAccountContext
 ): FinancialAccountRow | null {
   const activeRows = getActiveFinancialAccountRowsForUser(context.db, context.userId);
-  const existingDefault = findExistingDefaultFinancialAccount(activeRows);
-  if (existingDefault) {
-    return existingDefault;
-  }
-
-  const canonicalActive = findCanonicalFinancialAccount(activeRows, context.userId);
-  if (!canonicalActive) {
-    return null;
-  }
-
-  const promotedRow = promoteFinancialAccountToDefault(canonicalActive, context.now);
-  saveFinancialAccount(context.db, promotedRow);
-  return promotedRow;
+  return findExistingDefaultFinancialAccount(activeRows);
 }
 
 export function getFinancialAccountById(db: AnyDb, id: FinancialAccountRow["id"]) {
@@ -116,13 +101,10 @@ export function ensureDefaultFinancialAccount(
       return existingDefault;
     }
 
-    const canonicalId = buildDefaultFinancialAccountId(transactionContext.userId);
-    const existingCanonical = getFinancialAccountById(tx, canonicalId);
     const row = buildDefaultFinancialAccountRow(
       transactionContext.userId,
       transactionContext.now,
-      transactionContext.name,
-      existingCanonical
+      transactionContext.name
     );
     saveFinancialAccount(tx, row);
     return row;

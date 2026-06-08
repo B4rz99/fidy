@@ -47,32 +47,11 @@ describe("financial accounts repository", () => {
     expect(getFinancialAccountsForUser(db as any, USER_ID)).toHaveLength(1);
   });
 
-  it("reuses an existing default account instead of creating a new canonical one", () => {
+  it("creates the canonical default account when existing accounts are not default", () => {
     saveAccount({
       id: "fa-bank-1" as FinancialAccountId,
       name: "Bancolombia",
       kind: "checking",
-    });
-
-    const defaultAccount = ensureDefaultFinancialAccount(db as any, USER_ID, {
-      now: "2026-04-18T12:00:00.000Z" as IsoDateTime,
-    });
-
-    expect(defaultAccount).toMatchObject({
-      id: "fa-bank-1",
-      userId: USER_ID,
-      name: "Bancolombia",
-      kind: "checking",
-      isDefault: true,
-    });
-    expect(getFinancialAccountsForUser(db as any, USER_ID)).toHaveLength(1);
-  });
-
-  it("promotes an existing canonical account to the actual default when the flag is missing", () => {
-    saveAccount({
-      id: "fa-default-user-1" as FinancialAccountId,
-      name: "Cash",
-      kind: "cash",
       isDefault: false,
     });
 
@@ -83,12 +62,36 @@ describe("financial accounts repository", () => {
     expect(defaultAccount).toMatchObject({
       id: "fa-default-user-1",
       userId: USER_ID,
-      name: "Cash",
+      name: "Efectivo",
+      kind: "cash",
+      isDefault: true,
+    });
+    expect(getFinancialAccountsForUser(db as any, USER_ID)).toHaveLength(2);
+  });
+
+  it("replaces a non-default canonical row with the default account", () => {
+    saveAccount({
+      id: "fa-default-user-1" as FinancialAccountId,
+      name: "Old cash",
+      kind: "checking",
+      isDefault: false,
+    });
+
+    const defaultAccount = ensureDefaultFinancialAccount(db as any, USER_ID, {
+      now: "2026-04-18T12:00:00.000Z" as IsoDateTime,
+    });
+
+    expect(defaultAccount).toMatchObject({
+      id: "fa-default-user-1",
+      userId: USER_ID,
+      name: "Efectivo",
       kind: "cash",
       isDefault: true,
     });
     expect(getFinancialAccountsForUser(db as any, USER_ID)[0]).toMatchObject({
       id: "fa-default-user-1",
+      name: "Efectivo",
+      kind: "cash",
       isDefault: true,
     });
   });

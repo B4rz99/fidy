@@ -1,4 +1,3 @@
-import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/seed.public";
 import { parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
 import { parseDigitsToAmount } from "@/shared/lib/format-money";
 import { normalizeTransactionSource } from "@/shared/lib/transaction-source";
@@ -60,7 +59,7 @@ type BuildTransactionContext = {
 const OTHER_CATEGORY_ID = getBuiltInCategoryId("other");
 const TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT = new Set(["manual"]);
 
-const isAccountAttributionState = (state: string | undefined): state is AccountAttributionState =>
+const isAccountAttributionState = (state: string): state is AccountAttributionState =>
   state === "confirmed" || state === "inferred" || state === "unresolved";
 
 export const getDefaultAccountAttributionState = (
@@ -68,14 +67,12 @@ export const getDefaultAccountAttributionState = (
 ): AccountAttributionState =>
   TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT.has(source ?? "manual") ? "confirmed" : "unresolved";
 
-const normalizeAccountAttributionState = ({
-  state,
-  source,
-}: {
-  state: string | undefined;
-  source: string | undefined | null;
-}): AccountAttributionState =>
-  isAccountAttributionState(state) ? state : getDefaultAccountAttributionState(source);
+const normalizeAccountAttributionState = (state: string): AccountAttributionState => {
+  if (!isAccountAttributionState(state)) {
+    throw new Error(`Unsupported account attribution state: ${state}`);
+  }
+  return state;
+};
 
 const toNullableDate = (value: string | null | undefined): Date | null =>
   value ? new Date(value) : null;
@@ -138,17 +135,11 @@ const mapBuiltTransaction = ({
   source: normalizeTransactionSource(existing?.source),
 });
 
-const getRowAccountId = (row: TransactionRow): FinancialAccountId =>
-  row.accountId ?? buildDefaultFinancialAccountId(row.userId);
-
 const getRowCategoryId = (categoryId: string): CategoryId =>
   isValidCategoryId(categoryId) ? categoryId : OTHER_CATEGORY_ID;
 
 const getRowAttributionState = (row: TransactionRow): AccountAttributionState =>
-  normalizeAccountAttributionState({
-    state: row.accountAttributionState,
-    source: row.source,
-  });
+  normalizeAccountAttributionState(row.accountAttributionState);
 
 const serializeNullableDate = (
   value: Date | null | undefined
@@ -191,7 +182,7 @@ const toStoredTransactionDates = (row: TransactionRow) => ({
 });
 
 const toStoredTransactionMetadata = (row: TransactionRow) => ({
-  accountId: getRowAccountId(row),
+  accountId: row.accountId,
   accountAttributionState: getRowAttributionState(row),
   supersededAt: toNullableDate(row.supersededAt),
   supersededByTransferId: row.supersededByTransferId ?? null,

@@ -140,6 +140,8 @@ describe("toStoredTransaction branch coverage", () => {
       categoryId: "food" as CategoryId,
       description: null,
       date: "2026-03-01" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "confirmed",
       createdAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
       voidedAt: null,
@@ -157,6 +159,8 @@ describe("toStoredTransaction branch coverage", () => {
       categoryId: "food" as CategoryId,
       description: "Test",
       date: "2026-03-01" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "confirmed",
       createdAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
       voidedAt: "2026-03-02T10:00:00.000Z" as IsoDateTime,
@@ -248,7 +252,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(serialized.source).toBe("email_capture");
   });
 
-  test("rejects provider identifiers as transaction sources", () => {
+  test("rejects missing account attribution state", () => {
     const row = {
       id: "tx-legacy-source" as TransactionId,
       userId: "user-1" as UserId,
@@ -258,7 +262,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
       description: "Captured lunch",
       date: "2026-03-03" as IsoDate,
       accountId: "fa-credit-card" as FinancialAccountId,
-      accountAttributionState: undefined,
+      accountAttributionState: undefined as never,
       supersededAt: null,
       createdAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-03T12:00:00.000Z" as IsoDateTime,
@@ -266,6 +270,6 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
       source: "email_gmail",
     };
 
-    expect(() => toStoredTransaction(row)).toThrow("Unsupported transaction source: email_gmail");
+    expect(() => toStoredTransaction(row)).toThrow("Unsupported account attribution state");
   });
 });

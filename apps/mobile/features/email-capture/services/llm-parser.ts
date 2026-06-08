@@ -8,8 +8,6 @@ export const llmOutputSchema = z.object({
   description: z.string(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   confidence: z.number().min(0).max(1),
-  fromAccountHint: z.string().optional(),
-  toAccountHint: z.string().optional(),
   cardProductHint: z.string().optional(),
   accountTypeHint: z.string().optional(),
   counterpartyHint: z.string().optional(),

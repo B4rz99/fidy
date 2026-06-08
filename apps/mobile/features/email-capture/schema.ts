@@ -4,10 +4,10 @@ export const emailProviderSchema = z.enum(["gmail", "outlook"]);
 export type EmailProvider = z.infer<typeof emailProviderSchema>;
 
 export const processedEmailStatusSchema = z.enum([
-  "success",
+  "processed",
   "failed",
-  "skipped",
-  "skipped_duplicate",
+  "duplicate",
+  "dismissed",
   "needs_review",
   "pending_retry",
 ]);

@@ -16,8 +16,7 @@ describe("account presentation", () => {
     expect(getFinancialAccountKindIcon("savings")).toBe(PiggyBank);
   });
 
-  it("falls back to the bank icon for other or unknown kinds", () => {
+  it("uses the bank icon for checking accounts", () => {
     expect(getFinancialAccountKindIcon("checking")).toBe(Landmark);
-    expect(getFinancialAccountKindIcon("unexpected-kind")).toBe(Landmark);
   });
 });

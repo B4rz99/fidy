@@ -29,21 +29,7 @@ const DIRECT_KIND_BY_EVIDENCE_TYPE = new Map<
 const CONFIDENCE_LABEL_BY_EVIDENCE_TYPE = new Map<
   AccountCreationSuggestion["evidenceType"],
   SuggestedFinancialAccountDraft["confidenceLabel"]
->([
-  ["last4", "HIGH"],
-  ["llm_account_hint", "HIGH"],
-]);
-const LLM_HINT_KIND_TERMS: readonly {
-  readonly kind: FinancialAccountKind;
-  readonly terms: readonly string[];
-}[] = [
-  {
-    kind: "credit_card",
-    terms: ["credito", "crédito", "credit", "tarjeta", "card", "visa", "mastercard", "amex"],
-  },
-  { kind: "savings", terms: ["ahorros", "savings"] },
-];
-
+>([["last4", "HIGH"]]);
 function toTitleCaseSegment(segment: string) {
   return segment.length === 0 ? segment : `${segment[0]?.toUpperCase()}${segment.slice(1)}`;
 }
@@ -58,10 +44,6 @@ function normalizeLabel(value: string) {
 
 function normalizeSearchText(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function containsAnyTerm(value: string, terms: readonly string[]) {
-  return terms.some((term) => value.includes(term));
 }
 
 function buildEvidenceLabel(suggestion: AccountCreationSuggestion) {
@@ -84,16 +66,9 @@ function isWalletAliasSuggestion(suggestion: AccountCreationSuggestion) {
   );
 }
 
-const inferLlmHintKind = (value: string): FinancialAccountKind | undefined =>
-  LLM_HINT_KIND_TERMS.find((entry) => containsAnyTerm(normalizeSearchText(value), entry.terms))
-    ?.kind;
-
 const inferLlmSuggestionKind = (
   suggestion: AccountCreationSuggestion
-): FinancialAccountKind | undefined =>
-  suggestion.evidenceType === "llm_account_hint"
-    ? (inferLlmHintKind(suggestion.value) ?? "checking")
-    : undefined;
+): FinancialAccountKind | undefined => undefined;
 
 const inferWalletSuggestionKind = (
   suggestion: AccountCreationSuggestion

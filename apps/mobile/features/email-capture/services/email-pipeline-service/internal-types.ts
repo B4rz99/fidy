@@ -43,8 +43,6 @@ export type CaptureEvidenceRowsInput = {
   readonly userId: UserId;
   readonly from: string;
   readonly body?: string;
-  readonly fromAccountHint?: string;
-  readonly toAccountHint?: string;
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
@@ -54,8 +52,6 @@ export type CaptureEvidenceRowsInput = {
   readonly buildEmailCaptureEvidence: (input: {
     readonly from: string;
     readonly body?: string;
-    readonly fromAccountHint?: string;
-    readonly toAccountHint?: string;
     readonly cardProductHint?: string;
     readonly accountTypeHint?: string;
     readonly counterpartyHint?: string;
@@ -97,7 +93,6 @@ export type ProcessedSourceEventStatusEffectInput = {
   readonly id: ProcessedSourceEventId;
   readonly status: string;
   readonly transactionId: TransactionId | null;
-  readonly rawBody?: string | null;
 };
 
 export type DefaultAccountInput = {

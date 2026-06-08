@@ -278,11 +278,6 @@ vi.mock("@sentry/react-native", () => ({
   wrap: createMock<[component: unknown], unknown>((component) => component),
 }));
 
-// Mock burnt
-vi.mock("burnt", () => ({
-  toast: createMock(),
-}));
-
 // Mock expo-updates
 vi.mock("expo-updates", () => ({
   reloadAsync: createMock(),

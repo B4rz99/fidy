@@ -81,10 +81,8 @@ describe("Edge Function ↔ client schema compatibility", () => {
       "counterpartyHint",
       "date",
       "description",
-      "fromAccountHint",
       "kind",
       "reason",
-      "toAccountHint",
       "type",
     ].sort();
 
@@ -95,9 +93,7 @@ describe("Edge Function ↔ client schema compatibility", () => {
     const edgeRequired = extractRequired(edgeFnSource).sort();
     const clientKeys = Object.keys(llmOutputSchema.shape).sort();
 
-    expect(edgeRequired).toEqual(
-      expect.arrayContaining(["kind", "reason", "fromAccountHint", "toAccountHint"])
-    );
+    expect(edgeRequired).toEqual(expect.arrayContaining(["kind", "reason"]));
     expect(edgeRequired).toEqual(expect.arrayContaining(clientKeys));
   });
 

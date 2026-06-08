@@ -26,7 +26,7 @@ function buildReasonKey(suggestion: AccountCreationSuggestion) {
     return "accountSuggestions.card.reasonCardHint";
   }
 
-  if (suggestion.evidenceType === "alias_token" || suggestion.evidenceType === "llm_account_hint") {
+  if (suggestion.evidenceType === "alias_token") {
     return "accountSuggestions.card.reasonAlias";
   }
 

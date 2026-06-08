@@ -76,7 +76,7 @@ export function AttributionQueueCard({
               {t("attributionReview.currentOwner")}
             </Text>
             <Text style={[styles.ownerValue, { color: primary }]}>
-              {item.currentAccount?.name ?? t("common.unknown")}
+              {item.currentAccount?.name ?? t("attributionReview.fallbackOwner")}
             </Text>
           </View>
           <View style={styles.ownerRow}>

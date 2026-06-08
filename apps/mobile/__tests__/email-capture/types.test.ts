@@ -37,9 +37,11 @@ describe("email capture schemas", () => {
   });
 
   it("validates processed email status", () => {
-    expect(processedEmailStatusSchema.safeParse("success").success).toBe(true);
+    expect(processedEmailStatusSchema.safeParse("processed").success).toBe(true);
     expect(processedEmailStatusSchema.safeParse("failed").success).toBe(true);
-    expect(processedEmailStatusSchema.safeParse("skipped_duplicate").success).toBe(true);
-    expect(processedEmailStatusSchema.safeParse("pending").success).toBe(false);
+    expect(processedEmailStatusSchema.safeParse("duplicate").success).toBe(true);
+    expect(processedEmailStatusSchema.safeParse("dismissed").success).toBe(true);
+    expect(processedEmailStatusSchema.safeParse("success").success).toBe(false);
+    expect(processedEmailStatusSchema.safeParse("skipped_duplicate").success).toBe(false);
   });
 });

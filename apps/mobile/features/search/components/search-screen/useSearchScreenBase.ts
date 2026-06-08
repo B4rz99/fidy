@@ -7,7 +7,6 @@ import { useSearchStore } from "../../store";
 
 export function useSearchScreenBase() {
   const routeParams = useLocalSearchParams<{
-    category?: string | string[];
     categoryId?: string | string[];
   }>();
   const userId = useOptionalUserId();

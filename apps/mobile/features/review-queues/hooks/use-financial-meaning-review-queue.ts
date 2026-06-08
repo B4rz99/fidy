@@ -5,7 +5,6 @@ import {
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
 import type { AnyDb } from "@/shared/db";
-import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";
 
 type FinancialMeaningReviewItem = Awaited<
@@ -35,15 +34,9 @@ export function useFinancialMeaningReviewQueue({
       const nextItems = await getFinancialMeaningReviewItems(db, userId);
       setItems(nextItems);
       await loadNeedsReviewEmails(db, userId);
-    } catch (error) {
-      if (isMissingSqliteTableError(error)) {
-        setItems([]);
-      } else {
-        throw error;
-      }
+    } finally {
+      setHasLoadedQueue(true);
     }
-
-    setHasLoadedQueue(true);
   }, [db, userId]);
 
   useFocusEffect(

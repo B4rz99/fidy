@@ -76,7 +76,10 @@ export function toStoredTransferSide(
   if (accountId != null) {
     return { kind: "account", accountId };
   }
-  return { kind: "external", label: externalLabel ?? "Outside Fidy" };
+  if (externalLabel == null) {
+    throw new Error("Transfer side must have an account or external label");
+  }
+  return { kind: "external", label: externalLabel };
 }
 
 export function toTransferAccountId(side: TransferSide): FinancialAccountId | null {

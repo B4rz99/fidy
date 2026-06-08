@@ -47,8 +47,6 @@ Rules:
 - date: transaction date in YYYY-MM-DD
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
-- fromAccountHint: legacy source account/card/wallet hint exactly as described by the bank, or null when absent.
-- toAccountHint: legacy destination account/card/wallet hint exactly as described by the bank, or null when absent.
 - cardProductHint: card or account product name only when explicitly described, such as "Visa Oro" or "Mastercard Black"; if unsure, return null.
 - accountTypeHint: generic payment instrument/account type only, such as "credit card", "savings account", or "wallet"; if unsure, return null.
 - counterpartyHint: merchant/payee/counterparty name only, or null when absent.
@@ -75,8 +73,6 @@ The text is short (1-2 lines). Apply the same rules:
 - date: transaction date in YYYY-MM-DD (use today if not stated)
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
-- fromAccountHint: legacy source account/card/wallet hint exactly as described by the notification, or null when absent.
-- toAccountHint: legacy destination account/card/wallet hint exactly as described by the notification, or null when absent.
 - cardProductHint: card or account product name only when explicitly described, such as "Visa Oro" or "Mastercard Black"; if unsure, return null.
 - accountTypeHint: generic payment instrument/account type only, such as "credit card", "savings account", or "wallet"; if unsure, return null.
 - counterpartyHint: merchant/payee/counterparty name only, or null when absent.
@@ -124,8 +120,6 @@ const CAPTURE_INTERPRETER_SCHEMA = {
       date: { type: ["string", "null"], pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
       confidence: { type: "number", minimum: 0, maximum: 1 },
       reason: { type: ["string", "null"] },
-      fromAccountHint: { type: ["string", "null"] },
-      toAccountHint: { type: ["string", "null"] },
       cardProductHint: { type: ["string", "null"] },
       accountTypeHint: { type: ["string", "null"] },
       counterpartyHint: { type: ["string", "null"] },
@@ -139,8 +133,6 @@ const CAPTURE_INTERPRETER_SCHEMA = {
       "date",
       "confidence",
       "reason",
-      "fromAccountHint",
-      "toAccountHint",
       "cardProductHint",
       "accountTypeHint",
       "counterpartyHint",

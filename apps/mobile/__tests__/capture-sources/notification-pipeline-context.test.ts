@@ -51,9 +51,9 @@ describe("notification pipeline context helper", () => {
     expect(context.notificationDate).toBe("2026-04-18");
   });
 
-  it("falls back invalid categories to other", () => {
+  it("rejects invalid categories", () => {
     expect(resolveCategoryId("food")).toBe("food");
-    expect(resolveCategoryId("unknown-category")).toBe("other");
+    expect(() => resolveCategoryId("unknown-category")).toThrow("Invalid notification category");
   });
 
   it("selects inferred vs unresolved account attribution", () => {

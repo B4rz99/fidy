@@ -86,22 +86,22 @@ describe("account suggestion presentation helpers", () => {
     });
   });
 
-  it("builds a credit-card draft from LLM account hint evidence", () => {
+  it("builds a credit-card draft from card product hint evidence", () => {
     expect(
       buildSuggestedFinancialAccountDraft({
-        fingerprint: '["email:bancolombia:llm_account_hint","tarjeta credito bancolombia"]',
-        scope: "email:bancolombia:llm_account_hint",
+        fingerprint: '["email:bancolombia:card_product_hint","tarjeta credito bancolombia"]',
+        scope: "email:bancolombia:card_product_hint",
         value: "tarjeta credito bancolombia",
         sourceFamily: "bancolombia",
-        evidenceType: "llm_account_hint",
+        evidenceType: "card_product_hint",
         occurrences: 3,
         confidenceScore: 270,
       })
     ).toEqual({
-      confidenceLabel: "HIGH",
-      evidenceLabel: "tarjeta credito bancolombia",
+      confidenceLabel: "MED",
+      evidenceLabel: "Tarjeta Credito Bancolombia",
       kind: "credit_card",
-      name: "Bancolombia card",
+      name: "Bancolombia Tarjeta Credito Bancolombia",
       occurrences: 3,
       sourceLabel: "Bancolombia",
     });

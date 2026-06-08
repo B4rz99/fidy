@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ViewStyle } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CheckCircle } from "@/shared/components/icons";
+import { CheckCircle, TriangleAlert } from "@/shared/components/icons";
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { subscribeAppToasts } from "@/shared/lib";
@@ -24,7 +24,10 @@ export function AppToastHost() {
   const { top } = useSafeAreaInsets();
   const primary = useThemeColor("primary");
   const accentGreen = useThemeColor("accentGreen");
+  const accentRed = useThemeColor("accentRed");
   const onAccent = useThemeColor("onAccent");
+  const accent = toast?.kind === "error" ? accentRed : accentGreen;
+  const ToastIcon = toast?.kind === "error" ? TriangleAlert : CheckCircle;
   const animatedToastStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
@@ -70,12 +73,12 @@ export function AppToastHost() {
         ]}
         accessibilityLiveRegion="polite"
       >
-        <GlassSurface padded={false} radius={18} borderColor={accentGreen} style={styles.toast}>
+        <GlassSurface padded={false} radius={18} borderColor={accent} style={styles.toast}>
           <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
             {toast.message}
           </Text>
-          <View style={[styles.icon, { backgroundColor: accentGreen }]}>
-            <CheckCircle size={16} color={onAccent} strokeWidth={2.5} />
+          <View style={[styles.icon, { backgroundColor: accent }]}>
+            <ToastIcon size={16} color={onAccent} strokeWidth={2.5} />
           </View>
         </GlassSurface>
       </Animated.View>

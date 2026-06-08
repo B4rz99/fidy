@@ -44,8 +44,7 @@ describe("createParseEmailService", () => {
           description: "Exito",
           date: "2026-03-05",
           confidence: 0.9,
-          fromAccountHint: "Tarjeta credito Bancolombia",
-          toAccountHint: null,
+          cardProductHint: "Tarjeta credito Bancolombia",
           counterpartyHint: "Exito",
         },
       },
@@ -72,7 +71,7 @@ describe("createParseEmailService", () => {
         amount: 50000,
         categoryId: "food",
         description: "Exito",
-        fromAccountHint: "Tarjeta credito Bancolombia",
+        cardProductHint: "Tarjeta credito Bancolombia",
         counterpartyHint: "Exito",
       })
     );
@@ -90,8 +89,6 @@ describe("createParseEmailService", () => {
           description: "Exito",
           date: "2026-03-05",
           confidence: 0.9,
-          fromAccountHint: null,
-          toAccountHint: null,
         },
       },
       error: null,

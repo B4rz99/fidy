@@ -111,4 +111,19 @@ describe("notification preferences in settings store", () => {
 
     expect(useSettingsStore.getState().notificationPreferences).toEqual(DEFAULT_PREFERENCES);
   });
+
+  test("hydrate ignores invalid stored notification preferences without dropping other settings", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation(async (key: string) => {
+      if (key === "theme_preference") return "dark";
+      if (key === "notification_preferences") return JSON.stringify({ budgetAlerts: false });
+      if (key === "share_anonymized_parse_samples") return "true";
+      return null;
+    });
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().notificationPreferences).toEqual(DEFAULT_PREFERENCES);
+    expect(useSettingsStore.getState().themePreference).toBe("dark");
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+  });
 });

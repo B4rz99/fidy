@@ -1,7 +1,6 @@
-import * as burnt from "burnt";
 import { captureError } from "./sentry";
 
-type AppToastKind = "success";
+type AppToastKind = "error" | "success";
 type AppToast = {
   readonly id: number;
   readonly duration: number;
@@ -26,7 +25,7 @@ function showAppToast(message: string, kind: AppToastKind, duration: number): vo
 }
 
 export function showErrorToast(message: string): void {
-  burnt.toast({ title: message, preset: "error" });
+  showAppToast(message, "error", 5);
 }
 
 export function showSuccessToast(message: string, duration?: number): void {

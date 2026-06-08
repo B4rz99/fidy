@@ -6,7 +6,7 @@ import { readFinancialAccountKind } from "@/features/financial-accounts/display.
 import { getTransactionDisplayName } from "@/features/transactions/display.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
-import { Info, TriangleAlert } from "@/shared/components/icons";
+import { Info, Landmark, TriangleAlert } from "@/shared/components/icons";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -57,7 +57,7 @@ export function AttributionReviewScreen() {
 
   const CurrentIcon = reviewItem.currentAccount
     ? getFinancialAccountKindIcon(reviewItem.currentAccount.kind)
-    : TriangleAlert;
+    : Landmark;
   const SuggestedIcon = getFinancialAccountKindIcon(reviewItem.suggestedAccount.kind);
 
   const handleConfirm = () => {
@@ -111,13 +111,13 @@ export function AttributionReviewScreen() {
 
         <DetailRow
           label={t("attributionReview.currentOwner")}
-          title={reviewItem.currentAccount?.name ?? t("common.unknown")}
+          title={reviewItem.currentAccount?.name ?? t("attributionReview.fallbackOwner")}
           subtitle={
             reviewItem.currentAccount
               ? t(
                   `financialAccounts.kinds.${readFinancialAccountKind(reviewItem.currentAccount.kind)}`
                 )
-              : t("attributionReview.fallbackOwner")
+              : t("attributionReview.fallbackOwnerMissing")
           }
           icon={<CurrentIcon size={18} color={secondary} />}
         />

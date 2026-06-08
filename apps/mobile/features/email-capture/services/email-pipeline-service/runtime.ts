@@ -85,7 +85,7 @@ export function resolveRetryEmailBodyEffect(
   sourceEvent: ProcessedSourceEventRow
 ) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ resolveRetryEmailBody }) =>
-    fromPromise(() => resolveRetryEmailBody?.(db, userId, sourceEvent) ?? Promise.resolve(null))
+    fromPromise(() => resolveRetryEmailBody(db, userId, sourceEvent))
   );
 }
 
@@ -118,8 +118,6 @@ function buildEmailCaptureEvidenceRows(input: CaptureEvidenceRowsInput) {
     input.buildEmailCaptureEvidence({
       from: input.from,
       body: input.body,
-      fromAccountHint: input.fromAccountHint,
-      toAccountHint: input.toAccountHint,
       cardProductHint: input.cardProductHint,
       accountTypeHint: input.accountTypeHint,
       counterpartyHint: input.counterpartyHint,
@@ -148,8 +146,6 @@ export function saveEmailCaptureEvidenceEffect(input: CaptureEvidenceSaveInput) 
         userId: input.userId,
         from: input.from,
         body: input.body,
-        fromAccountHint: input.fromAccountHint,
-        toAccountHint: input.toAccountHint,
         cardProductHint: input.cardProductHint,
         accountTypeHint: input.accountTypeHint,
         counterpartyHint: input.counterpartyHint,
@@ -225,7 +221,6 @@ export function updateProcessedSourceEventStatusEffect(
         id: input.id,
         status: input.status,
         transactionId: input.transactionId,
-        rawBody: input.rawBody,
       })
     )
   );

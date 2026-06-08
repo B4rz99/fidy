@@ -2,7 +2,7 @@ export {
   buildApplePayCaptureEvidence,
   buildEmailCaptureEvidence,
   buildNotificationCaptureEvidence,
-  buildNotificationLlmAccountHintCaptureEvidence,
+  buildNotificationTypedLlmHintCaptureEvidence,
 } from "./lib/build-capture-evidence";
 export type { CaptureEvidenceRow } from "./lib/repository";
 export {

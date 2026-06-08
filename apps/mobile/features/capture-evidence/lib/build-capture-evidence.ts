@@ -30,8 +30,6 @@ const EMAIL_LAST4_PATTERNS = [
 type EmailCaptureInput = {
   readonly from: string;
   readonly body?: string;
-  readonly fromAccountHint?: string;
-  readonly toAccountHint?: string;
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
@@ -56,24 +54,13 @@ type TypedLlmHint = {
   readonly value: string;
 };
 
-function buildLlmAccountHintCaptureEvidence(input: {
+function buildTypedLlmHintCaptureEvidence(input: {
   readonly family: string;
   readonly scopePrefix: "email" | "notification";
-  readonly fromAccountHint?: string;
-  readonly toAccountHint?: string;
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
 }): readonly CaptureEvidenceSeed[] {
-  const legacyHints = [input.fromAccountHint, input.toAccountHint]
-    .filter((hint): hint is string => hint != null && hint.trim().length > 0)
-    .map(normalizeHint)
-    .map((hint) => ({
-      sourceFamily: input.family,
-      evidenceType: "llm_account_hint" as const,
-      scope: `${input.scopePrefix}:${input.family}:llm_account_hint`,
-      value: hint,
-    }));
   const typedHints = [
     { evidenceType: "card_product_hint" as const, value: input.cardProductHint },
     { evidenceType: "account_type_hint" as const, value: input.accountTypeHint },
@@ -87,7 +74,7 @@ function buildLlmAccountHintCaptureEvidence(input: {
       value: normalizeHint(hint.value),
     }));
 
-  return [...legacyHints, ...typedHints];
+  return typedHints;
 }
 
 function uniqueEvidence(rows: readonly CaptureEvidenceSeed[]) {
@@ -199,11 +186,9 @@ export function buildEmailCaptureEvidence(
 
   return uniqueEvidence([
     ...buildEmailSenderEvidence({ family, senderEmail, senderDomain }),
-    ...buildLlmAccountHintCaptureEvidence({
+    ...buildTypedLlmHintCaptureEvidence({
       family,
       scopePrefix: "email",
-      fromAccountHint: input.fromAccountHint,
-      toAccountHint: input.toAccountHint,
       cardProductHint: input.cardProductHint,
       accountTypeHint: input.accountTypeHint,
       counterpartyHint: input.counterpartyHint,
@@ -212,19 +197,15 @@ export function buildEmailCaptureEvidence(
   ]);
 }
 
-export function buildNotificationLlmAccountHintCaptureEvidence(input: {
+export function buildNotificationTypedLlmHintCaptureEvidence(input: {
   readonly notification: NotificationData;
-  readonly fromAccountHint?: string;
-  readonly toAccountHint?: string;
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
 }): readonly CaptureEvidenceSeed[] {
-  return buildLlmAccountHintCaptureEvidence({
+  return buildTypedLlmHintCaptureEvidence({
     family: familyFromPackageName(input.notification.packageName),
     scopePrefix: "notification",
-    fromAccountHint: input.fromAccountHint,
-    toAccountHint: input.toAccountHint,
     cardProductHint: input.cardProductHint,
     accountTypeHint: input.accountTypeHint,
     counterpartyHint: input.counterpartyHint,

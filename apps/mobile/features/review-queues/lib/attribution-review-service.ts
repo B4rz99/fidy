@@ -25,8 +25,8 @@ import {
 export type AttributionReviewItem = {
   readonly transaction: ReturnType<typeof toStoredTransaction>;
   readonly currentAccount: FinancialAccountRow | null;
-  readonly suggestedAccount: FinancialAccountRow | null;
-  readonly suggestion: AccountCreationSuggestion | null;
+  readonly suggestedAccount: FinancialAccountRow;
+  readonly suggestion: AccountCreationSuggestion;
   readonly evidenceLabel: string | null;
 };
 
@@ -147,17 +147,22 @@ function toReviewItem(
   transactionRow: ReturnType<typeof getAllTransactions>[number],
   accounts: readonly FinancialAccountRow[],
   suggestion: AccountCreationSuggestion | null
-): AttributionReviewItem {
-  const suggestedAccount = suggestion ? getSuggestedAccount(accounts, suggestion) : null;
+): AttributionReviewItem | null {
+  if (!suggestion) {
+    return null;
+  }
+
+  const suggestedAccount = getSuggestedAccount(accounts, suggestion);
+  if (!suggestedAccount) {
+    return null;
+  }
 
   return {
     transaction: toStoredTransaction(transactionRow),
     currentAccount: findFinancialAccountById(accounts, transactionRow.accountId),
     suggestedAccount,
     suggestion,
-    evidenceLabel: suggestion
-      ? buildSuggestedFinancialAccountDraft(suggestion).evidenceLabel
-      : null,
+    evidenceLabel: buildSuggestedFinancialAccountDraft(suggestion).evidenceLabel,
   };
 }
 
@@ -181,22 +186,24 @@ export function createAttributionReviewService({
     const accounts = getFinancialAccountsForUser(db, userId);
     const suggestions = accountSuggestionService.listSuggestions({ db, userId });
 
-    return getAllTransactions(db, userId).flatMap((transaction) =>
-      transaction.accountAttributionState === "unresolved"
-        ? [
-            toReviewItem(
-              transaction,
-              accounts,
-              getBestMatchingSuggestion({
-                suggestions,
-                transactionId: transaction.id,
-                db,
-                userId,
-              })
-            ),
-          ]
-        : []
-    );
+    return getAllTransactions(db, userId).flatMap((transaction) => {
+      if (transaction.accountAttributionState !== "unresolved") {
+        return [];
+      }
+
+      const reviewItem = toReviewItem(
+        transaction,
+        accounts,
+        getBestMatchingSuggestion({
+          suggestions,
+          transactionId: transaction.id,
+          db,
+          userId,
+        })
+      );
+
+      return reviewItem ? [reviewItem] : [];
+    });
   };
 
   const getReviewItem = ({
@@ -212,10 +219,6 @@ export function createAttributionReviewService({
 
     if (!item) {
       return { success: false, error: "reviewItemNotFound" };
-    }
-
-    if (!item.suggestion || !item.suggestedAccount) {
-      return { success: false, error: "suggestedOwnerUnavailable" };
     }
 
     const { suggestedAccount, suggestion } = item;
