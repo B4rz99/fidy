@@ -66,7 +66,7 @@ function FinanceCalendarPanel() {
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
   const nativeHeaderHeight = useNativeHeaderHeight();
-  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
+  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight + insets.top : 0;
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 

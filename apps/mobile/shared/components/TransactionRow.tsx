@@ -13,6 +13,7 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { GlassSurface } from "./GlassSurface";
 
 type TransactionRowProps = {
   icon: string;
@@ -156,7 +157,7 @@ export function TransactionRow({
   const hasActions = onEdit != null || onDelete != null;
 
   const content = (
-    <View className="flex-row items-center py-3">
+    <GlassSurface padded={false} radius={8} style={styles.rowSurface}>
       <View
         className="size-10 items-center justify-center rounded-icon"
         style={{ backgroundColor: iconBgColor ?? defaultIconBg }}
@@ -179,7 +180,7 @@ export function TransactionRow({
           {category}
         </Text>
       </View>
-    </View>
+    </GlassSurface>
   );
 
   if (!hasActions) return content;
@@ -197,6 +198,12 @@ export function TransactionRow({
 }
 
 const styles = StyleSheet.create({
+  rowSurface: {
+    alignItems: "center",
+    flexDirection: "row",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
   swipeActionPanel: {
     overflow: "hidden",
   },

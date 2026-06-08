@@ -99,4 +99,14 @@ describe("withFidyWidget warning cleanup", () => {
     expect(source).toContain("hasCppLinkerFlag = true");
     expect(source).not.toContain("flag !== '\"-lc++\"'");
   });
+
+  it("stores always-out-of-date script flags as Xcode string values", () => {
+    const source = readFileSync(
+      path.resolve(__dirname, "../../plugins/withFidyWidget.xcodeWarnings.js"),
+      "utf8"
+    );
+
+    expect(source).toContain('phase.alwaysOutOfDate = "1"');
+    expect(source).not.toContain("phase.alwaysOutOfDate = 1");
+  });
 });

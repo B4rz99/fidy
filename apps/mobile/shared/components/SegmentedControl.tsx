@@ -49,7 +49,13 @@ export function SegmentedControl<TValue extends string>({
   };
 
   return (
-    <GlassSurface {...viewProps} padded={false} radius={999} style={[styles.container, style]}>
+    <GlassSurface
+      {...viewProps}
+      nativeGlass={false}
+      padded={false}
+      radius={999}
+      style={[styles.container, style]}
+    >
       {options.map((option) => {
         const selected = option.value === value;
         const activeTone = getOptionTone?.(option.value) ?? tone;

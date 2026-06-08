@@ -15,7 +15,7 @@ const markKnownScriptsAlwaysOutOfDate = (project) => {
   const phases = project.hash.project.objects.PBXShellScriptBuildPhase ?? {};
   for (const phase of Object.values(phases)) {
     if (phase && ALWAYS_OUT_OF_DATE_SCRIPT_NAMES.has(phase.name)) {
-      phase.alwaysOutOfDate = 1;
+      phase.alwaysOutOfDate = "1";
     }
   }
 };

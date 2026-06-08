@@ -65,12 +65,13 @@ test("keeps activity item rendering memo-safe for edit and delete handlers", () 
 
 test("keeps the home feed aurora background visible behind section headers and row cards", () => {
   const dateHeaderSource = readSource("../../features/dashboard/components/DateHeader.tsx");
+  const transactionRowSource = readSource("../../shared/components/TransactionRow.tsx");
 
   expect(dateHeaderSource).not.toContain("bg-page");
   expect(dateHeaderSource).not.toContain("dark:bg-page-dark");
-  expect(activityItemSource).toContain("activityCard");
-  expect(activityItemSource).toContain("rgba(255, 255, 255, 0.58)");
-  expect(activityItemSource).toContain("rgba(28, 28, 30, 0.78)");
+  expect(activityItemSource).not.toContain("activityCard");
+  expect(transactionRowSource).toContain("<GlassSurface");
+  expect(transactionRowSource).toContain("styles.rowSurface");
 });
 
 test("keeps the aurora blur mobile-friendly", () => {

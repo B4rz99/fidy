@@ -5,7 +5,7 @@ import type { StoredTransaction } from "@/features/transactions/query.public";
 import { getTransferActivityCopy } from "@/features/transfers/display.public";
 import { CATEGORY_MAP } from "@/shared/categories";
 import { TransactionRow } from "@/shared/components";
-import { StyleSheet, useColorScheme, View } from "@/shared/components/rn";
+import { View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, formatSignedMoney } from "@/shared/lib";
@@ -26,8 +26,6 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
   onEditTransaction,
 }: TransactionActivityItemProps) {
   const { t, locale } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const category = CATEGORY_MAP[tx.categoryId];
   const handleEdit = useCallback(() => {
     onEditTransaction(tx.id);
@@ -49,17 +47,15 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
         />
       ) : null}
       <View className="px-4 py-1">
-        <View style={[styles.activityCard, isDark ? styles.activityCardDark : null]}>
-          <TransactionRow
-            icon={category?.icon ?? "✨"}
-            name={getTransactionDisplayName(tx, t("common.unknown"))}
-            amount={formatSignedMoney(tx.amount, tx.type)}
-            category={category ? getCategoryLabel(category, locale) : t("common.other")}
-            isPositive={tx.type === "income"}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        </View>
+        <TransactionRow
+          icon={category?.icon ?? "✨"}
+          name={getTransactionDisplayName(tx, t("common.unknown"))}
+          amount={formatSignedMoney(tx.amount, tx.type)}
+          category={category ? getCategoryLabel(category, locale) : t("common.other")}
+          isPositive={tx.type === "income"}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </View>
     </View>
   );
@@ -77,8 +73,6 @@ const TransferActivityItem = memo(function TransferActivityItem({
   showDateHeader,
 }: TransferActivityItemProps) {
   const { t, locale } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const { title, route } = getTransferActivityCopy(item.transfer, accountNames, t);
@@ -96,17 +90,15 @@ const TransferActivityItem = memo(function TransferActivityItem({
         />
       ) : null}
       <View className="px-4 py-1">
-        <View style={[styles.activityCard, isDark ? styles.activityCardDark : null]}>
-          <TransactionRow
-            icon="↔️"
-            iconBgColor={accentGreenLight}
-            iconColor={accentGreen}
-            name={title}
-            amount={formatMoney(item.transfer.amount)}
-            category={route}
-            amountTone="neutral"
-          />
-        </View>
+        <TransactionRow
+          icon="↔️"
+          iconBgColor={accentGreenLight}
+          iconColor={accentGreen}
+          name={title}
+          amount={formatMoney(item.transfer.amount)}
+          category={route}
+          amountTone="neutral"
+        />
       </View>
     </View>
   );
@@ -138,17 +130,3 @@ export function ActivityFeedItem({
     <TransferActivityItem item={item} showDateHeader={showDateHeader} accountNames={accountNames} />
   );
 }
-
-const styles = StyleSheet.create({
-  activityCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.58)",
-    borderColor: "rgba(26, 26, 26, 0.08)",
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
-  },
-  activityCardDark: {
-    backgroundColor: "rgba(28, 28, 30, 0.78)",
-    borderColor: "rgba(240, 240, 240, 0.10)",
-  },
-});

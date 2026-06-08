@@ -100,6 +100,8 @@ describe("calendar screen", () => {
     expect(financeTabSource).toContain("useNativeHeaderHeight");
     expect(financeTabSource).toContain("FINANCE_NATIVE_TAB_BAR_OFFSET = 72");
     expect(financeTabSource).toContain("nativeHeaderHeight");
+    expect(financeTabSource).toContain("nativeHeaderHeight + insets.top");
+    expect(billsCalendarSource).toContain("nativeHeaderHeight + insets.top");
     expect(financeTabSource).toContain(
       'Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE'
     );

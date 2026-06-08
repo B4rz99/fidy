@@ -39,7 +39,9 @@ test("create-budget is registered in root layout as a full screen route", () => 
 });
 
 test("auto-suggest budgets keeps the scroll view bounded inside the full screen route", () => {
-  expect(autoSuggestBudgetsSource).toContain("style={[styles.flex, { backgroundColor: pageBg }]}");
+  expect(autoSuggestBudgetsSource).toContain("<AppAuroraBackground");
+  expect(autoSuggestBudgetsSource).toContain("style={styles.flex}");
+  expect(autoSuggestBudgetsSource).not.toContain("backgroundColor: pageBg");
   expect(autoSuggestBudgetsSource).toContain("style={styles.container}");
   expect(autoSuggestBudgetsSource).toContain("flex: { flex: 1 }");
   expect(autoSuggestBudgetsSource).toContain("container: { flex: 1 }");

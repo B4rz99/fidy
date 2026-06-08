@@ -96,6 +96,7 @@ export function FilterPill({
     >
       <GlassSurface
         className={className}
+        nativeGlass={false}
         padded={false}
         radius={999}
         borderColor={selected ? selectedBorderColor : undefined}
