@@ -108,13 +108,10 @@ const styles = StyleSheet.create({
   },
   toastPosition: {
     alignSelf: "center",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
     maxWidth: 360,
     minHeight: 52,
     position: "absolute",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
     width: "88%",
   },
 });
