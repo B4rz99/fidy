@@ -1,0 +1,61 @@
+apps/mobile/shared/components/index.ts
+  s_c5de1adbad9fac::t_f7e908f8f4e642 9-16
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_c5de1adbad9fac::t_1c068aed688b3f 17,78-81
+apps/mobile/features/calendar/components/CalendarBillRow.tsx
+  s_c5de1adbad9fac::t_848b6e1324389e 17,26,43
+  s_c5de1adbad9fac::t_59669d7f1f3337 89,99,109
+  s_c5de1adbad9fac::t_a2d9ef0472a9ba 1-16,18-25,27-42,44-88,90-98,100-108,110-175
+apps/mobile/shared/components/Card.tsx
+  s_c5de1adbad9fac::t_1719e7a2a17399 11,22,55
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.styles.ts
+  s_c5de1adbad9fac::t_2da5bac4f3e368 8,10-11,65,67-68
+apps/mobile/app/delete-account.tsx
+  s_c5de1adbad9fac::t_6e9deb806edeaa 4,6,52-55,57-60,65-67
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_c5de1adbad9fac::t_299cd2a80baa61 3,50,91,171,199
+apps/mobile/__tests__/calendar/day-detail-screen.test.ts
+  s_c5de1adbad9fac::t_1c068aed688b3f 7,13-16,57-59
+apps/mobile/shared/components/IconActionButton.tsx
+  s_c5de1adbad9fac::t_7803bb4cde4468 11,25,51
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_c5de1adbad9fac::t_2da5bac4f3e368 12,210,241
+  s_c5de1adbad9fac::t_77e99ba50f18be 179,232-236
+apps/mobile/app/enable-notifications.tsx
+  s_c5de1adbad9fac::t_6e9deb806edeaa 12,14,122-124,129-133,137-138
+apps/mobile/features/calendar/components/CalendarMonthBoard.tsx
+  s_c5de1adbad9fac::t_d356c11ce66c12 39
+  s_c5de1adbad9fac::t_7192a50f1d21b5 2,6,77-85
+apps/mobile/app/day-detail.tsx
+  s_c5de1adbad9fac::t_d356c11ce66c12 12-16,22
+  s_c5de1adbad9fac::t_dc48c4bb6767e4 127
+  s_c5de1adbad9fac::t_34c50a18bce07c 18,117-122,124,126,128-134
+apps/mobile/app/auto-suggest-budgets.tsx
+  s_c5de1adbad9fac::t_dd9c2f033c3659 14,144-145,148-155
+apps/mobile/features/analytics/components/IncomeExpenseStrip.tsx
+  s_c5de1adbad9fac::t_299cd2a80baa61 1,19,49
+apps/mobile/features/review-queues/components/shared.tsx
+  s_c5de1adbad9fac::t_a8aa949bbb16b0 2
+apps/mobile/features/calendar/ui.public.ts
+  s_c5de1adbad9fac::t_d356c11ce66c12 1
+apps/mobile/shared/components/DialogFrame.tsx
+  s_c5de1adbad9fac::t_967bf876193f8a 2-3,5,113-155
+apps/mobile/features/calendar/index.ts
+  s_c5de1adbad9fac::t_d356c11ce66c12 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "01a7daf9cc848592f6708d096942f69e7034c6d7",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
