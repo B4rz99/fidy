@@ -1,0 +1,55 @@
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_c5de1adbad9fac::t_730e214c0376a1 36,88-90
+  s_c5de1adbad9fac::t_9968148cecccf5 94
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_c5de1adbad9fac::t_cbb91d433bd94a 52-58
+apps/mobile/shared/components/AppToastHost.tsx
+  s_c5de1adbad9fac::t_d2ad6881aa3f64 114-117
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_c5de1adbad9fac::t_38ce9a536fd9d0 103,106-123
+  s_c5de1adbad9fac::t_2e2177ea27dfff 19,31,33-34
+apps/mobile/features/search/components/CategoryFilter.tsx
+  s_c5de1adbad9fac::t_81e20e6a8bf1d7 39
+apps/mobile/plugins/withFidyWidget.xcodeWarnings.js
+  s_c5de1adbad9fac::t_e2995f830b10fd 18
+apps/mobile/shared/navigation/use-native-header-height.ts
+  s_c5de1adbad9fac::t_247591dd0a412d 1,4
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_c5de1adbad9fac::t_cc7502e8a74cab 42-44
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_c5de1adbad9fac::t_a4d32fdc6e0d9e 68,72-74
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_c5de1adbad9fac::t_29cdf8bb18fd4c 8,50-58,93-101
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_c5de1adbad9fac::t_100a62dffc5a6c 69
+apps/mobile/app/bills-calendar.tsx
+  s_c5de1adbad9fac::t_356a3f157d64e5 3,35,37
+apps/mobile/__tests__/plugins/with-fidy-widget-files.test.ts
+  s_c5de1adbad9fac::t_d368f28127e1fd 102-111
+apps/mobile/shared/components/TransactionRow.tsx
+  s_c5de1adbad9fac::t_249561075aacc8 16,160,183,201-206
+apps/mobile/shared/components/FilterPill.tsx
+  s_c5de1adbad9fac::t_f3354317573b99 99
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_c5de1adbad9fac::t_3f80544f015643 103-104
+apps/mobile/features/search/components/FilterChipRow.tsx
+  s_c5de1adbad9fac::t_8c0dbab9ebf7a4 3,78,80,86-89
+apps/mobile/app/auto-suggest-budgets.tsx
+  s_c5de1adbad9fac::t_6a15ab53a36bae 10,22,29,68,71,108-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c72e8cf7ca7045fc3e11e364063615b8ba5a1f9f",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
