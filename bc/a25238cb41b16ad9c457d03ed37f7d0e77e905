@@ -1,0 +1,25 @@
+apps/mobile/features/notifications/lib/display.ts
+  s_c5de1adbad9fac::t_de200f98c62783 158
+apps/mobile/features/email-capture/services/email-capture-sync-policy.ts
+  s_c5de1adbad9fac::t_136a506fd95669 18,31
+apps/mobile/features/goals/lib/derive/projection.ts
+  s_c5de1adbad9fac::t_63a5a08607d8c9 30
+apps/mobile/features/onboarding/components/SyncProgressStep.helpers.ts
+  s_c5de1adbad9fac::t_b844d2d4dffeea 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "bca25238cb41b16ad9c457d03ed37f7d0e77e905",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
