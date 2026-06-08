@@ -1,0 +1,27 @@
+apps/mobile/features/settings/store.ts
+  s_823790b9024764::t_a58acea5899be6 84-98
+apps/mobile/features/settings/lib/private-backup-settings-state.ts
+  s_823790b9024764::t_b54150d3326699 82-88
+apps/mobile/features/review-queues/hooks/use-financial-meaning-review-queue.ts
+  s_823790b9024764::t_d94cbd4121df69 33-39
+apps/mobile/__tests__/settings/notification-preferences.test.ts
+  s_823790b9024764::t_34302b2a0c2bd7 114-128
+apps/mobile/__tests__/settings/store.test.ts
+  s_823790b9024764::t_403f7321fd97d6 142-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "0c154b601993789403488db3c3e8403230b0ab1f",
+  "prompts": {},
+  "sessions": {
+    "s_823790b9024764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea7d4-e3f0-7cb0-9375-c6153bce12d8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
