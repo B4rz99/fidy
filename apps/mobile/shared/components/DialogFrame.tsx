@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { Modal, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
 
 type DialogFrameProps = {
@@ -103,10 +104,8 @@ export function DialogCancelButton({ onPress }: { readonly onPress: () => void }
   );
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button">
-      <GlassSurface isInteractive padded={false} radius={16} style={buttonStyle}>
-        {label}
-      </GlassSurface>
-    </Pressable>
+    <GlassPressable onPress={onPress} radius={16} surfaceStyle={buttonStyle}>
+      {label}
+    </GlassPressable>
   );
 }

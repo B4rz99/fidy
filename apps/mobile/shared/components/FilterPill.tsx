@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassSurface } from "./GlassSurface";
+import { GlassPressable } from "./GlassPressable";
 
 type FilterPillProps = Omit<ViewProps, "children"> & {
   readonly label?: string;
@@ -87,25 +87,20 @@ export function FilterPill({
   );
 
   return (
-    <Pressable
+    <GlassPressable
       {...viewProps}
       onPress={onPress}
-      accessibilityRole="button"
       accessibilityState={{ ...viewProps.accessibilityState, selected }}
       style={pressableStyle}
+      nativeGlass={false}
+      radius={999}
+      borderColor={selected ? selectedBorderColor : undefined}
+      borderWidth={selected ? 1.5 : undefined}
+      surfaceClassName={className}
+      surfaceStyle={[styles.surface, surfaceStyle]}
     >
-      <GlassSurface
-        className={className}
-        nativeGlass={false}
-        padded={false}
-        radius={999}
-        borderColor={selected ? selectedBorderColor : undefined}
-        borderWidth={selected ? 1.5 : undefined}
-        style={[styles.surface, surfaceStyle]}
-      >
-        {content}
-      </GlassSurface>
-    </Pressable>
+      {content}
+    </GlassPressable>
   );
 }
 

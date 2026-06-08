@@ -4,8 +4,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { Button, EmptyState, FormTextField, GlassSurface, ScreenLayout } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import {
+  Button,
+  EmptyState,
+  FormTextField,
+  GlassPressable,
+  ScreenLayout,
+} from "@/shared/components";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
@@ -117,23 +123,19 @@ function ResolvedCreateSuggestedAccountForm({
               const isSelected = option === kind;
 
               return (
-                <Pressable
+                <GlassPressable
                   key={option}
                   onPress={() => setKind(option)}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: isSelected }}
+                  radius={12}
+                  borderColor={isSelected ? accentGreen : undefined}
+                  surfaceStyle={styles.kindPill}
                 >
-                  <GlassSurface
-                    padded={false}
-                    radius={12}
-                    borderColor={isSelected ? accentGreen : undefined}
-                    style={styles.kindPill}
-                  >
-                    <Text style={[styles.kindText, { color: primary }]}>
-                      {t(`financialAccounts.kinds.${option}`)}
-                    </Text>
-                  </GlassSurface>
-                </Pressable>
+                  <Text style={[styles.kindText, { color: primary }]}>
+                    {t(`financialAccounts.kinds.${option}`)}
+                  </Text>
+                </GlassPressable>
               );
             })}
           </View>
