@@ -129,6 +129,9 @@ describe("glass layout contracts", () => {
 
   it("keeps compact form field sizing on the glass field container", () => {
     const formTextFieldSource = readShared("FormTextField.tsx");
+    const budgetSuggestionRowSource = readSource(
+      "../../features/budget/components/BudgetSuggestionRow.tsx"
+    );
     const autoSuggestSource = readSource("../../app/auto-suggest-budgets.tsx");
     const budgetSetupSource = readSource(
       "../../features/onboarding/components/BudgetSetupStep.tsx"
@@ -137,10 +140,14 @@ describe("glass layout contracts", () => {
     expect(formTextFieldSource).toMatch(/function getFieldContainerStyle/);
     expect(formTextFieldSource).toContain("minWidth: flattened.minWidth");
     expect(formTextFieldSource).toContain("width: flattened.width");
+    expect(budgetSuggestionRowSource).toContain("styles.amountInput");
+    expect(budgetSuggestionRowSource).toContain("minWidth: 64");
+    expect(budgetSuggestionRowSource).toContain("<FormTextField");
 
     [autoSuggestSource, budgetSetupSource].forEach((source) => {
-      expect(source).toContain("styles.amountInput");
-      expect(source).toContain("minWidth: 64");
+      expect(source).toContain("<BudgetSuggestionRow");
+      expect(source).not.toContain("styles.amountInput");
+      expect(source).not.toContain("minWidth: 64");
       expect(source).not.toContain("suggestion.suggestedAmount)}");
     });
   });
