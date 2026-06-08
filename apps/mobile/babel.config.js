@@ -11,11 +11,12 @@ function inlineSqlImports({ types: t }) {
           return;
         }
 
-        const defaultSpecifier = importPath.node.specifiers.find((specifier) =>
-          t.isImportDefaultSpecifier(specifier)
-        );
-        if (!defaultSpecifier) {
-          throw importPath.buildCodeFrameError("SQL imports must use a default import.");
+        const [defaultSpecifier] = importPath.node.specifiers;
+        if (
+          importPath.node.specifiers.length !== 1 ||
+          !t.isImportDefaultSpecifier(defaultSpecifier)
+        ) {
+          throw importPath.buildCodeFrameError("SQL imports must use exactly one default import.");
         }
 
         const filename = state.file.opts.filename;

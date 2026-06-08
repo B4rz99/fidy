@@ -8,7 +8,7 @@ import { saveCaptureEvidence } from "@/features/capture-evidence/lib/repository"
 import { upsertFinancialAccount } from "@/features/financial-accounts";
 import { createAttributionReviewService } from "@/features/review-queues/lib/attribution-review-service";
 import { getTransactionById } from "@/features/transactions/lib/repository";
-import { insertTransactionStorageRow as insertTransaction } from "@/infrastructure/local-ledger/transaction-storage";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import type {
   CaptureEvidenceId,
   CategoryId,
@@ -118,22 +118,26 @@ function insertAccount(input: AccountInput) {
   });
 }
 
-function insertReviewTransaction(input: ReviewTransactionInput) {
-  insertTransaction(db as any, {
-    id: input.id,
-    userId: USER_ID,
-    type: "expense",
-    amount: input.amount,
-    categoryId: "shopping" as CategoryId,
-    description: input.description,
-    date: input.date,
-    accountId: input.accountId ?? ("fa-default-user-1" as FinancialAccountId),
-    accountAttributionState: "unresolved",
-    source: "email_capture",
-    createdAt: NOW,
-    updatedAt: NOW,
-    voidedAt: null,
+async function insertReviewTransaction(input: ReviewTransactionInput) {
+  const result = await recordAutomatedTransactionWithLocalLedger({
+    db: db as any,
+    transactionId: input.id,
+    now: NOW,
+    command: {
+      userId: USER_ID,
+      type: "expense",
+      amount: input.amount,
+      categoryId: "food" as CategoryId,
+      description: input.description,
+      occurredOn: input.date,
+      accountId: input.accountId ?? ("fa-default-user-1" as FinancialAccountId),
+      accountAttributionState: "unresolved",
+      counterpartyName: null,
+      source: "email_capture",
+    },
   });
+
+  expect(result.success).toBe(true);
 }
 
 function saveEvidence(id: string, input: SavedEvidenceInput) {
@@ -154,9 +158,9 @@ function saveEvidence(id: string, input: SavedEvidenceInput) {
 }
 
 describe("attribution review service", () => {
-  it("lists unresolved transactions with a suggested account and confirms the reviewed owner", () => {
+  it("lists unresolved transactions with a suggested account and confirms the reviewed owner", async () => {
     attributionAccounts.forEach(insertAccount);
-    attributionTransactions.forEach(insertReviewTransaction);
+    await Promise.all(attributionTransactions.map(insertReviewTransaction));
     attributionEvidence.forEach((row) => {
       saveEvidence(row.id, row);
     });
@@ -212,9 +216,9 @@ describe("attribution review service", () => {
     );
   });
 
-  it("returns failure without accepting the suggestion when the reviewed transaction disappears", () => {
+  it("returns failure without accepting the suggestion when the reviewed transaction disappears", async () => {
     attributionAccounts.forEach(insertAccount);
-    attributionTransactions.forEach(insertReviewTransaction);
+    await Promise.all(attributionTransactions.map(insertReviewTransaction));
     attributionEvidence.forEach((row) => {
       saveEvidence(row.id, row);
     });
@@ -244,13 +248,29 @@ describe("attribution review service", () => {
     );
   });
 
-  it("ignores unresolved transactions without a current account", () => {
-    insertReviewTransaction({
+  it("ignores unresolved transactions without a current account", async () => {
+    insertAccount({
+      id: "fa-missing" as FinancialAccountId,
+      name: "Account to remove",
+      kind: "checking",
+      isDefault: false,
+    });
+    await insertReviewTransaction({
       id: "tx-unsuggested" as TransactionId,
       amount: 50000 as CopAmount,
       description: "Unknown merchant",
       date: "2026-03-05" as IsoDate,
       accountId: "fa-missing" as FinancialAccountId,
+    });
+    upsertFinancialAccount(db as any, {
+      id: "fa-missing" as FinancialAccountId,
+      userId: USER_ID,
+      name: "Account to remove",
+      kind: "checking",
+      isDefault: false,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: NOW,
     });
 
     const service = createAttributionReviewService();
@@ -265,19 +285,35 @@ describe("attribution review service", () => {
     ).toEqual({ success: false, error: "reviewItemNotFound" });
   });
 
-  it("keeps orphaned unresolved transactions reviewable when a suggested account exists", () => {
+  it("keeps orphaned unresolved transactions reviewable when a suggested account exists", async () => {
+    insertAccount({
+      id: "fa-missing" as FinancialAccountId,
+      name: "Account to remove",
+      kind: "checking",
+      isDefault: false,
+    });
     insertAccount({
       id: "fa-davivienda" as FinancialAccountId,
       name: "Davivienda Visa",
       kind: "credit_card",
       isDefault: false,
     });
-    insertReviewTransaction({
+    await insertReviewTransaction({
       id: "tx-orphaned" as TransactionId,
       amount: 50000 as CopAmount,
       description: "Unknown merchant",
       date: "2026-03-05" as IsoDate,
       accountId: "fa-missing" as FinancialAccountId,
+    });
+    upsertFinancialAccount(db as any, {
+      id: "fa-missing" as FinancialAccountId,
+      userId: USER_ID,
+      name: "Account to remove",
+      kind: "checking",
+      isDefault: false,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: NOW,
     });
     saveEvidence("ce-orphaned", {
       transactionId: "tx-orphaned",
@@ -314,9 +350,9 @@ describe("attribution review service", () => {
     });
   });
 
-  it("returns review item lookups by transaction id", () => {
+  it("returns review item lookups by transaction id", async () => {
     attributionAccounts.forEach(insertAccount);
-    insertReviewTransaction({
+    await insertReviewTransaction({
       id: "tx-reviewed" as TransactionId,
       amount: 85000 as CopAmount,
       description: "Rappi Supermai",
