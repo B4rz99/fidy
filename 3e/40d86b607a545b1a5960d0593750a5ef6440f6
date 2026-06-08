@@ -1,0 +1,31 @@
+apps/mobile/features/settings/components/NotificationPreferencesScreen.tsx
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 51
+apps/mobile/shared/i18n/locales/es.ts
+  s_ac9411f3c63c72::t_664e3027e77a76 814
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 816,835-836
+apps/mobile/__tests__/settings/notification-preferences.test.ts
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 47,59,62,71
+apps/mobile/__tests__/notifications/local-push.test.ts
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 83,92-93,95,97
+apps/mobile/features/settings/store.ts
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 64
+apps/mobile/shared/i18n/locales/en.ts
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 804,822-823
+  s_ac9411f3c63c72::t_664e3027e77a76 802
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "3e40d86b607a545b1a5960d0593750a5ef6440f6",
+  "prompts": {},
+  "sessions": {
+    "s_ac9411f3c63c72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea5cf-0767-7f82-9f64-b6f9d73b41c2",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
