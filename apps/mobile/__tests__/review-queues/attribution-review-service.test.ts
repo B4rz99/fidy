@@ -244,7 +244,7 @@ describe("attribution review service", () => {
     );
   });
 
-  it("lists unresolved transactions without evidence as unsuggested review items", () => {
+  it("ignores unresolved transactions without a current account", () => {
     insertReviewTransaction({
       id: "tx-unsuggested" as TransactionId,
       amount: 50000 as CopAmount,
@@ -255,22 +255,14 @@ describe("attribution review service", () => {
 
     const service = createAttributionReviewService();
 
-    expect(service.listQueueItems({ db: db as any, userId: USER_ID })).toEqual([
-      expect.objectContaining({
-        transaction: expect.objectContaining({ id: "tx-unsuggested" }),
-        currentAccount: null,
-        suggestedAccount: null,
-        suggestion: null,
-        evidenceLabel: null,
-      }),
-    ]);
+    expect(service.listQueueItems({ db: db as any, userId: USER_ID })).toEqual([]);
     expect(
       service.confirmSuggestedOwner({
         db: db as any,
         userId: USER_ID,
         transactionId: "tx-unsuggested" as TransactionId,
       })
-    ).toEqual({ success: false, error: "suggestedOwnerUnavailable" });
+    ).toEqual({ success: false, error: "reviewItemNotFound" });
   });
 
   it("returns review item lookups by transaction id", () => {

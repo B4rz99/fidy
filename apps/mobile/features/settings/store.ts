@@ -82,10 +82,17 @@ const parseStoredNotificationPreferences = (
   }
 
   const raw: unknown = JSON.parse(value);
-  return {
-    ...DEFAULT_NOTIFICATION_PREFERENCES,
-    ...(typeof raw === "object" && raw !== null ? (raw as Partial<NotificationPreferences>) : {}),
-  };
+  if (
+    typeof raw !== "object" ||
+    raw === null ||
+    typeof (raw as Record<string, unknown>).budgetAlerts !== "boolean" ||
+    typeof (raw as Record<string, unknown>).goalMilestones !== "boolean" ||
+    typeof (raw as Record<string, unknown>).spendingAnomalies !== "boolean"
+  ) {
+    throw new Error("Invalid notification preferences");
+  }
+
+  return raw as NotificationPreferences;
 };
 
 const loadStoredSettings = async () => {

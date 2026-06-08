@@ -229,102 +229,102 @@ function seedSameSourceAliasAndLast4Evidence() {
   });
 }
 
-function seedLlmAccountHintEvidence() {
+function seedTypedLlmHintEvidence() {
   saveEvidenceRow("ce-llm-hint-1", {
-    evidenceType: "llm_account_hint",
-    scope: "email:bancolombia:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:bancolombia:card_product_hint",
     value: "tarjeta credito bancolombia",
     processedSourceEventId: "pse-llm-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-llm-hint-2", {
-    evidenceType: "llm_account_hint",
-    scope: "email:bancolombia:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:bancolombia:card_product_hint",
     value: "tarjeta credito bancolombia",
     processedSourceEventId: "pse-llm-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
 }
 
-function seedEquivalentLlmAccountHintEvidence() {
+function seedEquivalentTypedLlmHintEvidence() {
   saveEvidenceRow("ce-davibank-hint-1", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "davibank visa oro",
     processedSourceEventId: "pse-davibank-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-davibank-hint-2", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "davibank visa oro",
     processedSourceEventId: "pse-davibank-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-davibank-hint-3", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "tarjeta visa oro",
     processedSourceEventId: "pse-davibank-3" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:51:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-davibank-hint-4", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "tarjeta visa oro",
     processedSourceEventId: "pse-davibank-4" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:52:00.000Z" as IsoDateTime,
   });
 }
 
-function seedDistinctLlmAccountHintEvidence() {
+function seedDistinctTypedLlmHintEvidence() {
   saveEvidenceRow("ce-distinct-hint-1", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "tarjeta visa oro",
     processedSourceEventId: "pse-distinct-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-distinct-hint-2", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "tarjeta visa oro",
     processedSourceEventId: "pse-distinct-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-distinct-hint-3", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "mastercard black",
     processedSourceEventId: "pse-distinct-3" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:51:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-distinct-hint-4", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "mastercard black",
     processedSourceEventId: "pse-distinct-4" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:52:00.000Z" as IsoDateTime,
   });
 }
 
-function seedMerchantLikeLlmAccountHintEvidence() {
+function seedMerchantLikeTypedLlmHintEvidence() {
   saveEvidenceRow("ce-merchant-hint-1", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "rappi colombia",
     processedSourceEventId: "pse-merchant-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-merchant-hint-2", {
     sourceFamily: "davibank",
-    evidenceType: "llm_account_hint",
-    scope: "email:davibank:llm_account_hint",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
     value: "rappi colombia",
     processedSourceEventId: "pse-merchant-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
@@ -558,9 +558,9 @@ describe("account suggestion service", () => {
     ]);
   });
 
-  it("suppresses LLM account hints when the same source has card-specific evidence", () => {
+  it("suppresses typed LLM hints when the same source has card-specific evidence", () => {
     seedRepeatedScopedSuggestionEvidence();
-    seedLlmAccountHintEvidence();
+    seedTypedLlmHintEvidence();
     const service = createSuggestionService();
     const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID });
 
@@ -569,40 +569,40 @@ describe("account suggestion service", () => {
     ]);
   });
 
-  it("lists repeated LLM account hints as account suggestions", () => {
-    seedLlmAccountHintEvidence();
+  it("lists repeated typed LLM hints as account suggestions", () => {
+    seedTypedLlmHintEvidence();
     const service = createSuggestionService();
     const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID });
 
     expect(suggestions).toEqual([
       expect.objectContaining({
-        scope: "email:bancolombia:llm_account_hint",
+        scope: "email:bancolombia:card_product_hint",
         value: "tarjeta credito bancolombia",
         sourceFamily: "bancolombia",
-        evidenceType: "llm_account_hint",
+        evidenceType: "card_product_hint",
         occurrences: 2,
       }),
     ]);
   });
 
-  it("collapses equivalent same-source LLM account hint variants", () => {
-    seedEquivalentLlmAccountHintEvidence();
+  it("collapses equivalent same-source typed LLM hint variants", () => {
+    seedEquivalentTypedLlmHintEvidence();
     const service = createSuggestionService();
     const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID, limit: 2 });
 
     expect(suggestions).toEqual([
       expect.objectContaining({
-        scope: "email:davibank:llm_account_hint",
+        scope: "email:davibank:card_product_hint",
         value: "davibank visa oro",
         sourceFamily: "davibank",
-        evidenceType: "llm_account_hint",
+        evidenceType: "card_product_hint",
         occurrences: 4,
       }),
     ]);
   });
 
-  it("keeps distinct same-source LLM account hint products separate", () => {
-    seedDistinctLlmAccountHintEvidence();
+  it("keeps distinct same-source typed LLM hint products separate", () => {
+    seedDistinctTypedLlmHintEvidence();
     const service = createSuggestionService();
     const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID, limit: 3 });
 
@@ -610,13 +610,6 @@ describe("account suggestion service", () => {
       "mastercard black",
       "tarjeta visa oro",
     ]);
-  });
-
-  it("ignores merchant-like LLM account hints", () => {
-    seedMerchantLikeLlmAccountHintEvidence();
-    const service = createSuggestionService();
-
-    expect(service.listSuggestions({ db: db as any, userId: USER_ID })).toEqual([]);
   });
 
   it("lists repeated card product hints as uncertain account suggestions", () => {

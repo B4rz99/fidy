@@ -2,7 +2,6 @@ import type { SearchFilters } from "./types";
 
 type SearchRouteParams = {
   readonly categoryId?: string | readonly string[];
-  readonly category?: string | readonly string[];
 };
 
 function getFirstNonEmptyRouteParam(value: string | readonly string[] | undefined): string | null {
@@ -18,8 +17,7 @@ function getFirstNonEmptyRouteParam(value: string | readonly string[] | undefine
 }
 
 export function resolveSearchRouteFilters(params: SearchRouteParams): Partial<SearchFilters> {
-  const categoryId =
-    getFirstNonEmptyRouteParam(params.categoryId) ?? getFirstNonEmptyRouteParam(params.category);
+  const categoryId = getFirstNonEmptyRouteParam(params.categoryId);
 
   return categoryId ? { categoryIds: [categoryId] } : {};
 }

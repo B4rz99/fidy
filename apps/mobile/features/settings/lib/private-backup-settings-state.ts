@@ -106,16 +106,14 @@ const requireNumberProperty = (record: Record<string, unknown>, key: string) => 
   return value;
 };
 
-const parseStoredRemoteBackupMetadata = (value: unknown): RemoteBackupMetadata | null => {
-  if (!isRecord(value)) {
-    return null;
-  }
+const parseStoredRemoteBackupMetadata = (value: unknown): RemoteBackupMetadata | null =>
+  value === null ? null : toRemoteBackupMetadata(requireRecord(value, "latestBackup"));
 
-  try {
-    return toRemoteBackupMetadata(value);
-  } catch {
-    return null;
+const requireRecord = (value: unknown, key: string): Record<string, unknown> => {
+  if (!isRecord(value)) {
+    throw new Error(`${key} must be an object`);
   }
+  return value;
 };
 
 const toRemoteBackupMetadata = (value: Record<string, unknown>): RemoteBackupMetadata => ({
@@ -134,29 +132,34 @@ const parsePrivateBackupRecord = (value: string | null): Record<string, unknown>
     return null;
   }
 
-  try {
-    const raw: unknown = JSON.parse(value);
-    return isRecord(raw) ? raw : null;
-  } catch {
-    return null;
-  }
+  const raw: unknown = JSON.parse(value);
+  return requireRecord(raw, "privateBackup");
 };
 
-const parseStoredRecoveryKey = (value: unknown) => (typeof value === "string" ? value : null);
+const parseStoredRecoveryKey = (value: unknown) => {
+  if (value === null || typeof value === "string") {
+    return value;
+  }
+  throw new Error("generatedRecoveryKey must be a string or null");
+};
 
-const parseStoredRecoveryKeyConfirmed = (value: unknown) =>
-  typeof value === "boolean" ? value : false;
+const parseStoredRecoveryKeyConfirmed = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  throw new Error("isRecoveryKeyConfirmed must be a boolean");
+};
 
 const parseStoredFailedAt = (value: unknown) => {
-  if (typeof value !== "string") {
+  if (value === null) {
     return null;
   }
 
-  try {
-    return requireIsoDateTime(value);
-  } catch {
-    return null;
+  if (typeof value !== "string") {
+    throw new Error("lastUploadFailedAt must be a string or null");
   }
+
+  return requireIsoDateTime(value);
 };
 
 const toPrivateBackupSettingsState = (raw: Record<string, unknown>) =>

@@ -28,7 +28,6 @@ function getVisibleContributions(
 function useGoalDetailSelection() {
   const routeParams = useLocalSearchParams<{
     goalId?: string | string[];
-    id?: string | string[];
   }>();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;

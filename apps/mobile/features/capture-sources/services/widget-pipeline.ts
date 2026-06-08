@@ -15,7 +15,7 @@ import {
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import { assertCopAmount, assertTransactionId } from "@/shared/types/assertions";
+import { assertCopAmount, assertTransactionId, requireCategoryId } from "@/shared/types/assertions";
 import type { CategoryId, IsoDateTime, TransactionId, UserId } from "@/shared/types/branded";
 import { captureFingerprint, isCaptureProcessed } from "../lib/dedup";
 
@@ -52,11 +52,15 @@ const widgetCounterpartyName = (): string => "";
 type ProcessWidgetEntryResult = "saved" | "duplicate" | "in_flight" | "failed";
 
 function resolveWidgetCategoryId(category: string | undefined): CategoryId {
-  const fallbackCategoryId = "other";
-  if (!isValidCategoryId(fallbackCategoryId)) {
-    throw new Error("Missing fallback category");
+  if (category == null) {
+    return requireCategoryId("other");
   }
-  return category && isValidCategoryId(category) ? category : fallbackCategoryId;
+
+  if (category && isValidCategoryId(category)) {
+    return category;
+  }
+
+  throw new Error("Invalid widget category");
 }
 
 function persistFailedWidgetEvent(input: {
@@ -97,7 +101,6 @@ async function processWidgetEntry(input: {
   const amount = Math.round(item.amount);
   assertCopAmount(amount);
   const date = toIsoDate(new Date(item.createdAt));
-  const categoryId = resolveWidgetCategoryId(item.category);
   const type = item.type === "income" ? "income" : "expense";
   const description = userAuthoredWidgetDescription(item.description);
   const counterpartyName = widgetCounterpartyName();
@@ -108,6 +111,7 @@ async function processWidgetEntry(input: {
   inFlightFingerprints.add(fingerprint);
 
   try {
+    const categoryId = resolveWidgetCategoryId(item.category);
     const alreadyProcessed = await isCaptureProcessed({
       db,
       userId,

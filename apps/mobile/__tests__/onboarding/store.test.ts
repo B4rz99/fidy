@@ -80,18 +80,10 @@ describe("useOnboardingStore", () => {
     expect(useOnboardingStore.getState().step).toBe(ONBOARDING_STEP.complete);
   });
 
-  test("nextStep safely logs unexpected step values", () => {
+  test("nextStep rejects unexpected step values", () => {
     useOnboardingStore.setState({ step: 999 as never });
 
-    useOnboardingStore.getState().nextStep();
-
-    expect(useOnboardingStore.getState().step).toBe(ONBOARDING_STEP.complete);
-    expect(mockLogOnboardingEvent).toHaveBeenCalledWith("step_transition", {
-      from: "unknown_999",
-      to: "complete",
-      emailSkipped: false,
-      shouldReviewAccounts: false,
-    });
+    expect(() => useOnboardingStore.getState().nextStep()).toThrow("Invalid onboarding step: 999");
   });
 
   test("completeSync routes to account review when suggestions should be reviewed", () => {

@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from "react";
 import type { AccountCreationSuggestion } from "@/features/account-suggestions/public";
 import { createAccountSuggestionService } from "@/features/account-suggestions/public";
 import type { AnyDb } from "@/shared/db";
-import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";
 
 type UseAccountSuggestionsInput = {
@@ -26,22 +25,14 @@ export function useAccountSuggestions(input: UseAccountSuggestionsInput) {
       return;
     }
 
-    try {
-      setSuggestions(
-        service.listSuggestions({
-          db,
-          userId,
-          limit,
-          minimumOccurrences,
-        })
-      );
-    } catch (error) {
-      if (isMissingSqliteTableError(error)) {
-        setSuggestions([]);
-      } else {
-        throw error;
-      }
-    }
+    setSuggestions(
+      service.listSuggestions({
+        db,
+        userId,
+        limit,
+        minimumOccurrences,
+      })
+    );
 
     setHasLoadedSuggestions(true);
   }, [db, limit, minimumOccurrences, service, userId]);

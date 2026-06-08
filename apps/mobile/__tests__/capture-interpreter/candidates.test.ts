@@ -27,8 +27,7 @@ describe("Capture Interpreter candidates", () => {
         description: "Exito",
         date: "2026-04-24",
         confidence: 0.9,
-        fromAccountHint: "Tarjeta credito Bancolombia",
-        toAccountHint: null,
+        cardProductHint: "Tarjeta credito Bancolombia",
       })
     ).toEqual({
       kind: "accepted",
@@ -39,7 +38,7 @@ describe("Capture Interpreter candidates", () => {
         description: "Exito",
         date: "2026-04-24",
         confidence: 0.9,
-        fromAccountHint: "Tarjeta credito Bancolombia",
+        cardProductHint: "Tarjeta credito Bancolombia",
       },
     });
   });
@@ -74,8 +73,6 @@ describe("Capture Interpreter candidates", () => {
       description: "Transferencia entre cuentas",
       date: "2026-04-24",
       confidence: 0.8,
-      fromAccountHint: null,
-      toAccountHint: null,
     };
     const interpreted = interpretCaptureCandidate(payload);
 

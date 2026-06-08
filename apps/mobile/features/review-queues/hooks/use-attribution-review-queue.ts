@@ -5,7 +5,6 @@ import {
   createAttributionReviewService,
 } from "@/features/review-queues/lib/attribution-review-service";
 import type { AnyDb } from "@/shared/db";
-import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";
 
 type SuggestedAttributionReviewItem = AttributionReviewItem & {
@@ -34,15 +33,7 @@ export function useAttributionReviewQueue({ db, userId }: UseAttributionReviewQu
       return;
     }
 
-    try {
-      setItems(service.listQueueItems({ db, userId }).filter(hasSuggestedOwner));
-    } catch (error) {
-      if (isMissingSqliteTableError(error)) {
-        setItems([]);
-      } else {
-        throw error;
-      }
-    }
+    setItems(service.listQueueItems({ db, userId }).filter(hasSuggestedOwner));
 
     setHasLoadedQueue(true);
   }, [db, service, userId]);

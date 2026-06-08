@@ -55,9 +55,7 @@ export function AttributionReviewScreen() {
     return null;
   }
 
-  const CurrentIcon = reviewItem.currentAccount
-    ? getFinancialAccountKindIcon(reviewItem.currentAccount.kind)
-    : TriangleAlert;
+  const CurrentIcon = getFinancialAccountKindIcon(reviewItem.currentAccount.kind);
   const SuggestedIcon = getFinancialAccountKindIcon(reviewItem.suggestedAccount.kind);
 
   const handleConfirm = () => {
@@ -111,14 +109,10 @@ export function AttributionReviewScreen() {
 
         <DetailRow
           label={t("attributionReview.currentOwner")}
-          title={reviewItem.currentAccount?.name ?? t("common.unknown")}
-          subtitle={
-            reviewItem.currentAccount
-              ? t(
-                  `financialAccounts.kinds.${readFinancialAccountKind(reviewItem.currentAccount.kind)}`
-                )
-              : t("attributionReview.fallbackOwner")
-          }
+          title={reviewItem.currentAccount.name}
+          subtitle={t(
+            `financialAccounts.kinds.${readFinancialAccountKind(reviewItem.currentAccount.kind)}`
+          )}
           icon={<CurrentIcon size={18} color={secondary} />}
         />
 

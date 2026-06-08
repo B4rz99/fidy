@@ -5,7 +5,6 @@ import {
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
 import type { AnyDb } from "@/shared/db";
-import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";
 
 type FinancialMeaningReviewItem = Awaited<
@@ -31,17 +30,9 @@ export function useFinancialMeaningReviewQueue({
       return;
     }
 
-    try {
-      const nextItems = await getFinancialMeaningReviewItems(db, userId);
-      setItems(nextItems);
-      await loadNeedsReviewEmails(db, userId);
-    } catch (error) {
-      if (isMissingSqliteTableError(error)) {
-        setItems([]);
-      } else {
-        throw error;
-      }
-    }
+    const nextItems = await getFinancialMeaningReviewItems(db, userId);
+    setItems(nextItems);
+    await loadNeedsReviewEmails(db, userId);
 
     setHasLoadedQueue(true);
   }, [db, userId]);

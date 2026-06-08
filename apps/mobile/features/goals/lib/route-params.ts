@@ -1,6 +1,5 @@
 type GoalDetailRouteParams = {
   readonly goalId?: string | readonly string[];
-  readonly id?: string | readonly string[];
 };
 
 function getFirstNonEmptyRouteParam(value: string | readonly string[] | undefined): string | null {
@@ -16,5 +15,5 @@ function getFirstNonEmptyRouteParam(value: string | readonly string[] | undefine
 }
 
 export function resolveGoalDetailGoalId(params: GoalDetailRouteParams): string | null {
-  return getFirstNonEmptyRouteParam(params.goalId) ?? getFirstNonEmptyRouteParam(params.id);
+  return getFirstNonEmptyRouteParam(params.goalId);
 }

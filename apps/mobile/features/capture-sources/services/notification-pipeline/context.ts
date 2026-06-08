@@ -1,7 +1,7 @@
 import type { CaptureEvidenceSeed } from "@/features/capture-evidence/public";
 import {
   buildNotificationCaptureEvidence,
-  buildNotificationLlmAccountHintCaptureEvidence,
+  buildNotificationTypedLlmHintCaptureEvidence,
 } from "@/features/capture-evidence/public";
 import { stripPii } from "@/features/email-capture/parsing.public";
 import { isValidCategoryId } from "@/features/transactions/write.public";
@@ -18,8 +18,6 @@ import type {
   ParsedNotification,
   RawParsedNotification,
 } from "./types";
-
-const FALLBACK_CATEGORY_ID = "other";
 
 export function buildNotificationFingerprint(
   context: NotificationContext,
@@ -57,8 +55,6 @@ export async function parseNotificationWithLlm(
         categoryId: llm.categoryId,
         date: llm.date,
         confidence: llm.confidence,
-        fromAccountHint: llm.fromAccountHint,
-        toAccountHint: llm.toAccountHint,
         cardProductHint: llm.cardProductHint,
         accountTypeHint: llm.accountTypeHint,
         counterpartyHint: llm.counterpartyHint,
@@ -74,10 +70,8 @@ export function appendParsedNotificationEvidence(
     ...context,
     captureEvidence: [
       ...context.captureEvidence,
-      ...buildNotificationLlmAccountHintCaptureEvidence({
+      ...buildNotificationTypedLlmHintCaptureEvidence({
         notification: context.notification,
-        fromAccountHint: parsed.fromAccountHint,
-        toAccountHint: parsed.toAccountHint,
         cardProductHint: parsed.cardProductHint,
         accountTypeHint: parsed.accountTypeHint,
         counterpartyHint: parsed.counterpartyHint,
@@ -110,11 +104,7 @@ export function resolveCategoryId(rawCategoryId: string): CategoryId {
     return rawCategoryId;
   }
 
-  if (!isValidCategoryId(FALLBACK_CATEGORY_ID)) {
-    throw new Error("Missing fallback category");
-  }
-
-  return FALLBACK_CATEGORY_ID;
+  throw new Error("Invalid notification category");
 }
 
 export function selectAccountResolution(

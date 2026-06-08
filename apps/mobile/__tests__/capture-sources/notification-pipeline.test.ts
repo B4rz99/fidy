@@ -36,7 +36,7 @@ const mockBuildNotificationCaptureEvidence = vi.fn<(...args: any[]) => any>().mo
     value: "1234",
   },
 ]);
-const mockBuildNotificationLlmAccountHintCaptureEvidence = vi
+const mockBuildNotificationTypedLlmHintCaptureEvidence = vi
   .fn<(...args: any[]) => any>()
   .mockReturnValue([]);
 const mockSaveCaptureEvidenceRows = vi.fn<(...args: any[]) => any>();
@@ -127,8 +127,8 @@ vi.mock("@/features/account-suggestions", () => ({
 vi.mock("@/features/capture-evidence", () => ({
   buildNotificationCaptureEvidence: (...args: any[]) =>
     mockBuildNotificationCaptureEvidence(...args),
-  buildNotificationLlmAccountHintCaptureEvidence: (...args: any[]) =>
-    mockBuildNotificationLlmAccountHintCaptureEvidence(...args),
+  buildNotificationTypedLlmHintCaptureEvidence: (...args: any[]) =>
+    mockBuildNotificationTypedLlmHintCaptureEvidence(...args),
   materializeCaptureEvidenceRows,
   saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
@@ -167,7 +167,7 @@ function expectSavedNotificationEvidence(transactionId: string) {
   );
 }
 
-function mockNotificationLlmAccountHintParse() {
+function mockNotificationTypedLlmHintParse() {
   mockParseNotificationApi.mockResolvedValueOnce({
     type: "expense",
     amount: 35000,
@@ -179,7 +179,7 @@ function mockNotificationLlmAccountHintParse() {
     accountTypeHint: "Tarjeta credito",
     counterpartyHint: "Restaurante XYZ",
   });
-  mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValueOnce([
+  mockBuildNotificationTypedLlmHintCaptureEvidence.mockReturnValueOnce([
     {
       sourceFamily: "bancolombia",
       evidenceType: "card_product_hint",
@@ -189,11 +189,9 @@ function mockNotificationLlmAccountHintParse() {
   ]);
 }
 
-function expectNotificationLlmAccountHintEvidence() {
-  expect(mockBuildNotificationLlmAccountHintCaptureEvidence).toHaveBeenCalledWith({
+function expectNotificationTypedLlmHintEvidence() {
+  expect(mockBuildNotificationTypedLlmHintCaptureEvidence).toHaveBeenCalledWith({
     notification: expect.objectContaining({ packageName: "com.todo1.mobile.co.bancolombia" }),
-    fromAccountHint: undefined,
-    toAccountHint: undefined,
     cardProductHint: "Visa Oro",
     accountTypeHint: "Tarjeta credito",
     counterpartyHint: "Restaurante XYZ",
@@ -229,7 +227,7 @@ describe("processNotification", () => {
     mockCaptureFingerprint.mockReturnValue("test-fingerprint");
     mockStripPii.mockImplementation((t: string) => t);
     mockBuildNotificationCaptureEvidence.mockReturnValue([DEFAULT_NOTIFICATION_CAPTURE_EVIDENCE]);
-    mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValue([]);
+    mockBuildNotificationTypedLlmHintCaptureEvidence.mockReturnValue([]);
     mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockRecordAutomatedTransactionWithLocalLedger.mockImplementation(async (input: any) => {
       input.afterRecord?.(input.db, { id: input.transactionId });
@@ -243,7 +241,7 @@ describe("processNotification", () => {
   });
 
   it("saves transaction when LLM parses a notification with regex hints", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
 
@@ -256,7 +254,7 @@ describe("processNotification", () => {
   });
 
   it("falls through to LLM when local regex fails", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
 
     const result = await processNotification(
       mockDb,
@@ -265,7 +263,7 @@ describe("processNotification", () => {
     );
 
     expect(mockParseNotificationApi).toHaveBeenCalled();
-    expectNotificationLlmAccountHintEvidence();
+    expectNotificationTypedLlmHintEvidence();
     expect(result.saved).toBe(true);
     expectSavedLlmNotificationTransaction();
   });
@@ -292,7 +290,7 @@ describe("processNotification", () => {
         date: "2026-05-18",
       })
     );
-    expect(mockBuildNotificationLlmAccountHintCaptureEvidence).toHaveBeenCalledWith(
+    expect(mockBuildNotificationTypedLlmHintCaptureEvidence).toHaveBeenCalledWith(
       expect.objectContaining({
         cardProductHint: "tarjeta 1234",
         counterpartyHint: "EXITO COLOMBIA",
@@ -301,7 +299,7 @@ describe("processNotification", () => {
   });
 
   it("falls back to LLM and requests a regex template when known notification regex misses", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
 
     const result = await processNotification(
       mockDb,
@@ -324,7 +322,7 @@ describe("processNotification", () => {
   });
 
   it("uses generic regex matches as LLM hints instead of saving fallback categories", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
     mockStripPii.mockReturnValueOnce("Tu compra fue aprobada por [AMOUNT] en [MERCHANT].");
 
     const result = await processNotification(
@@ -371,7 +369,7 @@ describe("processNotification", () => {
   });
 
   it("records failed source event before throwing when Local Ledger rejects", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
     mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({
       success: false,
       error: "account-not-usable",
@@ -465,7 +463,7 @@ describe("processNotification", () => {
   });
 
   it("skips when fingerprint already processed", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
     mockIsCaptureProcessed.mockResolvedValueOnce(true);
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -479,7 +477,7 @@ describe("processNotification", () => {
   });
 
   it("skips when cross-source duplicate found", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
     mockFindDuplicateTransaction.mockResolvedValueOnce("existing-tx-1");
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -502,7 +500,7 @@ describe("processNotification", () => {
   });
 
   it("uses cached merchant rule for category", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
     mockLookupMerchantRule.mockResolvedValueOnce("transport");
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -515,7 +513,7 @@ describe("processNotification", () => {
   });
 
   it("marks the transaction as inferred when evidence matches a known financial account", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
     mockFindMatchingFinancialAccountId.mockReturnValueOnce("fa-card-1");
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -538,7 +536,7 @@ describe("processNotification", () => {
   });
 
   it("caches merchant rule when a high-confidence LLM parse provides the category", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
 
     await processNotification(
       mockDb,
@@ -556,7 +554,7 @@ describe("processNotification", () => {
   });
 
   it("resolves Google Wallet as google_pay source", async () => {
-    mockNotificationLlmAccountHintParse();
+    mockNotificationTypedLlmHintParse();
 
     const result = await processNotification(
       mockDb,

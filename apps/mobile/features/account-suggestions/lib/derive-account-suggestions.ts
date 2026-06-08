@@ -10,12 +10,7 @@ type RepeatedCaptureEvidence = {
 
 type SuggestionEvidenceType = Extract<
   CaptureEvidenceType,
-  | "alias_token"
-  | "card_hint"
-  | "last4"
-  | "llm_account_hint"
-  | "card_product_hint"
-  | "account_type_hint"
+  "alias_token" | "card_hint" | "last4" | "card_product_hint" | "account_type_hint"
 >;
 
 type SuggestionRow = RepeatedCaptureEvidence & { readonly evidenceType: SuggestionEvidenceType };
@@ -24,7 +19,6 @@ const SUGGESTION_EVIDENCE_TYPES = new Set<SuggestionEvidenceType>([
   "last4",
   "card_hint",
   "alias_token",
-  "llm_account_hint",
   "card_product_hint",
   "account_type_hint",
 ]);
@@ -33,7 +27,6 @@ const BASE_CONFIDENCE_BY_EVIDENCE_TYPE = new Map<SuggestionEvidenceType, number>
   ["last4", 100],
   ["card_product_hint", 85],
   ["card_hint", 80],
-  ["llm_account_hint", 70],
   ["account_type_hint", 50],
   ["alias_token", 60],
 ]);
@@ -46,26 +39,6 @@ const GENERIC_LLM_HINT_TERMS = new Set([
   "credit",
   "cuenta",
   "tarjeta",
-]);
-
-const ACCOUNT_LIKE_LLM_HINT_TERMS = new Set([
-  "account",
-  "ahorros",
-  "amex",
-  "black",
-  "card",
-  "checking",
-  "corriente",
-  "credito",
-  "credit",
-  "cuenta",
-  "debito",
-  "mastercard",
-  "oro",
-  "platinum",
-  "savings",
-  "tarjeta",
-  "visa",
 ]);
 
 export type AccountCreationSuggestion = {
@@ -99,7 +72,7 @@ function normalizeLlmHintToken(value: string) {
 }
 
 function getHintCanonicalValue(row: SuggestionRow) {
-  if (row.evidenceType !== "llm_account_hint" && row.evidenceType !== "card_product_hint") {
+  if (row.evidenceType !== "card_product_hint") {
     return row.value;
   }
 
@@ -114,18 +87,8 @@ function getHintCanonicalValue(row: SuggestionRow) {
   return tokens.length > 0 ? tokens.join(" ") : normalizeLlmHintToken(row.value);
 }
 
-function getNormalizedLlmHintTokens(value: string) {
-  return value
-    .split(/[^\p{L}\p{N}]+/u)
-    .map(normalizeLlmHintToken)
-    .filter((token) => token.length > 0);
-}
-
 function isAccountLikeSuggestionRow(row: SuggestionRow) {
-  return (
-    row.evidenceType !== "llm_account_hint" ||
-    getNormalizedLlmHintTokens(row.value).some((token) => ACCOUNT_LIKE_LLM_HINT_TERMS.has(token))
-  );
+  return true;
 }
 
 function mergeEquivalentSuggestionRows(rows: readonly SuggestionRow[]): readonly SuggestionRow[] {
@@ -158,7 +121,6 @@ function hasStrongerSameSourceEvidence(
 ) {
   return (
     (row.evidenceType === "alias_token" ||
-      row.evidenceType === "llm_account_hint" ||
       row.evidenceType === "account_type_hint" ||
       row.evidenceType === "card_product_hint") &&
     rows.some(

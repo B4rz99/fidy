@@ -2,7 +2,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
 import { transfers } from "@/shared/db/schema";
 
-export type TransferRow = typeof transfers.$inferInsert;
+export type TransferRow = typeof transfers.$inferSelect;
 type GetTransfersPageInput = {
   readonly db: AnyDb;
   readonly userId: TransferRow["userId"];

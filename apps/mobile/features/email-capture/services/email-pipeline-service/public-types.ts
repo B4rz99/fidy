@@ -96,7 +96,7 @@ export type CreateEmailPipelineServiceDeps = {
     db: AnyDb,
     userId: UserId
   ) => Promise<readonly ProcessedSourceEventRow[]>;
-  readonly resolveRetryEmailBody?: (
+  readonly resolveRetryEmailBody: (
     db: AnyDb,
     userId: UserId,
     sourceEvent: ProcessedSourceEventRow
@@ -127,13 +127,10 @@ export type CreateEmailPipelineServiceDeps = {
     readonly id: ProcessedSourceEventId;
     readonly status: string;
     readonly transactionId: TransactionId | null;
-    readonly rawBody?: string | null;
   }) => Promise<void>;
   readonly buildEmailCaptureEvidence: (input: {
     readonly from: string;
     readonly body?: string;
-    readonly fromAccountHint?: string;
-    readonly toAccountHint?: string;
     readonly cardProductHint?: string;
     readonly accountTypeHint?: string;
     readonly counterpartyHint?: string;

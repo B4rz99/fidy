@@ -89,8 +89,6 @@ const buildEvidenceSeeds = (
   buildEmailCaptureEvidence({
     from: context.email.from ?? "",
     body: context.email.body ?? context.email.rawBody ?? undefined,
-    fromAccountHint: context.parsed.fromAccountHint,
-    toAccountHint: context.parsed.toAccountHint,
     cardProductHint: context.parsed.cardProductHint,
     accountTypeHint: context.parsed.accountTypeHint,
     counterpartyHint: context.parsed.counterpartyHint,

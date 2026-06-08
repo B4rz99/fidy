@@ -21,9 +21,11 @@ type OnboardingActions = {
 };
 
 function getStepName(step: OnboardingStep): string {
-  return (
-    Object.entries(ONBOARDING_STEP).find(([, value]) => value === step)?.[0] ?? `unknown_${step}`
-  );
+  const entry = Object.entries(ONBOARDING_STEP).find(([, value]) => value === step);
+  if (!entry) {
+    throw new Error(`Invalid onboarding step: ${step}`);
+  }
+  return entry[0];
 }
 
 export const useOnboardingStore = create<OnboardingState & OnboardingActions>((set) => ({

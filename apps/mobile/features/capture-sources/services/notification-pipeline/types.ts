@@ -26,8 +26,6 @@ export type RawParsedNotification = {
   categoryId: string;
   date: string;
   confidence: number;
-  fromAccountHint?: string;
-  toAccountHint?: string;
   cardProductHint?: string;
   accountTypeHint?: string;
   counterpartyHint?: string;

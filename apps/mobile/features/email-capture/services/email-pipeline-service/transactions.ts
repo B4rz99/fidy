@@ -42,8 +42,6 @@ function buildTransactionCaptureEvidenceRows(
     buildEmailCaptureEvidence({
       from: context.email.from,
       body: context.email.body,
-      fromAccountHint: context.parsed.fromAccountHint,
-      toAccountHint: context.parsed.toAccountHint,
       cardProductHint: context.parsed.cardProductHint,
       accountTypeHint: context.parsed.accountTypeHint,
       counterpartyHint: context.parsed.counterpartyHint,

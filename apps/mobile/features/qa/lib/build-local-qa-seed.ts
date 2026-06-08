@@ -230,6 +230,7 @@ function buildTransfers(
       createdAt: toIsoDateTime(new Date("2026-04-19T15:00:00.000Z")),
       updatedAt: toIsoDateTime(new Date("2026-04-19T15:00:00.000Z")),
       voidedAt: null,
+      source: "manual",
     },
   ];
 }
