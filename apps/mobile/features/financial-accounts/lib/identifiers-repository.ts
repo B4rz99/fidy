@@ -3,10 +3,7 @@ import { type AnyDb, financialAccountIdentifiers } from "@/shared/db";
 
 export type FinancialAccountIdentifierRow = typeof financialAccountIdentifiers.$inferInsert;
 
-export function getFinancialAccountIdentifierById(
-  db: AnyDb,
-  id: FinancialAccountIdentifierRow["id"]
-) {
+function getFinancialAccountIdentifierById(db: AnyDb, id: FinancialAccountIdentifierRow["id"]) {
   const rows = db
     .select()
     .from(financialAccountIdentifiers)

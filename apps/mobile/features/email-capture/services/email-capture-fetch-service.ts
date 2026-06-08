@@ -103,17 +103,6 @@ const createEmptyFetchResult = (
 const createFetchLookbackBoundary = (): string =>
   new Date(Date.now() - FETCH_LOOKBACK_WINDOW_MS).toISOString();
 
-export const summarizeFetchedEmailDiagnostics = (
-  fetchResults: readonly EmailAccountFetchResult[]
-) => ({
-  totalEmails: fetchResults.reduce((total, result) => total + result.rawEmails.length, 0),
-  accounts: fetchResults.map((result) => ({
-    provider: result.account.provider,
-    fetchOk: result.fetchOk,
-    emailCount: result.rawEmails.length,
-  })),
-});
-
 const createFetchSummary = (
   accounts: readonly EmailAccountRow[],
   fetchResults: readonly EmailAccountFetchResult[]

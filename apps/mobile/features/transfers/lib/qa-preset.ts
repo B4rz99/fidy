@@ -4,20 +4,12 @@ import type { TransferSide } from "./build-transfer";
 
 export type TransferQaPreset = "transfer-conflict";
 
-const TRANSFER_QA_PRESETS = ["transfer-conflict"] as const;
-
 type TransferQaDraft = {
   readonly digits: string;
   readonly fromSide: TransferSide;
   readonly toSide: TransferSide;
   readonly lastEditedSide: "from" | "to";
 };
-
-export function isTransferQaPreset(
-  value: string | string[] | null | undefined
-): value is TransferQaPreset {
-  return typeof value === "string" && TRANSFER_QA_PRESETS.includes(value as TransferQaPreset);
-}
 
 type TransferQaAccount = {
   readonly id: FinancialAccountRow["id"] | string;

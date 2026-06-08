@@ -26,8 +26,6 @@ function getStepName(step: OnboardingStep): string {
   );
 }
 
-export const TOTAL_STEPS = ONBOARDING_STEP.complete;
-
 export const useOnboardingStore = create<OnboardingState & OnboardingActions>((set) => ({
   step: ONBOARDING_STEP.welcome,
   isCompleting: false,

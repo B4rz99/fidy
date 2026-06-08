@@ -1,11 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  requireDetectedSmsEventId,
-  requireIsoDateTime,
-  requireTransactionId,
-  requireUserId,
-} from "@/shared/types/assertions";
+import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 import type { DetectedSmsEventId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 vi.mock("drizzle-orm", () => ({
@@ -72,8 +67,6 @@ const mockDb = {
   update: mockUpdate,
 } as any;
 const USER_ID = requireUserId("user-1");
-const DETECTED_SMS_EVENT_ID = requireDetectedSmsEventId("sms-1");
-const TRANSACTION_ID = requireTransactionId("tx-123");
 const NOW = requireIsoDateTime("2026-03-07T10:00:00Z");
 
 describe("capture-sources repository", () => {
@@ -117,22 +110,6 @@ describe("capture-sources repository", () => {
   });
 
   // -- getEnabledPackages --
-
-  it("getNotificationSources returns rows for the requested user", async () => {
-    const rows = [
-      { id: "ns-1", userId: "user-1", packageName: "com.bank.app", isEnabled: true },
-      { id: "ns-2", userId: "user-1", packageName: "com.wallet.app", isEnabled: false },
-    ];
-    mockWhere.mockResolvedValueOnce(rows);
-
-    const { getNotificationSources } = await import("@/features/capture-sources/lib/repository");
-    const result = await getNotificationSources(mockDb, USER_ID);
-
-    expect(mockSelect).toHaveBeenCalled();
-    expect(mockFrom).toHaveBeenCalled();
-    expect(mockWhere).toHaveBeenCalledWith({ eq: ["notificationSources.userId", "user-1"] });
-    expect(result).toEqual(rows);
-  });
 
   it("getEnabledPackages returns array of package names", async () => {
     mockWhere.mockResolvedValueOnce([
@@ -218,32 +195,5 @@ describe("capture-sources repository", () => {
     const result = await getTodaySmsEventCount(mockDb, USER_ID, new Date("2026-03-07T10:00:00Z"));
 
     expect(result).toBe(0);
-  });
-
-  // -- dismissSmsEvent --
-
-  it("dismissSmsEvent calls db.update with correct where clause", async () => {
-    const { dismissSmsEvent } = await import("@/features/capture-sources/lib/repository");
-
-    await dismissSmsEvent(mockDb, DETECTED_SMS_EVENT_ID);
-
-    expect(mockUpdate).toHaveBeenCalled();
-    expect(mockSet).toHaveBeenCalledWith({ dismissed: true });
-    expect(mockUpdateWhere).toHaveBeenCalled();
-  });
-
-  // -- linkSmsEventToTransaction --
-
-  it("linkSmsEventToTransaction updates linkedTransactionId", async () => {
-    const { linkSmsEventToTransaction } = await import("@/features/capture-sources/lib/repository");
-
-    await linkSmsEventToTransaction(mockDb, DETECTED_SMS_EVENT_ID, TRANSACTION_ID);
-
-    expect(mockUpdate).toHaveBeenCalled();
-    expect(mockSet).toHaveBeenCalledWith({
-      linkedTransactionId: "tx-123",
-      dismissed: true,
-    });
-    expect(mockUpdateWhere).toHaveBeenCalled();
   });
 });

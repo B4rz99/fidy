@@ -1,6 +1,6 @@
 import type { BootstrapTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
-import { refreshCategories } from "./public";
+import { refreshCategories } from "./store";
 
 export const categoriesBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "categories",

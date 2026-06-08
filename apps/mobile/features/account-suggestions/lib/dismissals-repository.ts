@@ -91,31 +91,6 @@ function getActiveDuplicateDismissal(db: AnyDb, row: AccountSuggestionDismissalR
   return activeDuplicate?.id !== row.id ? activeDuplicate : null;
 }
 
-function shouldSkipDismissalPersist(
-  existingById: AccountSuggestionDismissalRow | null,
-  duplicate: AccountSuggestionDismissalRow | null,
-  row: AccountSuggestionDismissalRow
-) {
-  return (
-    (existingById != null && existingById.updatedAt >= row.updatedAt) ||
-    (duplicate != null && duplicate.updatedAt >= row.updatedAt)
-  );
-}
-
-function upsertDismissalInTransaction(db: AnyDb, row: AccountSuggestionDismissalRow) {
-  const existingById = getAccountSuggestionDismissalById(db, row.id);
-  const duplicate = getActiveDuplicateDismissal(db, row);
-  if (shouldSkipDismissalPersist(existingById, duplicate, row)) {
-    return;
-  }
-
-  if (duplicate) {
-    deleteDismissalDuplicate(db, duplicate.id);
-  }
-
-  persistAccountSuggestionDismissal(db, row);
-}
-
 function saveDismissalInTransaction(db: AnyDb, row: AccountSuggestionDismissalRow) {
   const existingById = getAccountSuggestionDismissalById(db, row.id);
   const duplicate = getActiveDuplicateDismissal(db, row);
@@ -132,10 +107,6 @@ function saveDismissalInTransaction(db: AnyDb, row: AccountSuggestionDismissalRo
         }
       : row;
   persistAccountSuggestionDismissal(db, persistedRow);
-}
-
-export function upsertAccountSuggestionDismissal(db: AnyDb, row: AccountSuggestionDismissalRow) {
-  db.transaction((tx) => upsertDismissalInTransaction(tx, row));
 }
 
 export function saveAccountSuggestionDismissal(db: AnyDb, row: AccountSuggestionDismissalRow) {

@@ -3,12 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import type { EncryptedLocalLedgerBackupSnapshot } from "@/features/backup/public";
-import {
-  deleteEncryptedRemoteBackup,
-  downloadEncryptedRemoteBackup,
-  listEncryptedRemoteBackups,
-  uploadEncryptedRemoteBackup,
-} from "@/features/backup/public";
+import { uploadEncryptedRemoteBackup } from "@/features/backup/public";
 import { requireBackupId, requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 
 const USER_ID = requireUserId("00000000-0000-4000-8000-000000000001");
@@ -70,89 +65,6 @@ describe("remote encrypted backup storage", () => {
     expect(supabase.storageRemove).not.toHaveBeenCalled();
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.storageFrom).not.toHaveBeenCalled();
-  });
-
-  it("lists only encrypted backup metadata for the current user", async () => {
-    const supabase = createRemoteBackupSupabase({ currentBackup: expectedRemoteMetadata() });
-
-    await expect(listEncryptedRemoteBackups(supabase.client, USER_ID)).resolves.toEqual([
-      expectedRemoteMetadata(),
-    ]);
-    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
-      body: { action: "current" },
-      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
-    });
-    expect(supabase.storageUploadToSignedUrl).not.toHaveBeenCalled();
-  });
-
-  it("downloads an encrypted backup blob through user-scoped metadata", async () => {
-    const supabase = createRemoteBackupSupabase({
-      currentBackup: expectedRemoteMetadata(),
-      storageBody: JSON.stringify(ENCRYPTED_BACKUP),
-    });
-
-    await expect(
-      downloadEncryptedRemoteBackup(supabase.client, {
-        userId: USER_ID,
-        backupId: BACKUP_ID,
-      })
-    ).resolves.toEqual(ENCRYPTED_BACKUP);
-    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
-      body: { action: "prepareDownload" },
-      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
-    });
-    expect(supabase.fetch).toHaveBeenCalledWith("https://storage.example/download");
-    expectRemotePayloadsToExclude(FORBIDDEN_REMOTE_VALUES, supabase.remotePayloads());
-  });
-
-  it("rejects a downloaded blob that does not match its metadata", async () => {
-    const supabase = createRemoteBackupSupabase({
-      currentBackup: expectedRemoteMetadata(),
-      storageBody: JSON.stringify({ ...ENCRYPTED_BACKUP, ciphertext: "c3RhbGU=" }),
-    });
-
-    await expect(
-      downloadEncryptedRemoteBackup(supabase.client, {
-        userId: USER_ID,
-        backupId: BACKUP_ID,
-      })
-    ).rejects.toThrow("Downloaded encrypted backup does not match metadata");
-  });
-
-  it("deletes the encrypted backup blob and user-scoped metadata row", async () => {
-    const supabase = createRemoteBackupSupabase({ currentBackup: expectedRemoteMetadata() });
-
-    await expect(
-      deleteEncryptedRemoteBackup(supabase.client, {
-        userId: USER_ID,
-        backupId: BACKUP_ID,
-      })
-    ).resolves.toBeUndefined();
-    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
-      body: { action: "current" },
-      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
-    });
-    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
-      body: { action: "deleteCurrent" },
-      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
-    });
-    expect(supabase.from).not.toHaveBeenCalled();
-  });
-
-  it("keeps direct storage untouched when API deletion fails", async () => {
-    const supabase = createRemoteBackupSupabase({
-      currentBackup: expectedRemoteMetadata(),
-      apiErrors: { deleteCurrent: "delete_failed" },
-    });
-
-    await expect(
-      deleteEncryptedRemoteBackup(supabase.client, {
-        userId: USER_ID,
-        backupId: BACKUP_ID,
-      })
-    ).rejects.toThrow("Unable to call private backup API: delete_failed");
-    expect(supabase.storageRemove).not.toHaveBeenCalled();
-    expect(supabase.from).not.toHaveBeenCalled();
   });
 });
 

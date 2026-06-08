@@ -691,10 +691,6 @@ describe("shared UI kit", () => {
   });
 
   it("keeps inline text and icon actions on shared action primitives", () => {
-    const upcomingBillsSource = readFileSync(
-      resolve(__dirname, "../../features/budget/components/UpcomingBillsSection.tsx"),
-      "utf-8"
-    );
     const notificationsSource = readFileSync(
       resolve(__dirname, "../../features/notifications/components/NotificationsScreen.tsx"),
       "utf-8"
@@ -704,10 +700,8 @@ describe("shared UI kit", () => {
       "utf-8"
     );
 
-    expectSharedComponentImport(upcomingBillsSource, "TextActionButton");
     expectSharedComponentImport(notificationsSource, "TextActionButton");
     expectSharedComponentImport(goalsListSource, "IconActionButton");
-    expect(upcomingBillsSource).toContain("<TextActionButton");
     expect(notificationsSource).toContain("<TextActionButton");
     expect(goalsListSource).toContain("<IconActionButton");
   });
@@ -993,7 +987,6 @@ describe("shared UI kit", () => {
 
   it("keeps remaining simple empty states on the shared EmptyState primitive", () => {
     const files = [
-      "../../features/budget/components/UpcomingBillsSection.tsx",
       "../../features/onboarding/components/BudgetSetupStep.tsx",
       "../../features/goals/components/goal-detail/GoalDetailContributionsTab.tsx",
     ];

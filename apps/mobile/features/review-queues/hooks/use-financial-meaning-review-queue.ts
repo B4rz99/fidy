@@ -8,7 +8,7 @@ import type { AnyDb } from "@/shared/db";
 import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";
 
-export type FinancialMeaningReviewItem = Awaited<
+type FinancialMeaningReviewItem = Awaited<
   ReturnType<typeof getFinancialMeaningReviewItems>
 >[number];
 

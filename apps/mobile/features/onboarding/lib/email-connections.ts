@@ -23,10 +23,6 @@ export function getEmailConnectionChecklist(
   }));
 }
 
-export function shouldAdvanceAfterEmailConnection(_accounts: readonly EmailConnectionAccount[]) {
-  return false;
-}
-
 export function hasConnectedEmailAccount(accounts: readonly EmailConnectionAccount[]) {
   return accounts.some((account) => SUPPORTED_EMAIL_PROVIDERS.has(account.provider));
 }

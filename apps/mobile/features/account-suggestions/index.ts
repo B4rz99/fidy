@@ -9,7 +9,6 @@ export {
   getAccountSuggestionDismissalsForUser,
   getActiveAccountSuggestionDismissal,
   saveAccountSuggestionDismissal,
-  upsertAccountSuggestionDismissal,
 } from "./lib/dismissals-repository";
 export {
   findMatchingFinancialAccountId,

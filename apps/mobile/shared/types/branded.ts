@@ -26,8 +26,6 @@ export type DetectedSmsEventId = Brand<string, "DetectedSmsEventId">;
 export type UserCategoryId = Brand<string, "UserCategoryId">;
 export type NotificationId = Brand<string, "NotificationId">;
 export type BackupId = Brand<string, "BackupId">;
-// Server-generated (Supabase gen_random_uuid()) — no client-side generator needed
-export type PushDeviceId = Brand<string, "PushDeviceId">;
 
 // Temporal
 export type Month = Brand<string, "Month">; // "YYYY-MM"

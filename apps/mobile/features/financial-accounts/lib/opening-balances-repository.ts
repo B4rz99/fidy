@@ -3,7 +3,7 @@ import { type AnyDb, openingBalances } from "@/shared/db";
 
 export type OpeningBalanceRow = typeof openingBalances.$inferInsert;
 
-export function getOpeningBalanceById(db: AnyDb, id: OpeningBalanceRow["id"]) {
+function getOpeningBalanceById(db: AnyDb, id: OpeningBalanceRow["id"]) {
   const rows = db.select().from(openingBalances).where(eq(openingBalances.id, id)).all();
   return rows[0] ?? null;
 }
@@ -54,31 +54,6 @@ function getActiveOpeningBalanceDuplicate(db: AnyDb, row: OpeningBalanceRow) {
   return activeDuplicate?.id !== row.id ? activeDuplicate : null;
 }
 
-function shouldSkipOpeningBalancePersist(
-  existingById: OpeningBalanceRow | null,
-  duplicate: OpeningBalanceRow | null,
-  row: OpeningBalanceRow
-) {
-  return (
-    (existingById != null && existingById.updatedAt >= row.updatedAt) ||
-    (duplicate != null && duplicate.updatedAt >= row.updatedAt)
-  );
-}
-
-function upsertOpeningBalanceInTransaction(db: AnyDb, row: OpeningBalanceRow) {
-  const existingById = getOpeningBalanceById(db, row.id);
-  const duplicate = getActiveOpeningBalanceDuplicate(db, row);
-  if (shouldSkipOpeningBalancePersist(existingById, duplicate, row)) {
-    return;
-  }
-
-  if (duplicate) {
-    deleteOpeningBalanceDuplicate(db, duplicate.id);
-  }
-
-  persistOpeningBalance(db, row);
-}
-
 function saveOpeningBalanceInTransaction(db: AnyDb, row: OpeningBalanceRow) {
   const existingById = getOpeningBalanceById(db, row.id);
   const duplicate = getActiveOpeningBalanceDuplicate(db, row);
@@ -96,10 +71,6 @@ function saveOpeningBalanceInTransaction(db: AnyDb, row: OpeningBalanceRow) {
       : row;
 
   persistOpeningBalance(db, persistedRow);
-}
-
-export function upsertOpeningBalance(db: AnyDb, row: OpeningBalanceRow) {
-  db.transaction((tx) => upsertOpeningBalanceInTransaction(tx, row));
 }
 
 export function saveOpeningBalance(db: AnyDb, row: OpeningBalanceRow) {

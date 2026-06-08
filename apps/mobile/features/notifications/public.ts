@@ -15,12 +15,7 @@ export {
   shouldShowNotificationPrePermissionPrompt,
 } from "./services/pre-permission";
 
-export {
-  deletePushToken,
-  PROJECT_ID,
-  registerKnownPushToken,
-  registerPushToken,
-} from "./services/push-token";
+export { deletePushToken, PROJECT_ID, registerPushToken } from "./services/push-token";
 export {
   clearAllNotifications,
   initializeNotificationStore,

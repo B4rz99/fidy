@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  captureOnboardingEvent,
-  logOnboardingEvent,
-  trackOnboardingEvent,
-} from "@/features/onboarding/lib/telemetry";
+import { logOnboardingEvent, trackOnboardingEvent } from "@/features/onboarding/lib/telemetry";
 
 const { mockCapturePipelineEvent } = vi.hoisted(() => ({
   mockCapturePipelineEvent: vi.fn<(...args: any[]) => any>(),
@@ -22,16 +18,6 @@ describe("onboarding telemetry", () => {
     logOnboardingEvent("started", { step: 1 });
 
     expect(mockCapturePipelineEvent).not.toHaveBeenCalled();
-  });
-
-  it("captures onboarding events with source and event fields", () => {
-    captureOnboardingEvent("completed", { skipped: false });
-
-    expect(mockCapturePipelineEvent).toHaveBeenCalledWith({
-      skipped: false,
-      source: "onboarding",
-      event: "completed",
-    });
   });
 
   it("tracks onboarding events through telemetry capture", () => {

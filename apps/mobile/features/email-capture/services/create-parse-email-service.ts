@@ -114,7 +114,7 @@ function validateParsedTransactionEffect(
   data: unknown,
   validCategoryIds: readonly string[]
 ) {
-  const interpreted = interpretCaptureCandidate(data, { validCategoryIds });
+  const interpreted = interpretCaptureCandidate(data);
   if (interpreted.kind === "invalid") {
     return Effect.zipRight(
       captureWarningEffect(`${warningPrefix}_validation_failed`, {

@@ -190,42 +190,6 @@ describe("transaction mutation service", () => {
     });
   });
 
-  it("updates transactions and resets the form on success", async () => {
-    const service = createService();
-
-    const result = await service.update("txn-9" as TransactionId, input);
-
-    expect(result).toMatchObject({
-      success: true,
-      transaction: expect.objectContaining({ id: "txn-9" }),
-    });
-    expect(amendManualTransactionMock).toHaveBeenCalledWith({
-      userId: "user-1",
-      transactionId: "txn-9",
-      input,
-      now,
-    });
-    expect(trackEditedMock).toHaveBeenCalledWith({ category: "food" });
-    expect(resetFormMock).toHaveBeenCalledOnce();
-    expect(refreshMock).toHaveBeenCalledOnce();
-  });
-
-  it("returns a failed update result when the amend writer rejects", async () => {
-    amendManualTransactionMock.mockResolvedValueOnce({
-      success: false,
-      error: "categoryNotUsable",
-    });
-    const service = createService();
-
-    await expect(service.update("txn-9" as TransactionId, input)).resolves.toEqual({
-      success: false,
-      error: "categoryNotUsable",
-    });
-    expect(trackEditedMock).not.toHaveBeenCalled();
-    expect(resetFormMock).not.toHaveBeenCalled();
-    expect(refreshMock).not.toHaveBeenCalled();
-  });
-
   it("updates transactions directly without resetting the form", async () => {
     const service = createService();
 
@@ -263,7 +227,7 @@ describe("transaction mutation service", () => {
     });
     const service = createService();
 
-    await expect(service.update("txn-9" as TransactionId, input)).resolves.toEqual({
+    await expect(service.updateDirect("txn-9" as TransactionId, input)).resolves.toEqual({
       success: false,
       error: "update failed",
     });
@@ -273,25 +237,14 @@ describe("transaction mutation service", () => {
     expect(refreshMock).not.toHaveBeenCalled();
   });
 
-  it.each([
-    [
-      "update",
-      (service: ReturnType<typeof createService>) =>
-        service.update("txn-9" as TransactionId, { ...input, digits: "" }),
-    ],
-    [
-      "updateDirect",
-      (service: ReturnType<typeof createService>) =>
-        service.updateDirect("txn-9" as TransactionId, { ...input, digits: "" }),
-    ],
-  ])("returns validation failures from %s without side effects", async (_method, runMutation) => {
+  it("returns validation failures from updateDirect without side effects", async () => {
     amendManualTransactionMock.mockResolvedValueOnce({
       success: false,
       error: "amountNotPositive",
     });
     const service = createService();
 
-    const result = await runMutation(service);
+    const result = await service.updateDirect("txn-9" as TransactionId, { ...input, digits: "" });
 
     expect(result.success).toBe(false);
     if (result.success) return;

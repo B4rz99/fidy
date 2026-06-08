@@ -5,10 +5,7 @@ import {
   validateBackupSnapshot,
 } from "@/infrastructure/local-ledger/public";
 import type { EncryptedLocalLedgerBackupSnapshot } from "./local-ledger-encryption";
-import {
-  encryptLocalLedgerBackupSnapshot,
-  rotateLocalLedgerBackupRecoveryKey,
-} from "./local-ledger-encryption";
+import { encryptLocalLedgerBackupSnapshot } from "./local-ledger-encryption";
 import type { RemoteBackupMetadata, UploadEncryptedRemoteBackupInput } from "./remote-storage";
 import { uploadEncryptedRemoteBackup } from "./remote-storage";
 
@@ -43,32 +40,6 @@ export type PrivateBackupHealth =
       readonly latestBackup: RemoteBackupMetadata | null;
       readonly failedAt: string;
     };
-
-type RotateBackupKey = (
-  encrypted: EncryptedLocalLedgerBackupSnapshot,
-  options: {
-    readonly currentRecoveryKey: string;
-    readonly newRecoveryKey: string;
-    readonly confirmedNewRecoveryKey: string;
-  }
-) => Promise<EncryptedLocalLedgerBackupSnapshot>;
-
-export type RotatePrivateBackupRecoveryKeySafelyInput = {
-  readonly currentBackup: EncryptedLocalLedgerBackupSnapshot;
-  readonly currentMetadata: RemoteBackupMetadata;
-  readonly currentRecoveryKey: string;
-  readonly newRecoveryKey: string;
-  readonly confirmedNewRecoveryKey: string;
-  readonly rotate?: RotateBackupKey;
-  readonly uploadReplacement: (
-    rotatedBackup: EncryptedLocalLedgerBackupSnapshot
-  ) => Promise<RemoteBackupMetadata>;
-};
-
-export type RotatePrivateBackupRecoveryKeySafelyResult = {
-  readonly encryptedBackup: EncryptedLocalLedgerBackupSnapshot;
-  readonly metadata: RemoteBackupMetadata;
-};
 
 type ExportBackupSnapshot = (
   db: Parameters<typeof exportLocalLedgerBackupSnapshot>[0],
@@ -190,20 +161,3 @@ const createRemoteBackupMetadataInput = (
   appVersion: input.appVersion,
   deviceLabel: input.deviceLabel,
 });
-
-export async function rotatePrivateBackupRecoveryKeySafely(
-  input: RotatePrivateBackupRecoveryKeySafelyInput
-): Promise<RotatePrivateBackupRecoveryKeySafelyResult> {
-  const rotate = input.rotate ?? rotateLocalLedgerBackupRecoveryKey;
-  const rotatedBackup = await rotate(input.currentBackup, {
-    currentRecoveryKey: input.currentRecoveryKey,
-    newRecoveryKey: input.newRecoveryKey,
-    confirmedNewRecoveryKey: input.confirmedNewRecoveryKey,
-  });
-  const metadata = await input.uploadReplacement(rotatedBackup);
-
-  return {
-    encryptedBackup: rotatedBackup,
-    metadata,
-  };
-}

@@ -18,15 +18,6 @@ function queryActiveTransfers(db: AnyDb, userId: TransferRow["userId"]) {
     .orderBy(desc(transfers.date), desc(transfers.updatedAt), desc(transfers.id));
 }
 
-export function getTransferById(db: AnyDb, id: TransferRow["id"]) {
-  const rows = db.select().from(transfers).where(eq(transfers.id, id)).all();
-  return rows[0] ?? null;
-}
-
-export function getTransfersForUser(db: AnyDb, userId: TransferRow["userId"]) {
-  return queryActiveTransfers(db, userId).all();
-}
-
 export function getTransfersPaginated(input: GetTransfersPageInput) {
   const { db, userId, limit, offset } = input;
   return queryActiveTransfers(db, userId)

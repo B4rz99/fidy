@@ -6,9 +6,6 @@ import { fromBase64 } from "./local-ledger-crypto";
 import type { EncryptedLocalLedgerBackupSnapshot } from "./local-ledger-encryption";
 import { assertLocalLedgerBackupSecretSafeForRemote } from "./local-ledger-encryption";
 
-const REMOTE_BACKUP_BUCKET = "encrypted-backups";
-const REMOTE_BACKUP_METADATA_TABLE = "encrypted_backups";
-
 export type RemoteBackupMetadata = {
   readonly userId: UserId;
   readonly backupId: BackupId;
@@ -30,13 +27,6 @@ export type UploadEncryptedRemoteBackupInput = {
   readonly encryptedBackup: EncryptedLocalLedgerBackupSnapshot;
 };
 
-export type DownloadEncryptedRemoteBackupInput = {
-  readonly userId: UserId;
-  readonly backupId: BackupId;
-};
-
-export type DeleteEncryptedRemoteBackupInput = DownloadEncryptedRemoteBackupInput;
-
 type RemoteBackupErrorLike = {
   readonly message?: string;
 };
@@ -55,15 +45,6 @@ type PrepareUploadResponse = PrivateBackupApiResponse<{
 
 type ConfirmUploadResponse = PrivateBackupApiResponse<{
   readonly backup: RemoteBackupMetadata;
-}>;
-
-type CurrentResponse = PrivateBackupApiResponse<{
-  readonly backup: RemoteBackupMetadata | null;
-}>;
-
-type PrepareDownloadResponse = PrivateBackupApiResponse<{
-  readonly backup: RemoteBackupMetadata;
-  readonly downloadUrl: string;
 }>;
 
 export async function uploadEncryptedRemoteBackup(
@@ -92,50 +73,6 @@ export async function uploadEncryptedRemoteBackup(
     ...metadata,
   });
   return confirmed.backup;
-}
-
-export async function listEncryptedRemoteBackups(
-  supabase: SupabaseClient,
-  _userId: UserId
-): Promise<readonly RemoteBackupMetadata[]> {
-  const response = await invokePrivateBackupApi<CurrentResponse>(supabase, { action: "current" });
-  return response.backup === null ? [] : [response.backup];
-}
-
-export async function downloadEncryptedRemoteBackup(
-  supabase: SupabaseClient,
-  input: DownloadEncryptedRemoteBackupInput
-): Promise<EncryptedLocalLedgerBackupSnapshot> {
-  const prepared = await invokePrivateBackupApi<PrepareDownloadResponse>(supabase, {
-    action: "prepareDownload",
-  });
-  if (prepared.backup.backupId !== input.backupId) {
-    throw new Error("Unable to download encrypted backup: backup not found");
-  }
-
-  const response = await fetch(prepared.downloadUrl);
-  if (!response.ok) {
-    throw new Error("Unable to download encrypted backup: storage download failed");
-  }
-
-  const encryptedBackup = (await response.json()) as EncryptedLocalLedgerBackupSnapshot;
-  assertLocalLedgerBackupSecretSafeForRemote(encryptedBackup);
-  await assertEncryptedBackupMatchesMetadata(encryptedBackup, prepared.backup);
-  return encryptedBackup;
-}
-
-export async function deleteEncryptedRemoteBackup(
-  supabase: SupabaseClient,
-  input: DeleteEncryptedRemoteBackupInput
-): Promise<void> {
-  const current = await invokePrivateBackupApi<CurrentResponse>(supabase, { action: "current" });
-  if (current.backup !== null && current.backup.backupId !== input.backupId) {
-    throw new Error("Unable to delete encrypted backup metadata: backup not found");
-  }
-
-  await invokePrivateBackupApi<PrivateBackupApiResponse<Record<string, never>>>(supabase, {
-    action: "deleteCurrent",
-  });
 }
 
 async function buildRemoteBackupMetadata(
@@ -188,19 +125,6 @@ async function readCiphertextMetadata(
     ciphertextSizeBytes: ciphertext.byteLength,
     ciphertextSha256: await sha256Hex(ciphertext),
   };
-}
-
-async function assertEncryptedBackupMatchesMetadata(
-  encryptedBackup: EncryptedLocalLedgerBackupSnapshot,
-  metadata: RemoteBackupMetadata
-) {
-  const ciphertextMetadata = await readCiphertextMetadata(encryptedBackup);
-  if (
-    ciphertextMetadata.ciphertextSizeBytes !== metadata.ciphertextSizeBytes ||
-    ciphertextMetadata.ciphertextSha256 !== metadata.ciphertextSha256
-  ) {
-    throw new Error("Downloaded encrypted backup does not match metadata");
-  }
 }
 
 function throwIfRemoteBackupError(error: RemoteBackupErrorLike | null, operation: string) {

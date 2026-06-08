@@ -6,9 +6,7 @@ import type {
   IsoDateTime,
 } from "@/shared/types/branded";
 import type {
-  LocalLedgerCommandId,
   LocalLedgerDomainEvent,
-  LocalLedgerEntry,
   LocalLedgerEntryId,
   LocalLedgerTransfer,
   LocalLedgerTransferSide,
@@ -16,7 +14,7 @@ import type {
   TransferId,
   UserId,
 } from "../domain/public";
-import type { LocalLedgerTransactionSource } from "../domain/transaction-source";
+import type { NormalizedTransactionSource } from "@/shared/lib/transaction-source";
 import type { LocalLedgerTransferRepository } from "../ports/public";
 import { toLocalLedgerTransfer, transferRecordedEvent } from "./record-transfer-builders";
 import { reject } from "./record-transfer-result";
@@ -24,15 +22,6 @@ import {
   validateRecordTransfer,
   type ValidRecordTransferCommand,
 } from "./record-transfer-validation";
-
-export type WriteLocalLedgerEntryCommand = {
-  readonly commandId: LocalLedgerCommandId;
-  readonly entry: LocalLedgerEntry;
-};
-
-export type WriteLocalLedgerEntry = (
-  command: WriteLocalLedgerEntryCommand
-) => Promise<LocalLedgerEntry>;
 
 export type RecordTransferCommand = {
   readonly userId: UserId;
@@ -101,7 +90,7 @@ async function recordValidatedTransfer(
   };
 }
 
-export type RecordTransactionSource = LocalLedgerTransactionSource;
+export type RecordTransactionSource = NormalizedTransactionSource;
 
 export type RecordTransactionAccountAttributionState = "confirmed" | "inferred" | "unresolved";
 

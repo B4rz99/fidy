@@ -11,7 +11,6 @@ export const processedEmailStatusSchema = z.enum([
   "needs_review",
   "pending_retry",
 ]);
-export type ProcessedEmailStatus = z.infer<typeof processedEmailStatusSchema>;
 
 export const rawEmailSchema = z.object({
   externalId: z.string(),
@@ -22,17 +21,6 @@ export const rawEmailSchema = z.object({
   provider: emailProviderSchema,
 });
 export type RawEmail = z.infer<typeof rawEmailSchema>;
-
-const transactionSourceSchema = z.enum([
-  "manual",
-  "email_gmail",
-  "email_outlook",
-  "notification_android",
-  "google_pay",
-  "apple_pay",
-  "sms_detected",
-]);
-export type TransactionSource = z.infer<typeof transactionSourceSchema>;
 
 export const EMAIL_REDIRECT_URI = "fidy://email/callback";
 

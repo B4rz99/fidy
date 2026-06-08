@@ -79,14 +79,6 @@ export type DuplicateCheckResult =
   | { kind: "already_processed" }
   | { kind: "cross_source"; transactionId: TransactionId };
 
-export type PersistedCaptureOutcome = {
-  status: "failed" | "skipped_duplicate" | "needs_review" | "success";
-  fingerprintHash: string;
-  transactionId: TransactionId | null;
-  confidence: number | null;
-  now: IsoDateTime;
-};
-
 export type NotificationPipelineResult = {
   saved: boolean;
   skippedDuplicate: boolean;

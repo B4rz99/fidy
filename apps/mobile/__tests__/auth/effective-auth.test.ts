@@ -4,8 +4,8 @@ import {
   deriveAccountCreatedAt,
   deriveAuthEmail,
   deriveAuthFullName,
-  deriveAuthIdentity,
   deriveAuthMode,
+  deriveAuthProfileImageUrl,
   deriveEffectiveOnboardingComplete,
   deriveEffectiveUserId,
 } from "@/features/auth/lib/effective-auth";
@@ -53,46 +53,39 @@ describe("effective auth", () => {
   });
 
   it("uses local QA identity fields when local QA mode is active", () => {
-    expect(deriveAuthIdentity({ session: remoteSession, localQaSession })).toEqual({
-      fullName: "Local QA",
-      email: "local-qa@fidy.dev",
-      accountCreatedAt: "",
-      profileImageUrl: null,
-    });
+    expect(deriveAuthFullName({ session: remoteSession, localQaSession })).toBe("Local QA");
+    expect(deriveAuthEmail({ session: remoteSession, localQaSession })).toBe("local-qa@fidy.dev");
+    expect(deriveAccountCreatedAt({ session: remoteSession, localQaSession })).toBe("");
+    expect(deriveAuthProfileImageUrl({ session: remoteSession, localQaSession })).toBeNull();
   });
 
   it("derives provider profile image urls from remote auth metadata", () => {
     expect(
-      deriveAuthIdentity({
+      deriveAuthProfileImageUrl({
         session: remoteSessionWithMetadata({
           avatar_url: "https://accounts.google.com/avatar.png",
         }),
         localQaSession: null,
       })
-    ).toEqual({
-      fullName: "Remote User",
-      email: "remote@example.com",
-      accountCreatedAt: "2026-04-19T00:00:00Z",
-      profileImageUrl: "https://accounts.google.com/avatar.png",
-    });
+    ).toBe("https://accounts.google.com/avatar.png");
 
     expect(
-      deriveAuthIdentity({
+      deriveAuthProfileImageUrl({
         session: remoteSessionWithMetadata({
           picture: "https://graph.microsoft.com/avatar.jpg",
         }),
         localQaSession: null,
-      }).profileImageUrl
+      })
     ).toBe("https://graph.microsoft.com/avatar.jpg");
 
     expect(
-      deriveAuthIdentity({
+      deriveAuthProfileImageUrl({
         session: remoteSessionWithMetadata({
           avatar_url: "http://example.com/insecure.png",
           picture: "https://graph.microsoft.com/avatar.jpg",
         }),
         localQaSession: null,
-      }).profileImageUrl
+      })
     ).toBe("https://graph.microsoft.com/avatar.jpg");
   });
 

@@ -19,7 +19,6 @@ export type { TransactionRow } from "./lib/repository";
 export {
   getMonthlyTotalsByType,
   getSpendingByCategoryAggregate,
-  getSpendingByCategoryDateRangeAggregate,
   getTransactionById,
 } from "./lib/repository";
 export type { CreateTransactionInput, StoredTransaction, TransactionType } from "./schema";
@@ -35,7 +34,6 @@ export {
   refreshTransactions,
   removeTransaction,
   saveCurrentTransaction,
-  updateCurrentTransaction,
   updateTransactionDirect,
   useTransactionStore,
 } from "./store";

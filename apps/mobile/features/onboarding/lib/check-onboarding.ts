@@ -32,11 +32,3 @@ export const markOnboardingComplete = async (): Promise<void> => {
 export const clearOnboardingFromStore = async (): Promise<void> => {
   await SecureStore.deleteItemAsync(SECURE_STORE_KEY).catch(() => undefined);
 };
-
-/** Clears onboarding from both SecureStore and Supabase metadata (dev reset only). */
-export const resetOnboarding = async (): Promise<void> => {
-  await SecureStore.deleteItemAsync(SECURE_STORE_KEY);
-  await getSupabase()
-    .auth.updateUser({ data: { onboarding_completed: null } })
-    .catch(() => undefined);
-};

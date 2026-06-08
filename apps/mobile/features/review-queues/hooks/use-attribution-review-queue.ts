@@ -8,7 +8,7 @@ import type { AnyDb } from "@/shared/db";
 import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";
 
-export type SuggestedAttributionReviewItem = AttributionReviewItem & {
+type SuggestedAttributionReviewItem = AttributionReviewItem & {
   readonly suggestedAccount: NonNullable<AttributionReviewItem["suggestedAccount"]>;
   readonly suggestion: NonNullable<AttributionReviewItem["suggestion"]>;
 };

@@ -175,10 +175,7 @@ export function buildTransactionCandidate(input: {
   return { kind: "transaction", ...input };
 }
 
-export function interpretCaptureCandidate(
-  data: unknown,
-  _options: CaptureInterpreterOptions
-): CaptureCandidateInterpretation {
+export function interpretCaptureCandidate(data: unknown): CaptureCandidateInterpretation {
   const parsed = captureInterpreterCandidateSchema.safeParse(data);
 
   return parsed.success

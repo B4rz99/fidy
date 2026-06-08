@@ -7,7 +7,7 @@ import {
 const VALID_CATEGORIES = ["food", "transport", "other"] as const;
 
 function validateInterpretedCandidate(data: unknown) {
-  const interpreted = interpretCaptureCandidate(data, { validCategoryIds: VALID_CATEGORIES });
+  const interpreted = interpretCaptureCandidate(data);
 
   return interpreted.kind === "candidate"
     ? validateCaptureCandidateForLocalLedger(interpreted.candidate, {
@@ -50,9 +50,7 @@ describe("Capture Interpreter candidates", () => {
       reason: "merchant and amount conflict",
       confidence: 0.4,
     } as const;
-    const interpreted = interpretCaptureCandidate(candidate, {
-      validCategoryIds: VALID_CATEGORIES,
-    });
+    const interpreted = interpretCaptureCandidate(candidate);
 
     expect(interpreted).toEqual({
       kind: "candidate",
@@ -79,9 +77,7 @@ describe("Capture Interpreter candidates", () => {
       fromAccountHint: null,
       toAccountHint: null,
     };
-    const interpreted = interpretCaptureCandidate(payload, {
-      validCategoryIds: VALID_CATEGORIES,
-    });
+    const interpreted = interpretCaptureCandidate(payload);
 
     expect(interpreted).toEqual({
       kind: "candidate",
@@ -101,18 +97,15 @@ describe("Capture Interpreter candidates", () => {
 
   it("rejects malformed AI candidate payloads before local validation", () => {
     expect(
-      interpretCaptureCandidate(
-        {
-          kind: "transaction",
-          type: "expense",
-          amount: "50000",
-          categoryId: "food",
-          description: "Exito",
-          date: "2026-04-24",
-          confidence: 0.9,
-        },
-        { validCategoryIds: VALID_CATEGORIES }
-      )
+      interpretCaptureCandidate({
+        kind: "transaction",
+        type: "expense",
+        amount: "50000",
+        categoryId: "food",
+        description: "Exito",
+        date: "2026-04-24",
+        confidence: 0.9,
+      })
     ).toEqual({
       kind: "invalid",
       reasons: expect.arrayContaining(["Invalid input: expected number, received string"]),

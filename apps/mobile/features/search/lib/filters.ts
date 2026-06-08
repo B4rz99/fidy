@@ -11,7 +11,3 @@ const getActiveFilterDimensions = (filters: SearchFilters): readonly boolean[] =
 export function hasActiveFilters(filters: SearchFilters): boolean {
   return getActiveFilterDimensions(filters).some(Boolean);
 }
-
-export function countActiveFilters(filters: SearchFilters): number {
-  return getActiveFilterDimensions(filters).filter(Boolean).length;
-}

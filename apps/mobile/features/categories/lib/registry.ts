@@ -1,8 +1,6 @@
-import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
+import { CATEGORIES, type Category } from "@/shared/categories";
 import { requireCategoryId } from "@/shared/types/assertions";
 import { ICON_MAP } from "./icon-map";
-
-export type CategoryRegistryScope = "built_in" | "merged";
 
 export type CategoryRegistryRow = {
   readonly id: string;
@@ -14,11 +12,6 @@ export type CategoryRegistryRow = {
 export type CategoryRegistrySnapshot = {
   readonly builtIn: readonly Category[];
   readonly custom: readonly Category[];
-  readonly merged: readonly Category[];
-  readonly builtInRows: readonly (readonly Category[])[];
-  readonly byId: ReadonlyMap<string, Category>;
-  readonly builtInIds: ReadonlySet<string>;
-  readonly mergedIds: ReadonlySet<string>;
 };
 
 const toCustomCategory = (row: CategoryRegistryRow): Category => ({
@@ -28,30 +21,13 @@ const toCustomCategory = (row: CategoryRegistryRow): Category => ({
   color: row.colorHex,
 });
 
-const toCategoryById = (categories: readonly Category[]) =>
-  new Map(categories.map((category) => [category.id, category] as const));
-
 export function createCategoryRegistrySnapshot(
   rows: readonly CategoryRegistryRow[]
 ): CategoryRegistrySnapshot {
   const custom = rows.map(toCustomCategory);
-  const merged = [...CATEGORIES, ...custom];
 
   return {
     builtIn: CATEGORIES,
     custom,
-    merged,
-    builtInRows: CATEGORY_ROWS,
-    byId: toCategoryById(merged),
-    builtInIds: new Set(CATEGORIES.map((category) => category.id)),
-    mergedIds: new Set(merged.map((category) => category.id)),
   };
-}
-
-export function isCategoryIdValid(
-  snapshot: CategoryRegistrySnapshot,
-  id: string,
-  scope: CategoryRegistryScope = "built_in"
-): boolean {
-  return scope === "merged" ? snapshot.mergedIds.has(id) : snapshot.builtInIds.has(id);
 }

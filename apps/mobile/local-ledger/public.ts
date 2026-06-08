@@ -3,7 +3,6 @@ export type {
   LocalLedgerCaptureEvidence,
   LocalLedgerCommandId,
   LocalLedgerDomainEvent,
-  LocalLedgerEntry,
   LocalLedgerEntryId,
   LocalLedgerMoney,
   LocalLedgerProcessedSourceEventId,
@@ -18,11 +17,6 @@ export type {
   TransferId,
   UserId,
 } from "./domain/public";
-export {
-  normalizeTransactionSource,
-  TRANSACTION_SOURCES,
-  type LocalLedgerTransactionSource,
-} from "./domain/transaction-source";
 export {
   createAmendTransactionUseCase,
   createVoidTransactionUseCase,
@@ -78,8 +72,6 @@ export {
   type RecordTransferDependencies,
   type RecordTransferRejectionReason,
   type RecordTransferResult,
-  type WriteLocalLedgerEntry,
-  type WriteLocalLedgerEntryCommand,
 } from "./use-cases/write.public";
 export {
   confirmReviewCandidateAsTransaction,
@@ -87,25 +79,14 @@ export {
   dismissReviewCandidate,
   toRejectReviewCandidateCommand,
   type ConfirmReviewCandidateAsTransactionInput,
-  type ConfirmReviewCandidateAsTransactionPorts,
   type ConfirmReviewCandidateAsTransferInput,
-  type ConfirmReviewCandidateAsTransferPorts,
   type ConfirmReviewCandidateResult,
-  type ConfirmReviewCandidateTransactionCommitInput,
-  type ConfirmReviewCandidateTransactionCommitResult,
-  type ConfirmReviewCandidateTransferCommitInput,
-  type ConfirmReviewCandidateTransferCommitResult,
-  type DismissReviewCandidatePorts,
   type DismissReviewCandidateResult,
-  type ReviewCandidateResolutionCommitInput,
-  type ReviewCandidateResolutionCommitResult,
   type ReviewCandidateResolutionInput,
   type ReviewCandidateResolutionRecord,
   type ReviewCandidateResolutionRejection,
-  type ResolveReviewCandidateCommand,
 } from "./use-cases/review-candidate-resolution.public";
 export type {
-  LocalLedgerEntryRepository,
   LocalLedgerTransferRecordResult,
   LocalLedgerTransferRepository,
 } from "./ports/public";
