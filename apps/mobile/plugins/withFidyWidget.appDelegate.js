@@ -19,11 +19,15 @@ const rootWindowHelperBlockPattern =
 const rootWindowHelpers =
   "\n#if os(iOS) || os(tvOS)\n" +
   "private func makeRootWindow(for application: UIApplication) -> UIWindow {\n" +
-  "  guard let windowScene = application.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else {\n" +
-  '    fatalError("Unable to create a root window without an active window scene.")\n' +
+  "  if let windowScene = application.connectedScenes.compactMap({ $0 as? UIWindowScene }).first {\n" +
+  "    return UIWindow(windowScene: windowScene)\n" +
   "  }\n" +
   "\n" +
-  "  return UIWindow(windowScene: windowScene)\n" +
+  "  return makeSceneLessFallbackRootWindow()\n" +
+  "}\n" +
+  "\n" +
+  "private func makeSceneLessFallbackRootWindow() -> UIWindow {\n" +
+  "  (UIWindow.self as NSObject.Type).init() as! UIWindow\n" +
   "}\n" +
   "#endif\n";
 

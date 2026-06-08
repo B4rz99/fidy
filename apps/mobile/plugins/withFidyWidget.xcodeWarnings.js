@@ -20,12 +20,26 @@ const markKnownScriptsAlwaysOutOfDate = (project) => {
   }
 };
 
+const isCppLinkerFlag = (flag) => flag.replace(/^"|"$/g, "") === "-lc++";
+
 const removeDuplicateCppLinkerFlag = (project) => {
   const configurations = project.hash.project.objects.XCBuildConfiguration ?? {};
   for (const config of Object.values(configurations)) {
     const flags = config?.buildSettings?.OTHER_LDFLAGS;
     if (Array.isArray(flags)) {
-      config.buildSettings.OTHER_LDFLAGS = flags.filter((flag) => flag !== '"-lc++"');
+      let hasCppLinkerFlag = false;
+      config.buildSettings.OTHER_LDFLAGS = flags.filter((flag) => {
+        if (!isCppLinkerFlag(flag)) {
+          return true;
+        }
+
+        if (hasCppLinkerFlag) {
+          return false;
+        }
+
+        hasCppLinkerFlag = true;
+        return true;
+      });
     }
   }
 };

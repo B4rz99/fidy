@@ -76,3 +76,27 @@ describe("withFidyWidget.files", () => {
     );
   });
 });
+
+describe("withFidyWidget warning cleanup", () => {
+  it("keeps AppDelegate root window fallback non-crashing", () => {
+    const source = readFileSync(
+      path.resolve(__dirname, "../../plugins/withFidyWidget.appDelegate.js"),
+      "utf8"
+    );
+
+    expect(source).toContain("makeSceneLessFallbackRootWindow");
+    expect(source).toContain("(UIWindow.self as NSObject.Type).init() as! UIWindow");
+    expect(source).not.toContain("fatalError");
+  });
+
+  it("deduplicates the C++ linker flag instead of removing every copy", () => {
+    const source = readFileSync(
+      path.resolve(__dirname, "../../plugins/withFidyWidget.xcodeWarnings.js"),
+      "utf8"
+    );
+
+    expect(source).toContain('flag.replace(/^"|"$/g, "") === "-lc++"');
+    expect(source).toContain("hasCppLinkerFlag = true");
+    expect(source).not.toContain("flag !== '\"-lc++\"'");
+  });
+});

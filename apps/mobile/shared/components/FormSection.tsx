@@ -16,6 +16,7 @@ export function FormSection({ children, optionalLabel, style, title }: FormSecti
 
   return (
     <GlassSurface
+      nativeGlass={false}
       radius={8}
       style={[
         {

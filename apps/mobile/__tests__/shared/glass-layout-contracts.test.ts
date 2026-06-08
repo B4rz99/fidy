@@ -74,10 +74,36 @@ describe("glass layout contracts", () => {
     });
 
     expect(filterChipItemSource).toContain("paddingHorizontal: 16");
+    expect(filterChipItemSource).not.toContain("marginRight");
     expect(dateFilterSource).toContain("paddingHorizontal: 8");
     expect(categoryFilterSource).toContain("width: 44");
     expect(addBillSource).toContain("chipStyle");
     expect(transactionAccountSource).toContain("chipStyle");
+  });
+
+  it("keeps field-heavy form sections out of native glass", () => {
+    const formSectionSource = readShared("FormSection.tsx");
+
+    expect(formSectionSource).toContain("nativeGlass={false}");
+  });
+
+  it("routes selected account kind color through glass visual props", () => {
+    const accountKindSource = readSource(
+      "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx"
+    );
+
+    expect(accountKindSource).toContain("backgroundColor={isSelected ? accentGreen : undefined}");
+    expect(accountKindSource).not.toMatch(/style=\{\[[\s\S]*backgroundColor:/);
+  });
+
+  it("keeps toast shadows on React Native shadow props", () => {
+    const toastSource = readShared("AppToastHost.tsx");
+
+    expect(toastSource).not.toContain("boxShadow");
+    expect(toastSource).toContain("shadowColor");
+    expect(toastSource).toContain("shadowOffset");
+    expect(toastSource).toContain("shadowOpacity");
+    expect(toastSource).toContain("shadowRadius");
   });
 
   it("keeps compact form field sizing on the glass field container", () => {

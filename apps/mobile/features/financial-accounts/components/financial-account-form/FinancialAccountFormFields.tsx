@@ -31,14 +31,11 @@ export function KindChip({
       accessibilityState={{ checked: isSelected }}
     >
       <GlassSurface
+        backgroundColor={isSelected ? accentGreen : undefined}
         nativeGlass={false}
         padded={false}
         radius={999}
-        style={[
-          styles.kindChip,
-          { backgroundColor: "transparent" },
-          isSelected ? { backgroundColor: accentGreen } : null,
-        ]}
+        style={styles.kindChip}
       >
         <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
           {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
