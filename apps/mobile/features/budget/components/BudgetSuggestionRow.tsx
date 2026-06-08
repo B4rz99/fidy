@@ -21,7 +21,6 @@ export function BudgetSuggestionRow({
   onToggle,
 }: BudgetSuggestionRowProps) {
   const { locale, t } = useTranslation();
-  const borderColor = useThemeColor("borderSubtle");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
@@ -43,7 +42,6 @@ export function BudgetSuggestionRow({
             styles.amountInput,
             {
               color: selected ? primaryColor : secondaryColor,
-              borderColor,
               opacity: selected ? 1 : 0.4,
             },
           ]}
@@ -93,9 +91,6 @@ const styles = StyleSheet.create({
   amountInput: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
-    borderRadius: 8,
-    borderCurve: "continuous",
-    borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 4,
     minWidth: 64,

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { EmptyState, GlassPressable, ScreenLayout } from "@/shared/components";
+import { EmptyState, ListRowSurface, ScreenLayout } from "@/shared/components";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -30,15 +30,18 @@ function AccountRow({
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <GlassPressable
+    <ListRowSurface
       onPress={onPress}
       radius={16}
-      borderColor={isLikelyMatch ? accentGreen : undefined}
-      surfaceStyle={styles.accountRow}
+      selected={isLikelyMatch}
+      selectedBorderColor={accentGreen}
+      contentStyle={styles.accountRow}
     >
-      <Text style={[styles.accountName, { color: primary }]}>{name}</Text>
-      <Text style={[styles.accountSubtitle, { color: secondary }]}>{subtitle}</Text>
-    </GlassPressable>
+      <View style={styles.accountText}>
+        <Text style={[styles.accountName, { color: primary }]}>{name}</Text>
+        <Text style={[styles.accountSubtitle, { color: secondary }]}>{subtitle}</Text>
+      </View>
+    </ListRowSurface>
   );
 }
 
@@ -172,9 +175,11 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   accountRow: {
-    borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
+  },
+  accountText: {
+    flex: 1,
     gap: 4,
   },
   accountName: {

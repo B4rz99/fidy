@@ -5,7 +5,7 @@ import { useOptionalUserId } from "@/features/auth/public";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
 import { canFinancialAccountHaveIdentifiers, readFinancialAccountKind } from "../lib/kind";
-import { Button, FormTextField, ScreenLayout } from "@/shared/components";
+import { Button, Card, FormTextField, ScreenLayout } from "@/shared/components";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -88,21 +88,18 @@ export function FinancialAccountIdentifierScreen() {
           value={value}
           onChangeText={setValue}
           placeholder={t("financialAccounts.identifierScreen.placeholder")}
-          style={styles.fieldBlock}
-          labelStyle={styles.fieldLabel}
-          inputStyle={[
-            styles.input,
-            {
-              color: primary,
-            },
-          ]}
         />
 
-        <View style={[styles.noteBanner, { backgroundColor: accentGreenLight }]}>
+        <Card
+          backgroundColor={accentGreenLight}
+          padded={false}
+          radius={14}
+          contentStyle={styles.noteBanner}
+        >
           <Text style={[styles.noteText, { color: secondary }]}>
             {t("financialAccounts.identifierScreen.note")}
           </Text>
-        </View>
+        </Card>
 
         <Button
           label={t("financialAccounts.identifierScreen.save")}
@@ -126,23 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  fieldBlock: {
-    gap: 8,
-  },
-  fieldLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-  },
-  input: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-  },
   noteBanner: {
-    borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },

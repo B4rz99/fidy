@@ -202,7 +202,7 @@ test("keeps financial accounts content composed from sections and rows", () => {
   expect(sectionSource).toContain("items.length");
   expect(sectionSource).toContain("onOpenAccount(item.account.id)");
 
-  expect(hasJsxComponent(rowFile, "GlassPressable")).toBe(true);
+  expect(hasJsxComponent(rowFile, "ListRowSurface")).toBe(true);
   expect(rowSource).toContain("financialAccounts.list.identifiersCount");
   expect(rowSource).toContain("financialAccounts.labels.default");
   expect(rowSource).toContain("financialAccounts.list.billingGap");

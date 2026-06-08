@@ -6,11 +6,11 @@ import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import {
   AppAuroraBackground,
   Button,
-  FieldSurface,
+  FieldButton,
   FormTextField,
   SelectableChipRow,
 } from "@/shared/components";
-import { KeyboardAvoidingView, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { KeyboardAvoidingView, ScrollView, Text, View } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { type BillFrequency, FREQUENCIES } from "../../schema";
@@ -118,18 +118,12 @@ export function AddBillFormContent({
             />
           </View>
 
-          <Pressable
+          <FieldButton
+            label={t("bills.startDate")}
+            value={formattedStartDate}
             style={styles.inputGroup}
             onPress={() => setShowDatePicker(true)}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>
-              {t("bills.startDate")}
-            </Text>
-            <FieldSurface contentStyle={styles.dateInput}>
-              <Text style={[styles.dateText, { color: primaryColor }]}>{formattedStartDate}</Text>
-            </FieldSurface>
-          </Pressable>
+          />
 
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>

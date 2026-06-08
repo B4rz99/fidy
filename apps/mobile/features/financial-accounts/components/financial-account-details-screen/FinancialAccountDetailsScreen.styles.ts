@@ -45,15 +45,14 @@ export const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     fontSize: 14,
   },
-  card: {
-    borderRadius: 18,
-    overflow: "hidden",
-  },
   fieldRow: {
     paddingHorizontal: 16,
     paddingVertical: 14,
-    gap: 4,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  fieldText: {
+    flex: 1,
+    gap: 4,
   },
   fieldLabel: {
     fontFamily: "Poppins_500Medium",
@@ -88,8 +87,6 @@ export const styles = StyleSheet.create({
   manageButton: {
     minHeight: 46,
     paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
   },
   manageButtonText: {

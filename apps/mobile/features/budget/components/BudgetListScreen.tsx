@@ -4,9 +4,16 @@ import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { formatMonthYear } from "@/features/calendar/public";
 import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
-import { Button, EmptyState, FeedList, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import {
+  Button,
+  EmptyState,
+  FeedList,
+  IconActionButton,
+  ScreenLayout,
+  TAB_BAR_CLEARANCE,
+} from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
-import { Pressable, StyleSheet, View } from "@/shared/components/rn";
+import { StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
@@ -30,15 +37,12 @@ function AddBudgetButton({
   const primaryColor = useThemeColor("primary");
 
   return (
-    <Pressable
+    <IconActionButton
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
+      icon={<Plus size={24} color={primaryColor} />}
       onPress={onPress}
-      hitSlop={12}
-    >
-      <Plus size={24} color={primaryColor} />
-    </Pressable>
+    />
   );
 }
 
@@ -234,14 +238,5 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     gap: 8,
-  },
-  addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

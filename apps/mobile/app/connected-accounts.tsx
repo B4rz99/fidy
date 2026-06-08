@@ -11,7 +11,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { Button, Card, GlassSurface, ScreenLayout } from "@/shared/components";
+import { Button, Card, Chip, ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Platform, ScrollView, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -93,7 +93,6 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
   const { t, locale } = useTranslation();
   const iconColor = useThemeColor("primary");
   const greenColor = useThemeColor("accentGreen");
-  const primaryColor = useThemeColor("primary");
   const tertiaryColor = useThemeColor("tertiary");
 
   const { pulsingStyle: dotAnimatedStyle } = usePulsingOpacity(isSyncing);
@@ -125,17 +124,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
               {provider}
             </Text>
           </View>
-          <GlassSurface
-            nativeGlass={false}
-            padded={false}
-            radius={8}
-            borderColor={greenColor}
-            style={{ paddingHorizontal: 10, paddingVertical: 4 }}
-          >
-            <Text className="font-poppins-semibold text-[11px] text-accent-green dark:text-accent-green-dark">
-              {t("connectedAccounts.connected")}
-            </Text>
-          </GlassSurface>
+          <Chip label={t("connectedAccounts.connected")} tone="primary" size="compact" selected />
         </View>
 
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark">
@@ -168,17 +157,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
             {provider}
           </Text>
         </View>
-        <GlassSurface
-          nativeGlass={false}
-          padded={false}
-          radius={8}
-          borderColor={primaryColor}
-          style={{ paddingHorizontal: 10, paddingVertical: 4 }}
-        >
-          <Text className="font-poppins-semibold text-[11px] text-primary dark:text-primary-dark">
-            {t("connectedAccounts.notConnected")}
-          </Text>
-        </GlassSurface>
+        <Chip label={t("connectedAccounts.notConnected")} size="compact" selected />
       </View>
 
       <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">

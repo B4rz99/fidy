@@ -1,7 +1,13 @@
 import { format } from "date-fns";
 import { memo, useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { Card, FeedList, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import {
+  FeedList,
+  IconActionButton,
+  ListRowSurface,
+  ScreenLayout,
+  TAB_BAR_CLEARANCE,
+} from "@/shared/components";
 import { MessageSquare, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -46,33 +52,31 @@ const SessionCard = memo(function SessionCardInner({
   });
 
   return (
-    <Card
-      onPress={() => onSelectSession(session.id)}
-      padded={false}
-      contentStyle={{
-        paddingVertical: 13,
-        paddingHorizontal: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <MessageSquare size={20} color={supportTextColor} />
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text
-          className="font-poppins-semibold text-body text-primary dark:text-primary-dark"
-          numberOfLines={1}
-        >
-          {session.title}
-        </Text>
-        <Text className="font-poppins-medium text-caption" style={{ color: supportTextColor }}>
-          {dateStr}
-        </Text>
-      </View>
-      <Pressable onPress={() => onDeleteSession(session.id)} hitSlop={12} style={{ padding: 4 }}>
-        <Trash2 size={18} color={accentRed} />
+    <ListRowSurface>
+      <Pressable
+        onPress={() => onSelectSession(session.id)}
+        accessibilityRole="button"
+        style={styles.sessionMainAction}
+      >
+        <MessageSquare size={20} color={supportTextColor} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text
+            className="font-poppins-semibold text-body text-primary dark:text-primary-dark"
+            numberOfLines={1}
+          >
+            {session.title}
+          </Text>
+          <Text className="font-poppins-medium text-caption" style={{ color: supportTextColor }}>
+            {dateStr}
+          </Text>
+        </View>
       </Pressable>
-    </Card>
+      <IconActionButton
+        onPress={() => onDeleteSession(session.id)}
+        icon={<Trash2 size={18} color={accentRed} />}
+        size="size-8"
+      />
+    </ListRowSurface>
   );
 });
 
@@ -149,26 +153,19 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
               {t("aiChat.conversationsSubtitle")}
             </Text>
             {cleanupMessage != null ? (
-              <Card
-                padded={false}
-                contentStyle={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 14,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
+              <ListRowSurface minHeight={44}>
                 <Text
                   className="font-poppins-medium text-label"
                   style={{ color: supportTextColor, flex: 1 }}
                 >
                   {cleanupMessage}
                 </Text>
-                <Pressable onPress={dismissCleanup} hitSlop={12} style={{ padding: 2 }}>
-                  <X size={16} color={supportTextColor} />
-                </Pressable>
-              </Card>
+                <IconActionButton
+                  onPress={dismissCleanup}
+                  icon={<X size={16} color={supportTextColor} />}
+                  size="size-7"
+                />
+              </ListRowSurface>
             ) : null}
           </View>
         }
@@ -177,3 +174,12 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
     </ScreenLayout>
   );
 }
+
+const styles = {
+  sessionMainAction: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+    gap: 12,
+  },
+} as const;

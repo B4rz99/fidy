@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { GlassSurface } from "@/shared/components";
+import { Card, ListRowSurface } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./FinancialAccountDetailsScreen.styles";
@@ -16,9 +16,9 @@ export function FinancialAccountDetailSection({
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: primary }]}>{title}</Text>
-      <GlassSurface padded={false} radius={18} style={styles.card}>
+      <Card padded={false} radius={18}>
         {children}
-      </GlassSurface>
+      </Card>
     </View>
   );
 }
@@ -35,9 +35,17 @@ export function FinancialAccountFieldRow({
   const borderSubtle = useThemeColor("borderSubtle");
 
   return (
-    <View style={[styles.fieldRow, { borderBottomColor: borderSubtle }]}>
-      <Text style={[styles.fieldLabel, { color: secondary }]}>{label}</Text>
-      <Text style={[styles.fieldValue, { color: primary }]}>{value}</Text>
-    </View>
+    <ListRowSurface
+      variant="grouped"
+      nativeGlass={false}
+      divider
+      contentStyle={styles.fieldRow}
+      style={{ borderBottomColor: borderSubtle }}
+    >
+      <View style={styles.fieldText}>
+        <Text style={[styles.fieldLabel, { color: secondary }]}>{label}</Text>
+        <Text style={[styles.fieldValue, { color: primary }]}>{value}</Text>
+      </View>
+    </ListRowSurface>
   );
 }

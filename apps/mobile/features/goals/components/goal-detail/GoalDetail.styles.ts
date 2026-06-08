@@ -43,10 +43,11 @@ export const styles = StyleSheet.create({
   },
   projectionCard: {
     alignItems: "center",
-    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderCurve: "continuous",
+  },
+  projectionCardDashed: {
+    borderStyle: "dashed",
   },
   projectionText: {
     fontFamily: "Poppins_600SemiBold",

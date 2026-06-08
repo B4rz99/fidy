@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { GlassPressable } from "@/shared/components";
+import { ListRowSurface } from "@/shared/components";
 import { ChevronRight } from "@/shared/components/icons";
-import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { ScrollView, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
@@ -57,12 +57,7 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
       </View>
       <View style={{ width: "100%", gap: 10 }}>
         {suggestions.map((suggestion) => (
-          <GlassPressable
-            key={suggestion}
-            onPress={() => onSelect(suggestion)}
-            radius={18}
-            surfaceStyle={styles.suggestionButton}
-          >
+          <ListRowSurface key={suggestion} onPress={() => onSelect(suggestion)} radius={18}>
             <Text
               className="font-poppins-semibold text-label text-primary dark:text-primary-dark"
               style={{ flex: 1 }}
@@ -70,20 +65,9 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
               {suggestion}
             </Text>
             <ChevronRight size={18} color={supportTextColor} />
-          </GlassPressable>
+          </ListRowSurface>
         ))}
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  suggestionButton: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-});
