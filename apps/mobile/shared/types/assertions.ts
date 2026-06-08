@@ -1,11 +1,9 @@
 import type {
   BackupId,
   BillId,
-  BudgetId,
   CategoryId,
   ChatSessionId,
   CopAmount,
-  DetectedSmsEventId,
   EmailAccountId,
   FinancialAccountId,
   IsoDate,
@@ -14,7 +12,6 @@ import type {
   ProcessedSourceEventId,
   ReviewCandidateId,
   TransactionId,
-  TransferId,
   UserId,
 } from "@/shared/types/branded";
 
@@ -143,10 +140,6 @@ export function assertTransactionId(value: string): asserts value is Transaction
   assertNonEmptyString(value, "transactionId");
 }
 
-function assertTransferId(value: string): asserts value is TransferId {
-  assertNonEmptyString(value, "transferId");
-}
-
 function assertBillId(value: string): asserts value is BillId {
   assertNonEmptyString(value, "billId");
 }
@@ -155,20 +148,12 @@ function assertBackupId(value: string): asserts value is BackupId {
   assertNonEmptyString(value, "backupId");
 }
 
-function assertBudgetId(value: string): asserts value is BudgetId {
-  assertNonEmptyString(value, "budgetId");
-}
-
 function assertCategoryId(value: string): asserts value is CategoryId {
   assertNonEmptyString(value, "categoryId");
 }
 
 function assertChatSessionId(value: string): asserts value is ChatSessionId {
   assertNonEmptyString(value, "chatSessionId");
-}
-
-function assertDetectedSmsEventId(value: string): asserts value is DetectedSmsEventId {
-  assertNonEmptyString(value, "detectedSmsEventId");
 }
 
 export function assertEmailAccountId(value: string): asserts value is EmailAccountId {
@@ -219,10 +204,6 @@ export function requireTransactionId(value: string): TransactionId {
   return requireValue(value, assertTransactionId);
 }
 
-function requireTransferId(value: string): TransferId {
-  return requireValue(value, assertTransferId);
-}
-
 export function requireProcessedSourceEventId(value: string): ProcessedSourceEventId {
   return requireValue(value, assertProcessedSourceEventId);
 }
@@ -243,20 +224,12 @@ export function requireBackupId(value: string): BackupId {
   return requireValue(value, assertBackupId);
 }
 
-function requireBudgetId(value: string): BudgetId {
-  return requireValue(value, assertBudgetId);
-}
-
 export function requireCategoryId(value: string): CategoryId {
   return requireValue(value, assertCategoryId);
 }
 
 export function requireChatSessionId(value: string): ChatSessionId {
   return requireValue(value, assertChatSessionId);
-}
-
-export function requireDetectedSmsEventId(value: string): DetectedSmsEventId {
-  return requireValue(value, assertDetectedSmsEventId);
 }
 
 export function requireFinancialAccountId(value: string): FinancialAccountId {
