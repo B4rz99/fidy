@@ -21,16 +21,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 20,
   },
-  fieldCard: {
-    alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
-    flex: 1,
-    flexDirection: "row",
-    gap: 10,
-    height: 50,
-    paddingHorizontal: 14,
-  },
   fieldInput: {
     flex: 1,
     fontFamily: "Poppins_500Medium",

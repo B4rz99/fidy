@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
   deleteBill,
@@ -16,11 +17,12 @@ import {
 } from "@/features/calendar/ui.public";
 import { ScreenLayout } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
-import { Alert, Pressable } from "@/shared/components/rn";
+import { Alert, Platform, Pressable } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { getDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
+import { useNativeHeaderHeight } from "@/shared/navigation/use-native-header-height";
 import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
 
 export default function BillsCalendarScreen() {
@@ -30,6 +32,9 @@ export default function BillsCalendarScreen() {
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
+  const insets = useSafeAreaInsets();
+  const nativeHeaderHeight = useNativeHeaderHeight();
+  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight + insets.top : 0;
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
@@ -109,6 +114,7 @@ export default function BillsCalendarScreen() {
         onBillPaymentToggle={handleToggleBillPaid}
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
+        paddingTop={headerClearance}
         onDayPress={(date) => push({ pathname: "/day-detail", params: { date: toIsoDate(date) } })}
       />
     </ScreenLayout>

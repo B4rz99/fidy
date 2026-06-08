@@ -29,7 +29,7 @@ export function TransactionAccountSection({
       >
         <SelectableChipRow
           className="flex-nowrap"
-          chipClassName="h-auto rounded-full border border-border-subtle bg-card px-4 py-2 dark:border-border-subtle-dark dark:bg-card-dark"
+          chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
           options={accounts.map((account) => ({
             value: account.id,
             label: account.name,

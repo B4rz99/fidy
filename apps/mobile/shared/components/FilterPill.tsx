@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import type { PressableProps, ViewProps } from "react-native";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { GlassSurface } from "./GlassSurface";
 
 type FilterPillProps = Omit<ViewProps, "children"> & {
   readonly label?: string;
@@ -14,31 +15,62 @@ type FilterPillProps = Omit<ViewProps, "children"> & {
   readonly labelClassName?: string;
 };
 
+function getPressableLayoutStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    alignSelf: flattened.alignSelf,
+    flex: flattened.flex,
+    flexBasis: flattened.flexBasis,
+    flexGrow: flattened.flexGrow,
+    flexShrink: flattened.flexShrink,
+    margin: flattened.margin,
+    marginBottom: flattened.marginBottom,
+    marginHorizontal: flattened.marginHorizontal,
+    marginLeft: flattened.marginLeft,
+    marginRight: flattened.marginRight,
+    marginTop: flattened.marginTop,
+    marginVertical: flattened.marginVertical,
+  };
+}
+
+function getSurfaceStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    height: flattened.height,
+    minHeight: flattened.minHeight,
+    padding: flattened.padding,
+    paddingBottom: flattened.paddingBottom,
+    paddingHorizontal: flattened.paddingHorizontal,
+    paddingLeft: flattened.paddingLeft,
+    paddingRight: flattened.paddingRight,
+    paddingTop: flattened.paddingTop,
+    paddingVertical: flattened.paddingVertical,
+    width: flattened.width,
+  };
+}
+
 export function FilterPill({
   label,
   leading,
   selected = false,
   onPress,
   selectedColor,
-  selectedTextColor = "#FFFFFF",
+  selectedTextColor,
   className,
   labelClassName,
   style,
   ...viewProps
 }: FilterPillProps) {
   const primary = useThemeColor("primary");
-  const peachLight = useThemeColor("peachLight");
-  const backgroundColor = selected ? (selectedColor ?? primary) : peachLight;
-
-  return (
-    <Pressable
-      {...viewProps}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ ...viewProps.accessibilityState, selected }}
-      className={`items-center justify-center rounded-full px-3 ${className ?? ""}`}
-      style={[{ backgroundColor }, style]}
-    >
+  const selectedBorderColor = selectedColor ?? primary;
+  const pressableStyle = getPressableLayoutStyle(style);
+  const surfaceStyle = getSurfaceStyle(style);
+  const content = (
+    <>
       {leading ? <View>{leading}</View> : null}
       {label ? (
         <Text
@@ -46,13 +78,45 @@ export function FilterPill({
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.82}
-          style={{ color: selected ? selectedTextColor : primary }}
+          style={{ color: selected ? (selectedTextColor ?? selectedBorderColor) : primary }}
         >
           {label}
         </Text>
       ) : null}
+    </>
+  );
+
+  return (
+    <Pressable
+      {...viewProps}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ ...viewProps.accessibilityState, selected }}
+      style={pressableStyle}
+    >
+      <GlassSurface
+        className={className}
+        nativeGlass={false}
+        padded={false}
+        radius={999}
+        borderColor={selected ? selectedBorderColor : undefined}
+        borderWidth={selected ? 1.5 : undefined}
+        style={[styles.surface, surfaceStyle]}
+      >
+        {content}
+      </GlassSurface>
     </Pressable>
   );
 }
 
 export type { FilterPillProps };
+
+const styles = StyleSheet.create({
+  surface: {
+    alignItems: "center",
+    borderRadius: 999,
+    justifyContent: "center",
+    minHeight: 32,
+    paddingHorizontal: 12,
+  },
+});

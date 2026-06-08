@@ -29,7 +29,6 @@ export const styles = StyleSheet.create({
     fontSize: 13,
   },
   badge: {
-    borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },

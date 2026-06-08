@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { GlassSurface } from "@/shared/components";
 import { Modal, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -44,7 +45,6 @@ export const CelebrationModal = memo(function CelebrationModal({
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
-  const bgCard = useThemeColor("card");
   const textPrimary = useThemeColor("primary");
   const textSecondary = useThemeColor("secondary");
 
@@ -65,12 +65,12 @@ export const CelebrationModal = memo(function CelebrationModal({
           padding: 32,
         }}
       >
-        <View
+        <GlassSurface
+          padded={false}
+          radius={24}
           style={{
             width: "100%",
             maxWidth: 320,
-            backgroundColor: bgCard,
-            borderRadius: 24,
             padding: 32,
             alignItems: "center",
             gap: 20,
@@ -148,7 +148,7 @@ export const CelebrationModal = memo(function CelebrationModal({
               {t("goals.celebration.continueButton")}
             </Text>
           </Pressable>
-        </View>
+        </GlassSurface>
       </View>
     </Modal>
   );

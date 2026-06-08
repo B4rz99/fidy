@@ -1,3 +1,4 @@
+import { GlassSurface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -12,10 +13,7 @@ export const ResultsSummary = ({ summary }: ResultsSummaryProps) => {
 
   return (
     <View className="px-4 pb-2">
-      <View
-        className="flex-row rounded-lg bg-card/90 px-4 py-3 dark:bg-card-dark/90"
-        style={styles.summaryCard}
-      >
+      <GlassSurface padded={false} radius={8} style={styles.summaryCard}>
         <View className="flex-1">
           <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
             {t("search.resultTotal")}
@@ -32,15 +30,15 @@ export const ResultsSummary = ({ summary }: ResultsSummaryProps) => {
             {summary.count}
           </Text>
         </View>
-      </View>
+      </GlassSurface>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   summaryCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(15, 23, 42, 0.08)",
-    boxShadow: "0 8px 12px rgba(15,23,42,0.05)",
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
 });

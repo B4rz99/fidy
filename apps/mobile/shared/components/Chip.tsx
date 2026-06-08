@@ -1,43 +1,53 @@
 import type { ReactNode } from "react";
 import type { PressableProps, ViewProps } from "react-native";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
+import { GlassSurface } from "./GlassSurface";
 
 type ChipTone = "neutral" | "primary" | "success" | "danger" | "warning";
 
 type ChipProps = Omit<ViewProps, "children"> & {
   label: string;
   tone?: ChipTone;
+  size?: "default" | "compact";
   selected?: boolean;
   leading?: ReactNode;
   onPress?: PressableProps["onPress"];
   className?: string;
-};
-
-const CHIP_CLASS_NAMES: Record<ChipTone, string> = {
-  neutral: "bg-surface-muted dark:bg-surface-muted-dark",
-  primary: "bg-action-primary dark:bg-action-primary-dark",
-  success: "bg-success dark:bg-success-dark",
-  danger: "bg-danger dark:bg-danger-dark",
-  warning: "bg-warning dark:bg-warning-dark",
+  labelClassName?: string;
 };
 
 const LABEL_CLASS_NAMES: Record<ChipTone, string> = {
   neutral: "text-text-primary dark:text-text-primary-dark",
-  primary: "text-text-on-accent dark:text-text-on-accent-dark",
-  success: "text-text-on-accent dark:text-text-on-accent-dark",
-  danger: "text-white",
-  warning: "text-white",
+  primary: "text-accent-green dark:text-accent-green-dark",
+  success: "text-success dark:text-success-dark",
+  danger: "text-danger dark:text-danger-dark",
+  warning: "text-warning dark:text-warning-dark",
 };
 
 export function Chip({
   label,
   tone = "neutral",
+  size = "default",
   selected = false,
   leading,
   onPress,
   className,
+  labelClassName,
   ...viewProps
 }: ChipProps) {
+  const accentGreen = useThemeColor("accentGreen");
+  const success = useThemeColor("success");
+  const danger = useThemeColor("danger");
+  const warning = useThemeColor("warning");
+  const neutralBorderColor = useThemeColor("borderSubtle");
+  const toneBorderColor: Record<ChipTone, string | undefined> = {
+    neutral: undefined,
+    primary: accentGreen,
+    success,
+    danger,
+    warning,
+  };
   const {
     accessibilityHint,
     accessibilityLabel,
@@ -48,6 +58,9 @@ export function Chip({
     testID,
     ...containerProps
   } = viewProps;
+  const borderColor = selected
+    ? (toneBorderColor[tone] ?? neutralBorderColor)
+    : toneBorderColor[tone];
   const pressableProps = {
     accessibilityHint,
     accessibilityLabel,
@@ -58,16 +71,32 @@ export function Chip({
     testID,
   };
   const contentProps = onPress == null ? viewProps : containerProps;
-  const contentClassName = `h-8 flex-row items-center justify-center rounded-full px-3 ${
-    CHIP_CLASS_NAMES[tone]
-  } ${selected ? "border border-border-strong dark:border-border-strong-dark" : ""} ${
-    className ?? ""
-  }`;
-  const content = (
-    <View {...contentProps} className={contentClassName} style={[{ gap: 6 }, contentProps.style]}>
+  const contentBody = (
+    <>
       {leading}
-      <Text className={`font-poppins-medium text-caption ${LABEL_CLASS_NAMES[tone]}`}>{label}</Text>
-    </View>
+      <Text
+        className={`font-poppins-medium text-caption ${LABEL_CLASS_NAMES[tone]} ${labelClassName ?? ""}`}
+      >
+        {label}
+      </Text>
+    </>
+  );
+  const content = (
+    <GlassSurface
+      {...contentProps}
+      className={className}
+      padded={false}
+      radius={999}
+      borderColor={borderColor}
+      borderWidth={selected ? 1.5 : undefined}
+      style={[
+        styles.surface,
+        size === "compact" ? styles.compactSurface : null,
+        contentProps.style,
+      ]}
+    >
+      {contentBody}
+    </GlassSurface>
   );
 
   if (onPress == null) {
@@ -80,3 +109,19 @@ export function Chip({
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  surface: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center",
+    minHeight: 32,
+    paddingHorizontal: 12,
+  },
+  compactSurface: {
+    minHeight: 28,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+});

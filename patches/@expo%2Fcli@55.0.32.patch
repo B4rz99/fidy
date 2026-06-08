@@ -1,0 +1,30 @@
+diff --git a/node_modules/@expo/cli/.bun-tag-397cd8d9d2e459c6 b/.bun-tag-397cd8d9d2e459c6
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/build/src/run/ios/appleDevice/client/LockdowndClient.js b/build/src/run/ios/appleDevice/client/LockdowndClient.js
+index 4005594a4c6a1e8d10cb2028e784d7866c0dbdaf..67c700b882f9a2040e22c887c6dbcd90712e16bc 100644
+--- a/build/src/run/ios/appleDevice/client/LockdowndClient.js
++++ b/build/src/run/ios/appleDevice/client/LockdowndClient.js
+@@ -112,7 +112,7 @@ class LockdowndClient extends _ServiceClient.ServiceClient {
+         }
+     }
+     async startSession(pairRecord) {
+-        debug(`startSession: ${pairRecord}`);
++        debug('startSession');
+         const resp = await this.protocolClient.sendMessage({
+             Request: 'StartSession',
+             HostID: pairRecord.HostID,
+diff --git a/build/src/start/server/metro/dev-server/createMessageSocket.js b/build/src/start/server/metro/dev-server/createMessageSocket.js
+index d797431bca42c7ee5d1bf70094962423c31db3d0..931608debd6638c4d7629332835bea1fdad6ab5c 100644
+--- a/build/src/start/server/metro/dev-server/createMessageSocket.js
++++ b/build/src/start/server/metro/dev-server/createMessageSocket.js
+@@ -34,7 +34,8 @@ const CLIENT_BROADCAST_ALLOWED_METHODS = new Set([
+ function createMessagesSocket(options) {
+     const clients = (0, _createSocketMap.createSocketMap)();
+     const broadcast = (0, _createSocketBroadcaster.createBroadcaster)(clients.map);
+-    const server = new (_ws()).WebSocketServer({
++    const WebSocketServer = (_ws()).WebSocketServer ?? (_ws()).Server;
++    const server = new WebSocketServer({
+         noServer: true
+     });
+     server.on('connection', (socket, req)=>{

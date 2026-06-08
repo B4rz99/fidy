@@ -31,12 +31,8 @@ export const styles = StyleSheet.create({
     textAlign: "center",
   },
   formSection: {
-    borderWidth: 1,
-    borderRadius: 8,
-    borderCurve: "continuous",
     padding: 16,
     gap: 14,
-    boxShadow: "0 12px 20px rgba(0,0,0,0.18)",
   },
   sectionTitleRow: {
     flexDirection: "row",
@@ -63,8 +59,7 @@ export const styles = StyleSheet.create({
   input: {
     minHeight: 48,
     borderWidth: 1,
-    borderRadius: 8,
-    borderCurve: "continuous",
+    borderRadius: 14,
     paddingHorizontal: 12,
     fontFamily: "Poppins_800ExtraBold",
     fontSize: 15,
@@ -84,14 +79,10 @@ export const styles = StyleSheet.create({
   },
   kindChip: {
     minHeight: 34,
-    borderWidth: 1,
-    borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 0,
+    alignItems: "center",
     justifyContent: "center",
-  },
-  kindChipSelected: {
-    borderWidth: 0,
   },
   kindChipText: {
     fontFamily: "Poppins_800ExtraBold",

@@ -1,6 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, MoneyAmountDisplay } from "@/shared/components";
+import { Button, GlassSurface, MoneyAmountDisplay } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
   KeyboardAvoidingView,
@@ -25,7 +25,6 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const card = useThemeColor("card");
 
   return (
     <KeyboardAvoidingView
@@ -41,7 +40,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
       >
         <Text style={[styles.subtitle, { color: secondary }]}>{props.form.subtitle}</Text>
 
-        <View style={[styles.amountCard, { backgroundColor: card }]}>
+        <GlassSurface nativeGlass={false} padded={false} radius={18} style={styles.amountCard}>
           <Text style={[styles.sectionEyebrow, { color: tertiary }]}>
             {t("transfers.amountLabel")}
           </Text>
@@ -58,7 +57,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
               style={styles.amountInput}
             />
           </View>
-        </View>
+        </GlassSurface>
 
         <TransferSideCard
           label={t("transfers.fromLabel")}
@@ -82,11 +81,13 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
 
         <View style={{ gap: 8 }}>
           <Text style={[styles.sectionLabel, { color: primary }]}>{t("transfers.dateLabel")}</Text>
-          <View
+          <GlassSurface
+            nativeGlass={false}
+            padded={false}
+            radius={16}
             style={[
               styles.dateCard,
               props.form.isIos ? styles.dateCardIos : styles.dateCardAndroid,
-              { backgroundColor: card },
             ]}
           >
             {props.form.isIos ? (
@@ -110,7 +111,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
                 <Text style={[styles.dateValue, { color: primary }]}>{props.form.dateLabel}</Text>
               </Pressable>
             )}
-          </View>
+          </GlassSurface>
         </View>
 
         <View style={[styles.hintCard, { backgroundColor: props.form.hintBackground }]}>

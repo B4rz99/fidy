@@ -24,7 +24,6 @@ export function CreateCategoryScreenContent({
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
-  const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
@@ -54,7 +53,7 @@ export function CreateCategoryScreenContent({
         returnKeyType="done"
         style={styles.fieldGroup}
         labelStyle={[styles.fieldLabel, { color: secondaryColor }]}
-        inputStyle={[styles.input, { backgroundColor: cardBg, color: primaryColor }]}
+        inputStyle={[styles.input, { color: primaryColor }]}
       />
 
       <FormSection title={t("categories.create.iconLabel")}>

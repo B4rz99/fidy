@@ -3,7 +3,13 @@ import type { TextInput as RNTextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { AppAuroraBackground, Button, FormTextField, SelectableChipRow } from "@/shared/components";
+import {
+  AppAuroraBackground,
+  Button,
+  FieldSurface,
+  FormTextField,
+  SelectableChipRow,
+} from "@/shared/components";
 import { KeyboardAvoidingView, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -48,7 +54,6 @@ export function AddBillFormContent({
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const isDark = useColorScheme() === "dark";
-  const borderColor = useThemeColor("borderSubtle");
   const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -81,10 +86,7 @@ export function AddBillFormContent({
             onSubmitEditing={() => amountRef.current?.focus()}
             style={styles.inputGroup}
             labelStyle={[styles.inputLabel, { color: secondaryColor }]}
-            inputStyle={[
-              styles.input,
-              { backgroundColor: pageBg, borderColor, color: primaryColor },
-            ]}
+            inputStyle={[styles.input, { color: primaryColor }]}
           />
 
           <FormTextField
@@ -97,10 +99,7 @@ export function AddBillFormContent({
             returnKeyType="done"
             style={styles.inputGroup}
             labelStyle={[styles.inputLabel, { color: secondaryColor }]}
-            inputStyle={[
-              styles.input,
-              { backgroundColor: pageBg, borderColor, color: primaryColor },
-            ]}
+            inputStyle={[styles.input, { color: primaryColor }]}
           />
 
           <View style={styles.inputGroup}>
@@ -115,7 +114,7 @@ export function AddBillFormContent({
               }))}
               value={frequency}
               onChange={handleFrequencyPress}
-              chipClassName="h-auto rounded-full px-4 py-2"
+              chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
             />
           </View>
 
@@ -127,11 +126,9 @@ export function AddBillFormContent({
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>
               {t("bills.startDate")}
             </Text>
-            <View
-              style={[styles.input, styles.dateInput, { backgroundColor: pageBg, borderColor }]}
-            >
+            <FieldSurface contentStyle={styles.dateInput}>
               <Text style={[styles.dateText, { color: primaryColor }]}>{formattedStartDate}</Text>
-            </View>
+            </FieldSurface>
           </Pressable>
 
           <View style={styles.inputGroup}>
@@ -146,7 +143,7 @@ export function AddBillFormContent({
               }))}
               value={category}
               onChange={handleCategoryPress}
-              chipClassName="h-auto rounded-full px-4 py-2"
+              chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
             />
           </View>
         </View>

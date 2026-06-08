@@ -10,7 +10,12 @@ const openUrlSignaturePattern =
   /^(\s*)public\s+override\s+func\s+application\(\s*\n\s*_ app:\s*UIApplication,/m;
 const reactNativeDelegatePattern =
   /^class\s+ReactNativeDelegate:\s+ExpoReactNativeFactoryDelegate\s*\{/m;
-const reactNativeDelegateDeclaration = "class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {";
+const reactNativeDelegateDeclaration =
+  "class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {";
+const legacyRootWindowHelperPattern =
+  /\n#if os\(iOS\) \|\| os\(tvOS\)\nprivate func makeRootWindow\(for application: UIApplication\) -> UIWindow \{\n  if let windowScene = application\.connectedScenes\.compactMap\(\{ \$0 as\? UIWindowScene \}\)\.first \{\n    return UIWindow\(windowScene: windowScene\)\n  \}\n\n  return makeLegacyRootWindow\(\)\n\}\n\n@available\(iOS, deprecated: 26\.0\)\n@available\(tvOS, deprecated: 26\.0\)\nprivate func makeLegacyRootWindow\(\) -> UIWindow \{\n  UIWindow\(frame: UIScreen\.main\.bounds\)\n\}\n#endif\n/;
+const rootWindowHelperBlockPattern =
+  /\n#if os\(iOS\) \|\| os\(tvOS\)\nprivate func makeRootWindow\(for application: UIApplication\) -> UIWindow \{[\s\S]*?\n\}\n#endif\n/;
 const rootWindowHelpers =
   "\n#if os(iOS) || os(tvOS)\n" +
   "private func makeRootWindow(for application: UIApplication) -> UIWindow {\n" +
@@ -18,12 +23,10 @@ const rootWindowHelpers =
   "    return UIWindow(windowScene: windowScene)\n" +
   "  }\n" +
   "\n" +
-  "  return makeLegacyRootWindow()\n" +
+  "  return makeSceneLessFallbackRootWindow()\n" +
   "}\n" +
   "\n" +
-  "@available(iOS, deprecated: 26.0)\n" +
-  "@available(tvOS, deprecated: 26.0)\n" +
-  "private func makeLegacyRootWindow() -> UIWindow {\n" +
+  "private func makeSceneLessFallbackRootWindow() -> UIWindow {\n" +
   "  UIWindow(frame: UIScreen.main.bounds)\n" +
   "}\n" +
   "#endif\n";
@@ -56,6 +59,12 @@ const patchOpenUrlAvailability = (source) =>
         "open URL availability annotation"
       );
 
+const patchLegacyRootWindowHelper = (source) =>
+  source.replace(legacyRootWindowHelperPattern, rootWindowHelpers);
+
+const patchRootWindowHelperBlock = (source) =>
+  source.replace(rootWindowHelperBlockPattern, rootWindowHelpers);
+
 const insertRootWindowHelpers = (source) =>
   source.includes("private func makeRootWindow(")
     ? source
@@ -76,7 +85,9 @@ const getAppDelegatePath = (modConfig) =>
 const patchAppDelegateSource = (source) => {
   const windowPatched = patchRootWindowCreation(source);
   const openUrlPatched = patchOpenUrlAvailability(windowPatched);
-  return insertRootWindowHelpers(openUrlPatched);
+  const legacyHelperPatched = patchLegacyRootWindowHelper(openUrlPatched);
+  const helperBlockPatched = patchRootWindowHelperBlock(legacyHelperPatched);
+  return insertRootWindowHelpers(helperBlockPatched);
 };
 
 const markAppDelegateIos26Compatibility = (config) =>

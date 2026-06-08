@@ -27,7 +27,7 @@ export function LocalQaProfileTools() {
         }}
         testID="qa.profile.reset-local-qa"
         variant="secondary"
-        className="h-11 rounded-2xl bg-page dark:bg-page-dark"
+        className="h-11 rounded-2xl"
       />
       <Button
         label={t("settings.localQaOpenTools")}
@@ -37,7 +37,7 @@ export function LocalQaProfileTools() {
         }}
         testID="qa.profile.open-tools"
         variant="secondary"
-        className="h-11 rounded-2xl bg-page dark:bg-page-dark"
+        className="h-11 rounded-2xl"
       />
       <Button
         label={t("settings.localQaExit")}
@@ -46,7 +46,7 @@ export function LocalQaProfileTools() {
         }}
         testID="qa.profile.exit-local-qa"
         variant="secondary"
-        className="h-11 rounded-2xl bg-page dark:bg-page-dark"
+        className="h-11 rounded-2xl"
       />
     </Card>
   );

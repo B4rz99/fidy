@@ -4,6 +4,7 @@ import { ChevronLeft, X } from "@/shared/components/icons";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { AppAuroraBackground } from "./AppAuroraBackground";
+import { GlassSurface } from "./GlassSurface";
 
 type DialogRouteFrameProps = {
   readonly children: ReactNode;
@@ -19,7 +20,6 @@ export function DialogRouteFrame({
   const router = useRouter();
   const { t } = useTranslation();
   const isDark = useColorScheme() === "dark";
-  const card = useThemeColor("card");
   const modalBackdrop = useThemeColor("modalBackdrop");
   const secondary = useThemeColor("secondary");
   const closeToOrigin = () => router.dismiss(closeDepth);
@@ -32,8 +32,10 @@ export function DialogRouteFrame({
         style={[styles.backdrop, { backgroundColor: `${modalBackdrop}66` }]}
         onPress={closeToOrigin}
       >
-        <View
-          style={[styles.dialog, { backgroundColor: card }]}
+        <GlassSurface
+          padded={false}
+          radius={24}
+          style={styles.dialog}
           onStartShouldSetResponder={() => true}
           onTouchEnd={(event) => event.stopPropagation()}
         >
@@ -62,7 +64,7 @@ export function DialogRouteFrame({
             </Pressable>
           </View>
           {children}
-        </View>
+        </GlassSurface>
       </Pressable>
     </View>
   );

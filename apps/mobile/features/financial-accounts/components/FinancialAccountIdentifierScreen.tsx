@@ -23,9 +23,7 @@ export function FinancialAccountIdentifierScreen() {
   const db = userId ? tryGetDb(userId) : null;
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentGreenLight = useThemeColor("accentGreenLight");
-  const card = useThemeColor("card");
   const [value, setValue] = useState("");
   const { isBusy, run: guardedSave } = useAsyncGuard();
 
@@ -95,8 +93,6 @@ export function FinancialAccountIdentifierScreen() {
           inputStyle={[
             styles.input,
             {
-              backgroundColor: card,
-              borderColor: borderSubtle,
               color: primary,
             },
           ]}

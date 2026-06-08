@@ -3,9 +3,9 @@ import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransferSide } from "@/features/transfers/build.public";
 import { OUTSIDE_FIDY_LABEL } from "@/features/transfers/build.public";
 import { isTransferSideSelected } from "@/features/transfers/display.public";
-import { DialogFrame, DialogPanel } from "@/shared/components";
+import { PickerDialog, PickerOptionRow } from "@/shared/components";
 import { ChevronRight, ExternalLink } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import { getKindIcon } from "./TransferForm.helpers";
@@ -26,65 +26,50 @@ export function TransferSidePicker(props: {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
   const peachLight = useThemeColor("peachLight");
 
   return (
-    <DialogFrame
+    <PickerDialog
       visible={props.visible}
       testID={TRANSFER_FORM_TEST_IDS.pickerDialog}
+      title={t("transfers.pickerTitle")}
+      subtitle={
+        <Text style={[styles.pickerSubtitle, { color: secondary }]}>
+          {t("transfers.pickerSubtitle")}
+        </Text>
+      }
+      showHandle
+      showCancel={false}
       onClose={props.onClose}
     >
-      <DialogPanel backgroundRole="card" showHandle>
-        <View style={styles.pickerHeader}>
-          <Text style={[styles.pickerTitle, { color: primary }]}>{t("transfers.pickerTitle")}</Text>
-          <Text style={[styles.pickerSubtitle, { color: secondary }]}>
-            {t("transfers.pickerSubtitle")}
-          </Text>
-        </View>
+      {props.accounts.map((account) => {
+        const kind = readFinancialAccountKind(account.kind);
+        const balance = props.balances[account.id] ?? 0;
+        const isSelected = isTransferSideSelected(props.currentSide, account.id);
+        const Icon = getKindIcon(account.kind);
 
-        <View style={{ gap: 10 }}>
-          {props.accounts.map((account) => {
-            const kind = readFinancialAccountKind(account.kind);
-            const balance = props.balances[account.id] ?? 0;
-            const isSelected = isTransferSideSelected(props.currentSide, account.id);
-            const Icon = getKindIcon(account.kind);
-
-            return (
-              <Pressable
-                key={account.id}
-                testID={`${TRANSFER_FORM_TEST_IDS.pickerAccountPrefix}${account.id}`}
-                onPress={() =>
-                  props.target &&
-                  props.onSelect(props.target, { kind: "account", accountId: account.id })
-                }
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel={account.name}
-                accessibilityHint={t(`financialAccounts.kinds.${kind}`)}
-                style={[
-                  styles.sideCard,
-                  {
-                    borderColor: isSelected ? accentGreen : borderSubtle,
-                    backgroundColor: isSelected ? accentGreenLight : card,
-                  },
-                ]}
-              >
-                <View style={[styles.sideIconWrap, { backgroundColor: peachLight }]}>
-                  <Icon size={18} color={secondary} />
-                </View>
-
-                <View style={styles.sideTextWrap}>
-                  <Text style={[styles.sideTitle, { color: primary }]}>{account.name}</Text>
-                  <Text style={[styles.sideSubtitle, { color: secondary }]}>
-                    {t(`financialAccounts.kinds.${kind}`)}
-                  </Text>
-                </View>
-
+        return (
+          <PickerOptionRow
+            key={account.id}
+            testID={`${TRANSFER_FORM_TEST_IDS.pickerAccountPrefix}${account.id}`}
+            onPress={() =>
+              props.target &&
+              props.onSelect(props.target, { kind: "account", accountId: account.id })
+            }
+            accessibilityLabel={account.name}
+            accessibilityHint={t(`financialAccounts.kinds.${kind}`)}
+            selected={isSelected}
+            leading={
+              <View style={[styles.sideIconWrap, { backgroundColor: peachLight }]}>
+                <Icon size={18} color={secondary} />
+              </View>
+            }
+            title={account.name}
+            subtitle={t(`financialAccounts.kinds.${kind}`)}
+            trailing={
+              <View className="flex-row items-center" style={{ gap: 8 }}>
                 <Text
                   style={[
                     styles.sideTitle,
@@ -95,39 +80,29 @@ export function TransferSidePicker(props: {
                 >
                   {formatMoney(balance)}
                 </Text>
-
                 <ChevronRight size={18} color={tertiary} />
-              </Pressable>
-            );
-          })}
-
-          <Pressable
-            testID={TRANSFER_FORM_TEST_IDS.pickerOutsideFidy}
-            onPress={() =>
-              props.target &&
-              props.onSelect(props.target, { kind: "external", label: OUTSIDE_FIDY_LABEL })
+              </View>
             }
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel={t("transfers.outsideFidy")}
-            accessibilityHint={t("transfers.outsideFidyDescription")}
-            style={[styles.sideCard, { backgroundColor: peachLight, borderColor: peachLight }]}
-          >
-            <View style={[styles.sideIconWrap, { backgroundColor: "#FFFFFFAA" }]}>
-              <ExternalLink size={18} color={accentGreen} />
-            </View>
+          />
+        );
+      })}
 
-            <View style={styles.sideTextWrap}>
-              <Text style={[styles.sideTitle, { color: primary }]}>
-                {t("transfers.outsideFidy")}
-              </Text>
-              <Text style={[styles.sideSubtitle, { color: secondary }]}>
-                {t("transfers.outsideFidyDescription")}
-              </Text>
-            </View>
-          </Pressable>
-        </View>
-      </DialogPanel>
-    </DialogFrame>
+      <PickerOptionRow
+        testID={TRANSFER_FORM_TEST_IDS.pickerOutsideFidy}
+        onPress={() =>
+          props.target &&
+          props.onSelect(props.target, { kind: "external", label: OUTSIDE_FIDY_LABEL })
+        }
+        accessibilityLabel={t("transfers.outsideFidy")}
+        accessibilityHint={t("transfers.outsideFidyDescription")}
+        leading={
+          <View style={[styles.sideIconWrap, { backgroundColor: peachLight }]}>
+            <ExternalLink size={18} color={accentGreen} />
+          </View>
+        }
+        title={t("transfers.outsideFidy")}
+        subtitle={t("transfers.outsideFidyDescription")}
+      />
+    </PickerDialog>
   );
 }

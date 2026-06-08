@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import type { PressableProps, ViewProps } from "react-native";
 import { X } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { GlassSurface } from "./GlassSurface";
 import { IconActionButton } from "./IconActionButton";
 
 type CalloutTone = "neutral" | "success" | "danger" | "warning";
@@ -28,14 +29,6 @@ type CalloutProps = BaseCalloutProps &
         dismissAccessibilityLabel?: never;
       }
   );
-
-const CALLOUT_CLASS_NAMES: Record<CalloutTone, string> = {
-  neutral:
-    "bg-surface dark:bg-surface-dark border border-border-subtle dark:border-border-subtle-dark",
-  success: "bg-accent-green-light dark:bg-accent-green-light-dark",
-  danger: "bg-accent-red-light dark:bg-accent-red-light-dark",
-  warning: "bg-surface-muted dark:bg-surface-muted-dark",
-};
 
 const CALLOUT_TITLE_CLASS_NAMES: Record<CalloutTone, string> = {
   neutral: "text-text-primary dark:text-text-primary-dark",
@@ -64,6 +57,16 @@ export function Callout({
   ...viewProps
 }: CalloutProps) {
   const secondaryColor = useThemeColor("secondary");
+  const neutralBorderColor = useThemeColor("borderSubtle");
+  const successBorderColor = useThemeColor("success");
+  const dangerBorderColor = useThemeColor("danger");
+  const warningBorderColor = useThemeColor("warning");
+  const toneBorderColor: Record<CalloutTone, string> = {
+    neutral: neutralBorderColor,
+    success: successBorderColor,
+    danger: dangerBorderColor,
+    warning: warningBorderColor,
+  };
   const {
     accessibilityHint,
     accessibilityLabel,
@@ -91,12 +94,13 @@ export function Callout({
     : undefined;
   const contentProps = onPress == null ? viewProps : containerProps;
   const content = (
-    <View
+    <GlassSurface
       {...contentProps}
-      className={`flex-row items-start rounded-chart px-4 py-4 ${CALLOUT_CLASS_NAMES[tone]} ${
-        className ?? ""
-      }`}
-      style={[{ gap: 12 }, contentProps.style]}
+      className={className}
+      padded={false}
+      radius={12}
+      borderColor={toneBorderColor[tone]}
+      style={[styles.surface, contentProps.style]}
     >
       {icon}
       <View className="flex-1" style={{ gap: 2 }}>
@@ -120,7 +124,7 @@ export function Callout({
           size="size-8"
         />
       ) : null}
-    </View>
+    </GlassSurface>
   );
 
   if (onPress == null) {
@@ -133,3 +137,13 @@ export function Callout({
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  surface: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+});

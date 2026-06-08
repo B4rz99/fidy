@@ -1,4 +1,4 @@
-import { Button } from "@/shared/components";
+import { Button, GlassSurface } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { GoalProjection, Milestone } from "../../lib/derive";
@@ -9,12 +9,11 @@ function GoalRecommendationCard(props: { readonly recommendationText: string }) 
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
-  const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
   return (
-    <View style={[styles.recommendationCard, { backgroundColor: cardBg }]}>
+    <GlassSurface padded={false} style={styles.recommendationCard}>
       <View style={[styles.recommendationIcon, { backgroundColor: accentGreenLight }]}>
         <Text style={{ color: accentGreen, fontSize: 18 }}>{"*"}</Text>
       </View>
@@ -26,7 +25,7 @@ function GoalRecommendationCard(props: { readonly recommendationText: string }) 
           {props.recommendationText}
         </Text>
       </View>
-    </View>
+    </GlassSurface>
   );
 }
 

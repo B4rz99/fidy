@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { GlassSurface } from "./GlassSurface";
 
 type FormSectionProps = {
   readonly children: ReactNode;
@@ -12,21 +13,15 @@ type FormSectionProps = {
 
 export function FormSection({ children, optionalLabel, style, title }: FormSectionProps) {
   const secondary = useThemeColor("secondary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
 
   return (
-    <View
+    <GlassSurface
+      nativeGlass={false}
+      radius={8}
       style={[
         {
-          borderWidth: 1,
-          borderRadius: 8,
-          borderCurve: "continuous" as const,
           padding: 16,
           gap: 14,
-          backgroundColor: card,
-          borderColor: borderSubtle,
-          boxShadow: "0 12px 20px rgba(0,0,0,0.18)",
         },
         style,
       ]}
@@ -62,6 +57,6 @@ export function FormSection({ children, optionalLabel, style, title }: FormSecti
         ) : null}
       </View>
       {children}
-    </View>
+    </GlassSurface>
   );
 }

@@ -42,14 +42,12 @@ export const styles = StyleSheet.create({
     fontSize: 11,
   },
   cardButton: {
-    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 6,
   },
   scenarioButton: {
-    borderRadius: 18,
     gap: 4,
   },
   cardTitle: {
@@ -61,7 +59,6 @@ export const styles = StyleSheet.create({
     fontSize: 12,
   },
   eventCard: {
-    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { GlassSurface } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./FinancialAccountDetailsScreen.styles";
@@ -11,12 +12,13 @@ export function FinancialAccountDetailSection({
   readonly title: string;
 }) {
   const primary = useThemeColor("primary");
-  const card = useThemeColor("card");
 
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: primary }]}>{title}</Text>
-      <View style={[styles.card, { backgroundColor: card }]}>{children}</View>
+      <GlassSurface padded={false} radius={18} style={styles.card}>
+        {children}
+      </GlassSurface>
     </View>
   );
 }

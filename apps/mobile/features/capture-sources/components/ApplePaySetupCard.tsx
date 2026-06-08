@@ -1,36 +1,30 @@
 import { useMemo } from "react";
-import { Card } from "@/shared/components";
+import { Card, GlassSurface } from "@/shared/components";
 import { MessageSquare, Smartphone } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useCaptureSourcesStore } from "../store";
 
-const StepList = ({
-  steps,
-  circleBg,
-  circleText,
-}: {
-  steps: readonly string[];
-  circleBg: string;
-  circleText: string;
-}) => (
+const StepList = ({ steps, circleColor }: { steps: readonly string[]; circleColor: string }) => (
   <View style={{ gap: 10 }}>
     {steps.map((text, index) => (
       <View key={text} className="flex-row items-start" style={{ gap: 10 }}>
-        <View
+        <GlassSurface
+          nativeGlass={false}
+          padded={false}
+          radius={12}
+          borderColor={circleColor}
           style={{
             width: 24,
             height: 24,
-            borderRadius: 12,
-            backgroundColor: circleBg,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Text className="font-poppins-bold text-caption" style={{ color: circleText }}>
+          <Text className="font-poppins-bold text-caption" style={{ color: circleColor }}>
             {index + 1}
           </Text>
-        </View>
+        </GlassSurface>
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark flex-1 leading-relaxed">
           {text}
         </Text>
@@ -64,10 +58,7 @@ export const ApplePaySetupCard = () => {
 
   const secondaryColor = useThemeColor("secondary");
   const greenColor = useThemeColor("accentGreen");
-  const greenLightBg = useThemeColor("accentGreenLight");
-  const peachLightBg = useThemeColor("peachLight");
   const primaryColor = useThemeColor("primary");
-  const tertiaryColor = useThemeColor("tertiary");
 
   return (
     <View style={{ gap: 16 }}>
@@ -81,28 +72,32 @@ export const ApplePaySetupCard = () => {
             </Text>
           </View>
 
-          <View
-            className="rounded-full px-2 py-0.5"
+          <GlassSurface
+            nativeGlass={false}
+            padded={false}
+            radius={999}
+            borderColor={isApplePaySetupComplete ? greenColor : primaryColor}
             style={{
-              backgroundColor: isApplePaySetupComplete ? greenLightBg : peachLightBg,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
             }}
           >
             <Text
               className="font-poppins-semibold text-caption"
               style={{
-                color: isApplePaySetupComplete ? greenColor : tertiaryColor,
+                color: isApplePaySetupComplete ? greenColor : primaryColor,
               }}
             >
               {isApplePaySetupComplete ? t("applePay.connected") : t("applePay.notSetUp")}
             </Text>
-          </View>
+          </GlassSurface>
         </View>
 
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
           {t("applePay.description")}
         </Text>
 
-        <StepList steps={applePaySteps} circleBg={peachLightBg} circleText={primaryColor} />
+        <StepList steps={applePaySteps} circleColor={primaryColor} />
       </Card>
 
       {/* SMS Detection */}
@@ -118,7 +113,7 @@ export const ApplePaySetupCard = () => {
           {t("smsDetection.description")}
         </Text>
 
-        <StepList steps={smsSteps} circleBg={greenLightBg} circleText={greenColor} />
+        <StepList steps={smsSteps} circleColor={greenColor} />
       </Card>
     </View>
   );

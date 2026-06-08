@@ -6,9 +6,7 @@ export const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    borderRadius: 20,
     borderWidth: 1,
-    padding: 16,
     gap: 14,
   },
   metaLabel: {
@@ -63,10 +61,7 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   transferTip: {
-    borderRadius: 18,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,

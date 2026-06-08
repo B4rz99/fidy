@@ -12,7 +12,6 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "@/shared/
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
 import { shouldRefreshBudgetSuggestions } from "./BudgetSetupStep.helpers";
@@ -106,10 +105,6 @@ export function BudgetSetupStep() {
                     <View>
                       <Text style={[styles.categoryName, { color: primaryColor }]}>
                         {categoryLabel}
-                      </Text>
-                      <Text className="font-poppins-medium text-[10px] text-text-secondary dark:text-text-secondary-dark">
-                        {formatMoney(suggestion.suggestedAmount)}{" "}
-                        {t("onboarding.budgetSetup.basedOnSpending").toLowerCase()}
                       </Text>
                     </View>
                   </View>

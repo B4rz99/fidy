@@ -12,6 +12,7 @@ const financeTabSource = readSource("../../app/(tabs)/(finance)/index.tsx");
 const dayDetailSource = readSource("../../app/day-detail.tsx");
 const rootLayoutSource = readSource("../../app/_layout.tsx");
 const rootStackRoutesSource = readSource("../../shared/navigation/root-stack-routes.ts");
+const nativeHeaderHeightSource = readSource("../../shared/navigation/use-native-header-height.ts");
 const monthBoardSource = readSource("../../features/calendar/components/CalendarMonthBoard.tsx");
 const gridSource = readSource("../../features/calendar/components/CalendarGrid.tsx");
 const dayCellSource = readSource("../../features/calendar/components/CalendarDayCell.tsx");
@@ -97,10 +98,14 @@ describe("calendar screen", () => {
   });
 
   test("finance calendar starts after the native header and leaves room for the tab bar", () => {
-    expect(financeTabSource).toContain("useSafeAreaInsets");
+    expect(financeTabSource).toContain("useNativeHeaderHeight");
+    expect(nativeHeaderHeightSource).toContain("HeaderHeightContext");
+    expect(nativeHeaderHeightSource).toContain("use(HeaderHeightContext) ?? 0");
+    expect(nativeHeaderHeightSource).not.toContain("useHeaderHeight");
     expect(financeTabSource).toContain("FINANCE_NATIVE_TAB_BAR_OFFSET = 72");
-    expect(financeTabSource).toContain("FINANCE_IOS_HEADER_CONTENT_HEIGHT = 44");
-    expect(financeTabSource).toContain("insets.top + FINANCE_IOS_HEADER_CONTENT_HEIGHT");
+    expect(financeTabSource).toContain("nativeHeaderHeight");
+    expect(financeTabSource).toContain("nativeHeaderHeight + insets.top");
+    expect(billsCalendarSource).toContain("nativeHeaderHeight + insets.top");
     expect(financeTabSource).toContain(
       'Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE'
     );

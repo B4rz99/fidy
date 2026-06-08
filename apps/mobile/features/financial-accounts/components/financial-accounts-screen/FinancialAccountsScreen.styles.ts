@@ -48,15 +48,11 @@ export const styles = StyleSheet.create({
     fontSize: 12,
   },
   accountCard: {
-    borderWidth: 1,
-    borderRadius: 8,
-    borderCurve: "continuous",
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    boxShadow: "0 12px 20px rgba(0,0,0,0.18)",
   },
   accountIcon: {
     width: 40,

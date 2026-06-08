@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { Button, Callout, EmptyState as SharedEmptyState, Row } from "@/shared/components";
+import {
+  Button,
+  Callout,
+  EmptyState as SharedEmptyState,
+  GlassSurface,
+  Row,
+} from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
@@ -73,26 +79,29 @@ export function ActionButton({
 }
 
 export function DetailRow({ label, title, subtitle, icon, emphasis = "neutral" }: DetailRowProps) {
+  const accentGreen = useThemeColor("accentGreen");
+
   return (
-    <Row
-      title={
-        <View style={{ gap: 2 }}>
-          <Text className="font-poppins-bold text-[10px] uppercase text-text-secondary dark:text-text-secondary-dark">
-            {label}
-          </Text>
-          <Text className="font-poppins-semibold text-label text-text-primary dark:text-text-primary-dark">
-            {title}
-          </Text>
-        </View>
-      }
-      subtitle={subtitle}
-      leading={<View className="w-9 items-center">{icon}</View>}
-      className={`rounded-[18px] border border-border-subtle dark:border-border-subtle-dark ${
-        emphasis === "green"
-          ? "bg-accent-green-light dark:bg-accent-green-light-dark"
-          : "bg-surface dark:bg-surface-dark"
-      }`}
-      divider={false}
-    />
+    <GlassSurface
+      padded={false}
+      radius={18}
+      borderColor={emphasis === "green" ? accentGreen : undefined}
+    >
+      <Row
+        title={
+          <View style={{ gap: 2 }}>
+            <Text className="font-poppins-bold text-[10px] uppercase text-text-secondary dark:text-text-secondary-dark">
+              {label}
+            </Text>
+            <Text className="font-poppins-semibold text-label text-text-primary dark:text-text-primary-dark">
+              {title}
+            </Text>
+          </View>
+        }
+        subtitle={subtitle}
+        leading={<View className="w-9 items-center">{icon}</View>}
+        divider={false}
+      />
+    </GlassSurface>
   );
 }

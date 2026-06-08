@@ -7,7 +7,7 @@ import {
   useSuggestionSelection,
 } from "@/features/budget/hooks.public";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { FormTextField } from "@/shared/components";
+import { AppAuroraBackground, FormTextField } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -19,17 +19,14 @@ import {
   View,
 } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import {
-  formatMoney,
-  trackBudgetSuggestionAccepted,
-  trackBudgetSuggestionRejected,
-} from "@/shared/lib";
+import { trackBudgetSuggestionAccepted, trackBudgetSuggestionRejected } from "@/shared/lib";
 
 export default function AutoSuggestBudgetsScreen() {
   const { back } = useRouter();
   const { t, locale } = useTranslation();
+  const isDark = useColorScheme() === "dark";
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -39,12 +36,10 @@ export default function AutoSuggestBudgetsScreen() {
   const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
     useSuggestionSelection(autoSuggestions);
 
-  const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-  const pageBg = useThemeColor("page");
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
@@ -70,9 +65,10 @@ export default function AutoSuggestBudgetsScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: cardBg }]}
+      style={styles.flex}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <AppAuroraBackground isDark={isDark} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
@@ -102,10 +98,6 @@ export default function AutoSuggestBudgetsScreen() {
                     <Text style={[styles.categoryName, { color: primaryColor }]}>
                       {categoryLabel}
                     </Text>
-                    <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
-                      {formatMoney(suggestion.suggestedAmount)}{" "}
-                      {t("search.lastMonth").toLowerCase()}
-                    </Text>
                   </View>
                 </View>
                 <View style={styles.rowRight}>
@@ -116,7 +108,6 @@ export default function AutoSuggestBudgetsScreen() {
                     inputStyle={[
                       styles.amountInput,
                       {
-                        backgroundColor: pageBg,
                         color: isSelected ? primaryColor : secondaryColor,
                         borderColor,
                         opacity: isSelected ? 1 : 0.4,
@@ -206,10 +197,6 @@ const styles = StyleSheet.create({
   categoryName: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
-  },
-  lastMonthLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 10,
   },
   amountInput: {
     fontFamily: "Poppins_600SemiBold",

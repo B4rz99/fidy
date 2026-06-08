@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { X } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { FieldSurface } from "./FieldSurface";
 import { IconActionButton } from "./IconActionButton";
 
 type FieldButtonProps = Omit<ViewProps, "children"> & {
@@ -13,6 +14,7 @@ type FieldButtonProps = Omit<ViewProps, "children"> & {
   readonly trailing?: ReactNode;
   readonly onPress: PressableProps["onPress"];
   readonly onClear?: PressableProps["onPress"];
+  readonly borderColor?: string;
   readonly clearAccessibilityLabel?: string;
   readonly active?: boolean;
   readonly disabled?: boolean;
@@ -20,6 +22,41 @@ type FieldButtonProps = Omit<ViewProps, "children"> & {
   readonly buttonStyle?: StyleProp<ViewStyle>;
   readonly valueClassName?: string;
 };
+
+function getFieldButtonContentStyle(buttonStyle: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(buttonStyle);
+  if (!flattened) return null;
+
+  return {
+    height: flattened.height,
+    minHeight: flattened.minHeight,
+    padding: flattened.padding,
+    paddingBottom: flattened.paddingBottom,
+    paddingHorizontal: flattened.paddingHorizontal,
+    paddingLeft: flattened.paddingLeft,
+    paddingRight: flattened.paddingRight,
+    paddingTop: flattened.paddingTop,
+    paddingVertical: flattened.paddingVertical,
+  };
+}
+
+function getFieldButtonContainerStyle(buttonStyle: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(buttonStyle);
+  if (!flattened) return null;
+
+  return {
+    alignSelf: flattened.alignSelf,
+    flex: flattened.flex,
+    margin: flattened.margin,
+    marginBottom: flattened.marginBottom,
+    marginHorizontal: flattened.marginHorizontal,
+    marginLeft: flattened.marginLeft,
+    marginRight: flattened.marginRight,
+    marginTop: flattened.marginTop,
+    marginVertical: flattened.marginVertical,
+    width: flattened.width,
+  };
+}
 
 export function FieldButton({
   label,
@@ -31,6 +68,7 @@ export function FieldButton({
   onClear,
   clearAccessibilityLabel,
   active = false,
+  borderColor,
   disabled = false,
   className,
   buttonStyle,
@@ -48,8 +86,8 @@ export function FieldButton({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const card = useThemeColor("card");
+  const contentStyle = getFieldButtonContentStyle(buttonStyle);
+  const containerStyle = getFieldButtonContainerStyle(buttonStyle);
   const valueNode =
     typeof value === "string" ? (
       <Text
@@ -88,29 +126,29 @@ export function FieldButton({
         accessible={accessible}
         importantForAccessibility={importantForAccessibility}
         testID={testID}
-        className={`min-h-10 flex-row items-center rounded-lg px-3 ${disabled ? "opacity-60" : ""}`}
-        style={[
-          {
-            backgroundColor: card,
-            borderColor: active ? primary : borderSubtle,
-            borderWidth: 1,
-            gap: 10,
-          },
-          buttonStyle,
-        ]}
+        className={`${disabled ? "opacity-60" : ""}`}
+        style={{ minHeight: 40 }}
       >
-        {leading}
-        <View className="flex-1">{valueNode}</View>
-        {handleClear ? (
-          <IconActionButton
-            accessibilityLabel={clearAccessibilityLabel ?? t("common.clear")}
-            icon={<X size={14} color={tertiary} />}
-            onPress={handleClear}
-            size="size-7"
-          />
-        ) : (
-          trailing
-        )}
+        <FieldSurface
+          size="button"
+          radius={8}
+          borderColor={borderColor ?? (active ? primary : undefined)}
+          style={containerStyle}
+          contentStyle={contentStyle}
+        >
+          {leading}
+          <View className="flex-1">{valueNode}</View>
+          {handleClear ? (
+            <IconActionButton
+              accessibilityLabel={clearAccessibilityLabel ?? t("common.clear")}
+              icon={<X size={14} color={tertiary} />}
+              onPress={handleClear}
+              size="size-7"
+            />
+          ) : (
+            trailing
+          )}
+        </FieldSurface>
       </Pressable>
     </View>
   );

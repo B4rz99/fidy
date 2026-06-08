@@ -20,7 +20,6 @@ export const TypeToggle = ({ value, onChange }: TypeToggleProps) => {
 
   return (
     <SegmentedControl
-      className="w-56"
       options={[
         { value: "expense", label: t("transactions.expense") },
         { value: "income", label: t("transactions.income") },
@@ -28,6 +27,7 @@ export const TypeToggle = ({ value, onChange }: TypeToggleProps) => {
       value={value}
       onChange={handlePress}
       getOptionTone={(type) => (type === "expense" ? "danger" : "success")}
+      style={{ width: 224 }}
     />
   );
 };

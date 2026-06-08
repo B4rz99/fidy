@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScrollView } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { ScrollView, View } from "@/shared/components/rn";
+import { useColorScheme, useThemeColor } from "@/shared/hooks";
+import { AppAuroraBackground } from "./AppAuroraBackground";
 
 type FormScreenProps = {
   readonly children: ReactNode;
@@ -20,26 +21,30 @@ export function FormScreen({
   topPadding = 0,
 }: FormScreenProps) {
   const { bottom } = useSafeAreaInsets();
+  const isDark = useColorScheme() === "dark";
   const page = useThemeColor("page");
 
   return (
-    <ScrollView
-      style={{ backgroundColor: page }}
-      contentContainerStyle={[
-        {
-          paddingHorizontal: horizontalPadding,
-          paddingTop: topPadding,
-          gap: 12,
-        },
-        contentContainerStyle,
-        { paddingBottom: bottom + 32 },
-      ]}
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardDismissMode={keyboardDismissMode}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      {children}
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: page }}>
+      <AppAuroraBackground isDark={isDark} />
+      <ScrollView
+        style={{ backgroundColor: "transparent" }}
+        contentContainerStyle={[
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: topPadding,
+            gap: 12,
+          },
+          contentContainerStyle,
+          { paddingBottom: bottom + 32 },
+        ]}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode={keyboardDismissMode}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
+    </View>
   );
 }

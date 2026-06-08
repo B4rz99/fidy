@@ -20,7 +20,6 @@ type SearchResultsListProps = Pick<
   | "handleTogglePanel"
   | "inputRef"
   | "inputText"
-  | "peachLight"
   | "primary"
   | "results"
   | "secondary"
@@ -40,7 +39,6 @@ export function SearchResultsList({
   handleTogglePanel,
   inputRef,
   inputText,
-  peachLight,
   placeholder,
   primary,
   results,
@@ -91,7 +89,6 @@ export function SearchResultsList({
           handleTogglePanel={handleTogglePanel}
           inputRef={inputRef}
           inputText={inputText}
-          peachLight={peachLight}
           placeholder={placeholder}
           primary={primary}
           secondary={secondary}

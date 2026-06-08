@@ -1,3 +1,4 @@
+import { GlassSurface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -11,13 +12,11 @@ export function IncomeExpenseStrip({ incomeExpense }: IncomeExpenseStripProps) {
   const { t } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const cardBg = useThemeColor("card");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const borderSubtle = useThemeColor("borderSubtle");
 
   return (
-    <View style={[styles.strip, { backgroundColor: cardBg, borderColor: borderSubtle }]}>
+    <GlassSurface padded={false} style={styles.strip}>
       <View style={styles.legendRow}>
         <Text style={[styles.legendLabel, { color: secondaryColor }]}>
           {t("analytics.incomeLabel")}
@@ -47,15 +46,12 @@ export function IncomeExpenseStrip({ incomeExpense }: IncomeExpenseStripProps) {
           {`${incomeExpense.netIsPositive ? "+" : "-"}${formatMoney(Math.abs(incomeExpense.net))}`}
         </Text>
       </View>
-    </View>
+    </GlassSurface>
   );
 }
 
 const styles = StyleSheet.create({
   strip: {
-    borderRadius: 16,
-    borderCurve: "continuous",
-    borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
     gap: 7,
   },

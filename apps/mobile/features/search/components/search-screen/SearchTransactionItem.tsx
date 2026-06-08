@@ -2,7 +2,8 @@ import { memo } from "react";
 import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
 import { getTransferActivityCopy } from "@/features/transfers/display.public";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Text, View } from "@/shared/components/rn";
+import { GlassSurface } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, formatSignedMoney } from "@/shared/lib";
@@ -41,10 +42,7 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
         </View>
       ) : null}
       <View className="px-4 pb-2">
-        <View
-          testID="resultCard"
-          className="flex-row items-center rounded-lg bg-card/90 p-3 dark:bg-card-dark/90"
-        >
+        <GlassSurface testID="resultCard" padded={false} radius={8} style={styles.resultCard}>
           <View
             className="size-10 items-center justify-center rounded-icon"
             style={{
@@ -78,8 +76,16 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
           >
             {tx ? formatSignedMoney(tx.amount, tx.type) : formatMoney(transfer?.amount ?? 0)}
           </Text>
-        </View>
+        </GlassSurface>
       </View>
     </View>
   );
+});
+
+const styles = StyleSheet.create({
+  resultCard: {
+    alignItems: "center",
+    flexDirection: "row",
+    padding: 12,
+  },
 });

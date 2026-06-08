@@ -1,5 +1,6 @@
 import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useCallback } from "react";
+import { View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { hasActiveFilters } from "../lib/filters";
 import type { SearchFilters } from "../lib/types";
@@ -74,10 +75,15 @@ export const FilterChipRow = ({
       data={chips}
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+      contentContainerStyle={{ paddingHorizontal: 16 }}
       className="pt-2 pb-3"
+      ItemSeparatorComponent={FilterChipSeparator}
       keyExtractor={(chip) => chip.key}
       renderItem={renderChip}
     />
   );
 };
+
+function FilterChipSeparator() {
+  return <View style={{ width: 8 }} />;
+}

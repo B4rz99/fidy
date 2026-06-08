@@ -87,7 +87,6 @@ export default function EnableNotificationsDialogRoute() {
   return (
     <DialogRouteFrame>
       <ScrollView
-        className="bg-card dark:bg-card-dark"
         contentContainerStyle={{
           padding: 24,
           paddingBottom: 24,

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Text, View } from "@/shared/components/rn";
+import { GlassSurface } from "./GlassSurface";
 
 type SettingsSectionProps = {
   label: string;
@@ -15,7 +16,7 @@ export function SettingsSection({ label, children }: SettingsSectionProps) {
       >
         {label}
       </Text>
-      <View className="bg-card dark:bg-card-dark rounded-2xl overflow-hidden">{children}</View>
+      <GlassSurface padded={false}>{children}</GlassSurface>
     </View>
   );
 }
