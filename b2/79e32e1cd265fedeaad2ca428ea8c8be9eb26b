@@ -1,0 +1,19 @@
+apps/mobile/shared/components/TransactionRow.tsx
+  s_c5de1adbad9fac::t_7ba1dc375fc362 167
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "b279e32e1cd265fedeaad2ca428ea8c8be9eb26b",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
