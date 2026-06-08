@@ -5,8 +5,10 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 16,
   },
-  card: {
+  cardSurface: {
     borderWidth: 1,
+  },
+  cardContent: {
     gap: 14,
   },
   metaLabel: {
@@ -60,8 +62,10 @@ export const styles = StyleSheet.create({
   actionColumn: {
     gap: 10,
   },
-  transferTip: {
+  transferTipSurface: {
     borderWidth: 1,
+  },
+  transferTipContent: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,

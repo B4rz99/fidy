@@ -1,4 +1,4 @@
-import { GlassSurface } from "@/shared/components";
+import { Card } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -16,7 +16,7 @@ export function IncomeExpenseStrip({ incomeExpense }: IncomeExpenseStripProps) {
   const accentRed = useThemeColor("accentRed");
 
   return (
-    <GlassSurface padded={false} style={styles.strip}>
+    <Card padded={false} contentStyle={styles.strip}>
       <View style={styles.legendRow}>
         <Text style={[styles.legendLabel, { color: secondaryColor }]}>
           {t("analytics.incomeLabel")}
@@ -46,7 +46,7 @@ export function IncomeExpenseStrip({ incomeExpense }: IncomeExpenseStripProps) {
           {`${incomeExpense.netIsPositive ? "+" : "-"}${formatMoney(Math.abs(incomeExpense.net))}`}
         </Text>
       </View>
-    </GlassSurface>
+    </Card>
   );
 }
 

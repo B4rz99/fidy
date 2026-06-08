@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import type { StyleProp, ViewStyle } from "react-native";
-import { Modal, Pressable, Text, View } from "@/shared/components/rn";
+import type { PressableProps, StyleProp, ViewStyle } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { Button } from "./Button";
 import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
 
@@ -109,3 +110,46 @@ export function DialogCancelButton({ onPress }: { readonly onPress: () => void }
     </GlassPressable>
   );
 }
+
+type DialogActionStackProps = {
+  readonly children: ReactNode;
+  readonly style?: StyleProp<ViewStyle>;
+};
+
+type DialogActionButtonProps = Pick<
+  PressableProps,
+  "accessibilityLabel" | "disabled" | "onPress"
+> & {
+  readonly label: string;
+  readonly loading?: boolean;
+  readonly variant?: "primary" | "secondary" | "danger";
+};
+
+export function DialogActionStack({ children, style }: DialogActionStackProps) {
+  return <View style={[styles.actionStack, style]}>{children}</View>;
+}
+
+export function DialogActionButton({
+  label,
+  loading,
+  variant = "primary",
+  ...pressableProps
+}: DialogActionButtonProps) {
+  return (
+    <Button
+      {...pressableProps}
+      label={label}
+      loading={loading}
+      variant={variant === "danger" ? "danger" : variant}
+      className="w-full"
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  actionStack: {
+    width: "100%",
+    gap: 12,
+    marginTop: 8,
+  },
+});

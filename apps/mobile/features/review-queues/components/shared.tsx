@@ -1,11 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  Button,
-  Callout,
-  EmptyState as SharedEmptyState,
-  GlassSurface,
-  Row,
-} from "@/shared/components";
+import { Button, Callout, Card, EmptyState as SharedEmptyState, Row } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
@@ -82,10 +76,10 @@ export function DetailRow({ label, title, subtitle, icon, emphasis = "neutral" }
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <GlassSurface
+    <Card
       padded={false}
       radius={18}
-      borderColor={emphasis === "green" ? accentGreen : undefined}
+      surfaceStyle={emphasis === "green" ? { borderColor: accentGreen } : undefined}
     >
       <Row
         title={
@@ -102,6 +96,6 @@ export function DetailRow({ label, title, subtitle, icon, emphasis = "neutral" }
         leading={<View className="w-9 items-center">{icon}</View>}
         divider={false}
       />
-    </GlassSurface>
+    </Card>
   );
 }

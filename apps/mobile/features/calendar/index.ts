@@ -1,3 +1,4 @@
+export { CalendarBillRow } from "./components/CalendarBillRow";
 export { CalendarMonthBoard } from "./components/CalendarMonthBoard";
 export { CalendarGrid } from "./components/CalendarGrid";
 export { MonthNavigator } from "./components/MonthNavigator";

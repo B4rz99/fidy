@@ -9,14 +9,17 @@ import {
   unmarkBillPaid,
   useCalendarStore,
 } from "@/features/calendar/routes.public";
-import type { BillPayment } from "@/features/calendar/ui.public";
+import {
+  CalendarBillRow,
+  type BillPayment,
+  type CalendarBillOccurrence,
+} from "@/features/calendar/ui.public";
 import { AppAuroraBackground } from "@/shared/components";
-import { Check, Pencil, Trash2 } from "@/shared/components/icons";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Alert, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { captureError, formatMoney, parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
+import { captureError, parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
 import { requireBillId } from "@/shared/types/assertions";
 import type { BillId } from "@/shared/types/branded";
 
@@ -45,14 +48,8 @@ export default function DayDetailScreen() {
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
 
-  const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const pageBg = useThemeColor("page");
-  const borderColor = useThemeColor("borderSubtle");
-  const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-  const accentRed = useThemeColor("accentRed");
-  const peachBg = useThemeColor("peachLight");
 
   const dateObj = parseDayDetailDateParam(date);
   const dueDateStr = toIsoDate(dateObj);
@@ -117,59 +114,24 @@ export default function DayDetailScreen() {
             {billsForDate.map((bill) => {
               const billId = requireBillId(bill.id);
               const paid = isPaymentPaid(billId);
+              const occurrence: CalendarBillOccurrence = {
+                bill,
+                date: dateObj,
+                dueDate: dueDateStr,
+                isPaid: paid != null,
+              };
               return (
-                <View
+                <CalendarBillRow
                   key={billId}
-                  style={[
-                    styles.billRow,
-                    {
-                      backgroundColor: paid ? accentGreenLight : pageBg,
-                      borderColor,
-                    },
-                  ]}
-                >
-                  <View style={styles.billInfo}>
-                    <Text
-                      style={[styles.billName, { color: primaryColor }, paid && styles.paidText]}
-                    >
-                      {bill.name}
-                    </Text>
-                    <Text style={[styles.billAmount, { color: secondaryColor }]}>
-                      {formatMoney(bill.amount)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.actions}>
-                    <Pressable
-                      style={[
-                        styles.actionButton,
-                        { backgroundColor: paid ? accentGreen : peachBg },
-                      ]}
-                      onPress={() => {
-                        void handleTogglePaid(billId).catch(captureError);
-                      }}
-                      hitSlop={8}
-                    >
-                      <Check size={16} color={paid ? "#FFFFFF" : primaryColor} />
-                    </Pressable>
-
-                    <Pressable
-                      style={[styles.actionButton, { backgroundColor: peachBg }]}
-                      onPress={() => handleEdit(billId)}
-                      hitSlop={8}
-                    >
-                      <Pencil size={16} color={primaryColor} />
-                    </Pressable>
-
-                    <Pressable
-                      style={[styles.actionButton, { backgroundColor: peachBg }]}
-                      onPress={() => handleDelete(billId, bill.name)}
-                      hitSlop={8}
-                    >
-                      <Trash2 size={16} color={accentRed} />
-                    </Pressable>
-                  </View>
-                </View>
+                  occurrence={occurrence}
+                  radius={12}
+                  showDate={false}
+                  onPaymentToggle={() => {
+                    void handleTogglePaid(billId).catch(captureError);
+                  }}
+                  onEdit={() => handleEdit(billId)}
+                  onDelete={() => handleDelete(billId, bill.name)}
+                />
               );
             })}
           </View>
@@ -198,41 +160,5 @@ const styles = StyleSheet.create({
   },
   billList: {
     gap: 8,
-  },
-  billRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 12,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    padding: 16,
-    minHeight: 56,
-  },
-  billInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  billName: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 15,
-  },
-  paidText: {
-    textDecorationLine: "line-through",
-  },
-  billAmount: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-  },
-  actions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

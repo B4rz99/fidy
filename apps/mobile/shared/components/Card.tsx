@@ -8,6 +8,7 @@ type CardProps = Omit<ViewProps, "children" | "style"> & {
   onPress?: PressableProps["onPress"];
   disabled?: boolean;
   padded?: boolean;
+  radius?: number;
   contentClassName?: string;
   contentStyle?: StyleProp<ViewStyle>;
   surfaceStyle?: StyleProp<ViewStyle>;
@@ -18,6 +19,7 @@ export function Card({
   onPress,
   disabled = false,
   padded = true,
+  radius = 16,
   contentClassName,
   contentStyle,
   surfaceStyle: surfaceStyleOverride,
@@ -50,7 +52,7 @@ export function Card({
       {...surfaceViewProps}
       isInteractive={onPress != null && !disabled}
       padded={false}
-      radius={16}
+      radius={radius}
       style={surfaceStyleOverride}
     >
       <View className={innerClassName} style={contentStyle}>

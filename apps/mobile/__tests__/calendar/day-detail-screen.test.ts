@@ -4,11 +4,16 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
 let source = "";
+let billRowSource = "";
 let layoutSource = "";
 let rootStackRoutesSource = "";
 
 beforeAll(() => {
   source = readFileSync(resolve(__dirname, "../../app/day-detail.tsx"), "utf-8");
+  billRowSource = readFileSync(
+    resolve(__dirname, "../../features/calendar/components/CalendarBillRow.tsx"),
+    "utf-8"
+  );
   layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
   rootStackRoutesSource = readFileSync(
     resolve(__dirname, "../../shared/navigation/root-stack-routes.ts"),
@@ -49,8 +54,9 @@ describe("day-detail screen", () => {
     expect(source).toContain("deleteBill");
   });
 
-  test("uses Pressable per ui-pressable rule", () => {
-    expect(source).toContain("Pressable");
+  test("uses the shared bill row with pressable actions per ui-pressable rule", () => {
+    expect(source).toContain("<CalendarBillRow");
+    expect(billRowSource).toContain("IconActionButton");
     expect(source).not.toContain("TouchableOpacity");
   });
 });

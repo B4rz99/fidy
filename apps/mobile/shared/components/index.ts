@@ -6,7 +6,14 @@ export { Card } from "./Card";
 export type { GlassCardTokens } from "./card-tokens";
 export { Chip } from "./Chip";
 export { ChoiceTray } from "./ChoiceTray";
-export { DialogCancelButton, DialogFrame, DialogPanel, DialogTitle } from "./DialogFrame";
+export {
+  DialogActionButton,
+  DialogActionStack,
+  DialogCancelButton,
+  DialogFrame,
+  DialogPanel,
+  DialogTitle,
+} from "./DialogFrame";
 export { EmptyState } from "./EmptyState";
 export { ErrorFallback } from "./ErrorFallback";
 export { FeedList } from "./FeedList";

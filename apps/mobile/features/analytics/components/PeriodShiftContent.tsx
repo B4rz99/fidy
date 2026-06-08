@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { GlassSurface } from "@/shared/components";
+import { Card } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -47,7 +47,7 @@ export function PeriodShiftContent({
 
   return (
     <>
-      <GlassSurface padded={false} style={styles.heroCard}>
+      <Card padded={false} contentStyle={styles.heroCard}>
         <Text style={[styles.eyebrow, { color: secondaryColor }]}>
           {t("analytics.vsPreviousPeriodLabel")}
         </Text>
@@ -88,7 +88,7 @@ export function PeriodShiftContent({
             </Text>
           </View>
         )}
-      </GlassSurface>
+      </Card>
 
       <CategoryChangesCard changes={shiftView.categoryChanges.slice(0, 4)} />
       <IncomeExpenseStrip incomeExpense={incomeExpense} />
@@ -168,7 +168,7 @@ function CategoryChangesCard({ changes }: CategoryChangesCardProps) {
   const accentRed = useThemeColor("accentRed");
 
   return (
-    <GlassSurface padded={false} style={styles.card}>
+    <Card padded={false} contentStyle={styles.card}>
       <Text style={[styles.cardTitle, { color: primaryColor }]}>{t("analytics.whatChanged")}</Text>
       {changes.map((item) => {
         const category = CATEGORY_MAP[item.categoryId];
@@ -196,7 +196,7 @@ function CategoryChangesCard({ changes }: CategoryChangesCardProps) {
           </View>
         );
       })}
-    </GlassSurface>
+    </Card>
   );
 }
 
