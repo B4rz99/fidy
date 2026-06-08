@@ -1,0 +1,109 @@
+apps/mobile/features/categories/lib/registry.ts
+  s_ac9411f3c63c72::t_bc93017bae3259 1
+apps/mobile/__tests__/goals/repository.test.ts
+  s_ac9411f3c63c72::t_d4815822c5ec69 23-28,145,149,151,185-197,213,215-216
+apps/mobile/features/financial-accounts/lib/identifiers-repository.ts
+  s_ac9411f3c63c72::t_93204985627453 6
+apps/mobile/__tests__/financial-accounts/opening-balances.test.ts
+  s_ac9411f3c63c72::t_93204985627453 7
+apps/mobile/features/notifications/public.ts
+  s_ac9411f3c63c72::t_93204985627453 18
+apps/mobile/features/categories/bootstrap.ts
+  s_ac9411f3c63c72::t_bc93017bae3259 3
+apps/mobile/local-ledger/ports/public.ts
+  s_8c6e4ab954c3b5::t_89d75a296cad66 1
+apps/mobile/__tests__/backup/remote-storage.test.ts
+  s_ac9411f3c63c72::t_1706798d464aff 6
+apps/mobile/features/capture-sources/lib/repository.ts
+  s_ac9411f3c63c72::t_93204985627453 8
+  s_ac9411f3c63c72::t_d876e235208996 2
+apps/mobile/features/backup/public.ts
+  s_ac9411f3c63c72::t_93204985627453 32
+  s_ac9411f3c63c72::t_1706798d464aff 31,33
+apps/mobile/features/email-capture/services/create-parse-email-service.ts
+  s_ac9411f3c63c72::t_0842712d6613cd 117
+apps/mobile/features/search/lib/date-presets.ts
+  s_ac9411f3c63c72::t_682035a2a16686 11
+apps/mobile/__tests__/financial-accounts/management-service.test.ts
+  s_ac9411f3c63c72::t_417ba7422632d1 12,19,79,94,99-101
+apps/mobile/__tests__/transactions/mutation-service.test.ts
+  s_ac9411f3c63c72::t_214755abd7ecd0 230,240,247
+apps/mobile/features/financial-accounts/index.ts
+  s_ac9411f3c63c72::t_417ba7422632d1 10
+apps/mobile/features/financial-accounts/lib/opening-balances-repository.ts
+  s_ac9411f3c63c72::t_417ba7422632d1 6
+apps/mobile/features/capture-interpreter/lib/candidates.ts
+  s_ac9411f3c63c72::t_0842712d6613cd 178
+apps/mobile/__tests__/account-suggestions/dismissals-repository.test.ts
+  s_ac9411f3c63c72::t_9cefa2c626a06f 9,41-42,48-50,60
+apps/mobile/__tests__/categories/registry.test.ts
+  s_ac9411f3c63c72::t_7edb474b365592 2,25
+apps/mobile/__tests__/transfers/qa-preset.test.ts
+  s_ac9411f3c63c72::t_442e93578e307d 2
+apps/mobile/__tests__/backup/private-backup.test.ts
+  s_ac9411f3c63c72::t_93204985627453 7
+apps/mobile/features/review-queues/hooks/use-attribution-review-queue.ts
+  s_ac9411f3c63c72::t_417ba7422632d1 11
+apps/mobile/features/onboarding/index.ts
+  s_ac9411f3c63c72::t_9e10f7d58ffa5a 19
+apps/mobile/features/review-queues/hooks/use-financial-meaning-review-queue.ts
+  s_ac9411f3c63c72::t_417ba7422632d1 11
+apps/mobile/__tests__/capture-sources/repository.test.ts
+  s_ac9411f3c63c72::t_93204985627453 3
+apps/mobile/__tests__/onboarding/telemetry.test.ts
+  s_ac9411f3c63c72::t_93204985627453 2
+apps/mobile/features/transactions/schema.ts
+  s_8c6e4ab954c3b5::t_4a18d5c7d2a9b1 33
+apps/mobile/local-ledger/use-cases/write.public.ts
+  s_8c6e4ab954c3b5::t_4a18d5c7d2a9b1 17,93
+apps/mobile/features/backup/private-backup.ts
+  s_ac9411f3c63c72::t_93204985627453 8
+apps/mobile/features/categories/store.ts
+  s_ac9411f3c63c72::t_bc93017bae3259 41
+apps/mobile/__tests__/categories/store.test.ts
+  s_ac9411f3c63c72::t_7edb474b365592 4,50,58,76
+apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts
+  s_ac9411f3c63c72::t_7edb474b365592 65-67,69-72,74-75,77
+apps/mobile/__tests__/capture-interpreter/candidates.test.ts
+  s_ac9411f3c63c72::t_3e0df4a146a3c3 53,80,100-108
+  s_ac9411f3c63c72::t_f9cc27b202e6c9 10
+apps/mobile/features/transfers/query.public.ts
+  s_ac9411f3c63c72::t_442e93578e307d 2
+apps/mobile/__tests__/auth/effective-auth.test.ts
+  s_ac9411f3c63c72::t_9cefa2c626a06f 8,56-59,64,70,73,78,82,88
+apps/mobile/features/onboarding/lib/telemetry.ts
+  s_ac9411f3c63c72::t_9e10f7d58ffa5a 7
+  s_ac9411f3c63c72::t_93204985627453 5
+apps/mobile/__tests__/financial-accounts/repository.test.ts
+  s_ac9411f3c63c72::t_417ba7422632d1 90
+apps/mobile/__tests__/search/filters.test.ts
+  s_ac9411f3c63c72::t_682035a2a16686 2
+apps/mobile/features/goals/public.ts
+  s_ac9411f3c63c72::t_93204985627453 41
+apps/mobile/__tests__/backup/encryption.test.ts
+  s_ac9411f3c63c72::t_1706798d464aff 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e32e4f247a675bfd23e3441530ed30609a081e58",
+  "prompts": {},
+  "sessions": {
+    "s_8c6e4ab954c3b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea5c4-b28c-7c23-abc8-0702f12c4047",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_ac9411f3c63c72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea5cf-0767-7f82-9f64-b6f9d73b41c2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
