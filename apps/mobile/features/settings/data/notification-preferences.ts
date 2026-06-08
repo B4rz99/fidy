@@ -16,8 +16,6 @@ export async function saveNotificationPreferences(
       goal_milestones: preferences.goalMilestones,
       // biome-ignore lint/style/useNamingConvention: Supabase column name
       spending_anomalies: preferences.spendingAnomalies,
-      // biome-ignore lint/style/useNamingConvention: Supabase column name
-      weekly_digest: preferences.weeklyDigest,
     },
     { onConflict: "user_id" }
   );

@@ -1,7 +1,5 @@
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useOptionalUserId } from "@/features/auth/public";
-import { cancelWeeklyDigestNotification } from "@/features/notifications/schedule.public";
 import { ScreenLayout, SettingsSection } from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
 import { Platform, ScrollView, View } from "@/shared/components/rn";
@@ -35,12 +33,6 @@ const PREFERENCE_TOGGLES: readonly PreferenceToggle[] = [
     key: "spendingAnomalies",
     labelKey: "notifications.preferences.spendingAnomalies",
     descKey: "notifications.preferences.spendingAnomaliesDesc",
-    isLast: false,
-  },
-  {
-    key: "weeklyDigest",
-    labelKey: "notifications.preferences.weeklyDigest",
-    descKey: "notifications.preferences.weeklyDigestDesc",
     isLast: true,
   },
 ];
@@ -50,25 +42,17 @@ export function NotificationPreferencesScreen() {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
 
-  const userId = useOptionalUserId();
   const prefs = useSettingsStore((s) => s.notificationPreferences);
   const areAllOff = useSettingsStore((s) => s.areAllNotificationsOff);
   const setPreference = useSettingsStore((s) => s.setNotificationPreference);
   const setAll = useSettingsStore((s) => s.setAllNotifications);
   const syncPreferences = useNotificationPreferencesMutation();
 
-  const allOn =
-    prefs.budgetAlerts && prefs.goalMilestones && prefs.spendingAnomalies && prefs.weeklyDigest;
-
-  const cancelWeeklyDigestIfDisabled = (updated: NotificationPreferences): void => {
-    if (updated.weeklyDigest || userId === null) return;
-    void cancelWeeklyDigestNotification(userId).catch(() => undefined);
-  };
+  const allOn = prefs.budgetAlerts && prefs.goalMilestones && prefs.spendingAnomalies;
 
   const handleSetPreference = (key: keyof NotificationPreferences, value: boolean) => {
     const updated = { ...prefs, [key]: value };
     setPreference(key, value);
-    cancelWeeklyDigestIfDisabled(updated);
     syncPreferences.mutate(updated);
   };
 
@@ -77,11 +61,9 @@ export function NotificationPreferencesScreen() {
       budgetAlerts: enabled,
       goalMilestones: enabled,
       spendingAnomalies: enabled,
-      weeklyDigest: enabled,
     };
 
     setAll(enabled);
-    cancelWeeklyDigestIfDisabled(updated);
     syncPreferences.mutate(updated);
   };
 

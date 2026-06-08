@@ -28,7 +28,6 @@ describe("useSettingsStore", () => {
       budgetAlerts: true,
       goalMilestones: true,
       spendingAnomalies: true,
-      weeklyDigest: true,
     });
     expect(initial.shareAnonymizedParseSamples).toBe(false);
   });

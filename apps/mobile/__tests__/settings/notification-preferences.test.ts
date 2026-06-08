@@ -6,7 +6,6 @@ const DEFAULT_PREFERENCES = {
   budgetAlerts: true,
   goalMilestones: true,
   spendingAnomalies: true,
-  weeklyDigest: true,
 } as const;
 
 describe("notification preferences in settings store", () => {
@@ -42,12 +41,10 @@ describe("notification preferences in settings store", () => {
     expect(prefs.budgetAlerts).toBe(false);
     expect(prefs.goalMilestones).toBe(true);
     expect(prefs.spendingAnomalies).toBe(true);
-    expect(prefs.weeklyDigest).toBe(true);
   });
 
   test("setNotificationPreference persists to SecureStore", async () => {
-    useSettingsStore.getState().setNotificationPreference("weeklyDigest", false);
-    // Allow microtask to flush
+    useSettingsStore.getState().setNotificationPreference("spendingAnomalies", false);
     await vi.waitFor(() => {
       expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         "notification_preferences",
@@ -59,20 +56,19 @@ describe("notification preferences in settings store", () => {
     );
     expect(calledWith).toBeDefined();
     const parsed = JSON.parse(calledWith?.[1] as string);
-    expect(parsed.weeklyDigest).toBe(false);
+    expect(parsed.spendingAnomalies).toBe(false);
   });
 
-  test("setAllNotifications(false) sets all four to false", () => {
+  test("setAllNotifications(false) sets all notification preferences to false", () => {
     useSettingsStore.getState().setAllNotifications(false);
     expect(useSettingsStore.getState().notificationPreferences).toEqual({
       budgetAlerts: false,
       goalMilestones: false,
       spendingAnomalies: false,
-      weeklyDigest: false,
     });
   });
 
-  test("setAllNotifications(true) sets all four to true", () => {
+  test("setAllNotifications(true) sets all notification preferences to true", () => {
     useSettingsStore.getState().setAllNotifications(false);
     useSettingsStore.getState().setAllNotifications(true);
     expect(useSettingsStore.getState().notificationPreferences).toEqual(DEFAULT_PREFERENCES);
@@ -93,7 +89,6 @@ describe("notification preferences in settings store", () => {
       budgetAlerts: false,
       goalMilestones: true,
       spendingAnomalies: false,
-      weeklyDigest: true,
     });
     vi.mocked(SecureStore.getItemAsync).mockImplementation(async (key: string) => {
       if (key === "notification_preferences") return stored;
@@ -106,7 +101,6 @@ describe("notification preferences in settings store", () => {
       budgetAlerts: false,
       goalMilestones: true,
       spendingAnomalies: false,
-      weeklyDigest: true,
     });
   });
 

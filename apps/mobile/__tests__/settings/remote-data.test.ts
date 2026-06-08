@@ -33,7 +33,6 @@ describe("settings remote data", () => {
       budgetAlerts: false,
       goalMilestones: true,
       spendingAnomalies: false,
-      weeklyDigest: true,
     });
 
     expect(mockUpsert).toHaveBeenCalledWith(
@@ -42,7 +41,6 @@ describe("settings remote data", () => {
         budget_alerts: false,
         goal_milestones: true,
         spending_anomalies: false,
-        weekly_digest: true,
       },
       { onConflict: "user_id" }
     );

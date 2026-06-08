@@ -19,14 +19,12 @@ export type NotificationPreferences = {
   readonly budgetAlerts: boolean;
   readonly goalMilestones: boolean;
   readonly spendingAnomalies: boolean;
-  readonly weeklyDigest: boolean;
 };
 
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   budgetAlerts: true,
   goalMilestones: true,
   spendingAnomalies: true,
-  weeklyDigest: true,
 };
 
 type SettingsState = {
@@ -63,7 +61,7 @@ const SHARE_ANONYMIZED_PARSE_SAMPLES_KEY = "share_anonymized_parse_samples";
 const toColorScheme = (pref: ThemePreference) => (pref === "system" ? "unspecified" : pref);
 
 const computeAllOff = (prefs: NotificationPreferences): boolean =>
-  !prefs.budgetAlerts && !prefs.goalMilestones && !prefs.spendingAnomalies && !prefs.weeklyDigest;
+  !prefs.budgetAlerts && !prefs.goalMilestones && !prefs.spendingAnomalies;
 
 const persistPreferences = (prefs: NotificationPreferences): void => {
   void SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs)).catch((error) => {
@@ -175,7 +173,6 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       budgetAlerts: enabled,
       goalMilestones: enabled,
       spendingAnomalies: enabled,
-      weeklyDigest: enabled,
     };
     set({
       notificationPreferences: updated,

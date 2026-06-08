@@ -799,11 +799,9 @@ const en = {
     notSetupBody:
       "Fidy can save a backup that only your Recovery Key or a trusted device can unlock.",
     confirmTitle: "Save your Recovery Key now",
-    confirmBody:
-      "This device can restore without asking for the key, but a new phone needs your saved Recovery Key. Fidy cannot recreate it later.",
+    confirmBody: "Keep this key in a password manager. Fidy cannot recreate it later.",
     readyTitle: "Your backup is healthy",
-    readyBody:
-      "This device can restore without asking for the key, and a new phone can unlock the same backup with your saved Recovery Key.",
+    readyBody: "Fidy is saving encrypted backups for this account.",
     failedTitle: "Backup upload failed",
     failedBody: "Your current phone still has your data. Retry when your connection is steady.",
     recoveryKeyLabel: "Recovery Key",
@@ -821,10 +819,10 @@ const en = {
     encryptedBackupBody: "Last backup %{backupDate}",
     recoveryKeySavedTitle: "Recovery Key saved",
     recoveryKeySavedBody: "Stored in your password manager",
-    newPhoneTitle: "New phone restore",
-    newPhoneBody: "Paste the key after sign-in to unlock",
+    newPhoneTitle: "Recovery Key",
+    newPhoneBody: "Keep this key available outside Fidy",
     privacyNote:
-      "Login finds the backup account. Only the Recovery Key or a trusted device unlocks it.",
+      "Login finds the backup account. Only the Recovery Key or a trusted device can unlock the encrypted backup.",
     keyUnavailable: "This Recovery Key is no longer available in the app.",
     confirmMismatchTitle: "That key does not match",
     confirmMismatchBody: "Paste the Recovery Key exactly as shown before marking backup ready.",
@@ -1108,17 +1106,6 @@ const en = {
     spendingAnomalyMsg: "Your weekly spending is higher than usual",
     budgetPaceMsg: "Projected %{projected} vs %{budget} budget",
     goalMilestoneMsg: "You've saved %{percent}% of your goal",
-    weeklyDigest: {
-      title: "Your Week in Review",
-      reminderTitle: "Your weekly digest is ready",
-      reminderBody: "Open Fidy to generate it privately from this device.",
-      spending: "You spent %{amount} this week",
-      categoryOne: " mostly on %{firstCategory}",
-      categoryTwo: " mostly on %{firstCategory} and %{secondCategory}",
-      budgetOver: ". You're over budget - consider adjusting for next week",
-      budgetOnTrack: ". You're on track with your budgets",
-      goalContribution: ". You saved %{amount} toward your goals",
-    },
 
     // Section headers
     weeklyMovesHeader: "YOUR MONEY MOVES · %{weekRange}",
@@ -1146,15 +1133,13 @@ const en = {
       goalMilestonesDesc: "Updates on your savings and debt goals",
       spendingAnomalies: "Spending Alerts",
       spendingAnomaliesDesc: "Unusual spending patterns detected",
-      weeklyDigest: "Weekly Digest",
-      weeklyDigestDesc: "Sunday evening summary of your week",
     },
 
     // Pre-permission screen
     enableNotifications: {
       title: "Stay on top of your finances",
       description:
-        "Fidy can alert you when you're approaching your budget limit, celebrate your goal milestones, and send a weekly summary of your finances.",
+        "Fidy can alert you when you're approaching your budget limit and celebrate your goal milestones.",
       enable: "Enable notifications",
       notNow: "Not now",
     },
