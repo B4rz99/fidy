@@ -1,0 +1,33 @@
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_c5de1adbad9fac::t_91215d29948de4 44,52,56-57,122,127-128
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_c5de1adbad9fac::t_91215d29948de4 53,182
+apps/mobile/shared/components/Row.tsx
+  s_c5de1adbad9fac::t_91215d29948de4 3-4,50-53,55-68,92
+apps/mobile/features/budget/components/BudgetSuggestionRow.tsx
+  s_c5de1adbad9fac::t_91215d29948de4 3,32,62
+apps/mobile/shared/components/PickerOptionRow.tsx
+  s_c5de1adbad9fac::t_91215d29948de4 4,6,56,63-67,69-75
+apps/mobile/shared/components/TransactionRow.tsx
+  s_c5de1adbad9fac::t_91215d29948de4 16,160,183
+apps/mobile/shared/components/index.ts
+  s_c5de1adbad9fac::t_91215d29948de4 31-32
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_c5de1adbad9fac::t_91215d29948de4 69,74-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "259e1951b85faf618c517ad735a94d2de9c1afd3",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
