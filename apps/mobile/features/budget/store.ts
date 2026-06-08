@@ -49,12 +49,6 @@ const budgetAlertStateManager = createBudgetMonitoringModule({
   scheduleBudgetAlert: async () => ({ type: "skipped" }),
   insertNotification: () => undefined,
 });
-type BudgetRequest = {
-  readonly requestId: number;
-  readonly userId: UserId;
-  readonly month: Month;
-  readonly sessionId: number;
-};
 type UpdateBudgetInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -87,7 +81,7 @@ export function initializeBudgetSession(userId: UserId): void {
 }
 
 export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<boolean> {
-  const request: BudgetRequest = {
+  const request = {
     requestId: ++loadBudgetsRequestId,
     userId,
     month: useBudgetStore.getState().currentMonth,
