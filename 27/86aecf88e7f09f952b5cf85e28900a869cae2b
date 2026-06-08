@@ -1,0 +1,36 @@
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_c5de1adbad9fac::t_c542e0abdcd198 5,102-108,110-126
+  s_c5de1adbad9fac::t_b12e9ebd0b7037 109
+apps/mobile/app/_layout.tsx
+  s_c5de1adbad9fac::t_523774de247027 3
+apps/mobile/features/onboarding/components/SyncProgressStep.helpers.ts
+  s_c5de1adbad9fac::t_8d0de06983f8b0 14
+apps/mobile/features/goals/lib/derive/projection.ts
+  s_c5de1adbad9fac::t_31f035d54efd67 30
+apps/mobile/features/notifications/lib/display.ts
+  s_c5de1adbad9fac::t_eb7a6f015b1798 158
+apps/mobile/shared/polyfills/array-to-sorted.ts
+  s_c5de1adbad9fac::t_8ee48a675ae4ea 1-4,6-11
+  s_c5de1adbad9fac::t_8090d519427e58 5
+apps/mobile/features/ai-chat/components/NewChatButton.tsx
+  s_c5de1adbad9fac::t_6da97882bde5f4 2-3,11,17,19-20
+  s_c5de1adbad9fac::t_e842c53c2ddd0b 16
+apps/mobile/features/email-capture/services/email-capture-sync-policy.ts
+  s_c5de1adbad9fac::t_e1344a407f535a 18,31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "2786aecf88e7f09f952b5cf85e28900a869cae2b",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
