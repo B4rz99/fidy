@@ -1,0 +1,21 @@
+apps/mobile/shared/components/AppToastHost.tsx
+  s_057bd0ebcfafbe::t_f2ef24892da0b6 111
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_057bd0ebcfafbe::t_f2ef24892da0b6 99,102-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "899280efd22e81a9ca3ae1d4d812b8596499cfdf",
+  "prompts": {},
+  "sessions": {
+    "s_057bd0ebcfafbe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea447-dd2d-7a92-ae6a-234f34891060",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
