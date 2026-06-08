@@ -1,0 +1,41 @@
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_c5de1adbad9fac::t_816645537c5126 120-123,125
+  s_c5de1adbad9fac::t_a8c51479eb6786 15-20
+apps/mobile/features/budget/components/BudgetSuggestionRow.tsx
+  s_c5de1adbad9fac::t_dac7cdd8d78414 1-109
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_c5de1adbad9fac::t_c933f89941790c 625
+apps/mobile/features/budget/ui.public.ts
+  s_c5de1adbad9fac::t_dac7cdd8d78414 2
+apps/mobile/features/budget/hooks.public.ts
+  s_c5de1adbad9fac::t_2c8e06b02931b4 2-7
+apps/mobile/features/qa/lib/build-local-qa-seed.ts
+  s_c5de1adbad9fac::t_700f42e07989bb 107-109,114-152
+apps/mobile/app/auto-suggest-budgets.tsx
+  s_c5de1adbad9fac::t_5e49402ac6b10d 1,80-87
+  s_c5de1adbad9fac::t_a76eb6aea606e4 22-28,50-53
+  s_c5de1adbad9fac::t_dac7cdd8d78414 11,33,107-114
+  s_c5de1adbad9fac::t_459bc5e6f088a5 10
+  s_c5de1adbad9fac::t_2c8e06b02931b4 6
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_c5de1adbad9fac::t_c933f89941790c 132-134,143-145,148-150
+apps/mobile/features/onboarding/components/BudgetSetupStep.tsx
+  s_c5de1adbad9fac::t_dac7cdd8d78414 10-11,19,91-98
+  s_c5de1adbad9fac::t_459bc5e6f088a5 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7a307ce3cf09fa92c52f2e8e56ead193e9910ce4",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
