@@ -1,0 +1,109 @@
+import type { CategoryId } from "@/shared/categories";
+import { CATEGORY_MAP } from "@/shared/categories";
+import { FormTextField } from "@/shared/components";
+import { StyleSheet, Switch, Text, View } from "@/shared/components/rn";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
+
+type BudgetSuggestionRowProps = {
+  readonly categoryId: CategoryId;
+  readonly value: string;
+  readonly selected: boolean;
+  readonly onAmountChange: (categoryId: CategoryId, value: string) => void;
+  readonly onToggle: (categoryId: CategoryId) => void;
+};
+
+export function BudgetSuggestionRow({
+  categoryId,
+  value,
+  selected,
+  onAmountChange,
+  onToggle,
+}: BudgetSuggestionRowProps) {
+  const { locale } = useTranslation();
+  const borderColor = useThemeColor("borderSubtle");
+  const primaryColor = useThemeColor("primary");
+  const secondaryColor = useThemeColor("secondary");
+  const accentGreen = useThemeColor("accentGreen");
+  const category = CATEGORY_MAP[categoryId] ?? null;
+  const categoryLabel = category ? getCategoryLabel(category, locale) : categoryId;
+
+  return (
+    <View style={[styles.row, { borderColor }]}>
+      <View style={styles.rowLeft}>
+        {category ? <Text style={{ color: category.color }}>{category.icon}</Text> : null}
+        <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
+      </View>
+      <View style={styles.rowRight}>
+        <FormTextField
+          label={categoryLabel}
+          labelStyle={styles.hiddenLabel}
+          style={styles.amountField}
+          inputStyle={[
+            styles.amountInput,
+            {
+              color: selected ? primaryColor : secondaryColor,
+              borderColor,
+              opacity: selected ? 1 : 0.4,
+            },
+          ]}
+          value={value}
+          onChangeText={(nextValue) => onAmountChange(categoryId, nextValue)}
+          keyboardType="number-pad"
+          editable={selected}
+          selectTextOnFocus
+        />
+        <Switch
+          value={selected}
+          onValueChange={() => onToggle(categoryId)}
+          trackColor={{ true: accentGreen }}
+        />
+      </View>
+    </View>
+  );
+}
+
+export type { BudgetSuggestionRowProps };
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  rowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  rowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  categoryName: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+  },
+  amountField: {
+    gap: 0,
+  },
+  hiddenLabel: {
+    display: "none",
+  },
+  amountInput: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+    borderRadius: 8,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 64,
+    textAlign: "right",
+    minHeight: 36,
+  },
+});

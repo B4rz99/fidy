@@ -1,31 +1,36 @@
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
   acceptBudgetSuggestions,
+  loadBudgetAutoSuggestions,
   useBudgetStore,
   useSuggestionSelection,
 } from "@/features/budget/hooks.public";
-import { CATEGORY_MAP } from "@/features/transactions";
-import { AppAuroraBackground, FormTextField } from "@/shared/components";
+import { BudgetSuggestionRow } from "@/features/budget/ui.public";
+import { AppAuroraBackground } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useAsyncGuard, useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
-import { getCategoryLabel } from "@/shared/i18n";
+import {
+  useAsyncGuard,
+  useColorScheme,
+  useMountEffect,
+  useThemeColor,
+  useTranslation,
+} from "@/shared/hooks";
 import { trackBudgetSuggestionAccepted, trackBudgetSuggestionRejected } from "@/shared/lib";
 
 export default function AutoSuggestBudgetsScreen() {
   const { back } = useRouter();
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const isDark = useColorScheme() === "dark";
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
@@ -36,12 +41,16 @@ export default function AutoSuggestBudgetsScreen() {
   const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
     useSuggestionSelection(autoSuggestions);
 
-  const borderColor = useThemeColor("borderSubtle");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
+
+  useMountEffect(() => {
+    if (!userId || !db) return;
+    loadBudgetAutoSuggestions(db, userId);
+  });
 
   const handleAccept = () => {
     void guardedRun(async () => {
@@ -68,6 +77,14 @@ export default function AutoSuggestBudgetsScreen() {
       style={styles.flex}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <Stack.Screen
+        options={{
+          headerBackButtonDisplayMode: "minimal",
+          headerBackTitle: "",
+          headerTitle: t("budgets.autoSuggest.title"),
+          title: t("budgets.autoSuggest.title"),
+        }}
+      />
       <AppAuroraBackground isDark={isDark} />
       <ScrollView
         style={styles.container}
@@ -84,48 +101,17 @@ export default function AutoSuggestBudgetsScreen() {
 
         <View style={styles.list}>
           {autoSuggestions.map((suggestion) => {
-            const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
-            const categoryLabel = category
-              ? getCategoryLabel(category, locale)
-              : suggestion.categoryId;
             const isSelected = selectedIds.has(suggestion.categoryId);
 
             return (
-              <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
-                <View style={styles.rowLeft}>
-                  {category ? <Text style={{ color: category.color }}>{category.icon}</Text> : null}
-                  <View>
-                    <Text style={[styles.categoryName, { color: primaryColor }]}>
-                      {categoryLabel}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.rowRight}>
-                  <FormTextField
-                    label={categoryLabel}
-                    labelStyle={{ display: "none" }}
-                    style={{ gap: 0 }}
-                    inputStyle={[
-                      styles.amountInput,
-                      {
-                        color: isSelected ? primaryColor : secondaryColor,
-                        borderColor,
-                        opacity: isSelected ? 1 : 0.4,
-                      },
-                    ]}
-                    value={editedAmounts[suggestion.categoryId] ?? ""}
-                    onChangeText={(v) => handleAmountChange(suggestion.categoryId, v)}
-                    keyboardType="number-pad"
-                    editable={isSelected}
-                    selectTextOnFocus
-                  />
-                  <Switch
-                    value={isSelected}
-                    onValueChange={() => handleToggle(suggestion.categoryId)}
-                    trackColor={{ true: accentGreen }}
-                  />
-                </View>
-              </View>
+              <BudgetSuggestionRow
+                key={suggestion.categoryId}
+                categoryId={suggestion.categoryId}
+                value={editedAmounts[suggestion.categoryId] ?? ""}
+                selected={isSelected}
+                onAmountChange={handleAmountChange}
+                onToggle={handleToggle}
+              />
             );
           })}
         </View>
@@ -175,40 +161,6 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 0,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flex: 1,
-  },
-  rowRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  categoryName: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-  },
-  amountInput: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-    borderRadius: 8,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 64,
-    textAlign: "right",
-    minHeight: 36,
   },
   emptyText: {
     fontFamily: "Poppins_500Medium",

@@ -616,14 +616,13 @@ describe("shared UI kit", () => {
 
   it("keeps repeated form text inputs on the shared FormTextField primitive", () => {
     const files = [
-      "../../app/auto-suggest-budgets.tsx",
       "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx",
       "../../features/calendar/components/add-bill/AddBillFormContent.tsx",
       "../../features/categories/components/category-form/CreateCategoryScreenContent.tsx",
       "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountIdentifiersSection.tsx",
-      "../../features/onboarding/components/BudgetSetupStep.tsx",
+      "../../features/budget/components/BudgetSuggestionRow.tsx",
       "../../features/settings/components/PrivateBackupScreen.tsx",
       "../../features/transactions/components/transaction-form/TransactionMetadataRow.tsx",
     ];

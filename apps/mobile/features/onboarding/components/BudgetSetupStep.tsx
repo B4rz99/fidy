@@ -5,19 +5,18 @@ import {
   loadBudgetAutoSuggestions,
   useBudgetStore,
 } from "@/features/budget/public";
+import { BudgetSuggestionRow } from "@/features/budget/ui.public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
-import { CATEGORY_MAP } from "@/shared/categories";
-import { Button, EmptyState, FormTextField } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "@/shared/components/rn";
+import { Button, EmptyState } from "@/shared/components";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
-import { getCategoryLabel } from "@/shared/i18n";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
 import { shouldRefreshBudgetSuggestions } from "./BudgetSetupStep.helpers";
 
 export function BudgetSetupStep() {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const nextStep = useOnboardingStore((s) => s.nextStep);
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -25,10 +24,6 @@ export function BudgetSetupStep() {
   const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
 
   const primaryColor = useThemeColor("primary");
-  const secondaryColor = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
-  const borderColor = useThemeColor("borderSubtle");
-  const pageBg = useThemeColor("page");
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
@@ -90,51 +85,17 @@ export function BudgetSetupStep() {
         {autoSuggestions.length > 0 ? (
           <View style={styles.list}>
             {autoSuggestions.map((suggestion) => {
-              const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
-              const categoryLabel = category
-                ? getCategoryLabel(category, locale)
-                : suggestion.categoryId;
               const isSelected = selectedIds.has(suggestion.categoryId);
 
               return (
-                <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
-                  <View style={styles.rowLeft}>
-                    {category ? (
-                      <Text style={{ color: category.color }}>{category.icon}</Text>
-                    ) : null}
-                    <View>
-                      <Text style={[styles.categoryName, { color: primaryColor }]}>
-                        {categoryLabel}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.rowRight}>
-                    <FormTextField
-                      label={categoryLabel}
-                      labelStyle={{ display: "none" }}
-                      style={{ gap: 0 }}
-                      inputStyle={[
-                        styles.amountInput,
-                        {
-                          backgroundColor: pageBg,
-                          color: isSelected ? primaryColor : secondaryColor,
-                          borderColor,
-                          opacity: isSelected ? 1 : 0.4,
-                        },
-                      ]}
-                      value={editedAmounts[suggestion.categoryId] ?? ""}
-                      onChangeText={(v) => handleAmountChange(suggestion.categoryId, v)}
-                      keyboardType="number-pad"
-                      editable={isSelected}
-                      selectTextOnFocus
-                    />
-                    <Switch
-                      value={isSelected}
-                      onValueChange={() => handleToggle(suggestion.categoryId)}
-                      trackColor={{ true: accentGreen }}
-                    />
-                  </View>
-                </View>
+                <BudgetSuggestionRow
+                  key={suggestion.categoryId}
+                  categoryId={suggestion.categoryId}
+                  value={editedAmounts[suggestion.categoryId] ?? ""}
+                  selected={isSelected}
+                  onAmountChange={handleAmountChange}
+                  onToggle={handleToggle}
+                />
               );
             })}
           </View>
@@ -187,40 +148,6 @@ const styles = StyleSheet.create({
   list: {
     gap: 0,
     marginTop: 8,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flex: 1,
-  },
-  rowRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  categoryName: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-  },
-  amountInput: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-    borderRadius: 8,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 64,
-    textAlign: "right",
-    minHeight: 36,
   },
   actions: {
     alignItems: "center",

@@ -12,7 +12,12 @@ import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { captureError } from "@/shared/lib";
 import type { BudgetProgress } from "../lib/derive";
-import { nextBudgetMonth, prevBudgetMonth, useBudgetStore } from "../store";
+import {
+  loadBudgetAutoSuggestions,
+  nextBudgetMonth,
+  prevBudgetMonth,
+  useBudgetStore,
+} from "../store";
 import { BudgetAlertBanner } from "./BudgetAlertBanner";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetHeaderMonthNavigator } from "./BudgetHeaderMonthNavigator";
@@ -112,8 +117,12 @@ export function BudgetListScreen() {
   }, [userId]);
 
   const handleAutoSetup = useCallback(() => {
+    if (!userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    loadBudgetAutoSuggestions(db, userId);
     push("/auto-suggest-budgets");
-  }, [push]);
+  }, [push, userId]);
 
   const handleCreateManually = useCallback(() => {
     push("/create-budget");
