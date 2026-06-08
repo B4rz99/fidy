@@ -40,4 +40,14 @@ describe("getActivityAccountNames", () => {
 
     expect(() => getActivityAccountNames(db as never, USER_ID)).toThrow("boom");
   });
+
+  it("returns no account names while the accounts table is not ready", () => {
+    const db = {
+      select: () => {
+        throw new Error("no such table: financial_accounts");
+      },
+    };
+
+    expect(getActivityAccountNames(db as never, USER_ID)).toEqual({});
+  });
 });

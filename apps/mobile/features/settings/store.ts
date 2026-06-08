@@ -74,6 +74,18 @@ const persistPreferences = (prefs: NotificationPreferences): void => {
 const resolveThemePreference = (value: string | null): ThemePreference | null =>
   value === "light" || value === "dark" || value === "system" ? value : null;
 
+const isStoredNotificationPreferences = (value: unknown): value is NotificationPreferences => {
+  const record =
+    typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
+
+  return (
+    record !== null &&
+    typeof record.budgetAlerts === "boolean" &&
+    typeof record.goalMilestones === "boolean" &&
+    typeof record.spendingAnomalies === "boolean"
+  );
+};
+
 const parseStoredNotificationPreferences = (
   value: string | null
 ): NotificationPreferences | null => {
@@ -83,17 +95,7 @@ const parseStoredNotificationPreferences = (
 
   try {
     const raw: unknown = JSON.parse(value);
-    if (
-      typeof raw !== "object" ||
-      raw === null ||
-      typeof (raw as Record<string, unknown>).budgetAlerts !== "boolean" ||
-      typeof (raw as Record<string, unknown>).goalMilestones !== "boolean" ||
-      typeof (raw as Record<string, unknown>).spendingAnomalies !== "boolean"
-    ) {
-      return null;
-    }
-
-    return raw as NotificationPreferences;
+    return isStoredNotificationPreferences(raw) ? raw : null;
   } catch {
     return null;
   }

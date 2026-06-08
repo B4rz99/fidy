@@ -265,6 +265,55 @@ describe("attribution review service", () => {
     ).toEqual({ success: false, error: "reviewItemNotFound" });
   });
 
+  it("keeps orphaned unresolved transactions reviewable when a suggested account exists", () => {
+    insertAccount({
+      id: "fa-davivienda" as FinancialAccountId,
+      name: "Davivienda Visa",
+      kind: "credit_card",
+      isDefault: false,
+    });
+    insertReviewTransaction({
+      id: "tx-orphaned" as TransactionId,
+      amount: 50000 as CopAmount,
+      description: "Unknown merchant",
+      date: "2026-03-05" as IsoDate,
+      accountId: "fa-missing" as FinancialAccountId,
+    });
+    saveEvidence("ce-orphaned", {
+      transactionId: "tx-orphaned",
+      value: "4931",
+      processedSourceEventId: "pse-orphaned",
+    });
+    saveEvidence("ce-orphaned-repeat", {
+      transactionId: "tx-orphaned",
+      value: "4931",
+      processedSourceEventId: "pse-orphaned-repeat",
+    });
+
+    const service = createAttributionReviewService({
+      now: () => "2026-04-19T12:00:00.000Z" as IsoDateTime,
+    });
+
+    expect(service.listQueueItems({ db: db as any, userId: USER_ID })).toEqual([
+      expect.objectContaining({
+        transaction: expect.objectContaining({ id: "tx-orphaned" }),
+        currentAccount: null,
+        suggestedAccount: expect.objectContaining({ id: "fa-davivienda" }),
+      }),
+    ]);
+    expect(
+      service.confirmSuggestedOwner({
+        db: db as any,
+        userId: USER_ID,
+        transactionId: "tx-orphaned" as TransactionId,
+      })
+    ).toEqual({
+      success: true,
+      accountId: "fa-davivienda",
+      suggestionFingerprint: JSON.stringify(["notification:davivienda:last4", "4931"]),
+    });
+  });
+
   it("returns review item lookups by transaction id", () => {
     attributionAccounts.forEach(insertAccount);
     insertReviewTransaction({
@@ -277,6 +326,11 @@ describe("attribution review service", () => {
       transactionId: "tx-reviewed",
       value: "4931",
       processedSourceEventId: "pse-1",
+    });
+    saveEvidence("ce-reviewed-repeat", {
+      transactionId: "tx-reviewed",
+      value: "4931",
+      processedSourceEventId: "pse-1-repeat",
     });
 
     const service = createAttributionReviewService();

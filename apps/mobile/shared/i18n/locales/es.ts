@@ -650,6 +650,7 @@ const es = {
     confirmAccount: "Confirmar cuenta",
     createNew: "Crear nueva",
     fallbackOwner: "Cuenta temporal",
+    fallbackOwnerMissing: "La cuenta original no está disponible",
     suggestedByEvidence: "Sugerida por evidencia repetida de captura",
     balanceHint:
       "Hasta que confirmes el dueño, esta transacción queda fuera de los balances por cuenta aunque sí cuente en el total.",

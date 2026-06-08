@@ -640,6 +640,7 @@ const en = {
     confirmAccount: "Confirm account",
     createNew: "Create new",
     fallbackOwner: "Fallback account",
+    fallbackOwnerMissing: "The original account is unavailable",
     suggestedByEvidence: "Suggested from repeated capture evidence",
     balanceHint:
       "Until you confirm the owner, this transaction stays out of account-specific balances even though it still counts overall.",

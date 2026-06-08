@@ -24,9 +24,9 @@ import {
 
 export type AttributionReviewItem = {
   readonly transaction: ReturnType<typeof toStoredTransaction>;
-  readonly currentAccount: FinancialAccountRow;
-  readonly suggestedAccount: FinancialAccountRow | null;
-  readonly suggestion: AccountCreationSuggestion | null;
+  readonly currentAccount: FinancialAccountRow | null;
+  readonly suggestedAccount: FinancialAccountRow;
+  readonly suggestion: AccountCreationSuggestion;
   readonly evidenceLabel: string | null;
 };
 
@@ -148,21 +148,21 @@ function toReviewItem(
   accounts: readonly FinancialAccountRow[],
   suggestion: AccountCreationSuggestion | null
 ): AttributionReviewItem | null {
-  const currentAccount = findFinancialAccountById(accounts, transactionRow.accountId);
-  if (!currentAccount) {
+  if (!suggestion) {
     return null;
   }
 
-  const suggestedAccount = suggestion ? getSuggestedAccount(accounts, suggestion) : null;
+  const suggestedAccount = getSuggestedAccount(accounts, suggestion);
+  if (!suggestedAccount) {
+    return null;
+  }
 
   return {
     transaction: toStoredTransaction(transactionRow),
-    currentAccount,
+    currentAccount: findFinancialAccountById(accounts, transactionRow.accountId),
     suggestedAccount,
     suggestion,
-    evidenceLabel: suggestion
-      ? buildSuggestedFinancialAccountDraft(suggestion).evidenceLabel
-      : null,
+    evidenceLabel: buildSuggestedFinancialAccountDraft(suggestion).evidenceLabel,
   };
 }
 
@@ -219,10 +219,6 @@ export function createAttributionReviewService({
 
     if (!item) {
       return { success: false, error: "reviewItemNotFound" };
-    }
-
-    if (!item.suggestion || !item.suggestedAccount) {
-      return { success: false, error: "suggestedOwnerUnavailable" };
     }
 
     const { suggestedAccount, suggestion } = item;
