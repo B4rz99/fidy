@@ -1,0 +1,49 @@
+apps/mobile/shared/i18n/locales/en.ts
+  s_823790b9024764::t_39b1adaa264bc3 643
+apps/mobile/__tests__/review-queues/attribution-review-service.test.ts
+  s_823790b9024764::t_c64a61ddd143a4 287-291,330-333
+  s_823790b9024764::t_76c36ea4ab8a9d 269-274
+  s_823790b9024764::t_cc4232e0dc24c7 268,275-286,292-316
+apps/mobile/babel.config.js
+  s_823790b9024764::t_66f9e6bca40005 5
+apps/mobile/features/settings/store.ts
+  s_823790b9024764::t_704c2cd02f555f 78-79
+  s_823790b9024764::t_a49a0bfa4a7e8a 77,80-88,98
+apps/mobile/features/review-queues/components/AttributionReviewScreen.tsx
+  s_823790b9024764::t_3aa4c3616e62df 9
+  s_823790b9024764::t_bd568e8d4467ed 58-60,114-121
+apps/mobile/shared/components/AppToastHost.tsx
+  s_823790b9024764::t_e9fd04dd160dee 5,27,29-30,76,80-81
+apps/mobile/babel-inline-sql.cjs
+  s_823790b9024764::t_c33555f4f0f666 1-36
+apps/mobile/features/review-queues/lib/attribution-review-service.ts
+  s_823790b9024764::t_a7c8e4e190eea4 27-29,151,155-158,162,165
+apps/mobile/shared/i18n/locales/es.ts
+  s_823790b9024764::t_98e0e4876d8c74 653
+apps/mobile/features/dashboard/lib/get-activity-account-names.ts
+  s_823790b9024764::t_4d533713e96e22 5-8,14-23
+apps/mobile/features/review-queues/components/AttributionQueueCard.tsx
+  s_823790b9024764::t_6192d993781843 78-80
+package.json
+  s_823790b9024764::t_41347de865469e 57-58
+apps/mobile/shared/lib/toast.ts
+  s_823790b9024764::t_ce7b7b194344dc 3,28
+apps/mobile/__tests__/dashboard/get-activity-account-names.test.ts
+  s_823790b9024764::t_6999208bc07c8d 43-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "8947009038633d02d0d4643ef499d2974d581539",
+  "prompts": {},
+  "sessions": {
+    "s_823790b9024764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea7d4-e3f0-7cb0-9375-c6153bce12d8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
