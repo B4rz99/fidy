@@ -41,3 +41,18 @@ Surface styling should flow through those modules instead of feature-local `bg-c
 `TextInput` content should not be nested directly inside native liquid glass when that causes rendering or measurement issues. The field modules own the adapter pattern: render the glass frame behind the interactive content, and keep the interactive content transparent above it. This keeps the visual language consistent while preserving text input behavior.
 
 Numpad-based money entry screens should go through `MoneyEntryScreen`; feature modules provide content and actions while the shared module owns amount centering, pinned form stack placement, safe-area padding, and numpad anchoring.
+
+## Update: Primitive Usage Rules
+
+Shared primitives own reusable surface behavior. Feature code should compose these primitives instead of rebuilding their borders, backgrounds, padding, and interaction shells locally.
+
+- Use `Card` for standalone visual cards and simple glass containers. Route surface color, border color, border width, and radius through named props such as `backgroundColor`, `borderColor`, `borderWidth`, and `radius`; keep `surfaceStyle` for layout-only placement.
+- Use `ListRowSurface` or `Row` for repeated rows. `ListRowSurface` owns row glass, selected borders, disabled opacity, minimum height, and grouped dividers. If a row contains an independent trailing action, keep the row surface non-interactive and put the main row tap target inside it so nested pressables do not compete.
+- Use `FieldSurface`, `FieldButton`, `FormTextField`, `FilterTextField`, and money-entry field modules for form controls. Field modules own the adapter pattern that keeps interactive `TextInput` content out of native liquid glass.
+- Use `Button`, `IconActionButton`, and `TextActionButton` for actions. `TextActionButton` uses `appearance="pill"` for chip-like text actions and `appearance="plain"` for plain text links.
+- Use `Chip`, `FilterPill`, `SelectableChipRow`, and `SegmentedControl` for selection. Feature modules should pass semantic state and sizing props instead of rebuilding chip dimensions with local class strings.
+- Use `DialogFrame`, `PickerDialog`, and `PickerOptionRow` for modal picker flows.
+
+Direct `GlassSurface` usage in feature code is reserved for genuinely new shared primitive work or isolated one-off surfaces that cannot be expressed through an existing primitive. When a feature needs a recurring shape that would otherwise require local `Pressable` plus `View`/`GlassSurface` styling, add or extend a shared primitive first.
+
+Tests should prefer rendered component contract tests for primitive behavior: accessibility roles, press behavior, selected state, disabled opacity, border/background prop routing, and field sizing. Source tests remain appropriate for architecture boundaries, route membership, public-surface imports, and guardrails against feature-local surface restyling, but they should not assert formatting-sensitive implementation details such as exact `contentStyle` strings.

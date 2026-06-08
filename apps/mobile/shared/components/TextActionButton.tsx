@@ -7,6 +7,7 @@ type TextActionButtonTone = "primary" | "danger" | "neutral";
 type TextActionButtonProps = Omit<PressableProps, "children"> & {
   readonly label: string;
   readonly tone?: TextActionButtonTone;
+  readonly appearance?: "pill" | "plain";
   readonly icon?: ReactNode;
   readonly className?: string;
 };
@@ -19,18 +20,22 @@ const LABEL_CLASS_NAMES: Record<TextActionButtonTone, string> = {
 
 export function TextActionButton({
   label,
+  appearance = "pill",
   tone = "primary",
   icon,
   className,
   ...pressableProps
 }: TextActionButtonProps) {
+  const baseClassName =
+    appearance === "pill"
+      ? "min-h-8 flex-row items-center justify-center gap-1 rounded-full px-2"
+      : "flex-row items-center justify-center gap-1";
+
   return (
     <Pressable
       {...pressableProps}
       accessibilityRole={pressableProps.accessibilityRole ?? "button"}
-      className={`min-h-8 flex-row items-center justify-center gap-1 rounded-full px-2 ${
-        className ?? ""
-      }`}
+      className={`${baseClassName} ${className ?? ""}`}
     >
       {icon}
       <Text className={`font-poppins-medium text-caption ${LABEL_CLASS_NAMES[tone]}`}>{label}</Text>
