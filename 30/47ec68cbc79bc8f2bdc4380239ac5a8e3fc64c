@@ -1,0 +1,29 @@
+apps/mobile/shared/components/TextActionButton.tsx
+  s_c5de1adbad9fac::t_c73792062d87a8 10,23,29-33,38
+docs/adr/0006-mobile-ui-kit-and-semantic-theme-tokens.md
+  s_c5de1adbad9fac::t_c73792062d87a8 44-58
+apps/mobile/__tests__/shared/primitive-contracts.test.tsx
+  s_c5de1adbad9fac::t_c73792062d87a8 1-238
+cubic.yaml
+  s_c5de1adbad9fac::t_065f3559be6e55 35-59
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_c5de1adbad9fac::t_c73792062d87a8 692
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_c5de1adbad9fac::t_c73792062d87a8 112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3047ec68cbc79bc8f2bdc4380239ac5a8e3fc64c",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
