@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { PressableProps } from "react-native";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassSurface } from "./GlassSurface";
+import { GlassPressable } from "./GlassPressable";
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "dangerSecondary" | "ghost";
 type ButtonSize = "default" | "compact";
@@ -83,30 +83,38 @@ export function Button({
     </>
   );
 
+  if (!usesGlassSurface) {
+    return (
+      <Pressable
+        {...pressableProps}
+        accessibilityRole={pressableProps.accessibilityRole ?? "button"}
+        disabled={isDisabled}
+        style={style}
+        className={`${SIZE_CLASS_NAMES[size]} flex-row items-center justify-center gap-2 rounded-xl px-4 ${
+          CONTAINER_CLASS_NAMES[variant]
+        } ${isDisabled ? "opacity-60" : ""} ${className ?? ""}`}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
   return (
-    <Pressable
+    <GlassPressable
       {...pressableProps}
       accessibilityRole={pressableProps.accessibilityRole ?? "button"}
       disabled={isDisabled}
       style={style}
-      className={`${SIZE_CLASS_NAMES[size]} ${
-        usesGlassSurface ? "" : "flex-row items-center justify-center gap-2 rounded-xl px-4"
-      } ${CONTAINER_CLASS_NAMES[variant]} ${isDisabled ? "opacity-60" : ""} ${className ?? ""}`}
+      nativeGlass={false}
+      radius={12}
+      borderColor={semanticBorderColor}
+      surfaceStyle={styles.glassContent}
+      className={`${SIZE_CLASS_NAMES[size]} ${CONTAINER_CLASS_NAMES[variant]} ${
+        isDisabled ? "opacity-60" : ""
+      } ${className ?? ""}`}
     >
-      {usesGlassSurface ? (
-        <GlassSurface
-          nativeGlass={false}
-          padded={false}
-          radius={12}
-          borderColor={semanticBorderColor}
-          style={styles.glassContent}
-        >
-          {content}
-        </GlassSurface>
-      ) : (
-        content
-      )}
-    </Pressable>
+      {content}
+    </GlassPressable>
   );
 }
 

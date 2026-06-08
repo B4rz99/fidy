@@ -9,7 +9,7 @@ import {
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
 import { refreshTransactions } from "@/features/transactions/store.public";
-import { GlassSurface, ScreenLayout } from "@/shared/components";
+import { Card, ScreenLayout } from "@/shared/components";
 import { ArrowLeftRight, TriangleAlert } from "@/shared/components/icons";
 import { ScrollView, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -176,7 +176,7 @@ export function FinancialMeaningReviewScreen() {
           subtitle={t("financialMeaningReview.reviewSubtitle")}
         />
 
-        <GlassSurface radius={20} style={styles.card}>
+        <Card radius={20} surfaceStyle={styles.cardSurface} contentStyle={styles.cardContent}>
           <Text style={[styles.metaLabel, { color: tertiary }]}>{subject}</Text>
           <View style={styles.titleRow}>
             <View style={styles.titleWrap}>
@@ -207,7 +207,7 @@ export function FinancialMeaningReviewScreen() {
               {t("financialMeaningReview.transferHint")}
             </Text>
           </View>
-        </GlassSurface>
+        </Card>
 
         <View style={styles.actionColumn}>
           <ActionButton
@@ -229,12 +229,16 @@ export function FinancialMeaningReviewScreen() {
           />
         </View>
 
-        <GlassSurface radius={18} style={styles.transferTip}>
+        <Card
+          radius={18}
+          surfaceStyle={styles.transferTipSurface}
+          contentStyle={styles.transferTipContent}
+        >
           <ArrowLeftRight size={18} color={secondary} />
           <Text style={[styles.transferTipCopy, { color: secondary }]}>
             {t("financialMeaningReview.transferExplanation")}
           </Text>
-        </GlassSurface>
+        </Card>
       </ScrollView>
     </ScreenLayout>
   );

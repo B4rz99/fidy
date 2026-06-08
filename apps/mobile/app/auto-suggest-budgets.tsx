@@ -11,11 +11,10 @@ import {
   useSuggestionSelection,
 } from "@/features/budget/hooks.public";
 import { BudgetSuggestionRow } from "@/features/budget/ui.public";
-import { AppAuroraBackground } from "@/shared/components";
+import { AppAuroraBackground, Button, TextActionButton } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -44,7 +43,6 @@ export default function AutoSuggestBudgetsScreen() {
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
@@ -143,21 +141,18 @@ export default function AutoSuggestBudgetsScreen() {
         )}
 
         <View style={styles.actions}>
-          <Pressable
-            style={[
-              styles.acceptButton,
-              { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 },
-            ]}
+          <Button
+            label={t("budgets.autoSuggest.acceptSelected")}
             onPress={handleAccept}
             disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
-          >
-            <Text style={styles.acceptButtonText}>{t("budgets.autoSuggest.acceptSelected")}</Text>
-          </Pressable>
-          <Pressable onPress={handleSkip}>
-            <Text style={[styles.skipText, { color: secondaryColor }]}>
-              {t("budgets.autoSuggest.skipAll")}
-            </Text>
-          </Pressable>
+            loading={isBusy}
+            className="self-stretch"
+          />
+          <TextActionButton
+            label={t("budgets.autoSuggest.skipAll")}
+            tone="neutral"
+            onPress={handleSkip}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -192,22 +187,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginTop: 8,
-  },
-  acceptButton: {
-    borderRadius: 12,
-    borderCurve: "continuous",
-    paddingVertical: 14,
-    alignItems: "center",
-    minHeight: 48,
-    alignSelf: "stretch",
-  },
-  acceptButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  skipText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
   },
 });

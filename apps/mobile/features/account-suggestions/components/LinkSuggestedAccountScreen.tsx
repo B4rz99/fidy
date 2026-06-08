@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { EmptyState, GlassSurface, ScreenLayout } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { EmptyState, GlassPressable, ScreenLayout } from "@/shared/components";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
@@ -30,17 +30,15 @@ function AccountRow({
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <Pressable onPress={onPress}>
-      <GlassSurface
-        padded={false}
-        radius={16}
-        borderColor={isLikelyMatch ? accentGreen : undefined}
-        style={styles.accountRow}
-      >
-        <Text style={[styles.accountName, { color: primary }]}>{name}</Text>
-        <Text style={[styles.accountSubtitle, { color: secondary }]}>{subtitle}</Text>
-      </GlassSurface>
-    </Pressable>
+    <GlassPressable
+      onPress={onPress}
+      radius={16}
+      borderColor={isLikelyMatch ? accentGreen : undefined}
+      surfaceStyle={styles.accountRow}
+    >
+      <Text style={[styles.accountName, { color: primary }]}>{name}</Text>
+      <Text style={[styles.accountSubtitle, { color: secondary }]}>{subtitle}</Text>
+    </GlassPressable>
   );
 }
 

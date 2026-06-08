@@ -1,9 +1,9 @@
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/features/auth/hooks.public";
 import { useDeleteAccountMutation } from "@/features/settings/hooks.public";
-import { DialogRouteFrame } from "@/shared/components";
+import { DialogActionButton, DialogActionStack, DialogRouteFrame } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
-import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
+import { Alert, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export default function DeleteAccountDialogRoute() {
@@ -12,7 +12,6 @@ export default function DeleteAccountDialogRoute() {
   const accessToken = useAuthStore((s) => s.session?.access_token);
   const deleteAccount = useDeleteAccountMutation();
   const accentRed = useThemeColor("accentRed");
-  const borderColor = useThemeColor("borderSubtle");
 
   const handleDelete = async () => {
     try {
@@ -50,48 +49,22 @@ export default function DeleteAccountDialogRoute() {
         >
           {t("settings.deleteAccountWarning")}
         </Text>
-        <View style={{ width: "100%", gap: 12, marginTop: 8 }}>
-          <Pressable
+        <DialogActionStack>
+          <DialogActionButton
+            label={t("common.cancel")}
+            variant="secondary"
             onPress={() => back()}
-            style={{
-              height: 48,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
-              className="font-poppins-semibold text-primary dark:text-primary-dark"
-              style={{ fontSize: 15 }}
-            >
-              {t("common.cancel")}
-            </Text>
-          </Pressable>
-          <Pressable
+          />
+          <DialogActionButton
+            label={t("settings.deleteAccountConfirm")}
+            variant="danger"
             onPress={() => {
               void handleDelete();
             }}
             disabled={deleteAccount.isPending}
-            style={{
-              height: 48,
-              borderRadius: 16,
-              backgroundColor: accentRed,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: deleteAccount.isPending ? 0.6 : 1,
-            }}
-          >
-            {deleteAccount.isPending ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text className="font-poppins-semibold" style={{ fontSize: 15, color: "#FFFFFF" }}>
-                {t("settings.deleteAccountConfirm")}
-              </Text>
-            )}
-          </Pressable>
-        </View>
+            loading={deleteAccount.isPending}
+          />
+        </DialogActionStack>
       </View>
     </DialogRouteFrame>
   );

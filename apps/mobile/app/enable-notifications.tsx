@@ -9,9 +9,9 @@ import {
   registerPushToken,
   requestNotificationPermissionStatus,
 } from "@/features/notifications/hooks.public";
-import { DialogRouteFrame } from "@/shared/components";
+import { DialogActionButton, DialogActionStack, DialogRouteFrame } from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { ScrollView, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError, captureWarning } from "@/shared/lib";
 
@@ -23,7 +23,6 @@ export default function EnableNotificationsDialogRoute() {
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const accentGreen = useThemeColor("accentGreen");
-  const borderColor = useThemeColor("borderSubtle");
   const [isRequesting, setIsRequesting] = useState(false);
   const isMountedRef = useRef(true);
   const actionVersionRef = useRef(0);
@@ -120,50 +119,23 @@ export default function EnableNotificationsDialogRoute() {
         >
           {t("notifications.enableNotifications.description")}
         </Text>
-        <View style={{ width: "100%", gap: 12 }}>
-          <Pressable
+        <DialogActionStack style={{ marginTop: 0 }}>
+          <DialogActionButton
+            label={t("notifications.enableNotifications.enable")}
             onPress={() => {
               void handleEnable();
             }}
             disabled={isRequesting}
-            style={{
-              height: 48,
-              borderRadius: 16,
-              backgroundColor: accentGreen,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: isRequesting ? 0.6 : 1,
-            }}
-          >
-            {isRequesting ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text className="font-poppins-semibold" style={{ fontSize: 15, color: "#FFFFFF" }}>
-                {t("notifications.enableNotifications.enable")}
-              </Text>
-            )}
-          </Pressable>
-          <Pressable
+            loading={isRequesting}
+          />
+          <DialogActionButton
+            label={t("notifications.enableNotifications.notNow")}
+            variant="secondary"
             onPress={() => {
               void handleNotNow();
             }}
-            style={{
-              height: 48,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
-              className="font-poppins-semibold text-primary dark:text-primary-dark"
-              style={{ fontSize: 15 }}
-            >
-              {t("notifications.enableNotifications.notNow")}
-            </Text>
-          </Pressable>
-        </View>
+          />
+        </DialogActionStack>
       </ScrollView>
     </DialogRouteFrame>
   );

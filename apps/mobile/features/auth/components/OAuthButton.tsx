@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { GlassSurface } from "@/shared/components/GlassSurface";
+import { GlassPressable } from "@/shared/components/GlassPressable";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
@@ -34,19 +34,27 @@ export function OAuthButton({
   );
 
   return (
-    <Pressable
-      onPress={onPress}
-      testID={testID}
-      className={`h-[52px] items-center justify-center ${useGlassSurface ? "" : "rounded-xl"} ${containerClassName}`}
-    >
+    <>
       {useGlassSurface ? (
-        <GlassSurface padded={false} radius={12} style={styles.glassContent}>
+        <GlassPressable
+          onPress={onPress}
+          testID={testID}
+          radius={12}
+          className={`h-[52px] items-center justify-center ${containerClassName}`}
+          surfaceStyle={styles.glassContent}
+        >
           {content}
-        </GlassSurface>
+        </GlassPressable>
       ) : (
-        content
+        <Pressable
+          onPress={onPress}
+          testID={testID}
+          className={`h-[52px] items-center justify-center rounded-xl ${containerClassName}`}
+        >
+          {content}
+        </Pressable>
       )}
-    </Pressable>
+    </>
   );
 }
 

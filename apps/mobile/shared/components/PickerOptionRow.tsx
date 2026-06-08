@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewStyle } from "react-native";
 import { Check } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassSurface } from "./GlassSurface";
+import { ListRowSurface } from "./ListRowSurface";
 
 type PickerOptionRowProps = {
   readonly leading?: ReactNode;
@@ -34,7 +34,6 @@ export function PickerOptionRow({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-  const rowStyle = [styles.row, style];
 
   const titleNode =
     typeof title === "string" ? (
@@ -54,44 +53,30 @@ export function PickerOptionRow({
     );
 
   return (
-    <Pressable
+    <ListRowSurface
       testID={testID}
       onPress={onPress}
       accessible
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ selected }}
+      selected={selected}
+      selectedBorderColor={accentGreen}
+      minHeight={52}
+      radius={18}
+      style={style}
     >
-      <GlassSurface
-        padded={false}
-        radius={18}
-        borderColor={selected ? accentGreen : undefined}
-        style={rowStyle}
-      >
-        {leading}
-        <View style={styles.textWrap}>
-          {titleNode}
-          {subtitleNode}
-        </View>
-        {trailing ?? (selected ? <Check size={18} color={accentGreen} strokeWidth={3} /> : null)}
-      </GlassSurface>
-    </Pressable>
+      {leading}
+      <View style={styles.textWrap}>
+        {titleNode}
+        {subtitleNode}
+      </View>
+      {trailing ?? (selected ? <Check size={18} color={accentGreen} strokeWidth={3} /> : null)}
+    </ListRowSurface>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    alignItems: "center",
-    borderCurve: "continuous",
-    borderRadius: 18,
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 52,
-    overflow: "hidden",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
   textWrap: {
     flex: 1,
     gap: 2,

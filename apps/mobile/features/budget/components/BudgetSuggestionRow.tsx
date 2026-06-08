@@ -1,6 +1,6 @@
 import type { CategoryId } from "@/shared/categories";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { FormTextField } from "@/shared/components";
+import { FormTextField, ListRowSurface } from "@/shared/components";
 import { StyleSheet, Switch, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -29,7 +29,7 @@ export function BudgetSuggestionRow({
   const categoryLabel = category ? getCategoryLabel(category, locale) : t("common.unknown");
 
   return (
-    <View style={[styles.row, { borderColor }]}>
+    <ListRowSurface variant="grouped" divider contentStyle={styles.row}>
       <View style={styles.rowLeft}>
         {category ? <Text style={{ color: category.color }}>{category.icon}</Text> : null}
         <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
@@ -59,7 +59,7 @@ export function BudgetSuggestionRow({
           trackColor={{ true: accentGreen }}
         />
       </View>
-    </View>
+    </ListRowSurface>
   );
 }
 
@@ -67,11 +67,7 @@ export type { BudgetSuggestionRowProps };
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
   },
   rowLeft: {
     flexDirection: "row",

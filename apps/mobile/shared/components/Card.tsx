@@ -5,9 +5,13 @@ import { Pressable, View } from "./rn";
 
 type CardProps = Omit<ViewProps, "children" | "style"> & {
   children: ReactNode;
+  borderColor?: string;
+  borderWidth?: number;
+  backgroundColor?: string;
   onPress?: PressableProps["onPress"];
   disabled?: boolean;
   padded?: boolean;
+  radius?: number;
   contentClassName?: string;
   contentStyle?: StyleProp<ViewStyle>;
   surfaceStyle?: StyleProp<ViewStyle>;
@@ -15,9 +19,13 @@ type CardProps = Omit<ViewProps, "children" | "style"> & {
 
 export function Card({
   children,
+  backgroundColor,
+  borderColor,
+  borderWidth,
   onPress,
   disabled = false,
   padded = true,
+  radius = 16,
   contentClassName,
   contentStyle,
   surfaceStyle: surfaceStyleOverride,
@@ -48,9 +56,12 @@ export function Card({
   const surface = (
     <GlassSurface
       {...surfaceViewProps}
+      backgroundColor={backgroundColor}
+      borderColor={borderColor}
+      borderWidth={borderWidth}
       isInteractive={onPress != null && !disabled}
       padded={false}
-      radius={16}
+      radius={radius}
       style={surfaceStyleOverride}
     >
       <View className={innerClassName} style={contentStyle}>

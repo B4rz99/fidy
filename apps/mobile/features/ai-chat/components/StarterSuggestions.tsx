@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { GlassSurface } from "@/shared/components";
+import { GlassPressable } from "@/shared/components";
 import { ChevronRight } from "@/shared/components/icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
@@ -57,17 +57,20 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
       </View>
       <View style={{ width: "100%", gap: 10 }}>
         {suggestions.map((suggestion) => (
-          <Pressable key={suggestion} onPress={() => onSelect(suggestion)}>
-            <GlassSurface padded={false} radius={18} style={styles.suggestionButton}>
-              <Text
-                className="font-poppins-semibold text-label text-primary dark:text-primary-dark"
-                style={{ flex: 1 }}
-              >
-                {suggestion}
-              </Text>
-              <ChevronRight size={18} color={supportTextColor} />
-            </GlassSurface>
-          </Pressable>
+          <GlassPressable
+            key={suggestion}
+            onPress={() => onSelect(suggestion)}
+            radius={18}
+            surfaceStyle={styles.suggestionButton}
+          >
+            <Text
+              className="font-poppins-semibold text-label text-primary dark:text-primary-dark"
+              style={{ flex: 1 }}
+            >
+              {suggestion}
+            </Text>
+            <ChevronRight size={18} color={supportTextColor} />
+          </GlassPressable>
         ))}
       </View>
     </ScrollView>

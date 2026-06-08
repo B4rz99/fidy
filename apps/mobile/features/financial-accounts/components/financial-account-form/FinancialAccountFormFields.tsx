@@ -3,8 +3,8 @@ import {
   financialAccountKindSchema,
 } from "@/features/financial-accounts/schema";
 import { getKindEmoji } from "@/features/financial-accounts/lib/kind-display";
-import { GlassSurface } from "@/shared/components/GlassSurface";
-import { Pressable, Text } from "@/shared/components/rn";
+import { GlassPressable } from "@/shared/components/GlassPressable";
+import { Text } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountForm.styles";
 
@@ -25,22 +25,18 @@ export function KindChip({
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <Pressable
+    <GlassPressable
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityState={{ checked: isSelected }}
+      backgroundColor={isSelected ? accentGreen : undefined}
+      nativeGlass={false}
+      radius={999}
+      surfaceStyle={styles.kindChip}
     >
-      <GlassSurface
-        backgroundColor={isSelected ? accentGreen : undefined}
-        nativeGlass={false}
-        padded={false}
-        radius={999}
-        style={styles.kindChip}
-      >
-        <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
-          {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
-        </Text>
-      </GlassSurface>
-    </Pressable>
+      <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
+        {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
+      </Text>
+    </GlassPressable>
   );
 }

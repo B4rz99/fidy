@@ -13,7 +13,7 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { GlassSurface } from "./GlassSurface";
+import { ListRowSurface } from "./ListRowSurface";
 
 type TransactionRowProps = {
   icon: string;
@@ -157,14 +157,14 @@ export function TransactionRow({
   const hasActions = onEdit != null || onDelete != null;
 
   const content = (
-    <GlassSurface padded={false} radius={8} style={styles.rowSurface}>
+    <ListRowSurface radius={8} minHeight={64} style={styles.rowSurface}>
       <View
         className="size-10 items-center justify-center rounded-icon"
         style={{ backgroundColor: iconBgColor ?? defaultIconBg }}
       >
         <Text style={{ color: iconColor }}>{icon}</Text>
       </View>
-      <View className="ml-3 flex-1">
+      <View className="flex-1">
         <Text className="font-poppins-medium text-body text-primary dark:text-primary-dark">
           {name}
         </Text>
@@ -180,7 +180,7 @@ export function TransactionRow({
           {category}
         </Text>
       </View>
-    </GlassSurface>
+    </ListRowSurface>
   );
 
   if (!hasActions) return content;

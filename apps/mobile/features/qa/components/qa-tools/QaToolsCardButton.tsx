@@ -1,5 +1,5 @@
-import { GlassSurface } from "@/shared/components";
-import { Pressable, Text } from "@/shared/components/rn";
+import { GlassPressable } from "@/shared/components";
+import { Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./QaTools.styles";
 
@@ -27,21 +27,20 @@ export function QaToolsCardButton({
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <Pressable onPress={onPress} testID={testId}>
-      <GlassSurface
-        padded={false}
-        radius={scenario ? 18 : 16}
-        borderColor={highlighted ? accentGreen : undefined}
-        style={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
-      >
-        <Text style={[styles.cardTitle, { color: primary }]}>{title}</Text>
-        {description ? (
-          <Text style={[styles.cardDescription, { color: secondary }]}>{description}</Text>
-        ) : null}
-        {statusLabel ? (
-          <Text style={[styles.statusLabelText, { color: primary }]}>{statusLabel}</Text>
-        ) : null}
-      </GlassSurface>
-    </Pressable>
+    <GlassPressable
+      onPress={onPress}
+      testID={testId}
+      radius={scenario ? 18 : 16}
+      borderColor={highlighted ? accentGreen : undefined}
+      surfaceStyle={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
+    >
+      <Text style={[styles.cardTitle, { color: primary }]}>{title}</Text>
+      {description ? (
+        <Text style={[styles.cardDescription, { color: secondary }]}>{description}</Text>
+      ) : null}
+      {statusLabel ? (
+        <Text style={[styles.statusLabelText, { color: primary }]}>{statusLabel}</Text>
+      ) : null}
+    </GlassPressable>
   );
 }

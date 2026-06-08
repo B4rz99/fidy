@@ -6,7 +6,14 @@ export { Card } from "./Card";
 export type { GlassCardTokens } from "./card-tokens";
 export { Chip } from "./Chip";
 export { ChoiceTray } from "./ChoiceTray";
-export { DialogCancelButton, DialogFrame, DialogPanel, DialogTitle } from "./DialogFrame";
+export {
+  DialogActionButton,
+  DialogActionStack,
+  DialogCancelButton,
+  DialogFrame,
+  DialogPanel,
+  DialogTitle,
+} from "./DialogFrame";
 export { EmptyState } from "./EmptyState";
 export { ErrorFallback } from "./ErrorFallback";
 export { FeedList } from "./FeedList";
@@ -26,8 +33,12 @@ export type { FormTextFieldProps } from "./FormTextField";
 export { FormScreen } from "./FormScreen";
 export { FormSection } from "./FormSection";
 export { GlassSurface } from "./GlassSurface";
+export { GlassPressable } from "./GlassPressable";
+export type { GlassPressableProps } from "./GlassPressable";
 export { IconActionButton } from "./IconActionButton";
 export type { IconActionButtonProps, IconActionButtonTone } from "./IconActionButton";
+export { ListRowSurface } from "./ListRowSurface";
+export type { ListRowSurfaceProps, ListRowSurfaceVariant } from "./ListRowSurface";
 export { MonthNavigator } from "./MonthNavigator";
 export type { MonthNavigatorProps } from "./MonthNavigator";
 export { MoneyAmountDisplay } from "./MoneyAmountDisplay";

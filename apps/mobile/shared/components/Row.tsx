@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { PressableProps, ViewProps } from "react-native";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { Text, View } from "@/shared/components/rn";
+import { ListRowSurface } from "./ListRowSurface";
 
 type RowProps = Omit<ViewProps, "children"> & {
   title: ReactNode;
@@ -44,26 +44,28 @@ export function Row({
     testID,
     ...containerProps
   } = viewProps;
-  const contentProps = onPress == null ? viewProps : containerProps;
-  const borderColor = useThemeColor("borderSubtle");
   const titleColorClassName = destructive
     ? "text-danger dark:text-danger-dark"
     : "text-text-primary dark:text-text-primary-dark";
-  const content = (
-    <View
+  const contentProps = onPress == null ? viewProps : containerProps;
+
+  return (
+    <ListRowSurface
       {...contentProps}
-      className={`flex-row items-center px-4 py-3 ${disabled ? "opacity-50" : ""} ${
-        className ?? ""
-      }`}
-      style={[
-        {
-          minHeight: 56,
-          gap: 12,
-          borderBottomWidth: divider && !isLast ? StyleSheet.hairlineWidth : 0,
-          borderBottomColor: divider && !isLast ? borderColor : "transparent",
-        },
-        style,
-      ]}
+      onPress={onPress}
+      disabled={disabled}
+      divider={divider}
+      isLast={isLast}
+      variant="grouped"
+      accessibilityHint={accessibilityHint}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityState}
+      accessible={accessible}
+      importantForAccessibility={importantForAccessibility}
+      testID={testID}
+      contentStyle={style}
+      className={className}
     >
       {leading}
       <View className="flex-1" style={{ gap: 2 }}>
@@ -87,26 +89,6 @@ export function Row({
         )}
       </View>
       {trailing}
-    </View>
-  );
-
-  if (onPress == null) {
-    return content;
-  }
-
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityHint={accessibilityHint}
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole={accessibilityRole ?? "button"}
-      accessibilityState={{ ...accessibilityState, disabled }}
-      accessible={accessible}
-      importantForAccessibility={importantForAccessibility}
-      testID={testID}
-    >
-      {content}
-    </Pressable>
+    </ListRowSurface>
   );
 }

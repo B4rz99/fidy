@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { PressableProps, ViewProps } from "react-native";
-import { Pressable, StyleSheet, Text } from "@/shared/components/rn";
+import { StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
 
 type ChipTone = "neutral" | "primary" | "success" | "danger" | "warning";
@@ -81,6 +82,11 @@ export function Chip({
       </Text>
     </>
   );
+  const surfaceStyle = [
+    styles.surface,
+    size === "compact" ? styles.compactSurface : null,
+    contentProps.style,
+  ];
   const content = (
     <GlassSurface
       {...contentProps}
@@ -89,11 +95,7 @@ export function Chip({
       radius={999}
       borderColor={borderColor}
       borderWidth={selected ? 1.5 : undefined}
-      style={[
-        styles.surface,
-        size === "compact" ? styles.compactSurface : null,
-        contentProps.style,
-      ]}
+      style={surfaceStyle}
     >
       {contentBody}
     </GlassSurface>
@@ -104,9 +106,17 @@ export function Chip({
   }
 
   return (
-    <Pressable {...pressableProps} onPress={onPress}>
-      {content}
-    </Pressable>
+    <GlassPressable
+      {...pressableProps}
+      onPress={onPress}
+      radius={999}
+      borderColor={borderColor}
+      borderWidth={selected ? 1.5 : undefined}
+      surfaceClassName={className}
+      surfaceStyle={surfaceStyle}
+    >
+      {contentBody}
+    </GlassPressable>
   );
 }
 
