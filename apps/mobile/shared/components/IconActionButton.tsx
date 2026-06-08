@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { PressableProps } from "react-native";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { GlassSurface } from "./GlassSurface";
+import { GlassPressable } from "./GlassPressable";
 
 type IconActionButtonTone = "plain" | "surface";
 
@@ -39,6 +39,21 @@ export function IconActionButton({
     </>
   );
 
+  if (tone === "surface") {
+    return (
+      <GlassPressable
+        {...pressableProps}
+        accessibilityRole={accessibilityRole ?? "button"}
+        hitSlop={hitSlop}
+        radius={999}
+        surfaceStyle={styles.surface}
+        className={`relative ${size} items-center justify-center ${className ?? ""}`}
+      >
+        {content}
+      </GlassPressable>
+    );
+  }
+
   return (
     <Pressable
       {...pressableProps}
@@ -48,13 +63,7 @@ export function IconActionButton({
         className ?? ""
       }`}
     >
-      {tone === "surface" ? (
-        <GlassSurface padded={false} radius={999} style={styles.surface}>
-          {content}
-        </GlassSurface>
-      ) : (
-        content
-      )}
+      {content}
     </Pressable>
   );
 }

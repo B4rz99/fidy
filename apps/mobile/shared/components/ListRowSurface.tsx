@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
 
 type ListRowSurfaceVariant = "grouped" | "standalone";
@@ -97,6 +98,30 @@ export function ListRowSurface({
     );
 
   if (onPress == null) return content;
+
+  if (variant === "standalone") {
+    return (
+      <GlassPressable
+        {...viewProps}
+        testID={testID}
+        onPress={onPress}
+        disabled={disabled}
+        accessible={accessible}
+        accessibilityHint={accessibilityHint}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole ?? "button"}
+        accessibilityState={{ ...accessibilityState, disabled, selected }}
+        importantForAccessibility={importantForAccessibility}
+        nativeGlass={nativeGlass}
+        radius={radius}
+        borderColor={selected ? selectedColor : undefined}
+        surfaceClassName={className}
+        surfaceStyle={[innerStyle, style]}
+      >
+        {children}
+      </GlassPressable>
+    );
+  }
 
   return (
     <Pressable

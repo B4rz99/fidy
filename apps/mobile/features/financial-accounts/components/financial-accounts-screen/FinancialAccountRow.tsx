@@ -3,8 +3,8 @@ import {
   readFinancialAccountKind,
 } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/schema";
-import { GlassSurface } from "@/shared/components/GlassSurface";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { GlassPressable } from "@/shared/components/GlassPressable";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountsScreen.styles";
 import type { FinancialAccountListItem } from "./FinancialAccountsScreen.types";
@@ -67,37 +67,38 @@ export function FinancialAccountRow({
   ].filter((value): value is string => value != null);
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button">
-      <GlassSurface padded={false} radius={22} style={styles.accountCard}>
-        <View style={[styles.accountIcon, { backgroundColor: iconPalette[kind].backgroundColor }]}>
-          <Text style={{ color: iconPalette[kind].color }}>{icon}</Text>
-        </View>
+    <GlassPressable
+      onPress={onPress}
+      accessibilityRole="button"
+      radius={22}
+      surfaceStyle={styles.accountCard}
+    >
+      <View style={[styles.accountIcon, { backgroundColor: iconPalette[kind].backgroundColor }]}>
+        <Text style={{ color: iconPalette[kind].color }}>{icon}</Text>
+      </View>
 
-        <View style={styles.rowContent}>
-          <View style={styles.rowHeader}>
-            <Text style={[styles.rowTitle, { color: primary }]}>{item.account.name}</Text>
-            {item.account.isDefault ? (
-              <View style={[styles.badge, { backgroundColor: accentGreenLight }]}>
-                <Text style={[styles.badgeText, { color: primary }]}>
-                  {t("financialAccounts.labels.default")}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          <Text style={[styles.rowSubtitle, { color: secondary }]}>
-            {subtitleParts.join(" • ")}
-          </Text>
-
-          {item.hasBillingProfileGap ? (
-            <Text style={[styles.rowWarning, { color: accentRed }]}>
-              {t("financialAccounts.list.billingGap")}
-            </Text>
+      <View style={styles.rowContent}>
+        <View style={styles.rowHeader}>
+          <Text style={[styles.rowTitle, { color: primary }]}>{item.account.name}</Text>
+          {item.account.isDefault ? (
+            <View style={[styles.badge, { backgroundColor: accentGreenLight }]}>
+              <Text style={[styles.badgeText, { color: primary }]}>
+                {t("financialAccounts.labels.default")}
+              </Text>
+            </View>
           ) : null}
         </View>
 
-        <Text style={{ color: tertiary }}>›</Text>
-      </GlassSurface>
-    </Pressable>
+        <Text style={[styles.rowSubtitle, { color: secondary }]}>{subtitleParts.join(" • ")}</Text>
+
+        {item.hasBillingProfileGap ? (
+          <Text style={[styles.rowWarning, { color: accentRed }]}>
+            {t("financialAccounts.list.billingGap")}
+          </Text>
+        ) : null}
+      </View>
+
+      <Text style={{ color: tertiary }}>›</Text>
+    </GlassPressable>
   );
 }

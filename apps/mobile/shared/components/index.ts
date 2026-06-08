@@ -26,6 +26,8 @@ export type { FormTextFieldProps } from "./FormTextField";
 export { FormScreen } from "./FormScreen";
 export { FormSection } from "./FormSection";
 export { GlassSurface } from "./GlassSurface";
+export { GlassPressable } from "./GlassPressable";
+export type { GlassPressableProps } from "./GlassPressable";
 export { IconActionButton } from "./IconActionButton";
 export type { IconActionButtonProps, IconActionButtonTone } from "./IconActionButton";
 export { ListRowSurface } from "./ListRowSurface";
