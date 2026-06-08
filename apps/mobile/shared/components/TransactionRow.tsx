@@ -164,7 +164,7 @@ export function TransactionRow({
       >
         <Text style={{ color: iconColor }}>{icon}</Text>
       </View>
-      <View className="ml-3 flex-1">
+      <View className="flex-1">
         <Text className="font-poppins-medium text-body text-primary dark:text-primary-dark">
           {name}
         </Text>
