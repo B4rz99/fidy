@@ -76,8 +76,8 @@ async function refreshBudgetsForActiveSession(input: {
   readonly sessionId: number;
 }): Promise<boolean> {
   if (!isActiveBudgetSession(input.userId, input.sessionId)) return false;
-  await loadBudgetsForUser(input.db, input.userId);
-  return isActiveBudgetSession(input.userId, input.sessionId);
+  const didCommit = await loadBudgetsForUser(input.db, input.userId);
+  return didCommit && isActiveBudgetSession(input.userId, input.sessionId);
 }
 
 export function initializeBudgetSession(userId: UserId): void {
@@ -86,7 +86,7 @@ export function initializeBudgetSession(userId: UserId): void {
   useBudgetStore.getState().beginSession(userId);
 }
 
-export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<void> {
+export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<boolean> {
   const request: BudgetRequest = {
     requestId: ++loadBudgetsRequestId,
     userId,
@@ -116,14 +116,16 @@ export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<voi
       if (loadBudgetsRequestId === request.requestId) {
         useBudgetStore.getState().setIsLoading(false);
       }
-      return;
+      return false;
     }
 
     useBudgetStore.getState().setSnapshot(snapshot);
+    return true;
   } catch {
     if (loadBudgetsRequestId === request.requestId) {
       useBudgetStore.getState().setIsLoading(false);
     }
+    return false;
   }
 }
 

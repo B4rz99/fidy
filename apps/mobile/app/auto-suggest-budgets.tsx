@@ -60,8 +60,8 @@ export default function AutoSuggestBudgetsScreen() {
       }
 
       void loadBudgetsForUser(currentDb, userId)
-        .then(() => {
-          if (cancelled) return;
+        .then((didCommit) => {
+          if (cancelled || !didCommit) return;
           loadBudgetAutoSuggestions(currentDb, userId);
         })
         .catch(captureError);

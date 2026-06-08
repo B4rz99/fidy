@@ -160,9 +160,9 @@ describe("useBudgetStore", () => {
     useBudgetStore.getState().setMonth("2026-04" as Month);
     const freshLoad = loadBudgetsForUser(mockDb, USER_ID);
 
-    await freshLoad;
+    await expect(freshLoad).resolves.toBe(true);
     deferredMarch.resolve(MARCH_STALE_SNAPSHOT);
-    await staleLoad;
+    await expect(staleLoad).resolves.toBe(false);
 
     expect(useBudgetStore.getState().currentMonth).toBe("2026-04");
     expect(useBudgetStore.getState().budgets).toEqual(APRIL_FRESH_SNAPSHOT.budgets);
@@ -175,7 +175,7 @@ describe("useBudgetStore", () => {
 
     const { loadBudgetsForUser, useBudgetStore } = await initializeBudgetStore("2026-03" as Month);
 
-    await loadBudgetsForUser(mockDb, USER_ID);
+    await expect(loadBudgetsForUser(mockDb, USER_ID)).resolves.toBe(true);
 
     expect(useBudgetStore.getState().budgetTotalByMonth["2026-03" as Month]).toBe(100000);
   });
@@ -190,7 +190,7 @@ describe("useBudgetStore", () => {
 
     initializeBudgetSession("user-2" as UserId);
     deferredSnapshot.resolve(EMPTY_BUDGET_REFRESH_SNAPSHOT);
-    await load;
+    await expect(load).resolves.toBe(false);
 
     expect(useBudgetStore.getState().isLoading).toBe(false);
   });
