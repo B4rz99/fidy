@@ -1,0 +1,64 @@
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 111
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_c5de1adbad9fac::t_b0c2fd4fb72712 205
+apps/mobile/features/goals/components/goal-detail/ProjectionCard.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 1-2,13,16-23,28
+apps/mobile/features/ai-chat/components/NewChatButton.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 1,10,13-16
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 6,181,184-187,189
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsScreen.styles.ts
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 53-56
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 5,168-173,177
+apps/mobile/features/goals/components/goal-detail/GoalDetail.styles.ts
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 48-50
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 7-14,16,40,43,45
+apps/mobile/features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 8,93-98,102
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 7,9,108-111,113
+  s_c5de1adbad9fac::t_5f72e9d3ec0665 112
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountIdentifiersSection.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 2-3,44-48,53
+apps/mobile/features/ai-chat/components/ConversationList.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 4-10,55-72,74-79,156,163-168,177-185
+apps/mobile/features/ai-chat/components/StarterSuggestions.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 2,4,60,68
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 9,26,115,117-147
+apps/mobile/features/account-suggestions/components/OnboardingAccountReviewStep.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 6,55-60,64
+apps/mobile/features/account-suggestions/components/LinkSuggestedAccountScreen.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 7,33,36-38,40-44,180-182
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailSection.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 2,19,21,38-49
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 6,70,74,102
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 9,13,121-123,126
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 9,98-103,106,224-226
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_c5de1adbad9fac::t_cf64dfdc164827 684,690-692
+apps/mobile/app/connected-accounts.tsx
+  s_c5de1adbad9fac::t_b72d9eb6ce7685 14,127,160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "dfbf961edff80e2a705cedee704a9303fe126ec6",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
