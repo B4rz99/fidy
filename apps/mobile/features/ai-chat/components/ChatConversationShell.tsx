@@ -3,11 +3,11 @@ import { FlashList } from "@shopify/flash-list";
 import type { ReactElement, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { IconActionButton } from "@/shared/components";
 import { ChevronLeft } from "@/shared/components/icons";
 import {
   Keyboard,
   Platform,
-  Pressable,
   StyleSheet,
   View,
   type LayoutChangeEvent,
@@ -178,14 +178,15 @@ export function ChatConversationShell({
         isStreaming,
         isAwayFromBottom: showScrollToBottom,
       }) ? (
-        <Pressable
-          accessibilityRole="button"
+        <IconActionButton
           accessibilityLabel={scrollToBottomLabel}
           onPress={() => scrollToBottom()}
+          icon={
+            <ChevronLeft size={20} color="#fff" style={{ transform: [{ rotate: "-90deg" }] }} />
+          }
+          size="size-10"
           style={[styles.scrollToBottomButton, { bottom: scrollButtonBottom }]}
-        >
-          <ChevronLeft size={20} color="#fff" style={{ transform: [{ rotate: "-90deg" }] }} />
-        </Pressable>
+        />
       ) : null}
 
       <View
@@ -207,11 +208,6 @@ const styles = StyleSheet.create({
   scrollToBottomButton: {
     position: "absolute",
     right: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     backgroundColor: "rgba(0,0,0,0.64)",
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

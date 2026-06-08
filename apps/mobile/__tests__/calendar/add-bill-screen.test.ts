@@ -108,8 +108,7 @@ test("add-bill form dismisses keyboard on chip press", () => {
   expect(formSource).toContain("Keyboard.dismiss");
 });
 
-test("add-bill content uses Pressable per ui-pressable rule", () => {
-  expect(formContentSource).toContain("Pressable");
+test("add-bill content avoids TouchableOpacity per ui-pressable rule", () => {
   expect(formContentSource).not.toContain("TouchableOpacity");
 });
 

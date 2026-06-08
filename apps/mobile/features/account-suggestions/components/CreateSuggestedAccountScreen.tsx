@@ -6,6 +6,7 @@ import type { FinancialAccountKind } from "@/features/financial-accounts/public"
 import { useOnboardingStore } from "@/features/onboarding/store.public";
 import {
   Button,
+  Card,
   EmptyState,
   FormTextField,
   GlassPressable,
@@ -94,10 +95,15 @@ function ResolvedCreateSuggestedAccountForm({
           {t("accountSuggestions.create.subtitle")}
         </Text>
 
-        <View style={[styles.identifierBox, { backgroundColor: accentGreenLight }]}>
+        <Card
+          backgroundColor={accentGreenLight}
+          padded={false}
+          radius={12}
+          contentStyle={styles.identifierBox}
+        >
           <Text style={[styles.identifierLabel, { color: secondary }]}>{draft.sourceLabel}</Text>
           <Text style={[styles.identifierValue, { color: primary }]}>{draft.evidenceLabel}</Text>
-        </View>
+        </Card>
 
         <FormTextField
           label={t("accountSuggestions.create.nameLabel")}
@@ -106,12 +112,6 @@ function ResolvedCreateSuggestedAccountForm({
           placeholder={draft.name}
           style={styles.fieldGroup}
           labelStyle={[styles.fieldLabel, { color: secondary }]}
-          inputStyle={[
-            styles.input,
-            {
-              color: primary,
-            },
-          ]}
         />
 
         <View style={styles.fieldGroup}>
@@ -203,14 +203,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 12,
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    minHeight: 48,
-    paddingHorizontal: 14,
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-  },
   kindRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -227,9 +219,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   identifierBox: {
-    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    alignItems: "flex-start",
+    flexDirection: "column",
+    gap: 2,
   },
   identifierLabel: {
     fontFamily: "Poppins_500Medium",

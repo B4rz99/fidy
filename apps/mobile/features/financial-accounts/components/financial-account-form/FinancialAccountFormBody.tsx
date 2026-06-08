@@ -2,6 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
 import { FieldButton } from "@/shared/components/FieldButton";
 import { FormScreen } from "@/shared/components/FormScreen";
 import { FormSection } from "@/shared/components/FormSection";
@@ -164,11 +165,16 @@ export function FinancialAccountFormBody({
             maxLength={2}
           />
 
-          <View style={[styles.noteBanner, { backgroundColor: accentGreenLight }]}>
+          <Card
+            backgroundColor={accentGreenLight}
+            padded={false}
+            radius={8}
+            contentStyle={styles.noteBanner}
+          >
             <Text style={[styles.noteText, { color: secondary }]}>
               {t("financialAccounts.form.billingHint")}
             </Text>
-          </View>
+          </Card>
         </FormSection>
       ) : null}
 

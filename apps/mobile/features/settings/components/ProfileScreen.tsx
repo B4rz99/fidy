@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
-import { Button, ScreenLayout } from "@/shared/components";
+import { Button, ScreenLayout, TextActionButton } from "@/shared/components";
 import { LogOut } from "@/shared/components/icons";
-import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Alert, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
 
@@ -105,11 +105,12 @@ export function ProfileScreen() {
           <LocalQaProfileTools />
 
           {authMode === "remote" ? (
-            <Pressable onPress={handleDeleteAccount}>
-              <Text className="font-poppins text-sm text-accent-red dark:text-accent-red-dark">
-                {t("settings.deleteAccount")}
-              </Text>
-            </Pressable>
+            <TextActionButton
+              label={t("settings.deleteAccount")}
+              onPress={handleDeleteAccount}
+              tone="danger"
+              className="min-h-0 rounded-none px-0"
+            />
           ) : null}
         </View>
       </ScrollView>

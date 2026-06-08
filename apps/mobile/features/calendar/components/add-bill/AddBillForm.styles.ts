@@ -30,13 +30,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 44,
   },
-  dateInput: {
-    justifyContent: "center",
-  },
-  dateText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-  },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",

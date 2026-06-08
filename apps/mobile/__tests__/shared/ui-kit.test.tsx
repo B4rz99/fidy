@@ -525,7 +525,6 @@ describe("shared UI kit", () => {
       "../../features/settings/components/PrivateBackupScreen.tsx",
       "../../features/qa/components/LocalQaProfileTools.tsx",
       "../../features/ai-chat/components/ActionCard.tsx",
-      "../../features/ai-chat/components/ConversationList.tsx",
     ];
 
     files.forEach((file) => {
@@ -682,13 +681,15 @@ describe("shared UI kit", () => {
     expect(categoryFilterSource).toContain("SharedFilterPill");
   });
 
-  it("keeps AI conversation cards horizontal through explicit Card contentStyle", () => {
+  it("keeps AI conversation rows horizontal through shared row surfaces", () => {
     const source = readFileSync(
       resolve(__dirname, "../../features/ai-chat/components/ConversationList.tsx"),
       "utf-8"
     );
 
-    expect(source).toContain("contentStyle");
+    expectSharedComponentImport(source, "ListRowSurface");
+    expect(source).toContain("<ListRowSurface");
+    expect(source).toContain("sessionMainAction");
     expect(source).toMatch(/flexDirection:\s*['"]row['"]/);
     expect(source).not.toContain('className="rounded-lg"');
   });

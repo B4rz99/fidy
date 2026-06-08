@@ -1,5 +1,6 @@
 import { ChevronRight } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { ListRowSurface } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { FinancialAccountDetailSection } from "./FinancialAccountDetailSection";
 import { styles } from "./FinancialAccountDetailsScreen.styles";
@@ -40,12 +41,16 @@ export function FinancialAccountIdentifiersSection({
         </Text>
       )}
 
-      <Pressable style={styles.manageButton} onPress={onManageIdentifiers}>
+      <ListRowSurface
+        variant="grouped"
+        onPress={onManageIdentifiers}
+        contentStyle={styles.manageButton}
+      >
         <Text style={[styles.manageButtonText, { color: primary }]}>
           {t("financialAccounts.detail.manageIdentifiers")}
         </Text>
         <ChevronRight size={16} color={secondary} />
-      </Pressable>
+      </ListRowSurface>
     </FinancialAccountDetailSection>
   );
 }

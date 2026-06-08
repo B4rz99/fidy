@@ -6,7 +6,7 @@ import { openBrowserAsync } from "expo-web-browser";
 import { useAuthIdentity, useOptionalUserId } from "@/features/auth/public";
 import type { PrivateBackupHealthStatus } from "@/features/backup/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
-import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Row, ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
   Bell,
   ChevronRight,
@@ -23,7 +23,7 @@ import {
   Wallet,
   Wrench,
 } from "@/shared/components/icons";
-import { Linking, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Linking, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
 import { buildPrivacyUrl, buildTermsUrl, buildWhatsAppUrl } from "../lib/settings-links";
@@ -112,47 +112,39 @@ export function SettingsScreen() {
       >
         {/* ACCOUNT */}
         <SettingsSection label={t("settings.accountSection")}>
-          <Pressable
+          <Row
             onPress={() => push("/profile")}
-            className="flex-row items-center"
-            style={{
-              height: 64,
-              gap: 12,
-              paddingHorizontal: 16,
-            }}
-          >
-            <View
-              className="items-center justify-center rounded-full"
-              style={{
-                width: 40,
-                height: 40,
-                backgroundColor: accentGreen,
-                overflow: "hidden",
-              }}
-            >
-              {avatar.type === "image" ? (
-                <Image
-                  source={{ uri: avatar.uri }}
-                  style={{ width: 40, height: 40 }}
-                  contentFit="cover"
-                  onError={() => setFailedImageUrl(avatar.uri)}
-                />
-              ) : (
-                <Text className="font-poppins-semibold text-white" style={{ fontSize: 14 }}>
-                  {avatar.initials}
-                </Text>
-              )}
-            </View>
-            <View className="flex-1" style={{ gap: 2 }}>
-              <Text className="font-poppins text-sm text-primary dark:text-primary-dark">
-                {fullName}
-              </Text>
-              <Text className="font-poppins text-xs text-secondary dark:text-secondary-dark">
-                {email}
-              </Text>
-            </View>
-            <ChevronRight size={18} color={tertiaryColor} />
-          </Pressable>
+            title={fullName}
+            subtitle={email}
+            titleClassName="text-sm"
+            subtitleClassName="text-xs"
+            isLast
+            leading={
+              <View
+                className="items-center justify-center rounded-full"
+                style={{
+                  width: 40,
+                  height: 40,
+                  backgroundColor: accentGreen,
+                  overflow: "hidden",
+                }}
+              >
+                {avatar.type === "image" ? (
+                  <Image
+                    source={{ uri: avatar.uri }}
+                    style={{ width: 40, height: 40 }}
+                    contentFit="cover"
+                    onError={() => setFailedImageUrl(avatar.uri)}
+                  />
+                ) : (
+                  <Text className="font-poppins-semibold text-white" style={{ fontSize: 14 }}>
+                    {avatar.initials}
+                  </Text>
+                )}
+              </View>
+            }
+            trailing={<ChevronRight size={18} color={tertiaryColor} />}
+          />
         </SettingsSection>
 
         {/* PREFERENCES */}

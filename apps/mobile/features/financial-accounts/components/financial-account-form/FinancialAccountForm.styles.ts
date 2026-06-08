@@ -98,8 +98,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
   },
   noteBanner: {
-    borderRadius: 8,
-    borderCurve: "continuous",
     paddingHorizontal: 12,
     paddingVertical: 10,
   },

@@ -1,6 +1,5 @@
+import { IconActionButton } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
-import { GlassPressable } from "@/shared/components";
-import { StyleSheet } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export function NewChatButton({ onPress }: { readonly onPress: () => void }) {
@@ -8,24 +7,12 @@ export function NewChatButton({ onPress }: { readonly onPress: () => void }) {
   const iconColor = useThemeColor("primary");
 
   return (
-    <GlassPressable
+    <IconActionButton
       onPress={onPress}
-      hitSlop={12}
-      accessibilityRole="button"
       accessibilityLabel={t("aiChat.newChat")}
-      radius={20}
-      surfaceStyle={styles.surface}
-    >
-      <Plus size={24} color={iconColor} />
-    </GlassPressable>
+      icon={<Plus size={24} color={iconColor} />}
+      tone="surface"
+      size="size-10"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  surface: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

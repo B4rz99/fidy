@@ -3,7 +3,7 @@ import {
   readFinancialAccountKind,
 } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/schema";
-import { GlassPressable } from "@/shared/components/GlassPressable";
+import { ListRowSurface } from "@/shared/components/ListRowSurface";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountsScreen.styles";
@@ -67,11 +67,11 @@ export function FinancialAccountRow({
   ].filter((value): value is string => value != null);
 
   return (
-    <GlassPressable
+    <ListRowSurface
       onPress={onPress}
       accessibilityRole="button"
       radius={22}
-      surfaceStyle={styles.accountCard}
+      contentStyle={styles.accountCard}
     >
       <View style={[styles.accountIcon, { backgroundColor: iconPalette[kind].backgroundColor }]}>
         <Text style={{ color: iconPalette[kind].color }}>{icon}</Text>
@@ -99,6 +99,6 @@ export function FinancialAccountRow({
       </View>
 
       <Text style={{ color: tertiary }}>›</Text>
-    </GlassPressable>
+    </ListRowSurface>
   );
 }
