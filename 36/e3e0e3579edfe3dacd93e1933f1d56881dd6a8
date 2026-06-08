@@ -1,0 +1,19 @@
+apps/mobile/babel.config.js
+  s_823790b9024764::t_4943f00eb51411 1-37,42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "36e3e0e3579edfe3dacd93e1933f1d56881dd6a8",
+  "prompts": {},
+  "sessions": {
+    "s_823790b9024764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea7d4-e3f0-7cb0-9375-c6153bce12d8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
