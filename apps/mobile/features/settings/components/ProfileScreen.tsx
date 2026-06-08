@@ -109,7 +109,7 @@ export function ProfileScreen() {
               label={t("settings.deleteAccount")}
               onPress={handleDeleteAccount}
               tone="danger"
-              className="min-h-0 rounded-none px-0"
+              appearance="plain"
             />
           ) : null}
         </View>

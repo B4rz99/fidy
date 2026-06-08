@@ -689,8 +689,7 @@ describe("shared UI kit", () => {
 
     expectSharedComponentImport(source, "ListRowSurface");
     expect(source).toContain("<ListRowSurface");
-    expect(source).toContain("sessionMainAction");
-    expect(source).toMatch(/flexDirection:\s*['"]row['"]/);
+    expectSharedComponentImport(source, "IconActionButton");
     expect(source).not.toContain('className="rounded-lg"');
   });
 

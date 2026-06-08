@@ -32,3 +32,28 @@ reviews:
         - apps/mobile/.expo/**
         - apps/mobile/coverage/**
         - apps/mobile/dist/**
+    - name: Mobile UI Architecture Guardian
+      description: |
+        Review PRs for reusable UI architecture drift in Fidy's mobile app.
+
+        Flag changes that weaken the shared mobile UI kit and glass surface rules documented in docs/adr/0006-mobile-ui-kit-and-semantic-theme-tokens.md.
+
+        Specifically flag PR code when:
+        - Feature code recreates reusable glass/card/row/field/action/chip/dialog/list surfaces with local `GlassSurface`, `Pressable` plus styled `View`, `StyleSheet` card containers, `bg-card`, `bg-card-dark`, `bg-surface`, `bg-surface-dark`, direct `card` theme reads, or local border/background/radius styling instead of shared primitives such as `Card`, `MetricCard`, `ListRowSurface`, `Row`, `FeedList`, `FieldSurface`, `FieldButton`, `FormTextField`, `FilterTextField`, `Button`, `IconActionButton`, `TextActionButton`, `Chip`, `FilterPill`, `SelectableChipRow`, `SegmentedControl`, `DialogFrame`, `PickerDialog`, or `PickerOptionRow`.
+        - Interactive `TextInput` content is nested directly inside native liquid glass instead of using the shared field adapter pattern (`FieldSurface`, `FormTextField`, `FilterTextField`, or money-entry field modules) that keeps the glass frame behind the input.
+        - A reusable primitive's visual contract is bypassed by pushing surface-level background, border, radius, padding, or disabled/selected styling through generic `style` or `className` overrides when the primitive has a named prop or variant for that behavior.
+        - Feature code introduces a new recurring UI shape that would require repeated local `Pressable`/`View`/`GlassSurface` styling instead of extending or adding a shared primitive first.
+        - Tests assert brittle implementation strings such as exact `contentStyle`, class fragments, local `flexDirection` strings, or formatting-sensitive source snippets for shared primitive behavior when a rendered component contract test would cover the behavior more directly.
+
+        Do not flag domain-specific compositions or semantic visuals that are intentionally feature-owned: budget/goal/notification/account card content, category colors, chart marks, status/accent colors, avatars, icon badges, navigation chrome, chat bubbles, numpad keys, one-off layout containers without glass/card/row behavior, or source tests that guard route membership, public import boundaries, i18n keys, or architecture boundaries.
+
+        Prefer findings that identify a concrete duplicated surface, primitive bypass, missing shared component variant, or brittle UI test. Avoid cosmetic spacing/color opinions unless they undermine the shared primitive contract or the app-wide glass visual system.
+      include:
+        - apps/mobile/**
+        - docs/adr/0006-mobile-ui-kit-and-semantic-theme-tokens.md
+        - cubic.yaml
+      exclude:
+        - apps/mobile/node_modules/**
+        - apps/mobile/.expo/**
+        - apps/mobile/coverage/**
+        - apps/mobile/dist/**
