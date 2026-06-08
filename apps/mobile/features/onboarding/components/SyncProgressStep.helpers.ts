@@ -11,4 +11,4 @@ const byRecentlyCaptured = (a: { readonly updatedAt: Date }, b: { readonly updat
 
 export const getRecentTransactionPreview = <T extends { readonly updatedAt: Date }>(
   transactions: readonly T[]
-) => [...transactions].sort(byRecentlyCaptured).slice(0, RECENT_TRANSACTION_PREVIEW_LIMIT);
+) => transactions.toSorted(byRecentlyCaptured).slice(0, RECENT_TRANSACTION_PREVIEW_LIMIT);

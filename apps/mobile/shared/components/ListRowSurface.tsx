@@ -106,6 +106,7 @@ export function ListRowSurface({
         testID={testID}
         onPress={onPress}
         disabled={disabled}
+        disabledOpacity={1}
         accessible={accessible}
         accessibilityHint={accessibilityHint}
         accessibilityLabel={accessibilityLabel}

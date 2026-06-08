@@ -27,7 +27,7 @@ export function computeMedian(values: readonly number[]): number {
 }
 
 const sortNumbers = (values: readonly number[]): readonly number[] =>
-  [...values].sort(compareNumbersAscending);
+  values.toSorted(compareNumbersAscending);
 
 const compareNumbersAscending = (left: number, right: number): number => left - right;
 

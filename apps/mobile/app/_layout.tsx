@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: font export names from @expo-google-fonts
 import "../global.css";
+import "@/shared/polyfills/array-to-sorted";
 import {
   Poppins_500Medium,
   Poppins_600SemiBold,

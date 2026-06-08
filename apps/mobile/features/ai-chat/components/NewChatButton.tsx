@@ -25,8 +25,6 @@ const styles = StyleSheet.create({
   surface: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
   },
