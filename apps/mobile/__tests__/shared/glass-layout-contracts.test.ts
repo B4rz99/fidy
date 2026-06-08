@@ -41,7 +41,7 @@ describe("glass layout contracts", () => {
     const glassSource = readShared("GlassSurface.tsx");
     const buttonSource = readShared("Button.tsx");
     const fieldButtonSource = readShared("FieldButton.tsx");
-    const pickerOptionSource = readShared("PickerOptionRow.tsx");
+    const listRowSurfaceSource = readShared("ListRowSurface.tsx");
 
     expect(glassSource).toContain("function getLayoutStyle");
     expect(glassSource).toContain("backgroundColor: _backgroundColor");
@@ -49,10 +49,12 @@ describe("glass layout contracts", () => {
     expect(glassSource).toContain("borderRadius: _borderRadius");
     expect(glassSource).toContain("borderWidth: _borderWidth");
 
-    [buttonSource, fieldButtonSource, pickerOptionSource].forEach((source) => {
+    [buttonSource, fieldButtonSource].forEach((source) => {
       expect(source).toContain("borderColor=");
       expect(source).not.toMatch(/style=\{\[[^\]]*\{\s*borderColor:/);
     });
+    expect(listRowSurfaceSource).toContain("borderColor={selected ? selectedColor : undefined}");
+    expect(listRowSurfaceSource).not.toMatch(/style=\{\[[^\]]*\{\s*borderColor:/);
   });
 
   it("keeps migrated chip callsites on native chipStyle/style sizing", () => {
@@ -117,11 +119,13 @@ describe("glass layout contracts", () => {
 
   it("keeps shared transaction rows on glass surfaces", () => {
     const transactionRowSource = readShared("TransactionRow.tsx");
+    const listRowSurfaceSource = readShared("ListRowSurface.tsx");
     const activityItemSource = readSource(
       "../../features/dashboard/components/home-screen/ActivityFeedItem.tsx"
     );
 
-    expect(transactionRowSource).toContain("<GlassSurface");
+    expect(transactionRowSource).toContain("<ListRowSurface");
+    expect(listRowSurfaceSource).toContain("<GlassSurface");
     expect(transactionRowSource).toContain("styles.rowSurface");
     expect(activityItemSource).not.toContain("activityCard");
     expect(activityItemSource).not.toMatch(/rgba\(28,\s*28,\s*30/);

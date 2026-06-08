@@ -28,6 +28,8 @@ export { FormSection } from "./FormSection";
 export { GlassSurface } from "./GlassSurface";
 export { IconActionButton } from "./IconActionButton";
 export type { IconActionButtonProps, IconActionButtonTone } from "./IconActionButton";
+export { ListRowSurface } from "./ListRowSurface";
+export type { ListRowSurfaceProps, ListRowSurfaceVariant } from "./ListRowSurface";
 export { MonthNavigator } from "./MonthNavigator";
 export type { MonthNavigatorProps } from "./MonthNavigator";
 export { MoneyAmountDisplay } from "./MoneyAmountDisplay";

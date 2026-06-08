@@ -50,6 +50,7 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { SegmentedControl } from "./SegmentedControl"');
     expect(source).toContain('export { SelectableChipRow } from "./SelectableChipRow"');
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
+    expect(source).toContain('export { ListRowSurface } from "./ListRowSurface"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
     expect(source).toContain('export { MoneyAmountDisplay } from "./MoneyAmountDisplay"');
     expect(source).toContain('export { MoneyEntryAmountField } from "./MoneyEntryAmountField"');
@@ -178,6 +179,7 @@ describe("shared UI kit", () => {
       "FilterTextField.tsx",
       "FormTextField.tsx",
       "FormSection.tsx",
+      "ListRowSurface.tsx",
       "MoneyEntryFieldSurface.tsx",
       "PickerDialog.tsx",
       "PickerOptionRow.tsx",
