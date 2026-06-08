@@ -1,0 +1,40 @@
+apps/mobile/shared/components/AppToastHost.tsx
+  s_c5de1adbad9fac::t_3cd74a5e484285 109
+  s_c5de1adbad9fac::t_c3db7a0f2abaa2 17
+apps/mobile/shared/navigation/use-native-header-height.ts
+  s_c5de1adbad9fac::t_78ec8307ea361f 2,5
+  s_c5de1adbad9fac::t_99c50d20d1abef 1
+apps/mobile/__tests__/plugins/with-fidy-widget-files.test.ts
+  s_c5de1adbad9fac::t_780075a541376a 88-89
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_c5de1adbad9fac::t_ba9460a711f4bc 507-508
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_c5de1adbad9fac::t_f7c2051c8c60ed 25-27,115
+  s_c5de1adbad9fac::t_9150b43bae5ed1 106,109-113
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_c5de1adbad9fac::t_7f7a845c8773d2 103
+  s_c5de1adbad9fac::t_fe7b929590a01d 15,102,104
+apps/mobile/features/account-suggestions/components/AccountSuggestionCard.tsx
+  s_c5de1adbad9fac::t_9e25e325cfc886 84,89-90
+apps/mobile/shared/components/Chip.tsx
+  s_c5de1adbad9fac::t_d3949c007e2119 12,31,43,88,90,116-118
+  s_c5de1adbad9fac::t_e18fcc2b22848b 61
+apps/mobile/plugins/withFidyWidget.appDelegate.js
+  s_c5de1adbad9fac::t_916edf39deede7 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "ced4ff1218f7d2811802b8f46110ea42b7bb0830",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
