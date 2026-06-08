@@ -1,0 +1,37 @@
+apps/mobile/__tests__/settings/notification-preferences.test.ts
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 47,59,62,71
+apps/mobile/shared/i18n/locales/en.ts
+  s_ac9411f3c63c72::t_664e3027e77a76 802
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 804,822-823
+apps/mobile/features/settings/components/NotificationPreferencesScreen.tsx
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 51
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_ac9411f3c63c72::t_4f3df112370a4e 44
+apps/mobile/features/notifications/services/weekly-digest-schedule.ts
+  s_ac9411f3c63c72::t_4f3df112370a4e 36
+apps/mobile/features/settings/store.ts
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 64
+apps/mobile/__tests__/notifications/local-push.test.ts
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 83,92-93,95,97
+apps/mobile/shared/i18n/locales/es.ts
+  s_ac9411f3c63c72::t_664e3027e77a76 814
+  s_ac9411f3c63c72::t_7ec186d5bb76e2 816,835-836
+apps/mobile/features/settings/data/notification-preferences.ts
+  s_ac9411f3c63c72::t_4f3df112370a4e 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "ae591dd8ee439b7f567defca80df87ce6b70e200",
+  "prompts": {},
+  "sessions": {
+    "s_ac9411f3c63c72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea5cf-0767-7f82-9f64-b6f9d73b41c2",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
