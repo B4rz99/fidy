@@ -1,0 +1,36 @@
+apps/mobile/shared/components/Chip.tsx
+  s_c5de1adbad9fac::t_d6ccfe4ce90c72 7,11,20
+apps/mobile/shared/components/FieldSurface.tsx
+  s_c5de1adbad9fac::t_33ffb012f0fe1e 5,17,62
+apps/mobile/shared/components/Card.tsx
+  s_c5de1adbad9fac::t_f16f94c4caf008 5,19
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_c5de1adbad9fac::t_3530d7004e36d7 7,19,70,84-90,98,111,113,137,139
+apps/mobile/shared/components/surface-style.ts
+  s_c5de1adbad9fac::t_dd6f765092be6f 4-56
+apps/mobile/shared/components/GlassPressable.tsx
+  s_c5de1adbad9fac::t_12e4c64f70d5fa 2
+  s_c5de1adbad9fac::t_1deb1542bd94bc 5,18
+apps/mobile/shared/components/PickerOptionRow.tsx
+  s_c5de1adbad9fac::t_a732715f60115e 2,7,18
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_c5de1adbad9fac::t_32beb38c022844 45,50-52
+apps/mobile/shared/components/MetricCard.tsx
+  s_c5de1adbad9fac::t_c6b88235037008 4,12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c12600cb7684e6fa2f5bd617172449454497dbcf",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
