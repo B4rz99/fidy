@@ -224,6 +224,26 @@ describe("shared primitive contracts", () => {
     expect(rowContent).toBeTruthy();
   });
 
+  it("uses explicit ListRowSurface layout and divider props", () => {
+    const screen = renderFidy(
+      <ListRowSurface
+        accessibilityLabel="Grouped row"
+        divider
+        dividerColor="#ddeeff"
+        layoutStyle={{ marginTop: 6 }}
+        variant="grouped"
+      >
+        <Text>Grouped row</Text>
+      </ListRowSurface>
+    );
+    const groupedRow = asContractNode(screen.getByA11yLabel("Grouped row"));
+
+    expect(flattenStyle(groupedRow.props.style)).toMatchObject({
+      borderBottomColor: "#ddeeff",
+      marginTop: 6,
+    });
+  });
+
   it("keeps grouped ListRowSurface non-glass and divider-only", () => {
     const screen = renderFidy(
       <ListRowSurface variant="grouped" divider accessibilityLabel="Grouped row">
