@@ -178,6 +178,7 @@ export function ListRowSurface({
           style={[
             styles.content,
             {
+              minHeight,
               opacity: disabled ? 0.5 : 1,
             },
             rowLayoutStyle,
@@ -215,6 +216,7 @@ export function ListRowSurface({
           style={[
             styles.content,
             {
+              minHeight,
               opacity: disabled ? 0.5 : 1,
             },
             rowLayoutStyle,

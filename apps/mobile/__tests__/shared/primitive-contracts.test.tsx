@@ -168,12 +168,17 @@ describe("shared primitive contracts", () => {
       asContractNode(screen.root),
       (style) => style.borderColor === "#55cc88"
     );
+    const content = nearestAncestor(
+      findNodeByText(asContractNode(screen.root), "Row content"),
+      (node) => flattenStyle(node.props.style)?.minHeight === 72
+    );
     const rowContentStyle = flattenStyle(surface?.props.style);
 
     expect(pressable.props.disabled).toBe(true);
     expect(pressable.props.accessibilityState).toMatchObject({ disabled: true, selected: true });
     expect(flattenStyle(pressable.props.style)).toMatchObject({ opacity: 1 });
     expect(rowContentStyle).toMatchObject({ borderColor: "#55cc88" });
+    expect(content).toBeTruthy();
   });
 
   it("uses explicit ListRowSurface layout and divider props", () => {
