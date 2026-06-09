@@ -1,0 +1,23 @@
+apps/mobile/shared/components/surface-style.ts
+  s_c5de1adbad9fac::t_5e484563708dd3 91
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_c5de1adbad9fac::t_3103d969cd5500 29-91,133-134,153,177-188,214-225
+apps/mobile/__tests__/shared/primitive-contracts.test.tsx
+  s_c5de1adbad9fac::t_7100e5dc7b1eae 199-219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "98efbd4c9d5810753d0080aad68ffd9708c6286d",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
