@@ -49,7 +49,7 @@ export function IconActionButton({
         hitSlop={hitSlop}
         radius={999}
         backgroundColor={backgroundColor}
-        surfaceStyle={styles.surface}
+        surfaceLayoutStyle={styles.surface}
         className={`relative ${size} items-center justify-center ${className ?? ""}`}
       >
         {content}
@@ -77,7 +77,6 @@ const styles = StyleSheet.create({
   surface: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
-    borderRadius: 999,
     justifyContent: "center",
   },
 });

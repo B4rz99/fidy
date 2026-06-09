@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
-import { useColorScheme, useThemeColor } from "@/shared/hooks";
-import { AppAuroraBackground } from "./AppAuroraBackground";
+import { useThemeColor } from "@/shared/hooks";
+import { ScreenShell } from "./ScreenShell";
 
 export const TAB_BAR_CLEARANCE = Platform.OS === "ios" ? 0 : 96;
 export const HEADER_HEIGHT = 48;
@@ -35,7 +35,6 @@ export function ScreenLayout({
   children,
 }: ScreenLayoutProps) {
   const insets = useSafeAreaInsets();
-  const isDark = useColorScheme() === "dark";
   const primaryColor = useThemeColor("primary");
   const isTab = variant === "tab";
   const customHeaderTopInset = process.env.EXPO_OS === "web" ? 0 : insets.top;
@@ -69,9 +68,7 @@ export function ScreenLayout({
   };
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark" style={{ backgroundColor }}>
-      <AppAuroraBackground isDark={isDark} />
-      {backgroundLayer}
+    <ScreenShell backgroundColor={backgroundColor} backgroundLayer={backgroundLayer}>
       {Platform.OS === "ios" && includesNativeHeader && <Stack.Screen options={iosHeaderOptions} />}
       {shouldRenderCustomHeader && (
         <View style={{ paddingTop: customHeaderTopInset }}>
@@ -133,7 +130,7 @@ export function ScreenLayout({
       >
         {children}
       </View>
-    </View>
+    </ScreenShell>
   );
 }
 

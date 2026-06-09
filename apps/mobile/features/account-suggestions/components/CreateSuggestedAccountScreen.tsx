@@ -130,7 +130,7 @@ function ResolvedCreateSuggestedAccountForm({
                   accessibilityState={{ checked: isSelected }}
                   radius={12}
                   borderColor={isSelected ? accentGreen : undefined}
-                  surfaceStyle={styles.kindPill}
+                  surfaceLayoutStyle={styles.kindPill}
                 >
                   <Text style={[styles.kindText, { color: primary }]}>
                     {t(`financialAccounts.kinds.${option}`)}

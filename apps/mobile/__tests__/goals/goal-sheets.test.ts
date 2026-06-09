@@ -161,7 +161,7 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(frameSource).not.toContain("<FidyNumpad");
   expect(frameSource).toContain("<MoneyEntryScreen");
   expect(frameSource).toContain("numpadVisible={numpadEnabled}");
-  expect(numpadFormScreenSource).toContain("<AppAuroraBackground");
+  expect(numpadFormScreenSource).toContain("<ScreenShell>");
   expect(numpadFormScreenSource).toContain("<FidyNumpad");
   expect(numpadFormScreenSource).toContain("<ScrollView");
   expect(numpadFormScreenSource).toContain("accessible={false}");

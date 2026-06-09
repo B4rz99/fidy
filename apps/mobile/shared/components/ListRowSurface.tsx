@@ -4,16 +4,19 @@ import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type ListRowSurfaceVariant = "grouped" | "standalone";
 
-type ListRowSurfaceProps = Omit<ViewProps, "children"> & {
+type ListRowSurfaceProps = Omit<ViewProps, "children" | "style"> & {
   readonly children: ReactNode;
   readonly className?: string;
   readonly contentStyle?: StyleProp<ViewStyle>;
   readonly disabled?: boolean;
   readonly divider?: boolean;
+  readonly dividerColor?: string;
   readonly isLast?: boolean;
+  readonly layoutStyle?: SurfaceLayoutStyle;
   readonly minHeight?: number;
   readonly nativeGlass?: boolean;
   readonly onPress?: PressableProps["onPress"];
@@ -22,6 +25,70 @@ type ListRowSurfaceProps = Omit<ViewProps, "children"> & {
   readonly selectedBorderColor?: string;
   readonly variant?: ListRowSurfaceVariant;
 };
+
+function getSurfaceLayoutStyle(style: SurfaceLayoutStyle): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    alignSelf: flattened.alignSelf,
+    aspectRatio: flattened.aspectRatio,
+    bottom: flattened.bottom,
+    display: flattened.display,
+    end: flattened.end,
+    flex: flattened.flex,
+    flexBasis: flattened.flexBasis,
+    flexGrow: flattened.flexGrow,
+    flexShrink: flattened.flexShrink,
+    height: flattened.height,
+    left: flattened.left,
+    margin: flattened.margin,
+    marginBottom: flattened.marginBottom,
+    marginEnd: flattened.marginEnd,
+    marginHorizontal: flattened.marginHorizontal,
+    marginLeft: flattened.marginLeft,
+    marginRight: flattened.marginRight,
+    marginStart: flattened.marginStart,
+    marginTop: flattened.marginTop,
+    marginVertical: flattened.marginVertical,
+    maxHeight: flattened.maxHeight,
+    maxWidth: flattened.maxWidth,
+    minHeight: flattened.minHeight,
+    minWidth: flattened.minWidth,
+    position: flattened.position,
+    right: flattened.right,
+    start: flattened.start,
+    top: flattened.top,
+    width: flattened.width,
+    zIndex: flattened.zIndex,
+  };
+}
+
+function getRowContentLayoutStyle(style: SurfaceLayoutStyle): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    alignContent: flattened.alignContent,
+    alignItems: flattened.alignItems,
+    columnGap: flattened.columnGap,
+    flexDirection: flattened.flexDirection,
+    flexWrap: flattened.flexWrap,
+    gap: flattened.gap,
+    justifyContent: flattened.justifyContent,
+    minHeight: flattened.minHeight,
+    padding: flattened.padding,
+    paddingBottom: flattened.paddingBottom,
+    paddingEnd: flattened.paddingEnd,
+    paddingHorizontal: flattened.paddingHorizontal,
+    paddingLeft: flattened.paddingLeft,
+    paddingRight: flattened.paddingRight,
+    paddingStart: flattened.paddingStart,
+    paddingTop: flattened.paddingTop,
+    paddingVertical: flattened.paddingVertical,
+    rowGap: flattened.rowGap,
+  };
+}
 
 export function ListRowSurface({
   accessibilityHint,
@@ -34,6 +101,7 @@ export function ListRowSurface({
   contentStyle,
   disabled = false,
   divider = false,
+  dividerColor: dividerColorOverride,
   importantForAccessibility,
   isLast = false,
   minHeight = 56,
@@ -42,7 +110,7 @@ export function ListRowSurface({
   radius = 18,
   selected = false,
   selectedBorderColor,
-  style,
+  layoutStyle,
   testID,
   variant = "standalone",
   ...viewProps
@@ -50,6 +118,7 @@ export function ListRowSurface({
   const borderColor = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const selectedColor = selectedBorderColor ?? accentGreen;
+  const dividerColor = dividerColorOverride ?? borderColor;
   const surfaceA11yProps =
     onPress == null
       ? {
@@ -62,7 +131,9 @@ export function ListRowSurface({
           testID,
         }
       : null;
-  const innerStyle = [
+  const outerLayoutStyle = getSurfaceLayoutStyle(layoutStyle);
+  const rowLayoutStyle = getRowContentLayoutStyle(layoutStyle);
+  const contentStyleValue = [
     styles.content,
     {
       minHeight,
@@ -70,16 +141,27 @@ export function ListRowSurface({
     },
     variant === "grouped"
       ? {
-          borderBottomColor: divider && !isLast ? borderColor : "transparent",
+          borderBottomColor: divider && !isLast ? dividerColor : "transparent",
           borderBottomWidth: divider && !isLast ? StyleSheet.hairlineWidth : 0,
         }
       : null,
     contentStyle,
   ];
+  const surfaceLayoutStyle = [
+    {
+      minHeight,
+    },
+    outerLayoutStyle,
+  ];
 
   const content =
     variant === "grouped" ? (
-      <View {...viewProps} {...surfaceA11yProps} className={className} style={[innerStyle, style]}>
+      <View
+        {...viewProps}
+        {...surfaceA11yProps}
+        className={className}
+        style={[contentStyleValue, layoutStyle]}
+      >
         {children}
       </View>
     ) : (
@@ -91,9 +173,21 @@ export function ListRowSurface({
         radius={radius}
         borderColor={selected ? selectedColor : undefined}
         className={className}
-        style={[innerStyle, style]}
+        style={surfaceLayoutStyle}
       >
-        {children}
+        <View
+          style={[
+            styles.content,
+            {
+              minHeight,
+              opacity: disabled ? 0.5 : 1,
+            },
+            rowLayoutStyle,
+            contentStyle,
+          ]}
+        >
+          {children}
+        </View>
       </GlassSurface>
     );
 
@@ -117,9 +211,21 @@ export function ListRowSurface({
         radius={radius}
         borderColor={selected ? selectedColor : undefined}
         surfaceClassName={className}
-        surfaceStyle={[innerStyle, style]}
+        surfaceLayoutStyle={surfaceLayoutStyle}
       >
-        {children}
+        <View
+          style={[
+            styles.content,
+            {
+              minHeight,
+              opacity: disabled ? 0.5 : 1,
+            },
+            rowLayoutStyle,
+            contentStyle,
+          ]}
+        >
+          {children}
+        </View>
       </GlassPressable>
     );
   }

@@ -97,7 +97,7 @@ export function FilterPill({
       borderColor={selected ? selectedBorderColor : undefined}
       borderWidth={selected ? 1.5 : undefined}
       surfaceClassName={className}
-      surfaceStyle={[styles.surface, surfaceStyle]}
+      surfaceLayoutStyle={[styles.surface, surfaceStyle]}
     >
       {content}
     </GlassPressable>
@@ -109,7 +109,6 @@ export type { FilterPillProps };
 const styles = StyleSheet.create({
   surface: {
     alignItems: "center",
-    borderRadius: 999,
     justifyContent: "center",
     minHeight: 32,
     paddingHorizontal: 12,

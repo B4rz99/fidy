@@ -39,8 +39,8 @@ export function FinancialAccountFieldRow({
       variant="grouped"
       nativeGlass={false}
       divider
+      dividerColor={borderSubtle}
       contentStyle={styles.fieldRow}
-      style={{ borderBottomColor: borderSubtle }}
     >
       <View style={styles.fieldText}>
         <Text style={[styles.fieldLabel, { color: secondary }]}>{label}</Text>

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { Card } from "./Card";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type MetricCardProps = Omit<ViewProps, "children" | "style"> & {
   readonly children: ReactNode;
@@ -8,7 +9,7 @@ type MetricCardProps = Omit<ViewProps, "children" | "style"> & {
   readonly padded?: boolean;
   readonly contentClassName?: string;
   readonly contentStyle?: StyleProp<ViewStyle>;
-  readonly surfaceStyle?: StyleProp<ViewStyle>;
+  readonly layoutStyle?: SurfaceLayoutStyle;
 };
 
 export function MetricCard({
@@ -17,7 +18,7 @@ export function MetricCard({
   padded = true,
   contentClassName,
   contentStyle,
-  surfaceStyle,
+  layoutStyle,
   ...viewProps
 }: MetricCardProps) {
   return (
@@ -27,7 +28,7 @@ export function MetricCard({
       padded={padded}
       contentClassName={`gap-3 ${contentClassName ?? ""}`}
       contentStyle={contentStyle}
-      surfaceStyle={surfaceStyle}
+      layoutStyle={layoutStyle}
     >
       {children}
     </Card>

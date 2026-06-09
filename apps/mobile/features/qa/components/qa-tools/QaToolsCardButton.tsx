@@ -32,7 +32,8 @@ export function QaToolsCardButton({
       testID={testId}
       radius={scenario ? 18 : 16}
       borderColor={highlighted ? accentGreen : undefined}
-      surfaceStyle={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
+      borderWidth={highlighted ? 1.5 : undefined}
+      surfaceLayoutStyle={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
     >
       <Text style={[styles.cardTitle, { color: primary }]}>{title}</Text>
       {description ? (

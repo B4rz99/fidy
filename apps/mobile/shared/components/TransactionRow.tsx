@@ -157,7 +157,7 @@ export function TransactionRow({
   const hasActions = onEdit != null || onDelete != null;
 
   const content = (
-    <ListRowSurface radius={8} minHeight={64} style={styles.rowSurface}>
+    <ListRowSurface radius={8} minHeight={64} layoutStyle={styles.rowSurface}>
       <View
         className="size-10 items-center justify-center rounded-icon"
         style={{ backgroundColor: iconBgColor ?? defaultIconBg }}
