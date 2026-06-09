@@ -76,7 +76,10 @@ function getRowContentLayoutStyle(style: SurfaceLayoutStyle): StyleProp<ViewStyl
     flexWrap: flattened.flexWrap,
     gap: flattened.gap,
     justifyContent: flattened.justifyContent,
+<<<<<<< HEAD
     minHeight: flattened.minHeight,
+=======
+>>>>>>> 98efbd4c (fix(mobile-ui): route row layout without visual escapes)
     padding: flattened.padding,
     paddingBottom: flattened.paddingBottom,
     paddingEnd: flattened.paddingEnd,
