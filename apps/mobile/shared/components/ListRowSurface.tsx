@@ -76,6 +76,7 @@ function getRowContentLayoutStyle(style: SurfaceLayoutStyle): StyleProp<ViewStyl
     flexWrap: flattened.flexWrap,
     gap: flattened.gap,
     justifyContent: flattened.justifyContent,
+    minHeight: flattened.minHeight,
     padding: flattened.padding,
     paddingBottom: flattened.paddingBottom,
     paddingEnd: flattened.paddingEnd,

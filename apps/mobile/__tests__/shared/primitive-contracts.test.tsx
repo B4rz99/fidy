@@ -205,7 +205,7 @@ describe("shared primitive contracts", () => {
     const screen = renderFidy(
       <ListRowSurface
         accessibilityLabel="Standalone row"
-        layoutStyle={{ marginTop: 6, paddingHorizontal: 20 }}
+        layoutStyle={{ marginTop: 6, minHeight: 80, paddingHorizontal: 20 }}
       >
         <Text>Standalone content</Text>
       </ListRowSurface>
@@ -214,10 +214,12 @@ describe("shared primitive contracts", () => {
     const surface = findStyledView(root, (style) => style.marginTop === 6);
     const rowContent = nearestAncestor(
       findNodeByText(root, "Standalone content"),
-      (node) => flattenStyle(node.props.style)?.paddingHorizontal === 20
+      (node) =>
+        flattenStyle(node.props.style)?.minHeight === 80 &&
+        flattenStyle(node.props.style)?.paddingHorizontal === 20
     );
 
-    expect(flattenStyle(surface?.props.style)).toMatchObject({ marginTop: 6 });
+    expect(flattenStyle(surface?.props.style)).toMatchObject({ marginTop: 6, minHeight: 80 });
     expect(flattenStyle(surface?.props.style)?.paddingHorizontal).toBeUndefined();
     expect(rowContent).toBeTruthy();
   });
