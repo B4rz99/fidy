@@ -1,0 +1,75 @@
+apps/mobile/shared/components/IconActionButton.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 52
+apps/mobile/shared/components/GlassSurface.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 4,7,13,26,43,52
+apps/mobile/shared/components/Chip.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 116
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 35
+apps/mobile/features/auth/components/OAuthButton.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 44
+apps/mobile/shared/components/GlassPressable.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 22,51,71
+apps/mobile/shared/components/NumpadFormScreen.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 6,32-51
+apps/mobile/shared/components/index.ts
+  s_c5de1adbad9fac::t_2d798fac6ac117 83-84
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 133
+apps/mobile/shared/components/PickerOptionRow.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 67
+apps/mobile/features/calendar/components/CalendarBillRow.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 44
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 179,232
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_c5de1adbad9fac::t_2d798fac6ac117 42,47-53
+docs/adr/0006-mobile-ui-kit-and-semantic-theme-tokens.md
+  s_c5de1adbad9fac::t_2d798fac6ac117 49,59-64
+apps/mobile/shared/components/Card.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 9,18,25,33,63,68
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 6-7,71,133
+apps/mobile/shared/components/FieldSurface.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 16,38,61
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 10,16,18,39,48,56,77,86-91,103,129
+apps/mobile/shared/components/MetricCard.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 11,20,30
+apps/mobile/features/qa/components/qa-tools/QaToolsCardButton.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 35-36
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_c5de1adbad9fac::t_2d798fac6ac117 164
+apps/mobile/features/goals/components/goal-detail/ProjectionCard.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 21
+apps/mobile/shared/components/Button.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 111
+apps/mobile/shared/components/TransactionRow.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 160
+apps/mobile/__tests__/shared/primitive-contracts.test.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 7,72,96-127,179-196
+apps/mobile/shared/components/FilterPill.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 100
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailSection.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 42
+apps/mobile/shared/components/DialogFrame.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 108
+apps/mobile/shared/components/FormScreen.tsx
+  s_c5de1adbad9fac::t_2d798fac6ac117 4-5,25,44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "40cc2b633d73022f6c071699b1ab13ceee51a03d",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
