@@ -13,7 +13,7 @@ type FieldSurfaceProps = {
   readonly radius?: number;
   readonly size?: FieldSurfaceSize;
   readonly style?: StyleProp<ViewStyle>;
-  readonly surfaceStyle?: StyleProp<ViewStyle>;
+  readonly surfaceLayoutStyle?: StyleProp<ViewStyle>;
   // biome-ignore lint/style/useNamingConvention: React Native prop name
   readonly testID?: string;
 };
@@ -35,7 +35,7 @@ export function FieldSurface({
   radius,
   size = "regular",
   style,
-  surfaceStyle,
+  surfaceLayoutStyle,
   testID,
 }: FieldSurfaceProps) {
   const defaults = FIELD_SURFACE_DEFAULTS[size];
@@ -58,7 +58,7 @@ export function FieldSurface({
         radius={radius ?? defaults.radius}
         borderColor={borderColor}
         borderWidth={borderWidth}
-        style={[StyleSheet.absoluteFillObject, styles.surface, surfaceStyle]}
+        style={[StyleSheet.absoluteFillObject, styles.surface, surfaceLayoutStyle]}
       >
         <View />
       </GlassSurface>

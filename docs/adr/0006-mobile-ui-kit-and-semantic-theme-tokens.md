@@ -46,7 +46,7 @@ Numpad-based money entry screens should go through `MoneyEntryScreen`; feature m
 
 Shared primitives own reusable surface behavior. Feature code should compose these primitives instead of rebuilding their borders, backgrounds, padding, and interaction shells locally.
 
-- Use `Card` for standalone visual cards and simple glass containers. Route surface color, border color, border width, and radius through named props such as `backgroundColor`, `borderColor`, `borderWidth`, and `radius`; keep `surfaceStyle` for layout-only placement.
+- Use `Card` for standalone visual cards and simple glass containers. Route surface color, border color, border width, border style, and radius through named props such as `backgroundColor`, `borderColor`, `borderWidth`, `borderStyle`, and `radius`; keep `layoutStyle` for layout-only placement.
 - Use `ListRowSurface` or `Row` for repeated rows. `ListRowSurface` owns row glass, selected borders, disabled opacity, minimum height, and grouped dividers. If a row contains an independent trailing action, keep the row surface non-interactive and put the main row tap target inside it so nested pressables do not compete.
 - Use `FieldSurface`, `FieldButton`, `FormTextField`, `FilterTextField`, and money-entry field modules for form controls. Field modules own the adapter pattern that keeps interactive `TextInput` content out of native liquid glass.
 - Use `Button`, `IconActionButton`, and `TextActionButton` for actions. `TextActionButton` uses `appearance="pill"` for chip-like text actions and `appearance="plain"` for plain text links.
@@ -56,3 +56,9 @@ Shared primitives own reusable surface behavior. Feature code should compose the
 Direct `GlassSurface` usage in feature code is reserved for genuinely new shared primitive work or isolated one-off surfaces that cannot be expressed through an existing primitive. When a feature needs a recurring shape that would otherwise require local `Pressable` plus `View`/`GlassSurface` styling, add or extend a shared primitive first.
 
 Tests should prefer rendered component contract tests for primitive behavior: accessibility roles, press behavior, selected state, disabled opacity, border/background prop routing, and field sizing. Source tests remain appropriate for architecture boundaries, route membership, public-surface imports, and guardrails against feature-local surface restyling, but they should not assert formatting-sensitive implementation details such as exact `contentStyle` strings.
+
+## Update: Screen and Surface Contracts
+
+`ScreenShell` owns the shared page shell: semantic page background, aurora background, and optional background layers. Higher-level screen modules such as `ScreenLayout`, `FormScreen`, and `NumpadFormScreen` should compose `ScreenShell` instead of each recreating the page shell locally. Feature screens should choose the right screen module and provide content; they should not rebuild aurora/background ownership in feature code.
+
+Surface primitives expose named props for visual surface state. `backgroundColor`, `borderColor`, `borderStyle`, `borderWidth`, `radius`, `selected`, `disabled`, `divider`, and `dividerColor` are visual contract props. Layout-only placement should use `layoutStyle` or `surfaceLayoutStyle` depending on the primitive. These layout props may position or size the primitive, but they must not carry background, border, radius, or overflow styling; `GlassSurface` strips those keys so visual styling remains controlled by named props.

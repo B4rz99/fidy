@@ -64,7 +64,7 @@ export function PickerOptionRow({
       selectedBorderColor={accentGreen}
       minHeight={52}
       radius={18}
-      style={style}
+      layoutStyle={style}
     >
       {leading}
       <View style={styles.textWrap}>

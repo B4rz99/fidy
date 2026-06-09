@@ -8,7 +8,7 @@ type MetricCardProps = Omit<ViewProps, "children" | "style"> & {
   readonly padded?: boolean;
   readonly contentClassName?: string;
   readonly contentStyle?: StyleProp<ViewStyle>;
-  readonly surfaceStyle?: StyleProp<ViewStyle>;
+  readonly layoutStyle?: StyleProp<ViewStyle>;
 };
 
 export function MetricCard({
@@ -17,7 +17,7 @@ export function MetricCard({
   padded = true,
   contentClassName,
   contentStyle,
-  surfaceStyle,
+  layoutStyle,
   ...viewProps
 }: MetricCardProps) {
   return (
@@ -27,7 +27,7 @@ export function MetricCard({
       padded={padded}
       contentClassName={`gap-3 ${contentClassName ?? ""}`}
       contentStyle={contentStyle}
-      surfaceStyle={surfaceStyle}
+      layoutStyle={layoutStyle}
     >
       {children}
     </Card>

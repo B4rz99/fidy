@@ -113,7 +113,7 @@ export function Chip({
       borderColor={borderColor}
       borderWidth={selected ? 1.5 : undefined}
       surfaceClassName={className}
-      surfaceStyle={surfaceStyle}
+      surfaceLayoutStyle={surfaceStyle}
     >
       {contentBody}
     </GlassPressable>

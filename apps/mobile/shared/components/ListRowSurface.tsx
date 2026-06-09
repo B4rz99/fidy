@@ -7,13 +7,15 @@ import { GlassSurface } from "./GlassSurface";
 
 type ListRowSurfaceVariant = "grouped" | "standalone";
 
-type ListRowSurfaceProps = Omit<ViewProps, "children"> & {
+type ListRowSurfaceProps = Omit<ViewProps, "children" | "style"> & {
   readonly children: ReactNode;
   readonly className?: string;
   readonly contentStyle?: StyleProp<ViewStyle>;
   readonly disabled?: boolean;
   readonly divider?: boolean;
+  readonly dividerColor?: string;
   readonly isLast?: boolean;
+  readonly layoutStyle?: StyleProp<ViewStyle>;
   readonly minHeight?: number;
   readonly nativeGlass?: boolean;
   readonly onPress?: PressableProps["onPress"];
@@ -34,6 +36,7 @@ export function ListRowSurface({
   contentStyle,
   disabled = false,
   divider = false,
+  dividerColor: dividerColorOverride,
   importantForAccessibility,
   isLast = false,
   minHeight = 56,
@@ -42,7 +45,7 @@ export function ListRowSurface({
   radius = 18,
   selected = false,
   selectedBorderColor,
-  style,
+  layoutStyle,
   testID,
   variant = "standalone",
   ...viewProps
@@ -50,6 +53,7 @@ export function ListRowSurface({
   const borderColor = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const selectedColor = selectedBorderColor ?? accentGreen;
+  const dividerColor = dividerColorOverride ?? borderColor;
   const surfaceA11yProps =
     onPress == null
       ? {
@@ -70,7 +74,7 @@ export function ListRowSurface({
     },
     variant === "grouped"
       ? {
-          borderBottomColor: divider && !isLast ? borderColor : "transparent",
+          borderBottomColor: divider && !isLast ? dividerColor : "transparent",
           borderBottomWidth: divider && !isLast ? StyleSheet.hairlineWidth : 0,
         }
       : null,
@@ -79,7 +83,12 @@ export function ListRowSurface({
 
   const content =
     variant === "grouped" ? (
-      <View {...viewProps} {...surfaceA11yProps} className={className} style={[innerStyle, style]}>
+      <View
+        {...viewProps}
+        {...surfaceA11yProps}
+        className={className}
+        style={[innerStyle, layoutStyle]}
+      >
         {children}
       </View>
     ) : (
@@ -91,7 +100,7 @@ export function ListRowSurface({
         radius={radius}
         borderColor={selected ? selectedColor : undefined}
         className={className}
-        style={[innerStyle, style]}
+        style={[innerStyle, layoutStyle]}
       >
         {children}
       </GlassSurface>
@@ -117,7 +126,7 @@ export function ListRowSurface({
         radius={radius}
         borderColor={selected ? selectedColor : undefined}
         surfaceClassName={className}
-        surfaceStyle={[innerStyle, style]}
+        surfaceLayoutStyle={[innerStyle, layoutStyle]}
       >
         {children}
       </GlassPressable>

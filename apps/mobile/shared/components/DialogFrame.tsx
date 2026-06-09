@@ -105,7 +105,7 @@ export function DialogCancelButton({ onPress }: { readonly onPress: () => void }
   );
 
   return (
-    <GlassPressable onPress={onPress} radius={16} surfaceStyle={buttonStyle}>
+    <GlassPressable onPress={onPress} radius={16} surfaceLayoutStyle={buttonStyle}>
       {label}
     </GlassPressable>
   );

@@ -19,7 +19,7 @@ type GlassPressableProps = Omit<PressableProps, "children"> & {
   readonly padded?: boolean;
   readonly radius?: number;
   readonly surfaceClassName?: string;
-  readonly surfaceStyle?: StyleProp<ViewStyle>;
+  readonly surfaceLayoutStyle?: StyleProp<ViewStyle>;
 };
 
 function getPressableStyle(
@@ -48,7 +48,7 @@ export function GlassPressable({
   radius,
   style,
   surfaceClassName,
-  surfaceStyle,
+  surfaceLayoutStyle,
   ...pressableProps
 }: GlassPressableProps) {
   return (
@@ -68,7 +68,7 @@ export function GlassPressable({
         padded={padded}
         radius={radius}
         className={surfaceClassName}
-        style={surfaceStyle}
+        style={surfaceLayoutStyle}
       >
         {children}
       </GlassSurface>

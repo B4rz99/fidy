@@ -41,8 +41,8 @@ export function CalendarBillRow({
     <Card
       padded={false}
       radius={radius}
+      backgroundColor={paid ? accentGreenLight : undefined}
       contentStyle={styles.cardContent}
-      surfaceStyle={paid ? { backgroundColor: accentGreenLight } : undefined}
     >
       <View style={styles.billRow}>
         <View style={styles.billMain}>

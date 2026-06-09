@@ -39,15 +39,18 @@ describe("glass layout contracts", () => {
 
   it("keeps glass visual overrides explicit instead of passing them through style", () => {
     const glassSource = readShared("GlassSurface.tsx");
+    const surfaceStyleSource = readShared("surface-style.ts");
     const buttonSource = readShared("Button.tsx");
     const fieldButtonSource = readShared("FieldButton.tsx");
     const listRowSurfaceSource = readShared("ListRowSurface.tsx");
 
-    expect(glassSource).toContain("function getLayoutStyle");
-    expect(glassSource).toContain("backgroundColor: _backgroundColor");
-    expect(glassSource).toContain("borderColor: _borderColor");
-    expect(glassSource).toContain("borderRadius: _borderRadius");
-    expect(glassSource).toContain("borderWidth: _borderWidth");
+    expect(glassSource).toContain("getSurfaceLayoutStyle(style)");
+    expect(surfaceStyleSource).toContain("function getSurfaceLayoutStyle");
+    expect(surfaceStyleSource).toContain("backgroundColor: _backgroundColor");
+    expect(surfaceStyleSource).toContain("borderColor: _borderColor");
+    expect(surfaceStyleSource).toContain("borderRadius: _borderRadius");
+    expect(surfaceStyleSource).toContain("borderStyle: _borderStyle");
+    expect(surfaceStyleSource).toContain("borderWidth: _borderWidth");
 
     [buttonSource, fieldButtonSource].forEach((source) => {
       expect(source).toContain("borderColor=");

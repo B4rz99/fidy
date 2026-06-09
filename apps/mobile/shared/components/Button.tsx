@@ -108,7 +108,7 @@ export function Button({
       nativeGlass={false}
       radius={12}
       borderColor={semanticBorderColor}
-      surfaceStyle={styles.glassContent}
+      surfaceLayoutStyle={styles.glassContent}
       className={`${SIZE_CLASS_NAMES[size]} ${CONTAINER_CLASS_NAMES[variant]} ${
         isDisabled ? "opacity-60" : ""
       } ${className ?? ""}`}
