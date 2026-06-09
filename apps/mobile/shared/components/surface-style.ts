@@ -34,7 +34,6 @@ type SurfaceLayoutViewStyle = Pick<
   | "maxWidth"
   | "minHeight"
   | "minWidth"
-  | "opacity"
   | "padding"
   | "paddingBottom"
   | "paddingEnd"
@@ -89,6 +88,7 @@ export function getSurfaceLayoutStyle(style: StyleProp<ViewStyle>): StyleProp<Vi
     borderTopStartRadius: _borderTopStartRadius,
     borderTopWidth: _borderTopWidth,
     borderWidth: _borderWidth,
+    opacity: _opacity,
     overflow: _overflow,
     ...layoutStyle
   } = flattened;

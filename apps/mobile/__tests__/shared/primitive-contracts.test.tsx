@@ -196,6 +196,27 @@ describe("shared primitive contracts", () => {
     });
   });
 
+  it("routes standalone ListRowSurface layout keys to shell and row content", () => {
+    const screen = renderFidy(
+      <ListRowSurface
+        accessibilityLabel="Standalone row"
+        layoutStyle={{ marginTop: 6, paddingHorizontal: 20 }}
+      >
+        <Text>Standalone content</Text>
+      </ListRowSurface>
+    );
+    const root = asContractNode(screen.root);
+    const surface = findStyledView(root, (style) => style.marginTop === 6);
+    const rowContent = nearestAncestor(
+      findNodeByText(root, "Standalone content"),
+      (node) => flattenStyle(node.props.style)?.paddingHorizontal === 20
+    );
+
+    expect(flattenStyle(surface?.props.style)).toMatchObject({ marginTop: 6 });
+    expect(flattenStyle(surface?.props.style)?.paddingHorizontal).toBeUndefined();
+    expect(rowContent).toBeTruthy();
+  });
+
   it("keeps grouped ListRowSurface non-glass and divider-only", () => {
     const screen = renderFidy(
       <ListRowSurface variant="grouped" divider accessibilityLabel="Grouped row">

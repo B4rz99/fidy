@@ -26,6 +26,69 @@ type ListRowSurfaceProps = Omit<ViewProps, "children" | "style"> & {
   readonly variant?: ListRowSurfaceVariant;
 };
 
+function getSurfaceLayoutStyle(style: SurfaceLayoutStyle): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    alignSelf: flattened.alignSelf,
+    aspectRatio: flattened.aspectRatio,
+    bottom: flattened.bottom,
+    display: flattened.display,
+    end: flattened.end,
+    flex: flattened.flex,
+    flexBasis: flattened.flexBasis,
+    flexGrow: flattened.flexGrow,
+    flexShrink: flattened.flexShrink,
+    height: flattened.height,
+    left: flattened.left,
+    margin: flattened.margin,
+    marginBottom: flattened.marginBottom,
+    marginEnd: flattened.marginEnd,
+    marginHorizontal: flattened.marginHorizontal,
+    marginLeft: flattened.marginLeft,
+    marginRight: flattened.marginRight,
+    marginStart: flattened.marginStart,
+    marginTop: flattened.marginTop,
+    marginVertical: flattened.marginVertical,
+    maxHeight: flattened.maxHeight,
+    maxWidth: flattened.maxWidth,
+    minHeight: flattened.minHeight,
+    minWidth: flattened.minWidth,
+    position: flattened.position,
+    right: flattened.right,
+    start: flattened.start,
+    top: flattened.top,
+    width: flattened.width,
+    zIndex: flattened.zIndex,
+  };
+}
+
+function getRowContentLayoutStyle(style: SurfaceLayoutStyle): StyleProp<ViewStyle> {
+  const flattened = StyleSheet.flatten(style);
+  if (!flattened) return null;
+
+  return {
+    alignContent: flattened.alignContent,
+    alignItems: flattened.alignItems,
+    columnGap: flattened.columnGap,
+    flexDirection: flattened.flexDirection,
+    flexWrap: flattened.flexWrap,
+    gap: flattened.gap,
+    justifyContent: flattened.justifyContent,
+    padding: flattened.padding,
+    paddingBottom: flattened.paddingBottom,
+    paddingEnd: flattened.paddingEnd,
+    paddingHorizontal: flattened.paddingHorizontal,
+    paddingLeft: flattened.paddingLeft,
+    paddingRight: flattened.paddingRight,
+    paddingStart: flattened.paddingStart,
+    paddingTop: flattened.paddingTop,
+    paddingVertical: flattened.paddingVertical,
+    rowGap: flattened.rowGap,
+  };
+}
+
 export function ListRowSurface({
   accessibilityHint,
   accessibilityLabel,
@@ -67,6 +130,8 @@ export function ListRowSurface({
           testID,
         }
       : null;
+  const outerLayoutStyle = getSurfaceLayoutStyle(layoutStyle);
+  const rowLayoutStyle = getRowContentLayoutStyle(layoutStyle);
   const contentStyleValue = [
     styles.content,
     {
@@ -84,9 +149,8 @@ export function ListRowSurface({
   const surfaceLayoutStyle = [
     {
       minHeight,
-      opacity: disabled ? 0.5 : 1,
     },
-    layoutStyle,
+    outerLayoutStyle,
   ];
 
   const content =
@@ -110,7 +174,18 @@ export function ListRowSurface({
         className={className}
         style={surfaceLayoutStyle}
       >
-        <View style={[styles.content, contentStyle]}>{children}</View>
+        <View
+          style={[
+            styles.content,
+            {
+              opacity: disabled ? 0.5 : 1,
+            },
+            rowLayoutStyle,
+            contentStyle,
+          ]}
+        >
+          {children}
+        </View>
       </GlassSurface>
     );
 
@@ -136,7 +211,18 @@ export function ListRowSurface({
         surfaceClassName={className}
         surfaceLayoutStyle={surfaceLayoutStyle}
       >
-        <View style={[styles.content, contentStyle]}>{children}</View>
+        <View
+          style={[
+            styles.content,
+            {
+              opacity: disabled ? 0.5 : 1,
+            },
+            rowLayoutStyle,
+            contentStyle,
+          ]}
+        >
+          {children}
+        </View>
       </GlassPressable>
     );
   }
