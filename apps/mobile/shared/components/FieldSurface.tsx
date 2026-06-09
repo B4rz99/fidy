@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { GlassSurface } from "./GlassSurface";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type FieldSurfaceSize = "regular" | "compact" | "button";
 
@@ -13,7 +14,7 @@ type FieldSurfaceProps = {
   readonly radius?: number;
   readonly size?: FieldSurfaceSize;
   readonly style?: StyleProp<ViewStyle>;
-  readonly surfaceLayoutStyle?: StyleProp<ViewStyle>;
+  readonly surfaceLayoutStyle?: SurfaceLayoutStyle;
   // biome-ignore lint/style/useNamingConvention: React Native prop name
   readonly testID?: string;
 };
@@ -58,7 +59,7 @@ export function FieldSurface({
         radius={radius ?? defaults.radius}
         borderColor={borderColor}
         borderWidth={borderWidth}
-        style={[StyleSheet.absoluteFillObject, styles.surface, surfaceLayoutStyle]}
+        style={[StyleSheet.absoluteFillObject, surfaceLayoutStyle]}
       >
         <View />
       </GlassSurface>
@@ -82,9 +83,6 @@ const styles = StyleSheet.create({
   shell: {
     overflow: "hidden",
     position: "relative",
-  },
-  surface: {
-    backgroundColor: "transparent",
   },
   content: {
     alignItems: "center",

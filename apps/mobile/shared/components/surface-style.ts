@@ -1,7 +1,59 @@
 import type { StyleProp, ViewStyle } from "react-native";
 import { StyleSheet } from "@/shared/components/rn";
 
-export type SurfaceLayoutStyle = StyleProp<ViewStyle>;
+type SurfaceLayoutViewStyle = Pick<
+  ViewStyle,
+  | "alignContent"
+  | "alignItems"
+  | "alignSelf"
+  | "aspectRatio"
+  | "bottom"
+  | "columnGap"
+  | "display"
+  | "end"
+  | "flex"
+  | "flexBasis"
+  | "flexDirection"
+  | "flexGrow"
+  | "flexShrink"
+  | "flexWrap"
+  | "gap"
+  | "height"
+  | "justifyContent"
+  | "left"
+  | "margin"
+  | "marginBottom"
+  | "marginEnd"
+  | "marginHorizontal"
+  | "marginLeft"
+  | "marginRight"
+  | "marginStart"
+  | "marginTop"
+  | "marginVertical"
+  | "maxHeight"
+  | "maxWidth"
+  | "minHeight"
+  | "minWidth"
+  | "opacity"
+  | "padding"
+  | "paddingBottom"
+  | "paddingEnd"
+  | "paddingHorizontal"
+  | "paddingLeft"
+  | "paddingRight"
+  | "paddingStart"
+  | "paddingTop"
+  | "paddingVertical"
+  | "position"
+  | "right"
+  | "rowGap"
+  | "start"
+  | "top"
+  | "width"
+  | "zIndex"
+>;
+
+export type SurfaceLayoutStyle = StyleProp<SurfaceLayoutViewStyle>;
 
 export function getSurfaceLayoutStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
   const flattened = StyleSheet.flatten(style);

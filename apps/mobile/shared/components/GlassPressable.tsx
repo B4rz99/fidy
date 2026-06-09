@@ -1,12 +1,8 @@
 import type { ReactNode } from "react";
-import type {
-  PressableProps,
-  PressableStateCallbackType,
-  StyleProp,
-  ViewStyle,
-} from "react-native";
+import type { PressableProps, PressableStateCallbackType } from "react-native";
 import { Pressable } from "@/shared/components/rn";
 import { GlassSurface } from "./GlassSurface";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type GlassPressableProps = Omit<PressableProps, "children"> & {
   readonly backgroundColor?: string;
@@ -19,7 +15,7 @@ type GlassPressableProps = Omit<PressableProps, "children"> & {
   readonly padded?: boolean;
   readonly radius?: number;
   readonly surfaceClassName?: string;
-  readonly surfaceLayoutStyle?: StyleProp<ViewStyle>;
+  readonly surfaceLayoutStyle?: SurfaceLayoutStyle;
 };
 
 function getPressableStyle(

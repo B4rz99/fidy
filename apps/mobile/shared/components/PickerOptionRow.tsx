@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import type { PressableProps, StyleProp, ViewStyle } from "react-native";
+import type { PressableProps } from "react-native";
 import { Check } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { ListRowSurface } from "./ListRowSurface";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type PickerOptionRowProps = {
   readonly leading?: ReactNode;
@@ -14,7 +15,7 @@ type PickerOptionRowProps = {
   readonly onPress: PressableProps["onPress"];
   readonly accessibilityHint?: string;
   readonly accessibilityLabel?: string;
-  readonly style?: StyleProp<ViewStyle>;
+  readonly style?: SurfaceLayoutStyle;
   // biome-ignore lint/style/useNamingConvention: React Native prop name
   readonly testID?: string;
 };

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type ListRowSurfaceVariant = "grouped" | "standalone";
 
@@ -15,7 +16,7 @@ type ListRowSurfaceProps = Omit<ViewProps, "children" | "style"> & {
   readonly divider?: boolean;
   readonly dividerColor?: string;
   readonly isLast?: boolean;
-  readonly layoutStyle?: StyleProp<ViewStyle>;
+  readonly layoutStyle?: SurfaceLayoutStyle;
   readonly minHeight?: number;
   readonly nativeGlass?: boolean;
   readonly onPress?: PressableProps["onPress"];
@@ -66,7 +67,7 @@ export function ListRowSurface({
           testID,
         }
       : null;
-  const innerStyle = [
+  const contentStyleValue = [
     styles.content,
     {
       minHeight,
@@ -80,6 +81,13 @@ export function ListRowSurface({
       : null,
     contentStyle,
   ];
+  const surfaceLayoutStyle = [
+    {
+      minHeight,
+      opacity: disabled ? 0.5 : 1,
+    },
+    layoutStyle,
+  ];
 
   const content =
     variant === "grouped" ? (
@@ -87,7 +95,7 @@ export function ListRowSurface({
         {...viewProps}
         {...surfaceA11yProps}
         className={className}
-        style={[innerStyle, layoutStyle]}
+        style={[contentStyleValue, layoutStyle]}
       >
         {children}
       </View>
@@ -100,9 +108,9 @@ export function ListRowSurface({
         radius={radius}
         borderColor={selected ? selectedColor : undefined}
         className={className}
-        style={[innerStyle, layoutStyle]}
+        style={surfaceLayoutStyle}
       >
-        {children}
+        <View style={[styles.content, contentStyle]}>{children}</View>
       </GlassSurface>
     );
 
@@ -126,9 +134,9 @@ export function ListRowSurface({
         radius={radius}
         borderColor={selected ? selectedColor : undefined}
         surfaceClassName={className}
-        surfaceLayoutStyle={[innerStyle, layoutStyle]}
+        surfaceLayoutStyle={surfaceLayoutStyle}
       >
-        {children}
+        <View style={[styles.content, contentStyle]}>{children}</View>
       </GlassPressable>
     );
   }

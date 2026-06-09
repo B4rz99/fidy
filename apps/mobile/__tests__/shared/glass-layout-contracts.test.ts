@@ -42,10 +42,14 @@ describe("glass layout contracts", () => {
     const surfaceStyleSource = readShared("surface-style.ts");
     const buttonSource = readShared("Button.tsx");
     const fieldButtonSource = readShared("FieldButton.tsx");
+    const glassPressableSource = readShared("GlassPressable.tsx");
     const listRowSurfaceSource = readShared("ListRowSurface.tsx");
 
     expect(glassSource).toContain("getSurfaceLayoutStyle(style)");
     expect(surfaceStyleSource).toContain("function getSurfaceLayoutStyle");
+    expect(surfaceStyleSource).toContain("type SurfaceLayoutViewStyle = Pick<");
+    expect(surfaceStyleSource).toContain("export type SurfaceLayoutStyle");
+    expect(glassPressableSource).toContain("surfaceLayoutStyle?: SurfaceLayoutStyle");
     expect(surfaceStyleSource).toContain("backgroundColor: _backgroundColor");
     expect(surfaceStyleSource).toContain("borderColor: _borderColor");
     expect(surfaceStyleSource).toContain("borderRadius: _borderRadius");

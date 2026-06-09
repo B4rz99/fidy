@@ -77,7 +77,6 @@ const styles = StyleSheet.create({
   surface: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
-    borderRadius: 999,
     justifyContent: "center",
   },
 });

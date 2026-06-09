@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { GlassSurface } from "./GlassSurface";
 import { Pressable, View } from "./rn";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type CardProps = Omit<ViewProps, "children" | "style"> & {
   children: ReactNode;
@@ -15,7 +16,7 @@ type CardProps = Omit<ViewProps, "children" | "style"> & {
   radius?: number;
   contentClassName?: string;
   contentStyle?: StyleProp<ViewStyle>;
-  layoutStyle?: StyleProp<ViewStyle>;
+  layoutStyle?: SurfaceLayoutStyle;
 };
 
 export function Card({

@@ -4,10 +4,11 @@ import { StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
+import type { SurfaceLayoutStyle } from "./surface-style";
 
 type ChipTone = "neutral" | "primary" | "success" | "danger" | "warning";
 
-type ChipProps = Omit<ViewProps, "children"> & {
+type ChipProps = Omit<ViewProps, "children" | "style"> & {
   label: string;
   tone?: ChipTone;
   size?: "default" | "compact";
@@ -16,6 +17,7 @@ type ChipProps = Omit<ViewProps, "children"> & {
   onPress?: PressableProps["onPress"];
   className?: string;
   labelClassName?: string;
+  style?: SurfaceLayoutStyle;
 };
 
 const LABEL_CLASS_NAMES: Record<ChipTone, string> = {

@@ -121,7 +121,6 @@ export function Button({
 const styles = StyleSheet.create({
   glassContent: {
     alignItems: "center",
-    backgroundColor: "transparent",
     flexDirection: "row",
     gap: 8,
     height: "100%",

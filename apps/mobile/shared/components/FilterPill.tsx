@@ -109,7 +109,6 @@ export type { FilterPillProps };
 const styles = StyleSheet.create({
   surface: {
     alignItems: "center",
-    borderRadius: 999,
     justifyContent: "center",
     minHeight: 32,
     paddingHorizontal: 12,
