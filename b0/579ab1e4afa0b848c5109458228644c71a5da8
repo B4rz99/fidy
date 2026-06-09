@@ -1,0 +1,21 @@
+apps/mobile/__tests__/shared/primitive-contracts.test.tsx
+  s_c5de1adbad9fac::t_312e6748b4b855 171-174,181
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_c5de1adbad9fac::t_a421d458e0c762 181,219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b0579ab1e4afa0b848c5109458228644c71a5da8",
+  "prompts": {},
+  "sessions": {
+    "s_c5de1adbad9fac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e995a-e11e-7cd0-8a11-ba53fddc82d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
