@@ -78,8 +78,6 @@
     "eslint-plugin-import/minimatch/brace-expansion": "1.1.13",
     "eslint-plugin-react/minimatch/brace-expansion": "1.1.13",
     "eslint/minimatch/brace-expansion": "1.1.13",
-    "expo-router/@react-navigation/native": "7.3.0",
-    "expo-router/@react-navigation/native/@react-navigation/core": "7.19.0",
     "flatted": "3.4.2",
     "jest-util/picomatch": "2.3.2",
     "js-yaml": "4.2.0",
