@@ -1,0 +1,47 @@
+apps/mobile/__tests__/helpers/render.tsx
+  s_e9064aa61c68f1::t_93145c166cf661 37-43,143-144
+  s_e9064aa61c68f1::t_cd67a6faac2ebb 11-14,82,121-126,157-161,163-173
+  s_e9064aa61c68f1::t_0ec7b79d7d4f4a 2,18-27,29,32-34,36,62-66,71-81,83-116,118-120,128-142,148,162,188,191
+  s_e9064aa61c68f1::t_b115701f7b4745 117
+  s_e9064aa61c68f1::t_3c75d0ff123acb 145-147
+apps/mobile/package.json
+  s_e9064aa61c68f1::t_2a3027d604dc3e 34,37-38,101
+  s_e9064aa61c68f1::t_0484d5d40f13c4 88
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_e9064aa61c68f1::t_2a3027d604dc3e 6,86,89,91,96
+package.json
+  s_e9064aa61c68f1::t_6eed1fe7389738 93,101-102
+  s_e9064aa61c68f1::t_0bd8ff79c825f1 100
+  s_e9064aa61c68f1::t_ce35e4be63a76a 108-109
+  s_e9064aa61c68f1::t_2a3027d604dc3e 58-59,61,92,104
+  s_e9064aa61c68f1::t_65001fc38c19f0 45
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx
+  s_e9064aa61c68f1::t_4176dac6c07b0b 3
+apps/mobile/shared/components/AddActionButton.tsx
+  s_e9064aa61c68f1::t_2a3027d604dc3e 51
+apps/mobile/__tests__/helpers/react-native-mock.ts
+  s_e9064aa61c68f1::t_8ebf44683d5557 24-31
+apps/mobile/features/financial-accounts/lib/kind.ts
+  s_e9064aa61c68f1::t_e55fff47b9fe0a 5-7,10
+  s_e9064aa61c68f1::t_2a3027d604dc3e 1-4,11-14
+apps/mobile/__tests__/setup.ts
+  s_e9064aa61c68f1::t_8ebf44683d5557 20-21
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreen.styles.ts
+  s_e9064aa61c68f1::t_2a3027d604dc3e 83-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "6c977d19099c1fa9ec018e0f2e79e41e205b52b0",
+  "prompts": {},
+  "sessions": {
+    "s_e9064aa61c68f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3c4-ec01-7682-a616-3a9cb4fefaf0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
