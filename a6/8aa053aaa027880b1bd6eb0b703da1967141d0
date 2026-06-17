@@ -1,0 +1,34 @@
+package.json
+  s_3ba99571c9dbce::t_ef2eec06a9c82d 44
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_3ba99571c9dbce::t_4e896ba8f3c0c6 1,20,25
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_3ba99571c9dbce::t_5203c29723e567 2,77,82,84,89,91-103,105-107,109-123,125-127,154-155,157-160,162-171,173-176
+apps/mobile/features/search/components/CategoryFilter.tsx
+  s_3ba99571c9dbce::t_c68b62eb6a6c37 13-23,25-28,30-40,42-50
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_3ba99571c9dbce::t_2729616b4e9021 96,98,100,105,107,112,114,116,118,120,122-124,127-128,130-159,162-163
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_3ba99571c9dbce::t_da057ddd306051 21,29,31-32,34,62,70,101
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_3ba99571c9dbce::t_cb8b9c69334d3e 54-55,110
+  s_3ba99571c9dbce::t_d44d9139f2f64a 67,69-92
+apps/mobile/app/bills-calendar.tsx
+  s_3ba99571c9dbce::t_310eb99aef22ca 34,37,39,42,44-54,56-58,60-72,74-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "a68aa053aaa027880b1bd6eb0b703da1967141d0",
+  "prompts": {},
+  "sessions": {
+    "s_3ba99571c9dbce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed597-1f92-7880-833e-08faea1f5348",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
