@@ -3,6 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "main": "expo-router/entry",
+  "expo": {
+    "install": {
+      "exclude": [
+        "@react-navigation/native"
+      ]
+    }
+  },
   "scripts": {
     "start": "expo start --dev-client --host lan --port 8081",
     "android": "expo run:android",
