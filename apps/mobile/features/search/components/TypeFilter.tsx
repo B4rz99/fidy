@@ -23,15 +23,5 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
     onChange(type === value ? "all" : type);
   };
 
-  return (
-    <SegmentedControl
-      options={options}
-      value={value}
-      onChange={handlePress}
-      allowReselect
-      getOptionTone={(type) =>
-        type === "expense" ? "danger" : type === "income" ? "success" : "primary"
-      }
-    />
-  );
+  return <SegmentedControl options={options} value={value} onChange={handlePress} allowReselect />;
 };

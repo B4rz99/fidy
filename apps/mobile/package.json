@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --dev-client --host lan --port 8081",
     "android": "expo run:android",
     "ios": "expo run:ios --device \"${DEVICE:-iPhone 17 Pro}\"",
     "web": "expo start --web",

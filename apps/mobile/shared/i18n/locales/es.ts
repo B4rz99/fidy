@@ -2,6 +2,7 @@ const es = {
   // Common
   common: {
     save: "Guardar",
+    send: "Enviar",
     cancel: "Cancelar",
     delete: "Eliminar",
     confirm: "Confirmar",

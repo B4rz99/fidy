@@ -21,6 +21,7 @@ export function FilterChipItem({
   onTogglePanel,
 }: FilterChipItemProps) {
   const isClearAll = id === "clearAll";
+  const isHighlighted = !isClearAll && (isActive || isOpen);
 
   const handlePress = () => {
     void Haptics.selectionAsync();
@@ -34,8 +35,8 @@ export function FilterChipItem({
   return (
     <Chip
       label={label}
-      tone={isClearAll ? "danger" : isActive ? "primary" : "neutral"}
-      selected={!isClearAll && isOpen}
+      tone={isClearAll ? "danger" : isHighlighted ? "primary" : "neutral"}
+      selected={isHighlighted}
       style={{ paddingHorizontal: 16 }}
       onPress={handlePress}
     />

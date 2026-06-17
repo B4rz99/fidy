@@ -8,11 +8,11 @@ import {
   Button,
   EmptyState,
   FeedList,
-  IconActionButton,
+  AddActionButton,
   ScreenLayout,
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
-import { Plus, Wallet } from "@/shared/components/icons";
+import { Wallet } from "@/shared/components/icons";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -34,13 +34,10 @@ function AddBudgetButton({
   readonly accessibilityLabel: string;
   readonly onPress: () => void;
 }) {
-  const primaryColor = useThemeColor("primary");
-
   return (
-    <IconActionButton
+    <AddActionButton
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel}
-      icon={<Plus size={24} color={primaryColor} />}
       onPress={onPress}
     />
   );

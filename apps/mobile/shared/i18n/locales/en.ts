@@ -2,6 +2,7 @@ const en = {
   // Common
   common: {
     save: "Save",
+    send: "Send",
     cancel: "Cancel",
     delete: "Delete",
     confirm: "Confirm",

@@ -18,11 +18,15 @@ import {
 } from "@/features/calendar/ui.public";
 import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/routes.public";
-import { AppAuroraBackground, SegmentedControl, TAB_BAR_CLEARANCE } from "@/shared/components";
-import { Plus } from "@/shared/components/icons";
-import { Alert, Platform, Pressable, StyleSheet, View } from "@/shared/components/rn";
+import {
+  AddActionButton,
+  AppAuroraBackground,
+  SegmentedControl,
+  TAB_BAR_CLEARANCE,
+} from "@/shared/components";
+import { Alert, Platform, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
 import { useNativeHeaderHeight } from "@/shared/navigation/use-native-header-height";
 import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
@@ -66,7 +70,7 @@ function FinanceCalendarPanel() {
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
   const nativeHeaderHeight = useNativeHeaderHeight();
-  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight + insets.top : 0;
+  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 
@@ -154,37 +158,33 @@ function FinanceCalendarPanel() {
 function useHeaderRight(activeTab: FinanceTab) {
   const { push } = useRouter();
   const { t } = useTranslation();
-  const primaryColor = useThemeColor("primary");
   const goals = useGoalStore((s) => s.goals);
 
   return useMemo(() => {
     if (activeTab === "calendar") {
       return function AddBillAction() {
         return (
-          <Pressable
+          <AddActionButton
             onPress={() => push("/add-bill")}
-            hitSlop={12}
-            accessibilityRole="button"
             accessibilityLabel={t("bills.addBill")}
-          >
-            <Plus size={24} color={primaryColor} />
-          </Pressable>
+          />
         );
       };
     }
     if (activeTab === "goals" && goals.length > 0) {
       return function AddGoalAction() {
         return (
-          <Pressable onPress={() => push("/create-goal")} hitSlop={12}>
-            <Plus size={24} color={primaryColor} />
-          </Pressable>
+          <AddActionButton
+            onPress={() => push("/create-goal")}
+            accessibilityLabel={t("goals.empty.createGoal")}
+          />
         );
       };
     }
     return function NoAction() {
       return null;
     };
-  }, [activeTab, goals.length, primaryColor, push, t]);
+  }, [activeTab, goals.length, push, t]);
 }
 
 export default function FinanceScreen() {

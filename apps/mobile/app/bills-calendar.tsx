@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
   deleteBill,
@@ -15,10 +14,8 @@ import {
   type Bill,
   type CalendarBillOccurrence,
 } from "@/features/calendar/ui.public";
-import { ScreenLayout } from "@/shared/components";
-import { Plus } from "@/shared/components/icons";
-import { Alert, Platform, Pressable } from "@/shared/components/rn";
-import { Colors } from "@/shared/constants/theme";
+import { AddActionButton, ScreenLayout } from "@/shared/components";
+import { Alert, Platform } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
@@ -32,9 +29,8 @@ export default function BillsCalendarScreen() {
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
-  const insets = useSafeAreaInsets();
   const nativeHeaderHeight = useNativeHeaderHeight();
-  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight + insets.top : 0;
+  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
@@ -94,14 +90,10 @@ export default function BillsCalendarScreen() {
       title={t("calendar.title")}
       variant="sub"
       rightActions={
-        <Pressable
+        <AddActionButton
           onPress={() => push("/add-bill")}
-          hitSlop={12}
-          accessibilityRole="button"
           accessibilityLabel={t("bills.addBill")}
-        >
-          <Plus size={24} color={Colors.light.card} />
-        </Pressable>
+        />
       }
       onBack={() => back()}
     >

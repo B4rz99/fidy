@@ -14,7 +14,6 @@ type ChatInputProps = {
 export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
-  const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
   const supportTextColor = useAiSupportTextColor();
 
@@ -26,6 +25,9 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   }, [text, disabled, onSend]);
 
   const canSend = !disabled && text.trim().length > 0;
+  const sendButtonBackground = canSend ? accentGreen : "rgba(13, 13, 13, 0.72)";
+  const sendButtonBorderColor = canSend ? "transparent" : "rgba(255, 255, 255, 0.24)";
+  const sendIconColor = canSend ? "#fff" : "rgba(255, 255, 255, 0.72)";
 
   return (
     <GlassSurface nativeGlass={false} padded={false} radius={24} style={styles.composer}>
@@ -44,19 +46,19 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
         />
       </View>
       <Pressable
+        accessibilityLabel={t("common.send")}
+        accessibilityRole="button"
         onPress={handleSend}
         disabled={!canSend}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: canSend ? accentGreen : tertiary,
-          opacity: canSend ? 1 : 0.4,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+        style={[
+          styles.sendButton,
+          {
+            backgroundColor: sendButtonBackground,
+            borderColor: sendButtonBorderColor,
+          },
+        ]}
       >
-        <SendHorizonal size={18} color="#fff" />
+        <SendHorizonal size={18} color={sendIconColor} />
       </Pressable>
     </GlassSurface>
   );
@@ -77,5 +79,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingVertical: 10,
+  },
+  sendButton: {
+    alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 1,
+    height: 40,
+    justifyContent: "center",
+    width: 40,
   },
 });

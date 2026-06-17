@@ -5,11 +5,11 @@ import {
   Button,
   EmptyState,
   FeedList,
-  IconActionButton,
+  AddActionButton,
   ScreenLayout,
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
-import { Plus, Target } from "@/shared/components/icons";
+import { Target } from "@/shared/components/icons";
 import { Platform, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -49,14 +49,7 @@ function GoalsEmpty({ onCreateGoal }: { readonly onCreateGoal: () => void }) {
 
 function AddGoalButton({ onPress }: { readonly onPress: () => void }) {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
-  return (
-    <IconActionButton
-      accessibilityLabel={t("goals.empty.createGoal")}
-      icon={<Plus size={24} color={accentGreen} />}
-      onPress={onPress}
-    />
-  );
+  return <AddActionButton accessibilityLabel={t("goals.empty.createGoal")} onPress={onPress} />;
 }
 
 // ---------------------------------------------------------------------------

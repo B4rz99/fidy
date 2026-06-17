@@ -76,6 +76,11 @@ test("keeps the home feed aurora background visible behind section headers and r
   expect(transactionRowSource).toContain("styles.rowSurface");
 });
 
+test("keeps category emoji icons unbacked in transaction activity rows", () => {
+  expect(activityItemSource).toContain('iconBgColor="transparent"');
+  expect(activityItemSource).toContain("iconBgColor={accentGreenLight}");
+});
+
 test("keeps the aurora blur mobile-friendly", () => {
   expect(auroraBackgroundSource).toContain('stdDeviation="14"');
   expect(auroraBackgroundSource).toContain("<G filter={`url(#${softAuroraBlurId})`}>");
@@ -110,12 +115,12 @@ test("keeps aurora SVG definitions instance-scoped", () => {
   expect(auroraBackgroundSource).not.toContain('fill="url(#greenBand)"');
 });
 
-test("keeps the header wired to banners and analytics navigation", () => {
+test("keeps the header wired to banners without main-card analytics navigation", () => {
   expect(headerSource).toContain("<EmailConnectBanner");
   expect(headerSource).toContain("<DetectedTransactionsBanner");
   expect(headerSource).toContain("<HomeSpendingCard");
   expect(headerSource).toContain('localQaProfile !== "home-activity"');
   expect(headerSource).not.toContain("const showReviewBanners =");
   expect(headerSource).toContain("const db = tryGetDb(userId);");
-  expect(headerSource).toContain('push("/analytics" as never)');
+  expect(headerSource).not.toContain('push("/analytics" as never)');
 });

@@ -10,14 +10,6 @@ export const styles = StyleSheet.create({
     paddingBottom: 32,
     gap: 18,
   },
-  headerAddButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(240, 240, 240, 0.1)",
-  },
   headerTitle: {
     maxWidth: 250,
     fontFamily: "Poppins_700Bold",

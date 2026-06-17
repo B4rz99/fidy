@@ -11,6 +11,7 @@ type GlassPressableProps = Omit<PressableProps, "children"> & {
   readonly children: ReactNode;
   readonly className?: string;
   readonly disabledOpacity?: number;
+  readonly isInteractive?: boolean;
   readonly nativeGlass?: boolean;
   readonly padded?: boolean;
   readonly radius?: number;
@@ -39,6 +40,7 @@ export function GlassPressable({
   className,
   disabled,
   disabledOpacity = 0.6,
+  isInteractive = false,
   nativeGlass = true,
   padded = false,
   radius,
@@ -60,6 +62,7 @@ export function GlassPressable({
         backgroundColor={backgroundColor}
         borderColor={borderColor}
         borderWidth={borderWidth}
+        isInteractive={isInteractive}
         nativeGlass={nativeGlass}
         padded={padded}
         radius={radius}

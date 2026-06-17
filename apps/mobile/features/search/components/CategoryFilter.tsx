@@ -3,7 +3,7 @@ import { memo } from "react";
 import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
 import { FilterPill as SharedFilterPill } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 
 type CategoryFilterProps = {
@@ -22,6 +22,7 @@ const CategoryFilterPill = memo(
     onToggle: (categoryId: string) => void;
   }) => {
     const { locale } = useTranslation();
+    const accentGreen = useThemeColor("accentGreen");
 
     const handlePress = () => {
       void Haptics.selectionAsync();
@@ -32,6 +33,7 @@ const CategoryFilterPill = memo(
       <SharedFilterPill
         onPress={handlePress}
         selected={isSelected}
+        selectedColor={accentGreen}
         accessibilityLabel={getCategoryLabel(category, locale)}
         style={{ height: 44, paddingHorizontal: 0, width: 44 }}
         leading={

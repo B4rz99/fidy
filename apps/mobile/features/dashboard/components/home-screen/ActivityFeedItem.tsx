@@ -49,6 +49,7 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
       <View className="px-4 py-1">
         <TransactionRow
           icon={category?.icon ?? "✨"}
+          iconBgColor="transparent"
           name={getTransactionDisplayName(tx, t("common.unknown"))}
           amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
