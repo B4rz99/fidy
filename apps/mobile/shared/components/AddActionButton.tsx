@@ -48,10 +48,7 @@ export type { AddActionButtonProps };
 
 const styles = StyleSheet.create({
   pressable: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
+    boxShadow: "0 8px 18px rgba(0, 0, 0, 0.12)",
   },
   surface: {
     alignItems: "center",

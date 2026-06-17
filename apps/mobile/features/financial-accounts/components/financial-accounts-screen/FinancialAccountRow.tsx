@@ -3,7 +3,7 @@ import {
   readFinancialAccountKind,
 } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/schema";
-import { GlassSurface } from "@/shared/components/GlassSurface";
+import { FieldSurface } from "@/shared/components/FieldSurface";
 import { ListRowSurface } from "@/shared/components/ListRowSurface";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -83,17 +83,17 @@ export function FinancialAccountRow({
         <View style={styles.rowHeader}>
           <Text style={[styles.rowTitle, { color: primary }]}>{item.account.name}</Text>
           {item.account.isDefault ? (
-            <GlassSurface
-              nativeGlass={false}
-              padded={false}
+            <FieldSurface
               radius={999}
               borderColor={borderSubtle}
+              size="compact"
               style={styles.badge}
+              contentStyle={styles.badgeContent}
             >
               <Text style={[styles.badgeText, { color: primary }]}>
                 {t("financialAccounts.labels.default")}
               </Text>
-            </GlassSurface>
+            </FieldSurface>
           ) : null}
         </View>
 

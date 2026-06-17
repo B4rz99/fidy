@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AddActionButton } from "@/shared/components";
+import { AddActionButton } from "@/shared/components/AddActionButton";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { ScrollView, Text, View } from "@/shared/components/rn";

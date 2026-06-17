@@ -80,6 +80,9 @@ export const styles = StyleSheet.create({
     minHeight: 24,
     borderRadius: 999,
     borderCurve: "continuous",
+  },
+  badgeContent: {
+    minHeight: 24,
     paddingHorizontal: 8,
     paddingVertical: 0,
     alignItems: "center",
