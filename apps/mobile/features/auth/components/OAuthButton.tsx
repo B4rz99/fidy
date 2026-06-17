@@ -41,7 +41,7 @@ export function OAuthButton({
           testID={testID}
           radius={12}
           className={`h-[52px] items-center justify-center ${containerClassName}`}
-          surfaceStyle={styles.glassContent}
+          surfaceLayoutStyle={styles.glassContent}
         >
           {content}
         </GlassPressable>

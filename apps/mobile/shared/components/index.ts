@@ -80,6 +80,8 @@ export type {
   SelectableChipRowTone,
 } from "./SelectableChipRow";
 export { HEADER_HEIGHT, ScreenLayout, TAB_BAR_CLEARANCE } from "./ScreenLayout";
+export { ScreenShell } from "./ScreenShell";
+export type { ScreenShellProps } from "./ScreenShell";
 export { SettingsSection } from "./SettingsSection";
 export { TextActionButton } from "./TextActionButton";
 export type { TextActionButtonProps, TextActionButtonTone } from "./TextActionButton";

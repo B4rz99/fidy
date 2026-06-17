@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScrollView, View } from "@/shared/components/rn";
-import { useColorScheme, useThemeColor } from "@/shared/hooks";
-import { AppAuroraBackground } from "./AppAuroraBackground";
+import { ScrollView } from "@/shared/components/rn";
+import { ScreenShell } from "./ScreenShell";
 
 type FormScreenProps = {
   readonly children: ReactNode;
@@ -21,12 +20,9 @@ export function FormScreen({
   topPadding = 0,
 }: FormScreenProps) {
   const { bottom } = useSafeAreaInsets();
-  const isDark = useColorScheme() === "dark";
-  const page = useThemeColor("page");
 
   return (
-    <View style={{ flex: 1, backgroundColor: page }}>
-      <AppAuroraBackground isDark={isDark} />
+    <ScreenShell>
       <ScrollView
         style={{ backgroundColor: "transparent" }}
         contentContainerStyle={[
@@ -45,6 +41,6 @@ export function FormScreen({
       >
         {children}
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

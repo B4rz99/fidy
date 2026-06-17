@@ -46,9 +46,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  projectionCardDashed: {
-    borderStyle: "dashed",
-  },
   projectionText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 13,

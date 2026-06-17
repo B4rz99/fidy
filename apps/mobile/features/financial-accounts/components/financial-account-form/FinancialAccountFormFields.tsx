@@ -32,7 +32,7 @@ export function KindChip({
       backgroundColor={isSelected ? accentGreen : undefined}
       nativeGlass={false}
       radius={999}
-      surfaceStyle={styles.kindChip}
+      surfaceLayoutStyle={styles.kindChip}
     >
       <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
         {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}

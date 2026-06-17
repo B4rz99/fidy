@@ -4,6 +4,7 @@ import { Card } from "@/shared/components/Card";
 import { FieldButton } from "@/shared/components/FieldButton";
 import { FormTextField } from "@/shared/components/FormTextField";
 import { GlassPressable } from "@/shared/components/GlassPressable";
+import { GlassSurface } from "@/shared/components/GlassSurface";
 import { IconActionButton } from "@/shared/components/IconActionButton";
 import { ListRowSurface } from "@/shared/components/ListRowSurface";
 import { TextActionButton } from "@/shared/components/TextActionButton";
@@ -68,7 +69,7 @@ describe("shared primitive contracts", () => {
         borderWidth={2}
         contentStyle={{ gap: 6 }}
         radius={20}
-        surfaceStyle={{ marginTop: 4 }}
+        layoutStyle={{ marginTop: 4 }}
       >
         <Text>Card content</Text>
       </Card>
@@ -90,6 +91,38 @@ describe("shared primitive contracts", () => {
       marginTop: 4,
     });
     expect(content).toBeTruthy();
+  });
+
+  it("keeps layout props from overriding GlassSurface visual tokens", () => {
+    const screen = renderFidy(
+      <GlassSurface
+        backgroundColor="#111111"
+        borderColor="#22aa66"
+        borderStyle="dashed"
+        borderWidth={2}
+        radius={20}
+        style={{
+          backgroundColor: "#ff0000",
+          borderColor: "#0000ff",
+          borderRadius: 4,
+          borderStyle: "solid",
+          marginTop: 8,
+        }}
+      >
+        <Text>Glass content</Text>
+      </GlassSurface>
+    );
+    const root = asContractNode(screen.root);
+    const surface = findStyledView(root, (style) => style.marginTop === 8);
+
+    expect(flattenStyle(surface?.props.style)).toMatchObject({
+      backgroundColor: "#111111",
+      borderColor: "#22aa66",
+      borderRadius: 20,
+      borderStyle: "dashed",
+      borderWidth: 2,
+      marginTop: 8,
+    });
   });
 
   it("keeps GlassPressable as the sole interactive shell around a presentational surface", () => {
@@ -135,12 +168,60 @@ describe("shared primitive contracts", () => {
       asContractNode(screen.root),
       (style) => style.borderColor === "#55cc88"
     );
+    const content = nearestAncestor(
+      findNodeByText(asContractNode(screen.root), "Row content"),
+      (node) => flattenStyle(node.props.style)?.minHeight === 72
+    );
     const rowContentStyle = flattenStyle(surface?.props.style);
 
     expect(pressable.props.disabled).toBe(true);
     expect(pressable.props.accessibilityState).toMatchObject({ disabled: true, selected: true });
     expect(flattenStyle(pressable.props.style)).toMatchObject({ opacity: 1 });
     expect(rowContentStyle).toMatchObject({ borderColor: "#55cc88" });
+    expect(content).toBeTruthy();
+  });
+
+  it("uses explicit ListRowSurface layout and divider props", () => {
+    const screen = renderFidy(
+      <ListRowSurface
+        accessibilityLabel="Grouped row"
+        divider
+        dividerColor="#ddeeff"
+        layoutStyle={{ marginTop: 6 }}
+        variant="grouped"
+      >
+        <Text>Grouped row</Text>
+      </ListRowSurface>
+    );
+    const groupedRow = asContractNode(screen.getByA11yLabel("Grouped row"));
+
+    expect(flattenStyle(groupedRow.props.style)).toMatchObject({
+      borderBottomColor: "#ddeeff",
+      marginTop: 6,
+    });
+  });
+
+  it("routes standalone ListRowSurface layout keys to shell and row content", () => {
+    const screen = renderFidy(
+      <ListRowSurface
+        accessibilityLabel="Standalone row"
+        layoutStyle={{ marginTop: 6, minHeight: 80, paddingHorizontal: 20 }}
+      >
+        <Text>Standalone content</Text>
+      </ListRowSurface>
+    );
+    const root = asContractNode(screen.root);
+    const surface = findStyledView(root, (style) => style.marginTop === 6);
+    const rowContent = nearestAncestor(
+      findNodeByText(root, "Standalone content"),
+      (node) =>
+        flattenStyle(node.props.style)?.minHeight === 80 &&
+        flattenStyle(node.props.style)?.paddingHorizontal === 20
+    );
+
+    expect(flattenStyle(surface?.props.style)).toMatchObject({ marginTop: 6, minHeight: 80 });
+    expect(flattenStyle(surface?.props.style)?.paddingHorizontal).toBeUndefined();
+    expect(rowContent).toBeTruthy();
   });
 
   it("keeps grouped ListRowSurface non-glass and divider-only", () => {
