@@ -1,6 +1,5 @@
 import type { FinancialAccountKind } from "../schema";
-
-const financialAccountKinds = ["checking", "savings", "wallet", "cash", "credit_card"] as const;
+import { financialAccountKinds } from "./kind-options";
 
 function isFinancialAccountKind(value: string): value is FinancialAccountKind {
   return financialAccountKinds.some((kind) => kind === value);

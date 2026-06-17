@@ -160,17 +160,7 @@ export function renderFidy(ui: ReactElement) {
       });
     },
     toJSON: () => toJSON(renderer.container),
-    press: (node: TestNode) => {
-      const handler = findPressHandler(node);
-
-      if (handler == null) {
-        return;
-      }
-
-      act(() => {
-        (handler as (event: typeof pressEvent) => void)(pressEvent);
-      });
-    },
+    press,
     getAllByText: (text: string | RegExp) => activeRenderer.getAllByText(stableText(text)),
     getByText: (text: string | RegExp) => {
       const match = queryByText(text);
