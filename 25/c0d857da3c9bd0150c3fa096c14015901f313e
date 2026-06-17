@@ -1,0 +1,25 @@
+apps/mobile/features/financial-accounts/schema.ts
+  s_e9064aa61c68f1::t_05de361db4ccde 2,4
+apps/mobile/features/financial-accounts/lib/kind.ts
+  s_e9064aa61c68f1::t_05de361db4ccde 2
+apps/mobile/__tests__/helpers/render.tsx
+  s_e9064aa61c68f1::t_05de361db4ccde 163
+apps/mobile/features/financial-accounts/lib/kind-options.ts
+  s_e9064aa61c68f1::t_05de361db4ccde 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "25c0d857da3c9bd0150c3fa096c14015901f313e",
+  "prompts": {},
+  "sessions": {
+    "s_e9064aa61c68f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3c4-ec01-7682-a616-3a9cb4fefaf0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
