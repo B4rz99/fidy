@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
   deleteBill,
@@ -32,58 +31,49 @@ export default function BillsCalendarScreen() {
   const nativeHeaderHeight = useNativeHeaderHeight();
   const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
 
-  const handleNextMonth = useCallback(() => {
+  const handleNextMonth = () => {
     if (!userId) return;
     void nextMonth(getDb(userId)).catch(captureError);
-  }, [userId]);
+  };
 
-  const handlePrevMonth = useCallback(() => {
+  const handlePrevMonth = () => {
     if (!userId) return;
     void prevMonth(getDb(userId)).catch(captureError);
-  }, [userId]);
+  };
 
-  const handleToggleBillPaid = useCallback(
-    (occurrence: CalendarBillOccurrence) => {
-      if (!userId) return;
-      const command = {
-        db: getDb(userId),
-        userId,
-        billId: requireBillId(occurrence.bill.id),
-        dueDate: requireIsoDate(occurrence.dueDate),
-      };
-      const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
-      void action.catch(captureError);
-    },
-    [userId]
-  );
+  const handleToggleBillPaid = (occurrence: CalendarBillOccurrence) => {
+    if (!userId) return;
+    const command = {
+      db: getDb(userId),
+      userId,
+      billId: requireBillId(occurrence.bill.id),
+      dueDate: requireIsoDate(occurrence.dueDate),
+    };
+    const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
+    void action.catch(captureError);
+  };
 
-  const handleEditBill = useCallback(
-    (bill: Bill) => {
-      push({ pathname: "/add-bill", params: { billId: bill.id } });
-    },
-    [push]
-  );
+  const handleEditBill = (bill: Bill) => {
+    push({ pathname: "/add-bill", params: { billId: bill.id } });
+  };
 
-  const handleDeleteBill = useCallback(
-    (bill: Bill) => {
-      Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: () => {
-            if (!userId) return;
-            void deleteBill({
-              db: getDb(userId),
-              userId,
-              billId: requireBillId(bill.id),
-            }).catch(captureError);
-          },
+  const handleDeleteBill = (bill: Bill) => {
+    Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: () => {
+          if (!userId) return;
+          void deleteBill({
+            db: getDb(userId),
+            userId,
+            billId: requireBillId(bill.id),
+          }).catch(captureError);
         },
-      ]);
-    },
-    [t, userId]
-  );
+      },
+    ]);
+  };
 
   return (
     <ScreenLayout

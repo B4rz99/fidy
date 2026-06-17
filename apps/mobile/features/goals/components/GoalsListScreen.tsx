@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
   Button,
@@ -52,6 +51,8 @@ function AddGoalButton({ onPress }: { readonly onPress: () => void }) {
   return <AddActionButton accessibilityLabel={t("goals.empty.createGoal")} onPress={onPress} />;
 }
 
+const goalKeyExtractor = (item: { readonly goal: { readonly id: string } }) => item.goal.id;
+
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
@@ -63,44 +64,33 @@ export function GoalsListScreen() {
   const isLoading = useGoalStore((s) => s.isLoading);
   const userId = useOptionalUserId();
 
-  const handleCreateGoal = useCallback(() => {
+  const handleCreateGoal = () => {
     push("/create-goal");
-  }, [push]);
+  };
 
-  const handleGoalPress = useCallback(
-    (goalId: string) => {
-      if (!userId) return;
-      const db = tryGetDb(userId);
-      if (!db) return;
-      void selectGoal(db, userId, goalId);
-      push("/goal-detail");
-    },
-    [push, userId]
+  const handleGoalPress = (goalId: string) => {
+    if (!userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void selectGoal(db, userId, goalId);
+    push("/goal-detail");
+  };
+
+  const handleAddPayment = (goalId: string) => {
+    if (!userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void selectGoal(db, userId, goalId);
+    push("/add-payment");
+  };
+
+  const renderItem = ({ item }: { item: (typeof goals)[number] }) => (
+    <GoalCard
+      goalWithProgress={item}
+      onPress={() => handleGoalPress(item.goal.id)}
+      onAddPayment={() => handleAddPayment(item.goal.id)}
+    />
   );
-
-  const handleAddPayment = useCallback(
-    (goalId: string) => {
-      if (!userId) return;
-      const db = tryGetDb(userId);
-      if (!db) return;
-      void selectGoal(db, userId, goalId);
-      push("/add-payment");
-    },
-    [push, userId]
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: (typeof goals)[number] }) => (
-      <GoalCard
-        goalWithProgress={item}
-        onPress={() => handleGoalPress(item.goal.id)}
-        onAddPayment={() => handleAddPayment(item.goal.id)}
-      />
-    ),
-    [handleGoalPress, handleAddPayment]
-  );
-
-  const keyExtractor = useCallback((item: (typeof goals)[number]) => item.goal.id, []);
 
   const hasGoals = goals.length > 0;
 
@@ -117,7 +107,7 @@ export function GoalsListScreen() {
         <FeedList
           data={goals}
           renderItem={renderItem}
-          keyExtractor={keyExtractor}
+          keyExtractor={goalKeyExtractor}
           contentContainerStyle={[styles.listContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
           itemSeparatorHeight={12}
         />

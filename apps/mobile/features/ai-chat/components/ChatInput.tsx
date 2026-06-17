@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { GlassSurface } from "@/shared/components";
 import { SendHorizonal } from "@/shared/components/icons";
 import { Pressable, StyleSheet, TextInput, View } from "@/shared/components/rn";
@@ -17,12 +17,12 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const accentGreen = useThemeColor("accentGreen");
   const supportTextColor = useAiSupportTextColor();
 
-  const handleSend = useCallback(() => {
+  const handleSend = () => {
     const result = resolveChatComposerSend({ text, disabled });
     if (!result.canSend || !result.message) return;
     onSend(result.message);
     setText(result.nextText);
-  }, [text, disabled, onSend]);
+  };
 
   const canSend = !disabled && text.trim().length > 0;
   const sendButtonBackground = canSend ? accentGreen : "rgba(13, 13, 13, 0.72)";

@@ -41,6 +41,7 @@
     "test:coverage": "bun run --cwd apps/mobile --shell=bun test:coverage",
     "test:crap": "bun run --cwd apps/mobile --shell=bun test:crap",
     "perf:bundle:mobile": "bun run --cwd apps/mobile --shell=bun bundle:atlas",
+    "doctor": "bun run doctor:react",
     "doctor:expo": "bunx expo-doctor apps/mobile",
     "doctor:react": "git fetch origin main --depth=1 && bunx react-doctor . --offline --diff origin/main --verbose --project @fidy/mobile --blocking warning",
     "lint": "bunx oxlint .",

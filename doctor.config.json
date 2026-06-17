@@ -24,17 +24,12 @@
         "reason": "These screens intentionally mirror the dynamic safe-area bottom inset into contentContainerStyle to preserve Android scroll spacing while also using contentInset for OS-level bottom offset."
       },
       {
-        "files": [
-          "shared/hooks/use-subscription.ts",
-          "shared/hooks/use-mount-effect.ts"
-        ],
+        "files": ["shared/hooks/use-subscription.ts", "shared/hooks/use-mount-effect.ts"],
         "rules": ["react-doctor/exhaustive-deps"],
         "reason": "These hooks centralize deliberate dependency-array escape hatches: useSubscription lets callers provide an explicit dependency list, and useMountEffect is mount-only by contract."
       },
       {
-        "files": [
-          "features/email-capture/services/gmail-adapter.ts"
-        ],
+        "files": ["features/email-capture/services/gmail-adapter.ts"],
         "rules": [
           "react-doctor/async-await-in-loop",
           "react-doctor/server-sequential-independent-await"
@@ -60,7 +55,10 @@
           "features/email-capture/services/create-email-adapter.ts",
           "features/auth/store.ts"
         ],
-        "rules": ["react-doctor/async-parallel", "react-doctor/server-sequential-independent-await"],
+        "rules": [
+          "react-doctor/async-parallel",
+          "react-doctor/server-sequential-independent-await"
+        ],
         "reason": "OAuth and auth flows must preserve user-visible ordering: authorization before token exchange/profile fetch, token cleanup before remote sign-out, and local state clearing after sign-out."
       }
     ]

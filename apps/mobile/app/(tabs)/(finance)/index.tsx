@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
@@ -74,66 +74,57 @@ function FinanceCalendarPanel() {
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 
-  const handleNextMonth = useCallback(() => {
+  const handleNextMonth = () => {
     if (!userId) return;
     const db = tryGetDb(userId);
     if (!db) return;
     void nextMonth(db).catch(captureError);
-  }, [userId]);
+  };
 
-  const handlePrevMonth = useCallback(() => {
+  const handlePrevMonth = () => {
     if (!userId) return;
     const db = tryGetDb(userId);
     if (!db) return;
     void prevMonth(db).catch(captureError);
-  }, [userId]);
+  };
 
-  const handleToggleBillPaid = useCallback(
-    (occurrence: CalendarBillOccurrence) => {
-      if (!userId) return;
-      const db = tryGetDb(userId);
-      if (!db) return;
-      const command = {
-        db,
-        userId,
-        billId: requireBillId(occurrence.bill.id),
-        dueDate: requireIsoDate(occurrence.dueDate),
-      };
-      const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
-      void action.catch(captureError);
-    },
-    [userId]
-  );
+  const handleToggleBillPaid = (occurrence: CalendarBillOccurrence) => {
+    if (!userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    const command = {
+      db,
+      userId,
+      billId: requireBillId(occurrence.bill.id),
+      dueDate: requireIsoDate(occurrence.dueDate),
+    };
+    const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
+    void action.catch(captureError);
+  };
 
-  const handleEditBill = useCallback(
-    (bill: Bill) => {
-      push({ pathname: "/add-bill", params: { billId: bill.id } });
-    },
-    [push]
-  );
+  const handleEditBill = (bill: Bill) => {
+    push({ pathname: "/add-bill", params: { billId: bill.id } });
+  };
 
-  const handleDeleteBill = useCallback(
-    (bill: Bill) => {
-      Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: () => {
-            if (!userId) return;
-            const db = tryGetDb(userId);
-            if (!db) return;
-            void deleteBill({
-              db,
-              userId,
-              billId: requireBillId(bill.id),
-            }).catch(captureError);
-          },
+  const handleDeleteBill = (bill: Bill) => {
+    Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: () => {
+          if (!userId) return;
+          const db = tryGetDb(userId);
+          if (!db) return;
+          void deleteBill({
+            db,
+            userId,
+            billId: requireBillId(bill.id),
+          }).catch(captureError);
         },
-      ]);
-    },
-    [t, userId]
-  );
+      },
+    ]);
+  };
 
   return (
     <View style={styles.calendarPanel}>
@@ -160,31 +151,29 @@ function useHeaderRight(activeTab: FinanceTab) {
   const { t } = useTranslation();
   const goals = useGoalStore((s) => s.goals);
 
-  return useMemo(() => {
-    if (activeTab === "calendar") {
-      return function AddBillAction() {
-        return (
-          <AddActionButton
-            onPress={() => push("/add-bill")}
-            accessibilityLabel={t("bills.addBill")}
-          />
-        );
-      };
-    }
-    if (activeTab === "goals" && goals.length > 0) {
-      return function AddGoalAction() {
-        return (
-          <AddActionButton
-            onPress={() => push("/create-goal")}
-            accessibilityLabel={t("goals.empty.createGoal")}
-          />
-        );
-      };
-    }
-    return function NoAction() {
-      return null;
+  if (activeTab === "calendar") {
+    return function AddBillAction() {
+      return (
+        <AddActionButton
+          onPress={() => push("/add-bill")}
+          accessibilityLabel={t("bills.addBill")}
+        />
+      );
     };
-  }, [activeTab, goals.length, push, t]);
+  }
+  if (activeTab === "goals" && goals.length > 0) {
+    return function AddGoalAction() {
+      return (
+        <AddActionButton
+          onPress={() => push("/create-goal")}
+          accessibilityLabel={t("goals.empty.createGoal")}
+        />
+      );
+    };
+  }
+  return function NoAction() {
+    return null;
+  };
 }
 
 export default function FinanceScreen() {
