@@ -1,0 +1,165 @@
+apps/mobile/app/bills-calendar.tsx
+  s_55f9c66970e105::t_213014212a9703 33
+  s_8609d290efc18a::t_8fa11e96439f35 17-18,93,96
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_e9064aa61c68f1::t_9fe509acf78b80 52
+  s_8609d290efc18a::t_8fa11e96439f35 8,12
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_94eab01ecf5b04::t_60755aedd5580b 28-30
+  s_94eab01ecf5b04::t_8d81adb9471168 49-50,53-59,61,83-89
+apps/mobile/features/search/components/FilterChipItem.tsx
+  s_e5b65d6bb477bb::t_4bef16a11f3811 24,38-39
+apps/mobile/shared/constants/theme.ts
+  s_55f9c66970e105::t_8323962a59d753 5-10,45-46
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_e9064aa61c68f1::t_9fe509acf78b80 115-117
+  s_e5b65d6bb477bb::t_4d609386fb2d34 40,101-103,110-111,113-114,118
+  s_e5b65d6bb477bb::t_41711286b5ffcd 109
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx
+  s_8609d290efc18a::t_8fa11e96439f35 3,6
+  s_e9064aa61c68f1::t_9fe509acf78b80 19
+apps/mobile/shared/components/FilterPill.tsx
+  s_e5b65d6bb477bb::t_b9e9c680f2e89d 68,70
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_55f9c66970e105::t_fb3b06e08a0898 109-116
+  s_8609d290efc18a::t_63fc0d5d80bcc6 144-145
+apps/mobile/shared/components/GlassPressable.tsx
+  s_8609d290efc18a::t_ffb83fe5c77fb3 14,43,65
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_8609d290efc18a::t_63fc0d5d80bcc6 29
+  s_8609d290efc18a::t_8fa11e96439f35 21-27,167,170,177-180,187
+  s_55f9c66970e105::t_a7e92d7c9658f0 73
+apps/mobile/shared/components/index.ts
+  s_8609d290efc18a::t_ffb83fe5c77fb3 3-4
+apps/mobile/shared/components/navigation/AddNavButton.tsx
+  s_8609d290efc18a::t_8fa11e96439f35 1-2,9,12-17
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_8609d290efc18a::t_63fc0d5d80bcc6 725,727
+  s_8609d290efc18a::t_73bef2040583d2 53
+  s_e5b65d6bb477bb::t_4d609386fb2d34 220-236
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_1adb630a36085c::t_fab458abd65699 79-83
+  s_dabfe5e38c2109::t_f6d0f9ebee6748 118,125
+apps/mobile/features/ai-chat/components/NewChatButton.tsx
+  s_e9064aa61c68f1::t_9fe509acf78b80 7
+  s_8609d290efc18a::t_8fa11e96439f35 1-2
+apps/mobile/shared/i18n/locales/en.ts
+  s_94eab01ecf5b04::t_d058491b73368b 5
+apps/mobile/features/search/components/TypeFilter.tsx
+  s_e9064aa61c68f1::t_9fe509acf78b80 26
+apps/mobile/shared/i18n/locales/es.ts
+  s_94eab01ecf5b04::t_d058491b73368b 5
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_8609d290efc18a::t_8fa11e96439f35 11,15,38
+.agents/skills/review/SKILL.md
+  s_ba2139366134dc::t_15304617c2de5a 32
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_e5b65d6bb477bb::t_6920502f6d2323 41,46
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_1adb630a36085c::t_bf83b68667c1ea 52
+apps/mobile/features/search/components/CategoryFilter.tsx
+  s_e5b65d6bb477bb::t_cc4dfda1b3d274 25,36
+  s_e5b65d6bb477bb::t_4bef16a11f3811 6
+apps/mobile/package.json
+  s_df8332307c7247::t_eccb9a4e033820 7
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_8206990ac4903a::t_ca4a5047734742 6,46,86-92,96
+apps/mobile/features/search/components/DateFilter.tsx
+  s_e5b65d6bb477bb::t_b9e9c680f2e89d 7,20,89
+apps/mobile/shared/components/FieldButton.tsx
+  s_e5b65d6bb477bb::t_b9e9c680f2e89d 86,136
+apps/mobile/__tests__/theme/colors.test.ts
+  s_55f9c66970e105::t_af2fa46a3cdc85 55-68
+apps/mobile/shared/components/Chip.tsx
+  s_8206990ac4903a::t_2e2fa08a287a86 96,118
+apps/mobile/shared/components/AddActionButton.tsx
+  s_8609d290efc18a::t_ffb83fe5c77fb3 1-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "75d624d1da3be201c6586045121ba6d0c3834271",
+  "prompts": {},
+  "sessions": {
+    "s_1adb630a36085c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3a4-a3c7-7613-8d7e-14e615db6c0a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_55f9c66970e105": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed399-20ad-7dc3-9a25-001173d9e979",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_8206990ac4903a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3a7-854b-7eb2-b98c-5521f9a62547",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_8609d290efc18a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3b8-7e03-7f92-aa5f-3c781e8eae6b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_94eab01ecf5b04": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3a9-c9ad-7e82-8c16-d4e29706bd2b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_ba2139366134dc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3c2-8555-78c0-a52e-ccad31045486",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_dabfe5e38c2109": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed394-280c-7040-982e-6f20589fb7c9",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_df8332307c7247": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed371-6471-7d41-80a5-92b0829b7e92",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_e5b65d6bb477bb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed391-addd-77a0-87d1-60a2bad6eb10",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_e9064aa61c68f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3c4-ec01-7682-a616-3a9cb4fefaf0",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
