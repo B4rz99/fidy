@@ -1,0 +1,21 @@
+apps/mobile/package.json
+  s_e9064aa61c68f1::t_0d8287029e60f3 103-109
+package.json
+  s_e9064aa61c68f1::t_0d8287029e60f3 73-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "3136c97b453e82a51a718ee1a7e0d36940f75e38",
+  "prompts": {},
+  "sessions": {
+    "s_e9064aa61c68f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed3c4-ec01-7682-a616-3a9cb4fefaf0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
