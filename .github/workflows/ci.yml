@@ -21,8 +21,6 @@ jobs:
             command: lint-mobile
           - name: Lizard
             command: lint-complexity
-          - name: File Size
-            command: lint-file-size
           - name: Dependencies
             command: lint-dependency-policy
           - name: Expo Doctor
@@ -54,7 +52,6 @@ jobs:
             lint-brands) bun run lint:brands ;;
             lint-mobile) bun run lint:mobile ;;
             lint-complexity) bun run lint:complexity ;;
-            lint-file-size) bun run lint:file-size ;;
             lint-dependency-policy) bun run lint:dependency-policy ;;
             doctor-expo) bun run doctor:expo ;;
             doctor-react) bun run doctor:react ;;

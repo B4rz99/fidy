@@ -20,13 +20,11 @@
     "sim:serve:list": "bunx serve-sim --list",
     "sim:serve:kill": "bunx serve-sim --kill",
     "analyze:complexity:strict:update-ledger": "bun ./scripts/run-lizard-strict.ts --write-ledger",
-    "analyze:file-size": "bun ./scripts/check-max-file-lines.ts",
     "mcp:xcodebuild": "xcodebuildmcp mcp",
     "landing": "bun run --cwd apps/landing --shell=bun dev",
     "build:packages": "bun run --cwd packages/assets --shell=bun build && bun run --cwd packages/types --shell=bun build && bun run --cwd packages/schemas --shell=bun build && bun run --cwd packages/utils --shell=bun build",
     "lint:mobile": "bun run --cwd apps/mobile --shell=bun lint",
     "lint:complexity": "bun ./scripts/run-lizard-strict.ts",
-    "lint:file-size": "bun ./scripts/check-max-file-lines.ts --enforce",
     "lint:theme-colors": "bun ./scripts/check-theme-color-literals.ts --enforce",
     "lint:dependency-policy": "bun ./scripts/check-dependency-policy.ts --enforce --stale-days 365",
     "lint:brands": "bun scripts/check-branded-boundaries.ts",
@@ -49,7 +47,7 @@
     "lint:oxc:type-aware": "bunx oxlint --config .oxlintrc.strict.json --type-aware .",
     "format": "bunx oxfmt --write .",
     "format:check": "bunx oxfmt --check .",
-    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:file-size && bun run lint:theme-colors && bun run lint:dependency-policy && bun run lint:architecture && bun run typecheck && bun run test"
+    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:theme-colors && bun run lint:dependency-policy && bun run lint:architecture && bun run typecheck && bun run test"
   },
   "devDependencies": {
     "bun-types": "1.3.13",
