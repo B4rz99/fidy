@@ -1,0 +1,26 @@
+apps/mobile/shared/components/FidyNumpad.tsx
+  s_3b7d27b78b758d::t_2dad77ea175321 26,29-30,33,52,107
+  s_3b7d27b78b758d::t_33ebd92a28c64a 23-25,27-28,31-32
+apps/mobile/shared/components/EntryScaffold.tsx
+  s_3b7d27b78b758d::t_33ebd92a28c64a 137-139,142-143,147-148
+  s_3b7d27b78b758d::t_2dad77ea175321 141,144-146,149-151,153-155,264,274,291
+  s_3b7d27b78b758d::t_216ae9be7bcec8 152
+apps/mobile/shared/constants/theme.ts
+  s_3b7d27b78b758d::t_33ebd92a28c64a 39-41,82-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "33b978a8619c96da7f17ec6a6daec7e14c0e48da",
+  "prompts": {},
+  "sessions": {
+    "s_3b7d27b78b758d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edc69-820d-7fc3-9642-96d3dcf8609d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
