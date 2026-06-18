@@ -134,9 +134,25 @@ export function EntryScaffold({
   const accentGreen = useThemeColor("accentGreen");
   const onAccent = useThemeColor("onAccent");
   const accentRed = useThemeColor("accentRed");
-  const keyBg = useThemeColor("numpadKey");
-  const specialKeyBg = useThemeColor("numpadSpecialKey");
+  const numpadGlassKey = useThemeColor("numpadGlassKey");
+  const numpadGlassSpecialKey = useThemeColor("numpadGlassSpecialKey");
+  const numpadGlassBorder = useThemeColor("numpadGlassBorder");
   const activeColor = getTabIndicatorColor({ accentGreen, accentRed, tab: activeTab, tertiary });
+  const keySurfaceStyle = {
+    backgroundColor: numpadGlassKey,
+    borderColor: numpadGlassBorder,
+    borderWidth: 1,
+  };
+  const specialKeySurfaceStyle = {
+    backgroundColor: numpadGlassSpecialKey,
+    borderColor: numpadGlassBorder,
+    borderWidth: 1,
+  };
+  const confirmKeySurfaceStyle = {
+    backgroundColor: `${accentGreen}${isDark ? "B8" : "C7"}`,
+    borderColor: accentGreen,
+    borderWidth: 1,
+  };
   const { bottom, top } = useSafeAreaInsets();
   const tabBarHeight = Platform.OS === "ios" ? ANDROID_TAB_BAR_HEIGHT / 8 : ANDROID_TAB_BAR_HEIGHT;
   const tabBarClearance = tabBarHeight + Math.max(bottom, 16);
@@ -245,7 +261,7 @@ export function EntryScaffold({
                     return (
                       <View key={key} style={styles.rightColumn}>
                         <EntryNumpadButton
-                          style={[styles.key, { backgroundColor: specialKeyBg }]}
+                          style={[styles.key, specialKeySurfaceStyle]}
                           onPress={() => handleKeyPress(key)}
                           accessibilityLabel={t("common.delete")}
                         >
@@ -255,8 +271,8 @@ export function EntryScaffold({
                           testID="keyConfirm"
                           style={[
                             styles.key,
+                            confirmKeySurfaceStyle,
                             {
-                              backgroundColor: accentGreen,
                               opacity: isConfirmDisabled ? 0.45 : 1,
                             },
                           ]}
@@ -272,7 +288,7 @@ export function EntryScaffold({
                   return (
                     <EntryNumpadButton
                       key={key}
-                      style={[styles.key, { backgroundColor: keyBg }]}
+                      style={[styles.key, keySurfaceStyle]}
                       onPress={() => handleKeyPress(key)}
                       accessibilityLabel={key}
                     >
