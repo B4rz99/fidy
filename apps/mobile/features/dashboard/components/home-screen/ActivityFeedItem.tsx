@@ -1,4 +1,3 @@
-import { memo, useCallback } from "react";
 import type { StoredActivityItem } from "@/features/activity/query.public";
 import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
@@ -19,7 +18,7 @@ type TransactionActivityItemProps = {
   readonly onEditTransaction: (id: TransactionId) => void;
 };
 
-const TransactionActivityItem = memo(function TransactionActivityItem({
+function TransactionActivityItem({
   showDateHeader,
   tx,
   onDeleteTransaction,
@@ -27,12 +26,12 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
 }: TransactionActivityItemProps) {
   const { t, locale } = useTranslation();
   const category = CATEGORY_MAP[tx.categoryId];
-  const handleEdit = useCallback(() => {
+  const handleEdit = () => {
     onEditTransaction(tx.id);
-  }, [onEditTransaction, tx.id]);
-  const handleDelete = useCallback(() => {
+  };
+  const handleDelete = () => {
     onDeleteTransaction(tx.id);
-  }, [onDeleteTransaction, tx.id]);
+  };
 
   return (
     <View>
@@ -49,6 +48,7 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
       <View className="px-4 py-1">
         <TransactionRow
           icon={category?.icon ?? "✨"}
+          iconBgColor="transparent"
           name={getTransactionDisplayName(tx, t("common.unknown"))}
           amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
@@ -59,7 +59,7 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
       </View>
     </View>
   );
-});
+}
 
 type TransferActivityItemProps = {
   readonly accountNames: Readonly<Record<string, string>>;
@@ -67,11 +67,7 @@ type TransferActivityItemProps = {
   readonly showDateHeader: boolean;
 };
 
-const TransferActivityItem = memo(function TransferActivityItem({
-  accountNames,
-  item,
-  showDateHeader,
-}: TransferActivityItemProps) {
+function TransferActivityItem({ accountNames, item, showDateHeader }: TransferActivityItemProps) {
   const { t, locale } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
@@ -102,7 +98,7 @@ const TransferActivityItem = memo(function TransferActivityItem({
       </View>
     </View>
   );
-});
+}
 
 type ActivityFeedItemProps = {
   readonly accountNames: Readonly<Record<string, string>>;

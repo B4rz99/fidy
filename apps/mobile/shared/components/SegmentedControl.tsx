@@ -38,12 +38,12 @@ export function SegmentedControl<TValue extends string>({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const tokens = getSubtleGlassCardTokens(isDark);
-  const primary = useThemeColor("primary");
+  const accentGreen = useThemeColor("accentGreen");
   const success = useThemeColor("success");
   const danger = useThemeColor("danger");
   const secondary = useThemeColor("secondary");
   const toneColors: Record<SegmentedControlTone, string> = {
-    primary,
+    primary: accentGreen,
     success,
     danger,
   };

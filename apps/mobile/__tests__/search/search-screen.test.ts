@@ -37,6 +37,7 @@ const filterChipRowSource = readSource("../../features/search/components/FilterC
 const categoryFilterSource = readSource("../../features/search/components/CategoryFilter.tsx");
 const dateFilterSource = readSource("../../features/search/components/DateFilter.tsx");
 const typeFilterSource = readSource("../../features/search/components/TypeFilter.tsx");
+const filterChipItemSource = readSource("../../features/search/components/FilterChipItem.tsx");
 
 test("keeps SearchScreen routed through the extracted search-screen modules", () => {
   expect(screenSource).toContain("useSearchScreen");
@@ -97,12 +98,23 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   );
   expect(dateFilterSource).toContain("TransactionDatePickerDialog");
   expect(dateFilterSource).not.toContain("<TextInput");
+  expect(dateFilterSource).toContain('useThemeColor("accentGreen")');
+  expect(dateFilterSource).toContain("selectedColor={accentGreen}");
+  expect(dateFilterSource).not.toContain("#2F7D32");
   expect(dateFilterSource).toMatch(
     /preset\.key\s*===\s*["']lastMonth["']\s*\?\s*\{\s*flex\s*:\s*1\.35,\s*minHeight\s*:\s*32,\s*paddingHorizontal\s*:\s*8\s*\}\s*:\s*\{\s*flex\s*:\s*1,\s*minHeight\s*:\s*32,\s*paddingHorizontal\s*:\s*8\s*\}/
   );
   expect(typeFilterSource).not.toContain('style={getStyle("all")}');
   expect(typeFilterSource).toContain("SegmentedControl");
-  expect(typeFilterSource).toContain("getOptionTone={(type) =>");
+  expect(typeFilterSource).not.toContain("getOptionTone");
+  expect(typeFilterSource).not.toContain('"danger"');
+  expect(typeFilterSource).not.toContain('"success"');
   expect(typeFilterSource).toContain("search.transfers");
+  expect(categoryFilterSource).toContain('useThemeColor("accentGreen")');
+  expect(categoryFilterSource).toContain("selectedColor={accentGreen}");
+  expect(filterChipItemSource).toContain(
+    'isClearAll ? "danger" : isHighlighted ? "primary" : "neutral"'
+  );
+  expect(filterChipItemSource).not.toContain('isActive ? "primary" : "neutral"');
   expect(transactionItemSource).toContain("getTransferActivityCopy");
 });

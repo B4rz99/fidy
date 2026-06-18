@@ -3,6 +3,7 @@ import {
   readFinancialAccountKind,
 } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/schema";
+import { FieldSurface } from "@/shared/components/FieldSurface";
 import { ListRowSurface } from "@/shared/components/ListRowSurface";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -42,6 +43,7 @@ export function FinancialAccountRow({
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
+  const borderSubtle = useThemeColor("borderSubtle");
   const peach = useThemeColor("peach");
   const peachLight = useThemeColor("peachLight");
   const chartBg = useThemeColor("chartBg");
@@ -81,11 +83,17 @@ export function FinancialAccountRow({
         <View style={styles.rowHeader}>
           <Text style={[styles.rowTitle, { color: primary }]}>{item.account.name}</Text>
           {item.account.isDefault ? (
-            <View style={[styles.badge, { backgroundColor: accentGreenLight }]}>
+            <FieldSurface
+              radius={999}
+              borderColor={borderSubtle}
+              size="compact"
+              style={styles.badge}
+              contentStyle={styles.badgeContent}
+            >
               <Text style={[styles.badgeText, { color: primary }]}>
                 {t("financialAccounts.labels.default")}
               </Text>
-            </View>
+            </FieldSurface>
           ) : null}
         </View>
 

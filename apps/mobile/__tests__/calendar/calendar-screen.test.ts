@@ -106,8 +106,14 @@ describe("calendar screen", () => {
     expect(nativeHeaderHeightSource).not.toContain("useHeaderHeight");
     expect(financeTabSource).toContain("FINANCE_NATIVE_TAB_BAR_OFFSET = 72");
     expect(financeTabSource).toContain("nativeHeaderHeight");
-    expect(financeTabSource).toContain("nativeHeaderHeight + insets.top");
-    expect(billsCalendarSource).toContain("nativeHeaderHeight + insets.top");
+    expect(financeTabSource).toContain(
+      'const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0'
+    );
+    expect(billsCalendarSource).toContain(
+      'const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0'
+    );
+    expect(financeTabSource).not.toContain("nativeHeaderHeight + insets.top");
+    expect(billsCalendarSource).not.toContain("nativeHeaderHeight + insets.top");
     expect(financeTabSource).toContain(
       'Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE'
     );
@@ -135,8 +141,8 @@ describe("calendar screen", () => {
   });
 
   test("add-bill header actions use visible plus icons", () => {
-    expect(billsCalendarSource).toContain("Colors.light.card");
-    expect(financeTabSource).toContain('useThemeColor("primary")');
+    expect(billsCalendarSource).toContain("AddActionButton");
+    expect(financeTabSource).toContain("AddActionButton");
     expect(financeTabSource).not.toContain("Colors.light.card");
   });
 });

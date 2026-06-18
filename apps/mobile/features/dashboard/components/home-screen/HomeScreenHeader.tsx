@@ -71,7 +71,6 @@ export function HomeScreenHeader({
         categorySpending={categorySpending}
         balance={balance}
         monthlyBudget={monthlyBudget}
-        onPress={() => push("/analytics" as never)}
       />
     </View>
   );

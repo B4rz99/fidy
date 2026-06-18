@@ -1,7 +1,16 @@
-import { type FinancialAccountKind, financialAccountKindSchema } from "../schema";
+import type { FinancialAccountKind } from "../schema";
+import { financialAccountKinds } from "./kind-options";
+
+function isFinancialAccountKind(value: string): value is FinancialAccountKind {
+  return financialAccountKinds.some((kind) => kind === value);
+}
 
 export function readFinancialAccountKind(value: string): FinancialAccountKind {
-  return financialAccountKindSchema.parse(value);
+  if (isFinancialAccountKind(value)) {
+    return value;
+  }
+
+  throw new Error(`Unsupported financial account kind: ${value}`);
 }
 
 export function canFinancialAccountHaveIdentifiers(kind: FinancialAccountKind): boolean {

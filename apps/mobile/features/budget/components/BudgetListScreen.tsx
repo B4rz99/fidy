@@ -1,6 +1,5 @@
 import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { formatMonthYear } from "@/features/calendar/public";
 import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
@@ -8,11 +7,11 @@ import {
   Button,
   EmptyState,
   FeedList,
-  IconActionButton,
+  AddActionButton,
   ScreenLayout,
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
-import { Plus, Wallet } from "@/shared/components/icons";
+import { Wallet } from "@/shared/components/icons";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -34,13 +33,10 @@ function AddBudgetButton({
   readonly accessibilityLabel: string;
   readonly onPress: () => void;
 }) {
-  const primaryColor = useThemeColor("primary");
-
   return (
-    <IconActionButton
+    <AddActionButton
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel}
-      icon={<Plus size={24} color={primaryColor} />}
       onPress={onPress}
     />
   );
@@ -97,98 +93,74 @@ export function BudgetListScreen() {
   );
   const monthLabel = formatMonthYear(monthAsDate, getDateFnsLocale(locale));
 
-  const handleAddBudget = useCallback(() => {
+  const handleAddBudget = () => {
     push("/create-budget");
-  }, [push]);
+  };
 
-  const handleNextMonth = useCallback(() => {
+  const handleNextMonth = () => {
     if (!userId) return;
     const db = tryGetDb(userId);
     if (!db) return;
     void nextBudgetMonth(db, userId);
-  }, [userId]);
+  };
 
-  const handlePrevMonth = useCallback(() => {
+  const handlePrevMonth = () => {
     if (!userId) return;
     const db = tryGetDb(userId);
     if (!db) return;
     void prevBudgetMonth(db, userId);
-  }, [userId]);
+  };
 
-  const handleAutoSetup = useCallback(() => {
+  const handleAutoSetup = () => {
     push("/auto-suggest-budgets");
-  }, [push]);
+  };
 
-  const handleCreateManually = useCallback(() => {
+  const handleCreateManually = () => {
     push("/create-budget");
-  }, [push]);
+  };
 
-  const handleBudgetPress = useCallback(
-    (budgetId: string) => {
-      push({ pathname: "/create-budget", params: { budgetId } });
-    },
-    [push]
-  );
+  const handleBudgetPress = (budgetId: string) => {
+    push({ pathname: "/create-budget", params: { budgetId } });
+  };
 
   const hasBudgets = budgets.length > 0;
-  const renderBudget = useCallback(
-    ({ item }: ListRenderItemInfo<BudgetProgress>) => (
-      <BudgetCard progress={item} onPress={handleBudgetPress} />
-    ),
-    [handleBudgetPress]
+  const renderBudget = ({ item }: ListRenderItemInfo<BudgetProgress>) => (
+    <BudgetCard progress={item} onPress={handleBudgetPress} />
   );
-  const budgetSummary = useMemo(
-    () =>
-      hasBudgets ? (
-        <View style={styles.headerContent}>
-          {pendingAlerts.map((alert) => (
-            <BudgetAlertBanner
-              key={`${alert.budgetId}:${alert.threshold}`}
-              alert={alert}
-              onDismiss={acknowledgeAlert}
-            />
-          ))}
-          <BudgetSummaryCard
-            totalBudget={summary.totalBudget}
-            totalSpent={summary.totalSpent}
-            percentUsed={summary.percentUsed}
+  const budgetSummary = hasBudgets ? (
+    <View style={styles.headerContent}>
+      {pendingAlerts.map((alert) => (
+        <BudgetAlertBanner
+          key={`${alert.budgetId}:${alert.threshold}`}
+          alert={alert}
+          onDismiss={acknowledgeAlert}
+        />
+      ))}
+      <BudgetSummaryCard
+        totalBudget={summary.totalBudget}
+        totalSpent={summary.totalSpent}
+        percentUsed={summary.percentUsed}
+      />
+    </View>
+  ) : null;
+  const emptyState = (
+    <EmptyState
+      title={t("budgets.empty.title")}
+      subtitle={t("budgets.empty.subtitle")}
+      icon={<Wallet size={48} color={secondaryColor} />}
+      className="pt-20"
+      action={
+        <View className="mt-4 items-center" style={{ gap: 12 }}>
+          <Button label={t("budgets.empty.autoSetup")} onPress={handleAutoSetup} className="px-8" />
+          <Button
+            label={t("budgets.empty.createManually")}
+            variant="ghost"
+            size="compact"
+            onPress={handleCreateManually}
           />
         </View>
-      ) : null,
-    [
-      acknowledgeAlert,
-      hasBudgets,
-      pendingAlerts,
-      summary.percentUsed,
-      summary.totalBudget,
-      summary.totalSpent,
-    ]
-  );
-  const emptyState = useMemo(
-    () => (
-      <EmptyState
-        title={t("budgets.empty.title")}
-        subtitle={t("budgets.empty.subtitle")}
-        icon={<Wallet size={48} color={secondaryColor} />}
-        className="pt-20"
-        action={
-          <View className="mt-4 items-center" style={{ gap: 12 }}>
-            <Button
-              label={t("budgets.empty.autoSetup")}
-              onPress={handleAutoSetup}
-              className="px-8"
-            />
-            <Button
-              label={t("budgets.empty.createManually")}
-              variant="ghost"
-              size="compact"
-              onPress={handleCreateManually}
-            />
-          </View>
-        }
-      />
-    ),
-    [handleAutoSetup, handleCreateManually, secondaryColor, t]
+      }
+    />
   );
 
   return (

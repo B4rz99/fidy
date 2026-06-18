@@ -51,6 +51,21 @@ describe("Colors", () => {
     expect(Colors.dark.accentGreen).toBe("#8BC34A");
   });
 
+  test("neutral text tokens use maximum contrast over aurora backgrounds", () => {
+    expect(Colors.light.primary).toBe("#000000");
+    expect(Colors.light.textPrimary).toBe("#000000");
+    expect(Colors.light.secondary).toBe("#000000");
+    expect(Colors.light.textSecondary).toBe("#000000");
+    expect(Colors.light.tertiary).toBe("#000000");
+    expect(Colors.light.textTertiary).toBe("#000000");
+    expect(Colors.dark.primary).toBe("#FFFFFF");
+    expect(Colors.dark.textPrimary).toBe("#FFFFFF");
+    expect(Colors.dark.secondary).toBe("#FFFFFF");
+    expect(Colors.dark.textSecondary).toBe("#FFFFFF");
+    expect(Colors.dark.tertiary).toBe("#FFFFFF");
+    expect(Colors.dark.textTertiary).toBe("#FFFFFF");
+  });
+
   test("semantic aliases preserve the existing compatibility colors", () => {
     expect(Colors.light.background).toBe(Colors.light.page);
     expect(Colors.dark.background).toBe(Colors.dark.page);

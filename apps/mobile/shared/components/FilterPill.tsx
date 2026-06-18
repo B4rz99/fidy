@@ -65,8 +65,9 @@ export function FilterPill({
   style,
   ...viewProps
 }: FilterPillProps) {
+  const accentGreen = useThemeColor("accentGreen");
   const primary = useThemeColor("primary");
-  const selectedBorderColor = selectedColor ?? primary;
+  const selectedBorderColor = selectedColor ?? accentGreen;
   const pressableStyle = getPressableLayoutStyle(style);
   const surfaceStyle = getSurfaceStyle(style);
   const content = (

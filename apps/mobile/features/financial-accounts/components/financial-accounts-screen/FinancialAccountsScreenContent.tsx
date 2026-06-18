@@ -1,9 +1,9 @@
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AddActionButton } from "@/shared/components/AddActionButton";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { ScreenLayout } from "@/shared/components/ScreenLayout";
-import { Plus } from "@/shared/components/icons";
-import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountsScreen.styles";
 import type { FinancialAccountListItem } from "./FinancialAccountsScreen.types";
@@ -16,19 +16,7 @@ function FinancialAccountAddButton({
   readonly accessibilityLabel: string;
   readonly onPress: () => void;
 }) {
-  const primary = useThemeColor("primary");
-
-  return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      hitSlop={12}
-      onPress={onPress}
-      style={styles.headerAddButton}
-    >
-      <Plus size={22} color={primary} />
-    </Pressable>
-  );
+  return <AddActionButton accessibilityLabel={accessibilityLabel} onPress={onPress} />;
 }
 
 function FinancialAccountsAuroraLayer() {

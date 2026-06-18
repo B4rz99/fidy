@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
@@ -18,11 +18,15 @@ import {
 } from "@/features/calendar/ui.public";
 import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/routes.public";
-import { AppAuroraBackground, SegmentedControl, TAB_BAR_CLEARANCE } from "@/shared/components";
-import { Plus } from "@/shared/components/icons";
-import { Alert, Platform, Pressable, StyleSheet, View } from "@/shared/components/rn";
+import {
+  AddActionButton,
+  AppAuroraBackground,
+  SegmentedControl,
+  TAB_BAR_CLEARANCE,
+} from "@/shared/components";
+import { Alert, Platform, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
 import { useNativeHeaderHeight } from "@/shared/navigation/use-native-header-height";
 import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
@@ -66,70 +70,61 @@ function FinanceCalendarPanel() {
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
   const nativeHeaderHeight = useNativeHeaderHeight();
-  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight + insets.top : 0;
+  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 
-  const handleNextMonth = useCallback(() => {
+  const handleNextMonth = () => {
     if (!userId) return;
     const db = tryGetDb(userId);
     if (!db) return;
     void nextMonth(db).catch(captureError);
-  }, [userId]);
+  };
 
-  const handlePrevMonth = useCallback(() => {
+  const handlePrevMonth = () => {
     if (!userId) return;
     const db = tryGetDb(userId);
     if (!db) return;
     void prevMonth(db).catch(captureError);
-  }, [userId]);
+  };
 
-  const handleToggleBillPaid = useCallback(
-    (occurrence: CalendarBillOccurrence) => {
-      if (!userId) return;
-      const db = tryGetDb(userId);
-      if (!db) return;
-      const command = {
-        db,
-        userId,
-        billId: requireBillId(occurrence.bill.id),
-        dueDate: requireIsoDate(occurrence.dueDate),
-      };
-      const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
-      void action.catch(captureError);
-    },
-    [userId]
-  );
+  const handleToggleBillPaid = (occurrence: CalendarBillOccurrence) => {
+    if (!userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    const command = {
+      db,
+      userId,
+      billId: requireBillId(occurrence.bill.id),
+      dueDate: requireIsoDate(occurrence.dueDate),
+    };
+    const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
+    void action.catch(captureError);
+  };
 
-  const handleEditBill = useCallback(
-    (bill: Bill) => {
-      push({ pathname: "/add-bill", params: { billId: bill.id } });
-    },
-    [push]
-  );
+  const handleEditBill = (bill: Bill) => {
+    push({ pathname: "/add-bill", params: { billId: bill.id } });
+  };
 
-  const handleDeleteBill = useCallback(
-    (bill: Bill) => {
-      Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: () => {
-            if (!userId) return;
-            const db = tryGetDb(userId);
-            if (!db) return;
-            void deleteBill({
-              db,
-              userId,
-              billId: requireBillId(bill.id),
-            }).catch(captureError);
-          },
+  const handleDeleteBill = (bill: Bill) => {
+    Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: () => {
+          if (!userId) return;
+          const db = tryGetDb(userId);
+          if (!db) return;
+          void deleteBill({
+            db,
+            userId,
+            billId: requireBillId(bill.id),
+          }).catch(captureError);
         },
-      ]);
-    },
-    [t, userId]
-  );
+      },
+    ]);
+  };
 
   return (
     <View style={styles.calendarPanel}>
@@ -154,37 +149,31 @@ function FinanceCalendarPanel() {
 function useHeaderRight(activeTab: FinanceTab) {
   const { push } = useRouter();
   const { t } = useTranslation();
-  const primaryColor = useThemeColor("primary");
   const goals = useGoalStore((s) => s.goals);
 
-  return useMemo(() => {
-    if (activeTab === "calendar") {
-      return function AddBillAction() {
-        return (
-          <Pressable
-            onPress={() => push("/add-bill")}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel={t("bills.addBill")}
-          >
-            <Plus size={24} color={primaryColor} />
-          </Pressable>
-        );
-      };
-    }
-    if (activeTab === "goals" && goals.length > 0) {
-      return function AddGoalAction() {
-        return (
-          <Pressable onPress={() => push("/create-goal")} hitSlop={12}>
-            <Plus size={24} color={primaryColor} />
-          </Pressable>
-        );
-      };
-    }
-    return function NoAction() {
-      return null;
+  if (activeTab === "calendar") {
+    return function AddBillAction() {
+      return (
+        <AddActionButton
+          onPress={() => push("/add-bill")}
+          accessibilityLabel={t("bills.addBill")}
+        />
+      );
     };
-  }, [activeTab, goals.length, primaryColor, push, t]);
+  }
+  if (activeTab === "goals" && goals.length > 0) {
+    return function AddGoalAction() {
+      return (
+        <AddActionButton
+          onPress={() => push("/create-goal")}
+          accessibilityLabel={t("goals.empty.createGoal")}
+        />
+      );
+    };
+  }
+  return function NoAction() {
+    return null;
+  };
 }
 
 export default function FinanceScreen() {

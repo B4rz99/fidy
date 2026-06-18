@@ -4,7 +4,7 @@ import { useState } from "react";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { FieldButton, FilterPill } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
 import { DATE_PRESETS, getDatePresetRange } from "../lib/date-presets";
@@ -17,6 +17,7 @@ type DateFilterProps = {
 
 export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps) => {
   const { t, locale } = useTranslation();
+  const accentGreen = useThemeColor("accentGreen");
   const [activePicker, setActivePicker] = useState<"from" | "to" | null>(null);
 
   const activePresetKey =
@@ -85,7 +86,7 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
               key={preset.key}
               label={t(preset.labelKey)}
               selected={isActive}
-              selectedColor="#2F7D32"
+              selectedColor={accentGreen}
               style={
                 preset.key === "lastMonth"
                   ? { flex: 1.35, minHeight: 32, paddingHorizontal: 8 }

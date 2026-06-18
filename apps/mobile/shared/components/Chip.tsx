@@ -93,6 +93,7 @@ export function Chip({
     <GlassSurface
       {...contentProps}
       className={className}
+      nativeGlass={false}
       padded={false}
       radius={999}
       borderColor={borderColor}
@@ -114,6 +115,7 @@ export function Chip({
       radius={999}
       borderColor={borderColor}
       borderWidth={selected ? 1.5 : undefined}
+      nativeGlass={false}
       surfaceClassName={className}
       surfaceLayoutStyle={surfaceStyle}
     >

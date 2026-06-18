@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --dev-client --host lan --port 8081",
     "android": "expo run:android",
     "ios": "expo run:ios --device \"${DEVICE:-iPhone 17 Pro}\"",
     "web": "expo start --web",
@@ -31,11 +31,11 @@
     "@react-native-community/netinfo": "11.5.2",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/elements": "2.9.15",
-    "@react-navigation/native": "^7.1.33",
+    "@react-navigation/native": "7.3.0",
     "@sentry/react-native": "~7.11.0",
     "@shopify/flash-list": "2.0.2",
-    "@supabase/supabase-js": "2.106.0",
-    "@tanstack/react-query": "5.100.1",
+    "@supabase/supabase-js": "2.108.1",
+    "@tanstack/react-query": "5.101.0",
     "date-fns": "^4.4.0",
     "drizzle-orm": "0.45.2",
     "effect": "3.21.0",
@@ -85,7 +85,7 @@
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "7.29.7",
     "@stryker-mutator/core": "9.6.0",
-    "@testing-library/react-native": "^13.3.3",
+    "@testing-library/react-native": "14.0.0",
     "@types/better-sqlite3": "7.6.13",
     "@types/react": "~19.2.10",
     "@vitest/coverage-v8": "4.1.7",
@@ -98,7 +98,14 @@
     "eslint-plugin-boundaries": "6.0.2",
     "eslint-plugin-import": "^2.32.0",
     "expo-atlas": "0.4.3",
-    "typescript-eslint": "8.60.0",
+    "typescript-eslint": "8.61.0",
     "vitest": "4.1.7"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "@react-navigation/native"
+      ]
+    }
   }
 }

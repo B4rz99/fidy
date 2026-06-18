@@ -17,6 +17,9 @@ process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
 
+vi.mock("react-native", () => import("./helpers/react-native-mock"));
+vi.mock("@/shared/components/rn", () => import("./helpers/react-native-mock"));
+
 const { safeAreaContextMock } = vi.hoisted(() => {
   const zeroInsets = { top: 0, bottom: 0, left: 0, right: 0 };
 

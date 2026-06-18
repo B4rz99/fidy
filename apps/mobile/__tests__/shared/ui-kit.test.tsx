@@ -50,6 +50,7 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { SegmentedControl } from "./SegmentedControl"');
     expect(source).toContain('export { SelectableChipRow } from "./SelectableChipRow"');
     expect(source).toContain('export { GlassPressable } from "./GlassPressable"');
+    expect(source).toContain('export { AddActionButton } from "./AddActionButton"');
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
     expect(source).toContain('export { ListRowSurface } from "./ListRowSurface"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
@@ -214,6 +215,23 @@ describe("shared UI kit", () => {
     expect(readFileSync(resolve(sharedDir, "Chip.tsx"), "utf-8")).not.toMatch(
       /\bbg-action-primary\b|\bbg-danger\b|\bbg-success\b|\bbg-warning\b/
     );
+  });
+
+  it("keeps selected filter and active field borders on the green accent token", () => {
+    const sharedDir = resolve(__dirname, "../../shared/components");
+    const chipSource = readFileSync(resolve(sharedDir, "Chip.tsx"), "utf-8");
+    const filterPillSource = readFileSync(resolve(sharedDir, "FilterPill.tsx"), "utf-8");
+    const fieldButtonSource = readFileSync(resolve(sharedDir, "FieldButton.tsx"), "utf-8");
+    const segmentedSource = readFileSync(resolve(sharedDir, "SegmentedControl.tsx"), "utf-8");
+
+    expect(chipSource).toContain('const accentGreen = useThemeColor("accentGreen")');
+    expect(chipSource).toContain("primary: accentGreen");
+    expect(filterPillSource).toContain('const accentGreen = useThemeColor("accentGreen")');
+    expect(filterPillSource).toContain("selectedColor ?? accentGreen");
+    expect(fieldButtonSource).toContain('const accentGreen = useThemeColor("accentGreen")');
+    expect(fieldButtonSource).toContain("active ? accentGreen : undefined");
+    expect(segmentedSource).toContain('const accentGreen = useThemeColor("accentGreen")');
+    expect(segmentedSource).toContain("primary: accentGreen");
   });
 
   it("keeps numpad entry screens behind the money entry module", () => {
@@ -704,9 +722,9 @@ describe("shared UI kit", () => {
     );
 
     expectSharedComponentImport(notificationsSource, "TextActionButton");
-    expectSharedComponentImport(goalsListSource, "IconActionButton");
+    expectSharedComponentImport(goalsListSource, "AddActionButton");
     expect(notificationsSource).toContain("<TextActionButton");
-    expect(goalsListSource).toContain("<IconActionButton");
+    expect(goalsListSource).toContain("<AddActionButton");
   });
 
   it("keeps simple local action buttons on the shared Button primitive", () => {

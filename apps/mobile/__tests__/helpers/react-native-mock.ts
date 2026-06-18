@@ -21,6 +21,14 @@ export const StyleSheet = {
   create: (styles: Record<string, unknown>) => styles,
   flatten: (style: unknown) =>
     Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
+  absoluteFillObject: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+  },
+  hairlineWidth: 1,
 };
 export const Keyboard = { dismiss: createNoop() };
 export const Linking = {

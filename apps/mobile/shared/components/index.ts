@@ -1,5 +1,7 @@
 export { AppToastHost } from "./AppToastHost";
 export { AppAuroraBackground } from "./AppAuroraBackground";
+export { AddActionButton } from "./AddActionButton";
+export type { AddActionButtonProps } from "./AddActionButton";
 export { Button } from "./Button";
 export { Callout } from "./Callout";
 export { Card } from "./Card";

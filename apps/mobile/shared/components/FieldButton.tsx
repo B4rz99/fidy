@@ -83,6 +83,7 @@ export function FieldButton({
   ...viewProps
 }: FieldButtonProps) {
   const { t } = useTranslation();
+  const accentGreen = useThemeColor("accentGreen");
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -132,7 +133,7 @@ export function FieldButton({
         <FieldSurface
           size="button"
           radius={8}
-          borderColor={borderColor ?? (active ? primary : undefined)}
+          borderColor={borderColor ?? (active ? accentGreen : undefined)}
           style={containerStyle}
           contentStyle={contentStyle}
         >

@@ -1,9 +1,8 @@
 import * as Haptics from "expo-haptics";
-import { memo } from "react";
 import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
 import { FilterPill as SharedFilterPill } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 
 type CategoryFilterProps = {
@@ -11,46 +10,44 @@ type CategoryFilterProps = {
   onToggle: (categoryId: string) => void;
 };
 
-const CategoryFilterPill = memo(
-  ({
-    category,
-    isSelected,
-    onToggle,
-  }: {
-    category: Category;
-    isSelected: boolean;
-    onToggle: (categoryId: string) => void;
-  }) => {
-    const { locale } = useTranslation();
+function CategoryFilterPill({
+  category,
+  isSelected,
+  onToggle,
+}: {
+  category: Category;
+  isSelected: boolean;
+  onToggle: (categoryId: string) => void;
+}) {
+  const { locale } = useTranslation();
+  const accentGreen = useThemeColor("accentGreen");
 
-    const handlePress = () => {
-      void Haptics.selectionAsync();
-      onToggle(category.id);
-    };
+  const handlePress = () => {
+    void Haptics.selectionAsync();
+    onToggle(category.id);
+  };
 
-    return (
-      <SharedFilterPill
-        onPress={handlePress}
-        selected={isSelected}
-        accessibilityLabel={getCategoryLabel(category, locale)}
-        style={{ height: 44, paddingHorizontal: 0, width: 44 }}
-        leading={
-          <View className="items-center" style={{ gap: 3 }}>
-            <View className="size-8 items-center justify-center rounded-full">
-              <Text>{category.icon}</Text>
-            </View>
-            <View
-              className="h-0.5 w-5 rounded-full"
-              style={{ backgroundColor: isSelected ? category.color : "transparent" }}
-            />
+  return (
+    <SharedFilterPill
+      onPress={handlePress}
+      selected={isSelected}
+      selectedColor={accentGreen}
+      accessibilityLabel={getCategoryLabel(category, locale)}
+      style={{ height: 44, paddingHorizontal: 0, width: 44 }}
+      leading={
+        <View className="items-center" style={{ gap: 3 }}>
+          <View className="size-8 items-center justify-center rounded-full">
+            <Text>{category.icon}</Text>
           </View>
-        }
-      />
-    );
-  }
-);
-
-CategoryFilterPill.displayName = "CategoryFilterPill";
+          <View
+            className="h-0.5 w-5 rounded-full"
+            style={{ backgroundColor: isSelected ? category.color : "transparent" }}
+          />
+        </View>
+      }
+    />
+  );
+}
 
 export const CategoryFilter = ({ selectedIds, onToggle }: CategoryFilterProps) => (
   <View className="gap-3 p-4">
