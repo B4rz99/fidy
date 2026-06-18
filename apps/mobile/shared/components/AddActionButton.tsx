@@ -36,7 +36,7 @@ export function AddActionButton({
       isInteractive
       padded={false}
       radius={size / 2}
-      style={[styles.pressable, style]}
+      style={style}
       surfaceLayoutStyle={[styles.surface, { height: size, width: size }]}
     >
       <Plus size={iconSize} color={iconColor ?? defaultIconColor} />
@@ -47,9 +47,6 @@ export function AddActionButton({
 export type { AddActionButtonProps };
 
 const styles = StyleSheet.create({
-  pressable: {
-    boxShadow: "0 8px 18px rgba(0, 0, 0, 0.12)",
-  },
   surface: {
     alignItems: "center",
     justifyContent: "center",
