@@ -71,6 +71,9 @@ test("keeps content and results rendering wired to the extracted list modules", 
 
 test("keeps the transaction search redesign surfaces wired into the screen", () => {
   expect(contentSource).toContain('variant="sub"');
+  expect(contentSource).toContain("rightActions={clearFiltersAction}");
+  expect(contentSource).toContain("<TextActionButton");
+  expect(contentSource).toContain('label={t("common.clear")}');
   expect(contentSource).not.toContain("<SearchInputBar");
   expect(inputBarSource).toContain("placeholder={placeholder}");
   expect(filterControlsSource).toContain("<SearchInputBar");
@@ -91,7 +94,8 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   expect(filterChipRowSource).not.toContain("gap: 8");
   expect(categoryFilterSource).not.toContain("<Check");
   expect(categoryFilterSource).toContain("style={{ height: 44, paddingHorizontal: 0, width: 44 }}");
-  expect(categoryFilterSource).toContain('className="h-0.5 w-5 rounded-full"');
+  expect(categoryFilterSource).not.toContain('className="h-0.5 w-5 rounded-full"');
+  expect(categoryFilterSource).not.toContain("backgroundColor: isSelected ? category.color");
   expect(categoryFilterSource).not.toContain("peachLight");
   expect(categoryFilterSource).not.toContain(
     "backgroundColor: isSelected ? category.color : peachLight"
@@ -112,9 +116,8 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   expect(typeFilterSource).toContain("search.transfers");
   expect(categoryFilterSource).toContain('useThemeColor("accentGreen")');
   expect(categoryFilterSource).toContain("selectedColor={accentGreen}");
-  expect(filterChipItemSource).toContain(
-    'isClearAll ? "danger" : isHighlighted ? "primary" : "neutral"'
-  );
+  expect(filterChipRowSource).not.toContain('"clearAll"');
+  expect(filterChipItemSource).toContain('isHighlighted ? "primary" : "neutral"');
   expect(filterChipItemSource).not.toContain('isActive ? "primary" : "neutral"');
   expect(transactionItemSource).toContain("getTransferActivityCopy");
 });

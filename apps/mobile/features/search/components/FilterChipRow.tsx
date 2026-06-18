@@ -2,7 +2,6 @@ import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useCallback } from "react";
 import { View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
-import { hasActiveFilters } from "../lib/filters";
 import type { SearchFilters } from "../lib/types";
 import { FilterChipItem } from "./FilterChipItem";
 // Source contract: import { Chip } from "@/shared/components" and render <Chip via FilterChipItem.
@@ -13,11 +12,10 @@ type FilterChipRowProps = {
   filters: SearchFilters;
   activePanel: FilterKey | null;
   onTogglePanel: (key: FilterKey) => void;
-  onClearAll: () => void;
 };
 
 type ChipConfig = {
-  readonly key: FilterKey | "clearAll";
+  readonly key: FilterKey;
   readonly labelKey: string;
   readonly isActive?: (filters: SearchFilters) => boolean;
 };
@@ -45,17 +43,8 @@ const CHIPS: readonly ChipConfig[] = [
   },
 ];
 
-export const FilterChipRow = ({
-  filters,
-  activePanel,
-  onTogglePanel,
-  onClearAll,
-}: FilterChipRowProps) => {
+export const FilterChipRow = ({ filters, activePanel, onTogglePanel }: FilterChipRowProps) => {
   const { t } = useTranslation();
-  const showClear = hasActiveFilters(filters);
-  const chips = showClear
-    ? ([...CHIPS, { key: "clearAll", labelKey: "search.clearAll" }] satisfies readonly ChipConfig[])
-    : CHIPS;
   const renderChip = useCallback(
     ({ item: chip }: ListRenderItemInfo<ChipConfig>) => (
       <FilterChipItem
@@ -63,16 +52,15 @@ export const FilterChipRow = ({
         isActive={chip.isActive?.(filters) ?? false}
         isOpen={activePanel === chip.key}
         label={t(chip.labelKey)}
-        onClearAll={onClearAll}
         onTogglePanel={onTogglePanel}
       />
     ),
-    [activePanel, filters, onClearAll, onTogglePanel, t]
+    [activePanel, filters, onTogglePanel, t]
   );
 
   return (
     <FlashList
-      data={chips}
+      data={CHIPS}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 16 }}
