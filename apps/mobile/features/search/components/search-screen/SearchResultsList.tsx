@@ -84,7 +84,6 @@ export function SearchResultsList({
           activePanel={activePanel}
           filterPanel={filterPanel}
           filters={filters}
-          handleClearAll={handleClearAll}
           handleTextChange={handleTextChange}
           handleTogglePanel={handleTogglePanel}
           inputRef={inputRef}

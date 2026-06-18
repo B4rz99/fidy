@@ -1,15 +1,14 @@
 import * as Haptics from "expo-haptics";
 import { Chip } from "@/shared/components";
 
-export type FilterChipItemKey = "category" | "dateRange" | "amount" | "type" | "clearAll";
+export type FilterChipItemKey = "category" | "dateRange" | "amount" | "type";
 
 type FilterChipItemProps = {
   readonly id: FilterChipItemKey;
   readonly isActive: boolean;
   readonly isOpen: boolean;
   readonly label: string;
-  readonly onClearAll: () => void;
-  readonly onTogglePanel: (key: Exclude<FilterChipItemKey, "clearAll">) => void;
+  readonly onTogglePanel: (key: FilterChipItemKey) => void;
 };
 
 export function FilterChipItem({
@@ -17,25 +16,19 @@ export function FilterChipItem({
   isActive,
   isOpen,
   label,
-  onClearAll,
   onTogglePanel,
 }: FilterChipItemProps) {
-  const isClearAll = id === "clearAll";
-  const isHighlighted = !isClearAll && (isActive || isOpen);
+  const isHighlighted = isActive || isOpen;
 
   const handlePress = () => {
     void Haptics.selectionAsync();
-    if (isClearAll) {
-      onClearAll();
-    } else {
-      onTogglePanel(id);
-    }
+    onTogglePanel(id);
   };
 
   return (
     <Chip
       label={label}
-      tone={isClearAll ? "danger" : isHighlighted ? "primary" : "neutral"}
+      tone={isHighlighted ? "primary" : "neutral"}
       selected={isHighlighted}
       style={{ paddingHorizontal: 16 }}
       onPress={handlePress}

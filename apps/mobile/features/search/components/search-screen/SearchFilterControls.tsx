@@ -10,7 +10,6 @@ type SearchFilterControlsProps = Pick<
   | "activePanel"
   | "filterPanel"
   | "filters"
-  | "handleClearAll"
   | "handleTextChange"
   | "handleTogglePanel"
   | "inputRef"
@@ -27,7 +26,6 @@ export function SearchFilterControls({
   activePanel,
   filterPanel,
   filters,
-  handleClearAll,
   handleTextChange,
   handleTogglePanel,
   inputRef,
@@ -52,7 +50,6 @@ export function SearchFilterControls({
         filters={filters}
         activePanel={activePanel}
         onTogglePanel={handleTogglePanel}
-        onClearAll={handleClearAll}
       />
       {filterPanel ? (
         <GlassSurface

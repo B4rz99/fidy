@@ -34,17 +34,7 @@ function CategoryFilterPill({
       selectedColor={accentGreen}
       accessibilityLabel={getCategoryLabel(category, locale)}
       style={{ height: 44, paddingHorizontal: 0, width: 44 }}
-      leading={
-        <View className="items-center" style={{ gap: 3 }}>
-          <View className="size-8 items-center justify-center rounded-full">
-            <Text>{category.icon}</Text>
-          </View>
-          <View
-            className="h-0.5 w-5 rounded-full"
-            style={{ backgroundColor: isSelected ? category.color : "transparent" }}
-          />
-        </View>
-      }
+      leading={<Text>{category.icon}</Text>}
     />
   );
 }
