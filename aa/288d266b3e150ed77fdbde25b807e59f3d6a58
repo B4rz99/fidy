@@ -1,0 +1,27 @@
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_13dffe29b6f635::t_6764ce3543d4bb 74-76,97-98,119-120
+apps/mobile/features/search/components/CategoryFilter.tsx
+  s_13dffe29b6f635::t_6764ce3543d4bb 37
+apps/mobile/features/search/components/FilterChipItem.tsx
+  s_13dffe29b6f635::t_6764ce3543d4bb 4,11,21,25,31
+apps/mobile/features/search/components/search-screen/SearchScreenContent.tsx
+  s_13dffe29b6f635::t_6764ce3543d4bb 1-2,5,28-31,34-46
+apps/mobile/features/search/components/FilterChipRow.tsx
+  s_13dffe29b6f635::t_6764ce3543d4bb 18,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "aa288d266b3e150ed77fdbde25b807e59f3d6a58",
+  "prompts": {},
+  "sessions": {
+    "s_13dffe29b6f635": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edc60-2418-7140-8e24-07cb8406feac",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
