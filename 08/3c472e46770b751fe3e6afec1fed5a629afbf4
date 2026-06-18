@@ -1,0 +1,19 @@
+apps/mobile/shared/components/AddActionButton.tsx
+  s_6b82b3778f1d73::t_e4ae926f6f3e9c 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "083c472e46770b751fe3e6afec1fed5a629afbf4",
+  "prompts": {},
+  "sessions": {
+    "s_6b82b3778f1d73": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edc68-78ee-7062-b342-5728afb7ec81",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
