@@ -24,7 +24,6 @@ import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getSubtleGlassCardTokens } from "./card-tokens";
 import { getEntryTabTextStyle } from "./entry-tab-text-style";
 import { styles } from "./EntryScaffold.styles";
-import { useNumpadGlassStyles } from "./use-numpad-glass-styles";
 export { EntryField, EntryTextInputField } from "./EntryField";
 export type { EntryFieldProps } from "./EntryField";
 
@@ -135,9 +134,25 @@ export function EntryScaffold({
   const accentGreen = useThemeColor("accentGreen");
   const onAccent = useThemeColor("onAccent");
   const accentRed = useThemeColor("accentRed");
+  const numpadGlassKey = useThemeColor("numpadGlassKey");
+  const numpadGlassSpecialKey = useThemeColor("numpadGlassSpecialKey");
+  const numpadGlassBorder = useThemeColor("numpadGlassBorder");
   const activeColor = getTabIndicatorColor({ accentGreen, accentRed, tab: activeTab, tertiary });
-  const { confirmKeySurfaceStyle, keySurfaceStyle, specialKeySurfaceStyle } =
-    useNumpadGlassStyles();
+  const keySurfaceStyle = {
+    backgroundColor: numpadGlassKey,
+    borderColor: numpadGlassBorder,
+    borderWidth: 1,
+  };
+  const specialKeySurfaceStyle = {
+    backgroundColor: numpadGlassSpecialKey,
+    borderColor: numpadGlassBorder,
+    borderWidth: 1,
+  };
+  const confirmKeySurfaceStyle = {
+    backgroundColor: `${accentGreen}${isDark ? "B8" : "C7"}`,
+    borderColor: accentGreen,
+    borderWidth: 1,
+  };
   const { bottom, top } = useSafeAreaInsets();
   const tabBarHeight = Platform.OS === "ios" ? ANDROID_TAB_BAR_HEIGHT / 8 : ANDROID_TAB_BAR_HEIGHT;
   const tabBarClearance = tabBarHeight + Math.max(bottom, 16);

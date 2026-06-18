@@ -3,7 +3,6 @@ import { memo } from "react";
 import { Delete } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { useNumpadGlassStyles } from "./use-numpad-glass-styles";
 
 type FidyNumpadProps = {
   compact?: boolean;
@@ -21,7 +20,17 @@ export const FidyNumpad = memo(({ compact = false, onKeyPress }: FidyNumpadProps
   const { t } = useTranslation();
   const keyText = useThemeColor("primary");
   const specialText = useThemeColor("peach");
-  const { keySurfaceStyle, specialKeySurfaceStyle } = useNumpadGlassStyles();
+  const numpadGlassKey = useThemeColor("numpadGlassKey");
+  const numpadGlassSpecialKey = useThemeColor("numpadGlassSpecialKey");
+  const numpadGlassBorder = useThemeColor("numpadGlassBorder");
+  const keySurfaceStyle = {
+    backgroundColor: numpadGlassKey,
+    borderColor: numpadGlassBorder,
+  };
+  const specialKeySurfaceStyle = {
+    backgroundColor: numpadGlassSpecialKey,
+    borderColor: numpadGlassBorder,
+  };
 
   const handlePress = (key: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
