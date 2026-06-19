@@ -1,0 +1,25 @@
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_684b36ec2a2ec9::t_e2662ec4dcd432 124-127
+apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts
+  s_684b36ec2a2ec9::t_e2662ec4dcd432 89-92
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_684b36ec2a2ec9::t_8baf250122a917 123-126
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_684b36ec2a2ec9::t_8baf250122a917 111-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "9a616c4754732fbe494e9f3e35aab13f5e945f9c",
+  "prompts": {},
+  "sessions": {
+    "s_684b36ec2a2ec9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd1d-eae0-7511-a447-ae0901cc4de2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
