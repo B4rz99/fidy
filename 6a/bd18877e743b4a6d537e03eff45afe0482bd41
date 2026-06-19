@@ -1,0 +1,23 @@
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_8ecf919fd2e3f3::t_6a005210bd4dc7 92
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_8ecf919fd2e3f3::t_6a005210bd4dc7 105,120,124
+apps/mobile/shared/components/index.ts
+  s_8ecf919fd2e3f3::t_6a005210bd4dc7 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "6abd18877e743b4a6d537e03eff45afe0482bd41",
+  "prompts": {},
+  "sessions": {
+    "s_8ecf919fd2e3f3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ee0b0-2bb0-7ed3-be89-be08a501954f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
