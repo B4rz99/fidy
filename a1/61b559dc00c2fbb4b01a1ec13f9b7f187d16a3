@@ -1,0 +1,124 @@
+apps/mobile/features/qa/components/qa-tools/QaToolsCardButton.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 34
+apps/mobile/features/onboarding/components/ConnectEmailStep.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 11,98,111,126
+apps/mobile/features/transfers/components/transfer-form/TransferSideCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 4,72,74
+apps/mobile/features/goals/components/goal-detail/GoalDetailAiPlanTab.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,15,27
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 10,129,154
+apps/mobile/shared/components/index.ts
+  s_3f087eb59a5628::t_33df5dc264ccfb 93-94
+apps/mobile/features/categories/components/category-form/CategoryColorSwatches.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 28
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 141
+apps/mobile/features/transactions/components/transaction-form/TransactionMetadataRow.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,43
+apps/mobile/features/calendar/components/CalendarGrid.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,74,107
+apps/mobile/features/transactions/components/CategoryPill.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 28
+apps/mobile/features/transactions/components/transaction-form/TransactionFormHeader.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 35
+apps/mobile/shared/components/TransactionRow.tsx
+  s_3f087eb59a5628::t_43812528de5eb1 134,151,162
+apps/mobile/features/budget/components/BudgetAlertBanner.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,49,61
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,42,59,83,111,114,117
+apps/mobile/features/budget/components/BudgetSummaryCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,28,30
+apps/mobile/features/categories/components/category-form/CategoryIconGrid.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 46
+apps/mobile/__tests__/navigation/screen-layout-platform.test.ts
+  s_3f087eb59a5628::t_dc289293dfd869 40-42
+apps/mobile/shared/components/GlassPressable.tsx
+  s_3f087eb59a5628::t_33df5dc264ccfb 13,41,66
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsHero.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,21,29,33,36
+apps/mobile/features/settings/components/ProfileAvatarButton.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 36
+apps/mobile/features/calendar/components/CalendarBillRow.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 3,63,67
+apps/mobile/features/search/components/ResultsSummary.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,16,33
+apps/mobile/features/design-system/ui.public.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 6,162,164
+apps/mobile/features/goals/components/CelebrationModal.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,67,78,89,128
+apps/mobile/features/qa/components/QaStatusBanner.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,18,27
+apps/mobile/features/qa/components/qa-tools/QaToolsContent.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,130,140,155,160
+apps/mobile/app/enable-notifications.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 16,103,114
+apps/mobile/features/calendar/components/CalendarDayCell.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 32
+apps/mobile/features/search/components/search-screen/SearchFilterControls.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,56,62
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 7,62,84
+apps/mobile/features/ai-chat/components/MessageBubble.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,36,49,53,66,68,116
+apps/mobile/features/account-suggestions/components/AccountSuggestionCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 5,64,71
+apps/mobile/features/ai-chat/components/StreamingBubble.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,48,59,61,83
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,71,78
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,31,53,57
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 72
+apps/mobile/features/review-queues/components/shared.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 7,52,59
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_3f087eb59a5628::t_4cf09121c58c40 7,15,155,158,160,162,164
+apps/mobile/features/capture-sources/components/ApplePaySetupCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,12,25,73,89
+apps/mobile/features/auth/components/OAuthButton.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 43
+apps/mobile/app/delete-account.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 8,33,44
+apps/mobile/shared/components/Surface.tsx
+  s_3f087eb59a5628::t_33df5dc264ccfb 1-20
+apps/mobile/features/budget/components/BudgetCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 3,35,37,44,46
+apps/mobile/features/goals/components/GoalCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 2,56,67,94,96,109,113
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 8,32,39
+apps/mobile/features/settings/components/PrivateBackupStatusPill.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,14,26
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 124
+  s_3f087eb59a5628::t_43812528de5eb1 2,47
+apps/mobile/features/settings/components/BackupStatusCard.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 1,24,26
+apps/mobile/features/review-queues/components/AttributionReviewScreen.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 8,158,163
+apps/mobile/features/onboarding/components/CompleteStep.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 5,28,30
+apps/mobile/features/transactions/components/TransactionDatePickerDialog.tsx
+  s_3f087eb59a5628::t_4d6cee8233e392 1-3,22,27-28,30
+apps/mobile/features/search/components/search-screen/SearchTransactionItem.tsx
+  s_3f087eb59a5628::t_d47f068e2430ad 5,45-46,58,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "a161b559dc00c2fbb4b01a1ec13f9b7f187d16a3",
+  "prompts": {},
+  "sessions": {
+    "s_3f087eb59a5628": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede38-f6df-7c03-a89b-cef684fa74da",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
