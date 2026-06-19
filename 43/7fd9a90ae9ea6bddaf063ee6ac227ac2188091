@@ -1,0 +1,549 @@
+apps/mobile/features/financial-accounts/components/financial-account-form/ManageIdentifiersButton.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 18-23
+apps/mobile/features/categories/components/category-form/CategoryIconGrid.tsx
+  s_bd75d88a98f733::t_6fa175da48d218 75
+  s_bd75d88a98f733::t_72577819df70d2 2-3,41-46,49-50
+apps/mobile/features/account-suggestions/components/OnboardingAccountReviewStep.tsx
+  s_bd75d88a98f733::t_aba22fc56cd8c9 6-7,117-119,128
+  s_fd5f2f75a47f97::t_4d012962fbb28e 55
+apps/mobile/features/transfers/components/transfer-form/TransferSidePicker.tsx
+  s_bd75d88a98f733::t_ade80372c66626 64,98
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_775dcfa08b2193::t_168a4a67ceb638 694
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 80
+apps/mobile/__tests__/coming-soon/ai-tab.test.ts
+  s_3f087eb59a5628::t_5a73b996e69f44 27
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_2cf3b4287615f9::t_fde2baa9ee93e9 60-61
+apps/mobile/features/categories/components/category-form/CreateCategoryScreenContent.tsx
+  s_bd75d88a98f733::t_df871286b217f5 37
+apps/mobile/features/analytics/components/PeriodSelector.tsx
+  s_f769fc4a139387::t_0af2aa7c38ea3e 54
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_6498bf0a0fc069::t_494814dedf0ad8 14,44-89,132,195-197,199-205,207,263-292
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_3f087eb59a5628::t_f31a547498a973 2,7-14,25-32,47,95,113-132,208-210
+apps/mobile/features/settings/components/BackupStatusCard.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 24
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_acc82ee4024add::t_307ff37b4654a4 23,150,154-155,174,178,180-182,188,194
+  s_f769fc4a139387::t_2e517840cb7fb9 59
+  s_73af69b20b79cf::t_71bcf7ed7d0cb4 179
+  s_8266053a3149cc::t_9d2000ada564f4 1,29,156,163-165,172,175,185
+apps/mobile/shared/components/PinnedFormStack.tsx
+  s_30158f4cfe95f2::t_a9a4dc7a990b8e 17
+apps/mobile/shared/components/navigation/NavItem.tsx
+  s_0ac8b0f6ae00e1::t_fac28a96c2c9d7 24,27
+  s_5c332ab0522816::t_d7841ce4e71531 14
+  s_5c332ab0522816::t_93bf6e5297cdd0 2,4,18-23,25-26,28,30-32,35-45
+apps/mobile/features/goals/components/GoalCard.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 94,96,109
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 157
+apps/mobile/features/onboarding/components/CompleteStep.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 28
+apps/mobile/features/budget/components/BudgetCard.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 35,37,44
+apps/mobile/features/design-system/ui.public.tsx
+  s_bd75d88a98f733::t_551c9ee3036e49 88
+apps/mobile/features/goals/components/GoalDetail.tsx
+  s_bd75d88a98f733::t_50193471bb6d7f 3
+  s_bd75d88a98f733::t_e9dbefd0024836 2,25-30
+apps/mobile/app/_layout.tsx
+  s_775dcfa08b2193::t_5599036ffbbd8f 6,152
+  s_775dcfa08b2193::t_4edecaf3d9cf10 5,151,234
+apps/mobile/shared/components/card-tokens.ts
+  s_4040be8a6e4803::t_9628d9cebcbc74 7
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_b3b4a1c6df1d46::t_a02a6525bc1ada 61-69
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_bd75d88a98f733::t_771b81898594b8 10-15,129-131,135-136,154
+  s_0ac8b0f6ae00e1::t_cf5653d89b7b36 147-150
+apps/mobile/features/auth/components/OAuthButton.tsx
+  s_0ac8b0f6ae00e1::t_ee5d91139309e7 10
+  s_bd75d88a98f733::t_811c56c9c59110 42
+  s_bd75d88a98f733::t_ee8aa63b4d69e0 3,37-41,43-46
+apps/mobile/shared/components/FilterPill.tsx
+  s_bd75d88a98f733::t_557f37fe5012af 70,82
+apps/mobile/shared/components/EntryScaffold.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 177
+apps/mobile/features/onboarding/components/StepIndicator.tsx
+  s_bd75d88a98f733::t_bb4e078e5f37a4 12,19
+apps/mobile/features/budget/components/BudgetAlertBanner.tsx
+  s_bd75d88a98f733::t_18c23c1e330d64 2,49-51,54-57,61
+  s_bd75d88a98f733::t_4a0b6f6714be8c 3
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_3f087eb59a5628::t_f31a547498a973 1-2
+apps/mobile/tailwind.config.ts
+  s_775dcfa08b2193::t_5599036ffbbd8f 93
+apps/mobile/features/goals/components/goal-detail/GoalDetailAiPlanTab.tsx
+  s_bd75d88a98f733::t_bd265bb2165084 16
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 58
+apps/mobile/features/ai-chat/components/MessageBubble.tsx
+  s_bd75d88a98f733::t_f8894f49f3f5a3 36-38,49,53-55,66,68-70,116
+  s_bd75d88a98f733::t_d233b4da0391c1 2
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountIdentifiersSection.tsx
+  s_d8a255261e30fc::t_cbd518fac97365 12
+apps/mobile/shared/components/NumpadFormScreen.tsx
+  s_30158f4cfe95f2::t_a9a4dc7a990b8e 5,39,63
+apps/mobile/app/create-goal.tsx
+  s_775dcfa08b2193::t_4edecaf3d9cf10 4
+apps/mobile/shared/navigation/root-stack-routes.ts
+  s_775dcfa08b2193::t_4edecaf3d9cf10 67-69
+apps/mobile/features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 93
+apps/mobile/shared/components/MoneyAmountDisplay.tsx
+  s_5c332ab0522816::t_408f8c651ac0b7 3,5,95-102,104
+  s_775dcfa08b2193::t_5599036ffbbd8f 61-63
+apps/mobile/features/goals/components/goal-detail/ProjectionCard.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 14
+apps/mobile/features/qa/components/qa-tools/QaToolsCardButton.tsx
+  s_bd75d88a98f733::t_0b8fd786dc8113 33
+apps/mobile/features/settings/components/PrivateBackupStatusPill.tsx
+  s_bd75d88a98f733::t_5ba2b515ad37ae 2
+  s_bd75d88a98f733::t_68584f608e9e1e 1,14-16,26
+apps/mobile/shared/components/TextActionButton.tsx
+  s_5c332ab0522816::t_2eb57dd9c24394 3-4,31,34-44,48
+apps/mobile/features/transactions/components/transaction-form/TransactionFormHeader.tsx
+  s_bd75d88a98f733::t_98e42132400f46 1,3,27,33-35,38
+apps/mobile/app/enable-notifications.tsx
+  s_bd75d88a98f733::t_56d56f6c71ae66 12-17,103-105,114
+  s_bd75d88a98f733::t_1c822ec592d8df 19
+apps/mobile/features/review-queues/components/shared.tsx
+  s_fd5f2f75a47f97::t_5cd9abc9e2692c 87
+  s_fd5f2f75a47f97::t_4d012962fbb28e 89
+  s_bd75d88a98f733::t_6fc0e51d0364c8 2-9,52-57,59
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_8266053a3149cc::t_9d2000ada564f4 66-70,107-123,131,141-143
+  s_bd75d88a98f733::t_959b9b1e802fcf 8,32-37,39
+apps/mobile/features/goals/components/CelebrationModal.tsx
+  s_bd75d88a98f733::t_ea07fd9880700f 2,127
+  s_bd75d88a98f733::t_85da07b49967ae 78-80,89
+apps/mobile/features/search/components/search-screen/SearchFilterControls.tsx
+  s_f769fc4a139387::t_7c20446da2ea4f 54-55
+apps/mobile/features/review-queues/components/AttributionReviewScreen.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 158
+apps/mobile/shared/components/GlassSurface.tsx
+  s_bd75d88a98f733::t_29f70957ee3a49 38
+apps/mobile/shared/components/use-numpad-glass-styles.ts
+  s_fd5f2f75a47f97::t_009931e7fd56d0 11-13
+apps/mobile/shared/components/ErrorFallback.tsx
+  s_5c332ab0522816::t_ff4a735a83c0ea 25,28,74,80-81
+  s_0ac8b0f6ae00e1::t_62605b2148208a 35
+  s_5c332ab0522816::t_991749f73b3ffb 3,6,21,26-27,29,40,75-79
+apps/mobile/features/financial-accounts/components/financial-account-form/IdentifierChip.tsx
+  s_bd75d88a98f733::t_dfb65788111a6d 9
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_5c332ab0522816::t_c90e829e5d7941 5,124-127
+  s_f769fc4a139387::t_efaf99a08d0815 52-83
+  s_bd75d88a98f733::t_6e1e648611e25a 4
+  s_f769fc4a139387::t_e205167d373d91 3,9,26,37,51,84-92,98,100,105-110,113,119-122
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_775dcfa08b2193::t_065929b67ee2c1 136,140-141
+  s_f769fc4a139387::t_0f3d0586d641af 174
+  s_775dcfa08b2193::t_b3dadd27aa438c 166
+apps/mobile/features/goals/components/GoalEditScreen.tsx
+  s_bd75d88a98f733::t_955bf644afb862 3,16
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_0ac8b0f6ae00e1::t_62605b2148208a 185-189
+apps/mobile/shared/components/ChoiceTray.tsx
+  s_30158f4cfe95f2::t_a9a4dc7a990b8e 19-20
+apps/mobile/app/(tabs)/(ai)/chat.tsx
+  s_42782f4e0d524c::t_71c9932e159459 1,4
+  s_c89477e738eddc::t_ec6218265ac3e4 2-3,5
+apps/mobile/features/dashboard/components/home-screen/HomeScreenContent.tsx
+  s_a4e7c8d5e96a3d::t_484aa3be6ec4d4 46,48
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_fd5f2f75a47f97::t_4d012962fbb28e 179,232
+apps/mobile/features/onboarding/components/WelcomeStep.tsx
+  s_bd75d88a98f733::t_d3b3b4b97d5d6d 2,30-33,38-39,74-75
+apps/mobile/shared/i18n/locales/es.ts
+  s_f769fc4a139387::t_9be3cc784a7976 1019
+apps/mobile/app/create-budget.tsx
+  s_30158f4cfe95f2::t_5f21fc5838d353 16
+apps/mobile/app/delete-account.tsx
+  s_bd75d88a98f733::t_5f3484d65c4b23 4-9,33-35,44
+apps/mobile/__tests__/shared/primitive-contracts.test.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 67,73,84-86,90,114-116,121,127,136-148,151,173-175,179,196-197,223,235,238,254-260
+apps/mobile/features/goals/components/goal-detail/MilestoneRow.tsx
+  s_bd75d88a98f733::t_830cd5d8eec4b5 19
+apps/mobile/shared/components/Button.tsx
+  s_5c332ab0522816::t_230bfb4efd4376 3
+apps/mobile/app/(tabs)/_layout.tsx
+  s_bd75d88a98f733::t_e362b3f382dff1 11
+apps/mobile/features/search/components/TypeFilter.tsx
+  s_f769fc4a139387::t_e7bdcd7c12787d 18
+  s_f769fc4a139387::t_9100fe9388cca2 26-34
+apps/mobile/shared/components/FidyNumpad.tsx
+  s_5c332ab0522816::t_2ad53d4b7978c3 4,43
+  s_5c332ab0522816::t_12117e53a918b7 6,38-42,44-45,47,49-53,73,105,107-115
+apps/mobile/app/(tabs)/(finance)/_layout.tsx
+  s_bd75d88a98f733::t_a432a9049e674b 2,11-12
+apps/mobile/features/settings/components/ProfileAvatarButton.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 36-41
+apps/mobile/features/goals/components/goal-form/GoalAmountField.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 11
+apps/mobile/features/search/components/search-screen/SearchTransactionItem.tsx
+  s_bd75d88a98f733::t_23fde3d295fdab 46-48,51-54,58
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_30158f4cfe95f2::t_5f21fc5838d353 55
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 114
+apps/mobile/shared/i18n/locales/en.ts
+  s_f769fc4a139387::t_bdf5e9acc61e55 999
+apps/mobile/features/search/components/search-screen/SearchScreenContent.tsx
+  s_869ea07b9d7cc1::t_0097fe5d4f0689 3,48-64
+apps/mobile/app/day-detail.tsx
+  s_bd75d88a98f733::t_302118bdc167e3 90
+apps/mobile/features/onboarding/components/ConnectEmailStep.tsx
+  s_0ac8b0f6ae00e1::t_73c15004421719 86
+  s_bd75d88a98f733::t_79c071929e0cb9 85
+  s_bd75d88a98f733::t_88e752e802e3a4 11,13,134-135,138-144
+apps/mobile/shared/components/HeaderBackButton.tsx
+  s_b3b4a1c6df1d46::t_6ae7dac9afb836 4,14,19,22,29,32
+  s_bd75d88a98f733::t_f9219c6e8f74a9 31
+  s_f0dde39ffad30d::t_1711b94e6b62be 2-3,5-6,8-13,15-17,20-21,23-28,30,33-34
+  s_4447c546c52b63::t_f0306f883ee36f 1,7,18
+apps/mobile/shared/components/AppToastHost.tsx
+  s_bd75d88a98f733::t_c67dd597f0697d 76,80
+  s_0ac8b0f6ae00e1::t_73c15004421719 81
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_bd75d88a98f733::t_3f8fd87016a193 105
+  s_bd75d88a98f733::t_557f37fe5012af 111
+  s_bd75d88a98f733::t_b234409ebc22f5 102-103
+apps/mobile/__tests__/transactions/add-screen-source.test.ts
+  s_bd75d88a98f733::t_0f7b359736fd3d 59-60,95-98
+  s_5c332ab0522816::t_55d962769b984e 88-90
+apps/mobile/__tests__/navigation/screen-layout-platform.test.ts
+  s_b3b4a1c6df1d46::t_8a9296819421c3 36-37
+  s_c89477e738eddc::t_3d1dbd44445780 10-13,35,40
+  s_4d0e39cabe0cdd::t_9d2bd7aa7dd475 19-21,23-25
+  s_bd75d88a98f733::t_2ef30f9f6b0468 38-39
+  s_f0dde39ffad30d::t_b0ed62d811f601 33-34,41
+apps/mobile/features/goals/components/goal-form/GoalTypeToggle.tsx
+  s_f769fc4a139387::t_d54c33f9bfaed6 22
+apps/mobile/features/budget/components/BudgetSummaryCard.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 28
+apps/mobile/features/transactions/components/CategoryPill.tsx
+  s_bd75d88a98f733::t_215d80df366b7d 4
+  s_bd75d88a98f733::t_d2a5a134932a61 24,26-28,35
+  s_bd75d88a98f733::t_d233b4da0391c1 3
+  s_0ac8b0f6ae00e1::t_fac28a96c2c9d7 5
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_f769fc4a139387::t_10fbd57ddaa1b1 113-115
+  s_f769fc4a139387::t_a9603febe2aa53 119
+apps/mobile/shared/components/AddActionButton.tsx
+  s_5c332ab0522816::t_8ae5395bddb10d 29
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_bd75d88a98f733::t_a2ba8cd42aed20 48,88
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_0ac8b0f6ae00e1::t_fac28a96c2c9d7 28
+  s_bd75d88a98f733::t_f8ad5fbd33a21c 31
+  s_bd75d88a98f733::t_0cb040881e96a9 4
+  s_bd75d88a98f733::t_3bcfff8dca1212 2,46,51-53,56
+apps/mobile/shared/components/TransactionRow.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 137-140
+apps/mobile/shared/components/IconActionButton.tsx
+  s_0ac8b0f6ae00e1::t_c38e1c92223d6d 36
+  s_bd75d88a98f733::t_1266302f3a92d3 35
+  s_5c332ab0522816::t_d565f95e42a224 3,43,47-50,55
+apps/mobile/shared/components/MonthNavigator.tsx
+  s_264cb220b6fddc::t_4632ea8531ae7f 34,36,47,49
+apps/mobile/features/goals/components/goal-form/GoalForm.styles.ts
+  s_775dcfa08b2193::t_4edecaf3d9cf10 11-21,23
+  s_775dcfa08b2193::t_5599036ffbbd8f 22
+apps/mobile/shared/components/FieldButton.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 131
+apps/mobile/features/goals/components/goal-form/GoalForm.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 22
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_bd75d88a98f733::t_311057a9760f98 138,141
+  s_2cf3b4287615f9::t_29ff40a81298e7 79,241
+  s_bd75d88a98f733::t_e96a59284c5c59 3-4,121,137,139-140,143-144
+apps/mobile/features/onboarding/components/BudgetSetupStep.tsx
+  s_bd75d88a98f733::t_6d12de64f474bf 11,119-122,125
+apps/mobile/package.json
+  s_bd75d88a98f733::t_50599bb1bc6d6b 9
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 67
+apps/mobile/shared/components/GlassPressable.tsx
+  s_bd75d88a98f733::t_48ad0941483742 57
+apps/mobile/features/account-suggestions/components/AccountSuggestionCard.tsx
+  s_bd75d88a98f733::t_7d57f3466862c6 64-69,71
+  s_bd75d88a98f733::t_d233b4da0391c1 2-5
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsHero.tsx
+  s_d8a255261e30fc::t_cbd518fac97365 21,36
+apps/mobile/features/ai-chat/components/NewChatButton.tsx
+  s_c89477e738eddc::t_5a85e7313fe5a5 1,5-10,13-17,22
+  s_c89477e738eddc::t_a4bbe186801ae2 2,12,19-21,23-26
+  s_c89477e738eddc::t_ffb4a421df48a6 3
+AGENTS.md
+  s_cfba89d07ca9df::t_4081a213ad5633 13
+apps/mobile/app/(tabs)/(ai)/index.tsx
+  s_c89477e738eddc::t_1a48b47146ca73 17,24
+  s_c89477e738eddc::t_ec6218265ac3e4 1-3,9,19,25,27-34
+apps/mobile/features/ai-chat/components/ChatScreen.tsx
+  s_a8d46a483f1318::t_8b335c912acf43 121
+  s_c89477e738eddc::t_ec6218265ac3e4 1,11,21,43
+  s_42782f4e0d524c::t_71c9932e159459 40
+apps/mobile/features/transactions/components/AmountEntry.tsx
+  s_bd75d88a98f733::t_d233b4da0391c1 10
+  s_bd75d88a98f733::t_f3f1330fe8f566 115-116,120
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 79
+apps/mobile/features/categories/components/category-form/CategoryColorSwatches.tsx
+  s_bd75d88a98f733::t_81ca36c0373d58 2,4,23-24,26-29,31
+  s_bd75d88a98f733::t_e67f01e9457bd1 25
+  s_0ac8b0f6ae00e1::t_fac28a96c2c9d7 30
+apps/mobile/features/calendar/components/CalendarDayCell.tsx
+  s_0ac6e7c686c404::t_64491ce85c3a8e 24,31-32,61,64-67
+  s_bd75d88a98f733::t_0cd7fd78c22a01 1-2,30,33-34,56
+apps/mobile/features/notifications/components/NotificationCard.tsx
+  s_bd75d88a98f733::t_a9e11243c7236e 92
+apps/mobile/features/transactions/components/transaction-form/TransactionForm.styles.ts
+  s_bd75d88a98f733::t_5c76e700d0b51c 19-24
+apps/mobile/features/ai-chat/components/StreamingBubble.tsx
+  s_bd75d88a98f733::t_8a129c2233f7bf 2,48-50,59,61-63,83
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_3f087eb59a5628::t_f31a547498a973 7,9-11,13,52-60
+apps/mobile/shared/components/navigation/CustomTabBar.tsx
+  s_bd75d88a98f733::t_aec367b11d99da 2,26-29,63
+apps/mobile/features/transfers/components/transfer-form/TransferSideCard.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 72
+apps/mobile/features/qa/components/QaStatusBanner.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 18
+apps/mobile/features/calendar/components/CalendarBillRow.tsx
+  s_3f087eb59a5628::t_5a73b996e69f44 39,63
+apps/mobile/__tests__/setup.ts
+  s_bd75d88a98f733::t_09f19c4192fae1 210
+apps/mobile/shared/components/route-options.ts
+  s_4447c546c52b63::t_f0306f883ee36f 3
+  s_b3b4a1c6df1d46::t_ed5b84616f9518 10-16,24,36
+  s_4447c546c52b63::t_d5b09207fbf388 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "437fd9a90ae9ea6bddaf063ee6ac227ac2188091",
+  "prompts": {},
+  "sessions": {
+    "s_0ac6e7c686c404": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede1f-3166-75d1-9d55-fb2571ac63a8",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_0ac8b0f6ae00e1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd76-f9b8-7e01-9f41-02512e16bdd9",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_264cb220b6fddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede33-38c5-7c71-b3b1-a95958ee36ac",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_2cf3b4287615f9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd21-44c0-78d2-95c5-e21acc55d0da",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_30158f4cfe95f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede20-6e47-70f3-876b-059662b1e0e8",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_3f087eb59a5628": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede38-f6df-7c03-a89b-cef684fa74da",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_4040be8a6e4803": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede22-e467-7e71-b2d4-4c7863148d22",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_42782f4e0d524c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede28-5750-7583-b339-a3939076d47d",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_4447c546c52b63": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd51-5816-79e2-8ecf-638a648b9d12",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_4d0e39cabe0cdd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede11-1e53-7c92-b549-23ddc06b5b30",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_5c332ab0522816": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd34-bbfb-7921-a1ee-0ec7e783a51a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_6498bf0a0fc069": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede30-34be-7dd3-9b9a-56671f98e86c",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_73af69b20b79cf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede1e-65ce-70b2-bda1-79d4928382e1",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_775dcfa08b2193": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede2b-cb9c-7f33-88f4-0adec319cf33",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_8266053a3149cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd14-e0c9-7b93-a6ab-da1870d0ad2f",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_869ea07b9d7cc1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede10-5e15-77b2-b214-0de460d28a67",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_a4e7c8d5e96a3d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede27-d315-77e0-95b7-901980ece733",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_a8d46a483f1318": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede2f-68ad-7f80-87f3-e720cf2f7808",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_acc82ee4024add": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd3b-3ec0-74d3-8020-8227aff8636a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_b3b4a1c6df1d46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede29-f1b1-74a0-a631-91363fb84d1e",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_bd75d88a98f733": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd5f-0b4d-7562-9bab-47cc3c71a7da",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_c89477e738eddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd3b-9582-7173-8230-793a19430763",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_cfba89d07ca9df": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd23-8d25-7d03-9f8e-635dda092c8d",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_d8a255261e30fc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd35-b61f-73a1-ab37-81584b743448",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_f0dde39ffad30d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd3b-d2f2-7ed0-8849-9884c3fff448",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_f769fc4a139387": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede1d-c346-7343-8ca3-aee108650645",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_fd5f2f75a47f97": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd7e-c805-70e0-be4e-0bcc89e14780",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
