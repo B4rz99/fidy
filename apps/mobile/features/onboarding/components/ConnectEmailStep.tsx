@@ -95,12 +95,7 @@ export function ConnectEmailStep() {
         <View style={styles.buttons}>
           {checklist.map((item) =>
             item.connected ? (
-              <Surface
-                key={item.provider}
-                padded={false}
-                radius={12}
-                style={styles.connectedCard}
-              >
+              <Surface key={item.provider} padded={false} radius={12} style={styles.connectedCard}>
                 <View style={styles.providerRow}>
                   <View style={styles.providerIcon}>{PROVIDER_ICONS[item.provider]}</View>
                   <Text style={[styles.connectedText, { color: primaryColor }]}>

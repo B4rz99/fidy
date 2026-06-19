@@ -40,12 +40,7 @@ export function TransactionMetadataRow({
         onBlur={onDescriptionBlur}
         maxLength={200}
       />
-      <Surface
-        testID="transaction-form.date"
-        padded={false}
-        radius={10}
-        style={styles.dateChip}
-      >
+      <Surface testID="transaction-form.date" padded={false} radius={10} style={styles.dateChip}>
         <Calendar size={14} color={secondaryColor} />
         <Text
           style={{

@@ -15,12 +15,7 @@ export function ManageIdentifiersButton({
   const secondary = useThemeColor("secondary");
 
   return (
-    <GlassPressable
-      onPress={onPress}
-      radius={14}
-      padded={false}
-      layoutStyle={styles.manageButton}
-    >
+    <GlassPressable onPress={onPress} radius={14} padded={false} layoutStyle={styles.manageButton}>
       <Text style={[styles.manageButtonText, { color: primary }]}>{label}</Text>
       <ChevronRight size={16} color={secondary} />
     </GlassPressable>
