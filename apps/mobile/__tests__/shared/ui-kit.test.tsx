@@ -220,19 +220,19 @@ describe("shared UI kit", () => {
     );
   });
 
-  it("keeps selected filter and active field borders on the green accent token", () => {
+  it("keeps selected filter and active field state out of decorative borders", () => {
     const sharedDir = resolve(__dirname, "../../shared/components");
     const chipSource = readFileSync(resolve(sharedDir, "Chip.tsx"), "utf-8");
     const filterPillSource = readFileSync(resolve(sharedDir, "FilterPill.tsx"), "utf-8");
     const fieldButtonSource = readFileSync(resolve(sharedDir, "FieldButton.tsx"), "utf-8");
     const segmentedSource = readFileSync(resolve(sharedDir, "SegmentedControl.tsx"), "utf-8");
 
-    expect(chipSource).toContain('const accentGreen = useThemeColor("accentGreen")');
-    expect(chipSource).toContain("primary: accentGreen");
+    expect(chipSource).not.toContain("selectedBorderColor");
+    expect(chipSource).not.toContain("borderColor={selected");
     expect(filterPillSource).toContain('const accentGreen = useThemeColor("accentGreen")');
     expect(filterPillSource).toContain("selectedColor ?? accentGreen");
-    expect(fieldButtonSource).toContain('const accentGreen = useThemeColor("accentGreen")');
-    expect(fieldButtonSource).toContain("active ? accentGreen : undefined");
+    expect(filterPillSource).not.toContain("borderColor={selected");
+    expect(fieldButtonSource).not.toContain("active ? accentGreen : undefined");
     expect(segmentedSource).toContain('const accentGreen = useThemeColor("accentGreen")');
     expect(segmentedSource).toContain("primary: accentGreen");
   });
@@ -573,7 +573,9 @@ describe("shared UI kit", () => {
       "utf-8"
     );
 
-    expect(source).toContain('import { Button, Card, Chip } from "@/shared/components"');
+    expectSharedComponentImport(source, "Button");
+    expectSharedComponentImport(source, "Card");
+    expectSharedComponentImport(source, "Chip");
     expect(source).toContain("<Button");
     expect(source).toContain("<Card");
     expect(source).toContain("<Chip");
@@ -671,12 +673,8 @@ describe("shared UI kit", () => {
     });
   });
 
-  it("keeps money-entry amount controls on the shared money entry amount field", () => {
-    const files = [
-      "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx",
-      "../../features/goals/components/AddPaymentScreen.tsx",
-      "../../features/goals/components/goal-form/GoalAmountField.tsx",
-    ];
+  it("keeps money-entry amount controls on shared money amount primitives", () => {
+    const files = ["../../features/goals/components/AddPaymentScreen.tsx"];
 
     files.forEach((file) => {
       const source = readFileSync(resolve(__dirname, file), "utf-8");
@@ -684,6 +682,29 @@ describe("shared UI kit", () => {
       expectSharedComponentImport(source, "MoneyEntryAmountField");
       expect(source).toContain("<MoneyEntryAmountField");
     });
+
+    const goalAmountSource = readFileSync(
+      resolve(__dirname, "../../features/goals/components/goal-form/GoalAmountField.tsx"),
+      "utf-8"
+    );
+
+    expect(goalAmountSource).toContain('import { Pressable, Text } from "@/shared/components/rn"');
+    expect(goalAmountSource).toContain("<Text");
+    expect(goalAmountSource).not.toContain("<MoneyEntryAmountField");
+    expect(goalAmountSource).not.toContain("cursorVisible");
+
+    const budgetAmountSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx"
+      ),
+      "utf-8"
+    );
+
+    expect(budgetAmountSource).toContain('import { Text, View } from "@/shared/components/rn"');
+    expect(budgetAmountSource).toContain("<Text");
+    expect(budgetAmountSource).not.toContain("<MoneyEntryAmountField");
+    expect(budgetAmountSource).not.toContain("cursorVisible");
   });
 
   it("keeps repeated form text inputs on the shared FormTextField primitive", () => {
@@ -976,7 +997,7 @@ describe("shared UI kit", () => {
     expect(syncProgressStepSource).toContain('import { Button } from "@/shared/components"');
     expect(syncProgressStepSource).toContain("<Button");
     expect(syncProgressStepSource).not.toContain("styles.primaryButton");
-    expect(completeStepSource).toContain('import { Button } from "@/shared/components"');
+    expectSharedComponentImport(completeStepSource, "Button");
     expect(completeStepSource).toContain("<Button");
     expect(completeStepSource).not.toContain("styles.primaryButton");
   });

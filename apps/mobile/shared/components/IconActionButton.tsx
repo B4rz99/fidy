@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { PressableProps } from "react-native";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { GlassPressable } from "./GlassPressable";
 
 type IconActionButtonTone = "plain" | "surface";
@@ -8,7 +8,6 @@ type IconActionButtonTone = "plain" | "surface";
 type IconActionButtonProps = Omit<PressableProps, "children"> & {
   readonly icon: ReactNode;
   readonly badgeLabel?: string;
-  readonly backgroundColor?: string;
   readonly tone?: IconActionButtonTone;
   readonly size?: string;
   readonly className?: string;
@@ -22,7 +21,6 @@ const TONE_CLASS_NAMES: Record<IconActionButtonTone, string> = {
 export function IconActionButton({
   icon,
   badgeLabel,
-  backgroundColor,
   tone = "plain",
   size = "size-10",
   className,
@@ -34,40 +32,27 @@ export function IconActionButton({
     <>
       {icon}
       {badgeLabel ? (
-        <View className="-right-0.5 -top-0.5 absolute min-w-4 items-center justify-center rounded-full bg-danger px-1">
-          <Text className="font-poppins-bold text-[9px] text-white">{badgeLabel}</Text>
+        <View className="-right-0.5 -top-0.5 absolute min-w-4 items-center justify-center rounded-full px-1">
+          <Text className="font-poppins-bold text-[9px] text-danger">{badgeLabel}</Text>
         </View>
       ) : null}
     </>
   );
 
-  if (tone === "surface") {
-    return (
-      <GlassPressable
-        {...pressableProps}
-        accessibilityRole={accessibilityRole ?? "button"}
-        hitSlop={hitSlop}
-        radius={999}
-        backgroundColor={backgroundColor}
-        surfaceLayoutStyle={styles.surface}
-        className={`relative ${size} items-center justify-center ${className ?? ""}`}
-      >
-        {content}
-      </GlassPressable>
-    );
-  }
-
   return (
-    <Pressable
+    <GlassPressable
       {...pressableProps}
       accessibilityRole={accessibilityRole ?? "button"}
       hitSlop={hitSlop}
-      className={`relative ${size} items-center justify-center rounded-full ${TONE_CLASS_NAMES[tone]} ${
+      radius={999}
+      padded={false}
+      surfaceLayoutStyle={styles.surface}
+      className={`relative ${size} items-center justify-center ${TONE_CLASS_NAMES[tone]} ${
         className ?? ""
       }`}
     >
       {content}
-    </Pressable>
+    </GlassPressable>
   );
 }
 

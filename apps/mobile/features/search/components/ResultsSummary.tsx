@@ -1,4 +1,4 @@
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -13,7 +13,7 @@ export const ResultsSummary = ({ summary }: ResultsSummaryProps) => {
 
   return (
     <View className="px-4 pb-2">
-      <GlassSurface padded={false} radius={8} style={styles.summaryCard}>
+      <Surface padded={false} radius={8} style={styles.summaryCard}>
         <View className="flex-1">
           <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
             {t("search.resultTotal")}
@@ -30,7 +30,7 @@ export const ResultsSummary = ({ summary }: ResultsSummaryProps) => {
             {summary.count}
           </Text>
         </View>
-      </GlassSurface>
+      </Surface>
     </View>
   );
 };

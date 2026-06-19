@@ -1,7 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useBudgetStore } from "@/features/budget/public";
 import { useTransactionStore } from "@/features/transactions/store.public";
-import { Button } from "@/shared/components";
+import { Button } from "@/shared/components/Button";
+import { Surface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { useOnboardingStore } from "../store";
@@ -24,9 +25,9 @@ export function CompleteStep() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <View style={[styles.iconCircle, { backgroundColor: accentGreen }]}>
-          <Ionicons name="checkmark" size={48} color="#FFFFFF" />
-        </View>
+        <Surface radius={48} padded={false} style={styles.iconCircle}>
+          <Ionicons name="checkmark" size={48} color={accentGreen} />
+        </Surface>
         <Text style={[styles.title, { color: primaryColor }]}>
           {t("onboarding.complete.title")}
         </Text>

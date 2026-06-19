@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderFidy } from "@/__tests__/helpers/render";
+import { AddActionButton } from "@/shared/components/AddActionButton";
 import { Card } from "@/shared/components/Card";
 import { FieldButton } from "@/shared/components/FieldButton";
 import { FormTextField } from "@/shared/components/FormTextField";
@@ -61,22 +62,15 @@ function findStyledView(
 }
 
 describe("shared primitive contracts", () => {
-  it("routes Card visual props to the glass surface and keeps content layout separate", () => {
+  it("keeps Card layout and content separate without solid fills", () => {
     const screen = renderFidy(
-      <Card
-        backgroundColor="#111111"
-        borderColor="#22aa66"
-        borderWidth={2}
-        contentStyle={{ gap: 6 }}
-        radius={20}
-        layoutStyle={{ marginTop: 4 }}
-      >
+      <Card contentStyle={{ gap: 6 }} radius={20} layoutStyle={{ marginTop: 4 }}>
         <Text>Card content</Text>
       </Card>
     );
 
     const root = asContractNode(screen.root);
-    const surface = findStyledView(root, (style) => style.borderColor === "#22aa66");
+    const surface = findStyledView(root, (style) => style.marginTop === 4);
     const content = nearestAncestor(
       findNodeByText(root, "Card content"),
       (node) => flattenStyle(node.props.style)?.gap === 6
@@ -84,22 +78,19 @@ describe("shared primitive contracts", () => {
     const surfaceStyle = flattenStyle(surface?.props.style);
 
     expect(surfaceStyle).toMatchObject({
-      backgroundColor: "#111111",
-      borderColor: "#22aa66",
       borderRadius: 20,
-      borderWidth: 2,
       marginTop: 4,
     });
+    expect(surfaceStyle).toHaveProperty("backgroundColor", "transparent");
+    expect(surfaceStyle).not.toHaveProperty("borderColor");
+    expect(surfaceStyle).not.toHaveProperty("borderWidth");
     expect(content).toBeTruthy();
   });
 
-  it("keeps layout props from overriding GlassSurface visual tokens", () => {
+  it("keeps layout props from overriding GlassSurface fill tokens", () => {
     const screen = renderFidy(
       <GlassSurface
         backgroundColor="#111111"
-        borderColor="#22aa66"
-        borderStyle="dashed"
-        borderWidth={2}
         radius={20}
         style={{
           backgroundColor: "#ff0000",
@@ -117,40 +108,47 @@ describe("shared primitive contracts", () => {
 
     expect(flattenStyle(surface?.props.style)).toMatchObject({
       backgroundColor: "#111111",
-      borderColor: "#22aa66",
       borderRadius: 20,
-      borderStyle: "dashed",
-      borderWidth: 2,
       marginTop: 8,
     });
+    expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderColor");
+    expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderStyle");
+    expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderWidth");
   });
 
   it("keeps GlassPressable as the sole interactive shell around a presentational surface", () => {
     const screen = renderFidy(
-      <GlassPressable
-        accessibilityLabel="Glass action"
-        backgroundColor="#123456"
-        borderColor="#abcdef"
-        radius={12}
-      >
+      <GlassPressable accessibilityLabel="Glass action" backgroundColor="#123456" radius={12}>
         <Text>Run</Text>
       </GlassPressable>
     );
     const button = asContractNode(screen.getByA11yLabel("Glass action"));
     const root = asContractNode(screen.root);
-    const surface = findStyledView(root, (style) => style.borderColor === "#abcdef");
+    const surface = findStyledView(root, (style) => style.backgroundColor === "#123456");
 
     expect(button.type).toBe("Pressable");
     expect(button.props.accessibilityRole).toBe("button");
     expect(surface?.props.pointerEvents).toBe("none");
     expect(flattenStyle(surface?.props.style)).toMatchObject({
       backgroundColor: "#123456",
-      borderColor: "#abcdef",
       borderRadius: 12,
     });
+    expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderColor");
   });
 
-  it("keeps standalone ListRowSurface selected borders and disabled opacity consistent", () => {
+  it("uses native platform feedback for shared add actions", () => {
+    const screen = renderFidy(<AddActionButton accessibilityLabel="Create item" />);
+    const button = asContractNode(screen.getByA11yLabel("Create item"));
+    const surface = findStyledView(
+      asContractNode(screen.root),
+      (style) => style.height === 44 && style.width === 44
+    );
+
+    expect(button.props.android_ripple).toMatchObject({ borderless: false });
+    expect(surface?.props.pointerEvents).toBe("auto");
+  });
+
+  it("keeps standalone ListRowSurface selected state accessible without decorative borders", () => {
     const screen = renderFidy(
       <ListRowSurface
         accessibilityLabel="Open row"
@@ -164,24 +162,21 @@ describe("shared primitive contracts", () => {
       </ListRowSurface>
     );
     const pressable = screen.getByA11yLabel("Open row");
-    const surface = findStyledView(
-      asContractNode(screen.root),
-      (style) => style.borderColor === "#55cc88"
-    );
     const content = nearestAncestor(
       findNodeByText(asContractNode(screen.root), "Row content"),
       (node) => flattenStyle(node.props.style)?.minHeight === 72
     );
-    const rowContentStyle = flattenStyle(surface?.props.style);
 
     expect(pressable.props.disabled).toBe(true);
     expect(pressable.props.accessibilityState).toMatchObject({ disabled: true, selected: true });
     expect(flattenStyle(pressable.props.style)).toMatchObject({ opacity: 1 });
-    expect(rowContentStyle).toMatchObject({ borderColor: "#55cc88" });
+    expect(
+      findStyledView(asContractNode(screen.root), (style) => style.borderColor === "#55cc88")
+    ).toBeUndefined();
     expect(content).toBeTruthy();
   });
 
-  it("uses explicit ListRowSurface layout and divider props", () => {
+  it("ignores grouped ListRowSurface divider props while keeping layout", () => {
     const screen = renderFidy(
       <ListRowSurface
         accessibilityLabel="Grouped row"
@@ -196,9 +191,10 @@ describe("shared primitive contracts", () => {
     const groupedRow = asContractNode(screen.getByA11yLabel("Grouped row"));
 
     expect(flattenStyle(groupedRow.props.style)).toMatchObject({
-      borderBottomColor: "#ddeeff",
       marginTop: 6,
     });
+    expect(flattenStyle(groupedRow.props.style)).not.toHaveProperty("borderBottomColor");
+    expect(flattenStyle(groupedRow.props.style)).not.toHaveProperty("borderBottomWidth");
   });
 
   it("routes standalone ListRowSurface layout keys to shell and row content", () => {
@@ -224,7 +220,7 @@ describe("shared primitive contracts", () => {
     expect(rowContent).toBeTruthy();
   });
 
-  it("keeps grouped ListRowSurface non-glass and divider-only", () => {
+  it("keeps grouped ListRowSurface non-glass without dividers", () => {
     const screen = renderFidy(
       <ListRowSurface variant="grouped" divider accessibilityLabel="Grouped row">
         <Text>Grouped content</Text>
@@ -234,19 +230,18 @@ describe("shared primitive contracts", () => {
 
     expect(groupedRow.type).toBe("View");
     expect(flattenStyle(groupedRow.props.style)).toMatchObject({
-      borderBottomWidth: StyleSheet.hairlineWidth,
       minHeight: 56,
     });
+    expect(flattenStyle(groupedRow.props.style)).not.toHaveProperty("borderBottomWidth");
   });
 
-  it("keeps IconActionButton plain by default and glass-backed only for surface tone", () => {
+  it("keeps IconActionButton glass-backed for all tones", () => {
     const plain = renderFidy(
       <IconActionButton accessibilityLabel="Plain action" icon={<Text>Icon</Text>} />
     );
     const surface = renderFidy(
       <IconActionButton
         accessibilityLabel="Surface action"
-        backgroundColor="#778899"
         icon={<Text>Icon</Text>}
         tone="surface"
       />
@@ -255,9 +250,14 @@ describe("shared primitive contracts", () => {
     const plainButton = asContractNode(plain.getByA11yLabel("Plain action"));
 
     expect(plainButton.type).toBe("Pressable");
-    expect(plainButton.props.className).toContain("rounded-full");
     expect(
-      findStyledView(asContractNode(surface.root), (style) => style.backgroundColor === "#778899")
+      findStyledView(asContractNode(plain.root), (style) => style.borderRadius === 999)
+    ).toBeTruthy();
+    expect(
+      findStyledView(
+        asContractNode(surface.root),
+        (style) => style.backgroundColor === "transparent"
+      )
     ).toBeTruthy();
   });
 
@@ -311,9 +311,17 @@ describe("shared primitive contracts", () => {
     const pill = renderFidy(<TextActionButton label="See all" />);
     const plain = renderFidy(<TextActionButton appearance="plain" label="Delete account" />);
 
-    expect(pill.getByText("See all").parent?.props.className).toContain("rounded-full");
-    expect(pill.getByText("See all").parent?.props.className).toContain("min-h-8");
-    expect(plain.getByText("Delete account").parent?.props.className).not.toContain("rounded-full");
-    expect(plain.getByText("Delete account").parent?.props.className).not.toContain("min-h-8");
+    expect(
+      findStyledView(asContractNode(pill.root), (style) => style.borderRadius === 999)
+    ).toBeTruthy();
+    expect(
+      findStyledView(asContractNode(pill.root), (style) => style.minHeight === 32)
+    ).toBeTruthy();
+    expect(
+      findStyledView(asContractNode(plain.root), (style) => style.borderRadius === 10)
+    ).toBeTruthy();
+    expect(
+      findStyledView(asContractNode(plain.root), (style) => style.minHeight === 32)
+    ).toBeUndefined();
   });
 });

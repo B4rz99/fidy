@@ -67,7 +67,7 @@ export function FilterPill({
 }: FilterPillProps) {
   const accentGreen = useThemeColor("accentGreen");
   const primary = useThemeColor("primary");
-  const selectedBorderColor = selectedColor ?? accentGreen;
+  const selectedText = selectedColor ?? accentGreen;
   const pressableStyle = getPressableLayoutStyle(style);
   const surfaceStyle = getSurfaceStyle(style);
   const content = (
@@ -79,7 +79,7 @@ export function FilterPill({
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.82}
-          style={{ color: selected ? (selectedTextColor ?? selectedBorderColor) : primary }}
+          style={{ color: selected ? (selectedTextColor ?? selectedText) : primary }}
         >
           {label}
         </Text>
@@ -93,10 +93,7 @@ export function FilterPill({
       onPress={onPress}
       accessibilityState={{ ...viewProps.accessibilityState, selected }}
       style={pressableStyle}
-      nativeGlass={false}
       radius={999}
-      borderColor={selected ? selectedBorderColor : undefined}
-      borderWidth={selected ? 1.5 : undefined}
       surfaceClassName={className}
       surfaceLayoutStyle={[styles.surface, surfaceStyle]}
     >

@@ -3,7 +3,6 @@ import { StyleSheet } from "@/shared/components/rn";
 export const styles = StyleSheet.create({
   accountChip: {
     borderRadius: 12,
-    borderWidth: 1,
     justifyContent: "center",
     minHeight: 36,
     paddingHorizontal: 12,
@@ -17,10 +16,15 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
   },
+  closeButton: {
+    alignItems: "center",
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
   dateChip: {
     alignItems: "center",
     borderRadius: 10,
-    borderWidth: 1,
     flexDirection: "row",
     gap: 6,
     height: 36,
@@ -28,7 +32,6 @@ export const styles = StyleSheet.create({
   },
   descriptionInput: {
     borderRadius: 10,
-    borderWidth: 1,
     flex: 1,
     fontFamily: "Poppins_500Medium",
     fontSize: 12,

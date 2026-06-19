@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Card, GlassSurface } from "@/shared/components";
+import { Card, Surface } from "@/shared/components";
 import { MessageSquare, Smartphone } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -9,11 +9,9 @@ const StepList = ({ steps, circleColor }: { steps: readonly string[]; circleColo
   <View style={{ gap: 10 }}>
     {steps.map((text, index) => (
       <View key={text} className="flex-row items-start" style={{ gap: 10 }}>
-        <GlassSurface
-          nativeGlass={false}
+        <Surface
           padded={false}
           radius={12}
-          borderColor={circleColor}
           style={{
             width: 24,
             height: 24,
@@ -24,7 +22,7 @@ const StepList = ({ steps, circleColor }: { steps: readonly string[]; circleColo
           <Text className="font-poppins-bold text-caption" style={{ color: circleColor }}>
             {index + 1}
           </Text>
-        </GlassSurface>
+        </Surface>
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark flex-1 leading-relaxed">
           {text}
         </Text>
@@ -72,11 +70,9 @@ export const ApplePaySetupCard = () => {
             </Text>
           </View>
 
-          <GlassSurface
-            nativeGlass={false}
+          <Surface
             padded={false}
             radius={999}
-            borderColor={isApplePaySetupComplete ? greenColor : primaryColor}
             style={{
               paddingHorizontal: 8,
               paddingVertical: 2,
@@ -90,7 +86,7 @@ export const ApplePaySetupCard = () => {
             >
               {isApplePaySetupComplete ? t("applePay.connected") : t("applePay.notSetUp")}
             </Text>
-          </GlassSurface>
+          </Surface>
         </View>
 
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">

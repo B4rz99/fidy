@@ -58,7 +58,6 @@ export const styles = StyleSheet.create({
   },
   input: {
     minHeight: 48,
-    borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 12,
     fontFamily: "Poppins_800ExtraBold",

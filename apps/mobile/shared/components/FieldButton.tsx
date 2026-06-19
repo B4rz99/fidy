@@ -68,7 +68,6 @@ export function FieldButton({
   onClear,
   clearAccessibilityLabel,
   active = false,
-  borderColor,
   disabled = false,
   className,
   buttonStyle,
@@ -83,7 +82,6 @@ export function FieldButton({
   ...viewProps
 }: FieldButtonProps) {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -130,13 +128,7 @@ export function FieldButton({
         className={`${disabled ? "opacity-60" : ""}`}
         style={{ minHeight: 40 }}
       >
-        <FieldSurface
-          size="button"
-          radius={8}
-          borderColor={borderColor ?? (active ? accentGreen : undefined)}
-          style={containerStyle}
-          contentStyle={contentStyle}
-        >
+        <FieldSurface size="button" radius={8} style={containerStyle} contentStyle={contentStyle}>
           {leading}
           <View className="flex-1">{valueNode}</View>
           {handleClear ? (

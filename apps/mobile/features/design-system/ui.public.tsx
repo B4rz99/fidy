@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import {
   Button,
   Card,
-  GlassSurface,
+  Surface,
   ProgressBar,
   ScreenLayout,
   SettingsSection,
@@ -85,7 +85,7 @@ export function DesignSystemScreen() {
           <View className="p-4" style={{ gap: 12 }}>
             <Card>
               <View className="flex-row items-center" style={{ gap: 12 }}>
-                <View className="size-10 items-center justify-center rounded-icon bg-accent-green-light dark:bg-accent-green-light-dark">
+                <View className="size-10 items-center justify-center rounded-icon">
                   <Wallet size={20} color={accentGreen} />
                 </View>
                 <View className="flex-1" style={{ gap: 2 }}>
@@ -159,9 +159,9 @@ function ColorSwatch({
 function GlassSwatch({ label }: { label: string }) {
   return (
     <View className="flex-1" style={{ gap: 6 }}>
-      <GlassSurface padded={false} radius={12} style={{ height: 48 }}>
+      <Surface padded={false} radius={12} style={{ height: 48 }}>
         <View />
-      </GlassSurface>
+      </Surface>
       <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
         {label}
       </Text>

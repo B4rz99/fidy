@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
 import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
 import type { SurfaceLayoutStyle } from "./surface-style";
@@ -100,25 +99,21 @@ export function ListRowSurface({
   className,
   contentStyle,
   disabled = false,
-  divider = false,
-  dividerColor: dividerColorOverride,
+  divider: _divider = false,
+  dividerColor: _dividerColorOverride,
   importantForAccessibility,
-  isLast = false,
+  isLast: _isLast = false,
   minHeight = 56,
   nativeGlass = true,
   onPress,
   radius = 18,
   selected = false,
-  selectedBorderColor,
+  selectedBorderColor: _selectedBorderColor,
   layoutStyle,
   testID,
   variant = "standalone",
   ...viewProps
 }: ListRowSurfaceProps) {
-  const borderColor = useThemeColor("borderSubtle");
-  const accentGreen = useThemeColor("accentGreen");
-  const selectedColor = selectedBorderColor ?? accentGreen;
-  const dividerColor = dividerColorOverride ?? borderColor;
   const surfaceA11yProps =
     onPress == null
       ? {
@@ -139,12 +134,6 @@ export function ListRowSurface({
       minHeight,
       opacity: disabled ? 0.5 : 1,
     },
-    variant === "grouped"
-      ? {
-          borderBottomColor: divider && !isLast ? dividerColor : "transparent",
-          borderBottomWidth: divider && !isLast ? StyleSheet.hairlineWidth : 0,
-        }
-      : null,
     contentStyle,
   ];
   const surfaceLayoutStyle = [
@@ -171,7 +160,6 @@ export function ListRowSurface({
         nativeGlass={nativeGlass}
         padded={false}
         radius={radius}
-        borderColor={selected ? selectedColor : undefined}
         className={className}
         style={surfaceLayoutStyle}
       >
@@ -209,7 +197,6 @@ export function ListRowSurface({
         importantForAccessibility={importantForAccessibility}
         nativeGlass={nativeGlass}
         radius={radius}
-        borderColor={selected ? selectedColor : undefined}
         surfaceClassName={className}
         surfaceLayoutStyle={surfaceLayoutStyle}
       >

@@ -11,7 +11,6 @@ export const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 20,
-    borderWidth: 1,
     padding: 14,
     gap: 14,
   },

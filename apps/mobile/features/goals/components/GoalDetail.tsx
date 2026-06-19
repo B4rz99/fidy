@@ -1,13 +1,11 @@
 import { Stack } from "expo-router";
-import { Pressable, Text } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { styles } from "./goal-detail/GoalDetail.styles";
+import { TextActionButton } from "@/shared/components";
+import { useTranslation } from "@/shared/hooks";
 import { GoalDetailContent } from "./goal-detail/GoalDetailContent";
 import { useGoalDetail } from "./goal-detail/useGoalDetail";
 
 export function GoalDetailScreen() {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
   const detail = useGoalDetail();
 
   if (detail.goalData == null) {
@@ -24,11 +22,12 @@ export function GoalDetailScreen() {
           headerBackTitle: "",
           headerTitle: goal.name,
           headerRight: () => (
-            <Pressable onPress={detail.onEditGoal} hitSlop={8}>
-              <Text style={[styles.editHeaderButton, { color: accentGreen }]}>
-                {t("common.edit")}
-              </Text>
-            </Pressable>
+            <TextActionButton
+              label={t("common.edit")}
+              onPress={detail.onEditGoal}
+              hitSlop={8}
+              appearance="plain"
+            />
           ),
         }}
       />

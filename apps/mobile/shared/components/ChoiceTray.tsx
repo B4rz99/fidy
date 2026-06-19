@@ -16,5 +16,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+    overflow: "visible",
+    paddingVertical: 2,
   },
 });

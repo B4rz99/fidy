@@ -1,4 +1,4 @@
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { StyleSheet } from "@/shared/components/rn";
 import { FilterChipRow } from "../FilterChipRow";
 import { ResultsSummary } from "../ResultsSummary";
@@ -51,14 +51,15 @@ export function SearchFilterControls({
         activePanel={activePanel}
         onTogglePanel={handleTogglePanel}
       />
-      {filterPanel ? (
-        <GlassSurface
+      {filterPanel && activePanel === "type" ? filterPanel : null}
+      {filterPanel && activePanel !== "type" ? (
+        <Surface
           padded={false}
           radius={8}
           style={[styles.filterDock, activePanel === "dateRange" ? styles.dateFilterDock : null]}
         >
           {filterPanel}
-        </GlassSurface>
+        </Surface>
       ) : null}
       {showSummary && summary ? <ResultsSummary summary={summary} /> : null}
     </>

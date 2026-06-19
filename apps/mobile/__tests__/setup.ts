@@ -207,6 +207,7 @@ export const mockPush = createMock();
 export const mockBack = createMock();
 
 vi.mock("expo-router", () => ({
+  router: { replace: mockReplace, push: mockPush, back: mockBack },
   useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack }),
   Stack: {
     Screen: "Stack.Screen",

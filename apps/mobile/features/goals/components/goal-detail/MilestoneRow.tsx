@@ -16,7 +16,7 @@ function MilestoneRowInner({ milestone }: { readonly milestone: Milestone }) {
       <View
         style={[
           styles.milestoneDot,
-          { backgroundColor: milestone.isCompleted ? accentGreen : "#CCCCCC" },
+          { backgroundColor: milestone.isCompleted ? accentGreen : secondaryColor },
         ]}
       />
       <View style={styles.milestoneContent}>

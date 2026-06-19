@@ -1,32 +1,28 @@
-import { MoneyEntryAmountField } from "@/shared/components";
+import { Pressable, Text } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import type { GoalFormCursorStyle } from "./useGoalForm";
+import { formatInputDisplay } from "@/shared/lib";
+import { styles } from "./GoalForm.styles";
 
 type GoalAmountFieldProps = {
-  readonly cursorStyle: GoalFormCursorStyle;
   readonly digits: string;
-  readonly isAmountActive: boolean;
   readonly onPress: () => void;
 };
 
-export function GoalAmountField({
-  cursorStyle,
-  digits,
-  isAmountActive,
-  onPress,
-}: GoalAmountFieldProps) {
+export function GoalAmountField({ digits, onPress }: GoalAmountFieldProps) {
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
+  const displayAmount = formatInputDisplay(digits);
 
   return (
-    <MoneyEntryAmountField
+    <Pressable
       accessibilityLabel={t("goals.create.targetAmount")}
-      color={primary}
-      cursorStyle={cursorStyle}
-      cursorVisible={isAmountActive}
-      digits={digits}
+      accessibilityRole="button"
       onPress={onPress}
-      size="hero"
-    />
+      style={styles.amountPressTarget}
+    >
+      <Text numberOfLines={1} style={[styles.amountText, { color: primary }]}>
+        {displayAmount}
+      </Text>
+    </Pressable>
   );
 }

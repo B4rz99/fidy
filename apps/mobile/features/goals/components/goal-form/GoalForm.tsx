@@ -19,14 +19,7 @@ export function GoalForm({ children, form, showGoalTypeToggle = false }: GoalFor
   const typeToggle = showGoalTypeToggle ? (
     <GoalTypeToggle goalType={form.goalType} onChange={form.setGoalType} />
   ) : null;
-  const amountField = (
-    <GoalAmountField
-      cursorStyle={form.cursorStyle}
-      digits={form.digits}
-      isAmountActive={form.numpadTarget === "amount"}
-      onPress={form.handleAmountPress}
-    />
-  );
+  const amountField = <GoalAmountField digits={form.digits} onPress={form.handleAmountPress} />;
   const interestField =
     form.goalType === "debt" ? (
       <GoalInterestField

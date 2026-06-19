@@ -54,7 +54,6 @@ export function AddBillFormContent({
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const isDark = useColorScheme() === "dark";
-  const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -65,10 +64,7 @@ export function AddBillFormContent({
   });
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: pageBg }]}
-      behavior="padding"
-    >
+    <KeyboardAvoidingView style={styles.container} behavior="padding">
       <AppAuroraBackground isDark={isDark} />
       <ScrollView
         style={styles.container}

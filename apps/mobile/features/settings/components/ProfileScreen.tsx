@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
-import { Button, ScreenLayout, TextActionButton } from "@/shared/components";
+import { Button, Surface, ScreenLayout, TextActionButton } from "@/shared/components";
 import { LogOut } from "@/shared/components/icons";
 import { Alert, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -59,13 +59,14 @@ export function ProfileScreen() {
       >
         {/* Avatar & Info */}
         <View className="items-center" style={{ gap: 12 }}>
-          <View
-            className="items-center justify-center rounded-full"
+          <Surface
+            radius={40}
+            padded={false}
             style={{
               width: 80,
               height: 80,
-              backgroundColor: accentGreen,
-              overflow: "hidden",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             {avatar.type === "image" ? (
@@ -76,11 +77,11 @@ export function ProfileScreen() {
                 onError={() => setFailedImageUrl(avatar.uri)}
               />
             ) : (
-              <Text className="font-poppins-bold text-white" style={{ fontSize: 28 }}>
+              <Text className="font-poppins-bold" style={{ color: accentGreen, fontSize: 28 }}>
                 {avatar.initials}
               </Text>
             )}
-          </View>
+          </Surface>
           <View className="items-center" style={{ gap: 4 }}>
             <Text className="font-poppins-semibold text-lg text-primary dark:text-primary-dark">
               {fullName}

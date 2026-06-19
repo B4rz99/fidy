@@ -26,7 +26,6 @@ export const NotificationSetupCard = () => {
   const iconColor = useThemeColor("accentGreen");
   const warningColor = useThemeColor("accentRed");
   const secondaryColor = useThemeColor("secondary");
-  const borderColor = useThemeColor("borderSubtle");
 
   return (
     <Card padded={false} contentStyle={{ gap: 14, padding: 20 }}>
@@ -48,8 +47,6 @@ export const NotificationSetupCard = () => {
         className="flex-row items-center justify-between"
         style={{
           paddingVertical: 8,
-          borderTopWidth: 1,
-          borderTopColor: borderColor,
         }}
       >
         <View className="flex-row items-center" style={{ gap: 8 }}>

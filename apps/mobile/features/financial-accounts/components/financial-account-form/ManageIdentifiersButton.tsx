@@ -1,5 +1,6 @@
+import { GlassPressable } from "@/shared/components/GlassPressable";
 import { ChevronRight } from "@/shared/components/icons";
-import { Pressable, Text } from "@/shared/components/rn";
+import { Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./FinancialAccountForm.styles";
 
@@ -14,9 +15,9 @@ export function ManageIdentifiersButton({
   const secondary = useThemeColor("secondary");
 
   return (
-    <Pressable style={styles.manageButton} onPress={onPress}>
+    <GlassPressable onPress={onPress} radius={14} padded={false} layoutStyle={styles.manageButton}>
       <Text style={[styles.manageButtonText, { color: primary }]}>{label}</Text>
       <ChevronRight size={16} color={secondary} />
-    </Pressable>
+    </GlassPressable>
   );
 }

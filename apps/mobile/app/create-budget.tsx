@@ -13,7 +13,7 @@ export default function CreateBudgetRoute() {
         options={{
           headerBackButtonDisplayMode: "minimal",
           headerBackTitle: "",
-          headerTitle: title,
+          headerBackVisible: false,
           title,
         }}
       />

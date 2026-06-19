@@ -41,26 +41,8 @@ export function FinancialAccountRow({
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
   const accentRed = useThemeColor("accentRed");
-  const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const peach = useThemeColor("peach");
-  const peachLight = useThemeColor("peachLight");
-  const chartBg = useThemeColor("chartBg");
-  const numpadKey = useThemeColor("numpadKey");
-  const numpadSpecialKey = useThemeColor("numpadSpecialKey");
   const kind = readFinancialAccountKind(item.account.kind);
   const icon = getKindIcon(kind);
-  const iconPalette: Record<
-    FinancialAccountKind,
-    { readonly backgroundColor: string; readonly color: string }
-  > = {
-    checking: { backgroundColor: accentGreenLight, color: accentGreen },
-    savings: { backgroundColor: peachLight, color: peach },
-    wallet: { backgroundColor: chartBg, color: secondary },
-    cash: { backgroundColor: numpadKey, color: tertiary },
-    credit_card: { backgroundColor: numpadSpecialKey, color: peach },
-  };
   const subtitleParts = [
     t(`financialAccounts.kinds.${kind}`),
     canFinancialAccountHaveIdentifiers(kind) && item.identifiersCount > 0
@@ -75,8 +57,8 @@ export function FinancialAccountRow({
       radius={22}
       contentStyle={styles.accountCard}
     >
-      <View style={[styles.accountIcon, { backgroundColor: iconPalette[kind].backgroundColor }]}>
-        <Text style={{ color: iconPalette[kind].color }}>{icon}</Text>
+      <View style={styles.accountIcon}>
+        <Text>{icon}</Text>
       </View>
 
       <View style={styles.rowContent}>
@@ -85,7 +67,6 @@ export function FinancialAccountRow({
           {item.account.isDefault ? (
             <FieldSurface
               radius={999}
-              borderColor={borderSubtle}
               size="compact"
               style={styles.badge}
               contentStyle={styles.badgeContent}

@@ -31,9 +31,9 @@ export function MonthNavigator({
       <IconActionButton
         accessibilityHint={previousAccessibilityHint}
         accessibilityLabel={previousAccessibilityLabel}
-        icon={<ChevronLeft size={22} color={primaryColor} />}
+        icon={<ChevronLeft size={24} color={primaryColor} />}
         onPress={onPrevious}
-        size="size-9"
+        size="size-11"
       />
       <Text
         className="min-w-[120px] text-center font-poppins-bold text-body text-text-primary dark:text-text-primary-dark"
@@ -44,9 +44,9 @@ export function MonthNavigator({
       <IconActionButton
         accessibilityHint={nextAccessibilityHint}
         accessibilityLabel={nextAccessibilityLabel}
-        icon={<ChevronRight size={22} color={primaryColor} />}
+        icon={<ChevronRight size={24} color={primaryColor} />}
         onPress={onNext}
-        size="size-9"
+        size="size-11"
       />
     </View>
   );

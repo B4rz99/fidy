@@ -1,11 +1,5 @@
 import type { ReactNode } from "react";
 import * as Haptics from "expo-haptics";
-import Animated, {
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppAuroraBackground } from "@/shared/components/AppAuroraBackground";
@@ -14,16 +8,17 @@ import {
   Keyboard,
   Platform,
   Pressable,
+  StyleSheet,
   type StyleProp,
   Text,
-  useWindowDimensions,
   View,
   type ViewStyle,
 } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
-import { getSubtleGlassCardTokens } from "./card-tokens";
 import { getEntryTabTextStyle } from "./entry-tab-text-style";
 import { styles } from "./EntryScaffold.styles";
+import { GlassPressable } from "./GlassPressable";
+import { GlassSurface } from "./GlassSurface";
 import { useNumpadGlassStyles } from "./use-numpad-glass-styles";
 export { EntryField, EntryTextInputField } from "./EntryField";
 export type { EntryFieldProps } from "./EntryField";
@@ -50,9 +45,7 @@ const ENTRY_ROWS = [
 ] as const;
 
 const ANDROID_TAB_BAR_HEIGHT = 64;
-const ENTRY_HORIZONTAL_PADDING = 16;
 const SWIPE_TAB_THRESHOLD = 56;
-const TAB_GAP = 8;
 const NUMPAD_RIPPLE_COLOR = "rgba(255, 255, 255, 0.42)";
 
 function getTabIndicatorColor(input: {
@@ -83,34 +76,40 @@ function EntryNumpadButton({
   style,
   testID,
 }: EntryNumpadButtonProps) {
-  const feedback = useSharedValue(0);
-  const feedbackStyle = useAnimatedStyle(() => ({
-    opacity: feedback.value,
-    transform: [{ scale: 0.88 + feedback.value * 0.12 }],
-  }));
-  const showFeedback = () => {
-    if (disabled) return;
-    feedback.value = withTiming(1, { duration: 80 });
+  const flattenedStyle = StyleSheet.flatten(style);
+  const radius =
+    typeof flattenedStyle?.borderRadius === "number" ? flattenedStyle.borderRadius : 14;
+  const layoutStyle = {
+    alignItems: flattenedStyle?.alignItems,
+    flex: flattenedStyle?.flex,
+    justifyContent: flattenedStyle?.justifyContent,
+    position: "relative" as const,
   };
-  const hideFeedback = () => {
-    feedback.value = withTiming(0, { duration: 180 });
-  };
+  const surfaceLayoutStyle = [
+    StyleSheet.absoluteFillObject,
+    {
+      alignItems: flattenedStyle?.alignItems,
+      justifyContent: flattenedStyle?.justifyContent,
+    },
+  ];
 
   return (
-    <Pressable
+    <GlassPressable
       testID={testID}
-      style={style}
+      style={layoutStyle}
+      surfaceLayoutStyle={surfaceLayoutStyle}
+      radius={radius}
+      padded={false}
+      isInteractive
+      disabledOpacity={0.45}
       android_ripple={{ color: NUMPAD_RIPPLE_COLOR, borderless: false }}
       disabled={disabled}
       onPress={onPress}
-      onPressIn={showFeedback}
-      onPressOut={hideFeedback}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <Animated.View pointerEvents="none" style={[styles.keyFeedback, feedbackStyle]} />
       {children}
-    </Pressable>
+    </GlassPressable>
   );
 }
 
@@ -125,40 +124,20 @@ export function EntryScaffold({
   tabs,
   includesNativeHeader = false,
 }: EntryScaffoldProps) {
-  const { width } = useWindowDimensions();
-  const tabBarWidth = useSharedValue(Math.max(width - ENTRY_HORIZONTAL_PADDING * 2, 0));
   const { t } = useTranslation();
   const isDark = useColorScheme() === "dark";
-  const glassTokens = getSubtleGlassCardTokens(isDark);
   const primary = useThemeColor("primary");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
-  const onAccent = useThemeColor("onAccent");
   const accentRed = useThemeColor("accentRed");
   const activeColor = getTabIndicatorColor({ accentGreen, accentRed, tab: activeTab, tertiary });
+  const onAccent = useThemeColor("onAccent");
   const { confirmKeySurfaceStyle, keySurfaceStyle, specialKeySurfaceStyle } =
     useNumpadGlassStyles();
   const { bottom, top } = useSafeAreaInsets();
   const tabBarHeight = Platform.OS === "ios" ? ANDROID_TAB_BAR_HEIGHT / 8 : ANDROID_TAB_BAR_HEIGHT;
   const tabBarClearance = tabBarHeight + Math.max(bottom, 16);
   const activeTabIndex = tabs.findIndex((tab) => tab.key === activeTab);
-  const totalTabGap = Math.max(tabs.length - 1, 0) * TAB_GAP;
-  const tabPillWidth = Math.max(
-    (width - ENTRY_HORIZONTAL_PADDING * 2 - totalTabGap) / Math.max(tabs.length, 1),
-    0
-  );
-  const animatedTabPillX = useDerivedValue(() => {
-    const tabWidth = tabs.length > 0 ? (tabBarWidth.value - totalTabGap) / tabs.length : 0;
-    const translateX = activeTabIndex < 0 ? 0 : activeTabIndex * (tabWidth + TAB_GAP);
-
-    return withTiming(translateX, { duration: 180 });
-  });
-  const animatedTabPillColor = useDerivedValue(() => withTiming(activeColor, { duration: 180 }));
-  const animatedTabPillStyle = useAnimatedStyle(() => ({
-    backgroundColor: glassTokens.tintColor,
-    borderColor: animatedTabPillColor.value,
-    transform: [{ translateX: animatedTabPillX.value }],
-  }));
   const handleKeyPress = (key: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onKeyPress(key);
@@ -195,12 +174,7 @@ export function EntryScaffold({
       ]}
     >
       <AppAuroraBackground isDark={isDark} />
-      <View
-        style={styles.tabs}
-        onLayout={(event) => {
-          tabBarWidth.value = event.nativeEvent.layout.width;
-        }}
-      >
+      <GlassSurface padded={false} radius={999} style={styles.tabs}>
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
           return (
@@ -220,8 +194,7 @@ export function EntryScaffold({
             </Pressable>
           );
         })}
-        <Animated.View style={[styles.tabPill, { width: tabPillWidth }, animatedTabPillStyle]} />
-      </View>
+      </GlassSurface>
 
       <GestureDetector gesture={tabSwipe}>
         <View style={styles.swipeArea}>

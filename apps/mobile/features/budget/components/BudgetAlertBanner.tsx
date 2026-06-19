@@ -1,6 +1,6 @@
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Callout } from "@/shared/components";
-import { Text, View } from "@/shared/components/rn";
+import { Callout, Surface } from "@/shared/components";
+import { Text } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney, trackBudgetAlertViewed } from "@/shared/lib";
@@ -26,8 +26,6 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
   const categoryLabel = category ? getCategoryLabel(category, locale) : alert.categoryId;
 
   const isOverBudget = alert.threshold === 100;
-  const bannerBg = isOverBudget ? `${accentRed}1E` : `${accentGreen}1E`;
-  const circleBg = isOverBudget ? `${accentRed}40` : `${accentGreen}40`;
   const iconColor = isOverBudget ? accentRed : accentGreen;
 
   const title = isOverBudget
@@ -48,19 +46,23 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
           : undefined
       }
       icon={
-        <View
+        <Surface
+          radius={16}
+          padded={false}
           className="size-8 items-center justify-center rounded-full"
           style={{
-            backgroundColor: circleBg,
+            alignItems: "center",
+            height: 32,
+            justifyContent: "center",
+            width: 32,
           }}
         >
           {CategoryIcon ? <Text style={{ color: iconColor }}>{CategoryIcon}</Text> : null}
-        </View>
+        </Surface>
       }
       onDismiss={handleDismiss}
       dismissAccessibilityLabel={t("common.dismiss")}
       tone={isOverBudget ? "danger" : "warning"}
-      style={{ backgroundColor: bannerBg }}
     />
   );
 }

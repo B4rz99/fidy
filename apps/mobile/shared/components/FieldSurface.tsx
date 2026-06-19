@@ -8,8 +8,6 @@ type FieldSurfaceSize = "regular" | "compact" | "button";
 
 type FieldSurfaceProps = {
   readonly children: ReactNode;
-  readonly borderColor?: string;
-  readonly borderWidth?: number;
   readonly contentStyle?: StyleProp<ViewStyle>;
   readonly radius?: number;
   readonly size?: FieldSurfaceSize;
@@ -29,8 +27,6 @@ const FIELD_SURFACE_DEFAULTS: Record<
 };
 
 export function FieldSurface({
-  borderColor,
-  borderWidth,
   children,
   contentStyle,
   radius,
@@ -53,12 +49,9 @@ export function FieldSurface({
       ]}
     >
       <GlassSurface
-        nativeGlass={false}
         pointerEvents="none"
         padded={false}
         radius={radius ?? defaults.radius}
-        borderColor={borderColor}
-        borderWidth={borderWidth}
         style={[StyleSheet.absoluteFillObject, surfaceLayoutStyle]}
       >
         <View />

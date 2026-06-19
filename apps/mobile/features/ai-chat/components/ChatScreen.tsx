@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { removeTransaction } from "@/features/transactions/store.public";
@@ -8,19 +8,17 @@ import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useTranslation } from "@/shared/hooks";
 import { captureError, trackAiChatOpened } from "@/shared/lib";
 import type { ChatMessageId } from "@/shared/types/branded";
-import { useStreamingChat } from "../hooks/use-streaming-chat";
+import { cancelActiveStream, useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ActionStatus, ChatMessage } from "../schema";
 import { updateChatActionStatus, useChatStore } from "../store";
 import { ChatConversationShell } from "./ChatConversationShell";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
-import { NewChatButton } from "./NewChatButton";
 import { StarterSuggestions } from "./StarterSuggestions";
 import { StreamingBubble } from "./StreamingBubble";
 
 type ChatScreenProps = {
-  readonly onBack: () => void;
-  readonly onNewChat: () => void;
+  readonly onBack?: () => void;
 };
 
 const keyExtractor = (item: ChatMessage) => item.id;
@@ -39,9 +37,10 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
   );
 });
 
-export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
+export function ChatScreen({ onBack }: ChatScreenProps) {
   const { t } = useTranslation();
   useMountEffect(() => trackAiChatOpened());
+  useEffect(() => cancelActiveStream, []);
   const userId = useOptionalUserId();
   const { top: safeTop } = useSafeAreaInsets();
   const db = userId ? tryGetDb(userId) : null;
@@ -119,13 +118,7 @@ export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
   );
 
   return (
-    <ScreenLayout
-      title={title}
-      variant="sub"
-      onBack={onBack}
-      includesNativeHeader={false}
-      rightActions={<NewChatButton onPress={onNewChat} />}
-    >
+    <ScreenLayout title={title} variant="sub" onBack={onBack} includesNativeHeader>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}

@@ -89,7 +89,7 @@ export const NotificationCard = React.memo(function NotificationCard({
       disabled={!notification.route}
       contentClassName="flex-row items-center gap-3 p-3.5"
     >
-      <View style={[styles.iconCircle, { backgroundColor: notification.iconBgColor }]}>
+      <View style={styles.iconCircle}>
         <IconComponent size={16} color={notification.iconColor} />
       </View>
 

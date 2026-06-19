@@ -8,7 +8,7 @@ import {
 import { BudgetSuggestionRow } from "@/features/budget/ui.public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { Button, EmptyState } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
@@ -116,16 +116,13 @@ export function BudgetSetupStep() {
           disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
           loading={isBusy}
         />
-        <Pressable
-          accessible
+        <Button
+          label={t("onboarding.budgetSetup.skipForNow")}
+          variant="ghost"
+          size="compact"
           accessibilityLabel={t("onboarding.budgetSetup.skipForNow")}
-          accessibilityRole="button"
           onPress={handleSkip}
-        >
-          <Text className="font-poppins-medium text-sm text-text-secondary dark:text-text-secondary-dark">
-            {t("onboarding.budgetSetup.skipForNow")}
-          </Text>
-        </Pressable>
+        />
       </View>
     </View>
   );

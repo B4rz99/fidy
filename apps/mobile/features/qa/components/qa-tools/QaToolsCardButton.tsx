@@ -24,16 +24,14 @@ export function QaToolsCardButton({
 }: QaToolsCardButtonProps) {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
 
   return (
     <GlassPressable
       onPress={onPress}
       testID={testId}
       radius={scenario ? 18 : 16}
-      borderColor={highlighted ? accentGreen : undefined}
-      borderWidth={highlighted ? 1.5 : undefined}
-      surfaceLayoutStyle={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
+      accessibilityState={{ selected: highlighted }}
+      layoutStyle={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
     >
       <Text style={[styles.cardTitle, { color: primary }]}>{title}</Text>
       {description ? (

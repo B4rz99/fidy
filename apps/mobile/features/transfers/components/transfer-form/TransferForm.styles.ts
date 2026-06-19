@@ -62,7 +62,6 @@ export const styles = StyleSheet.create({
   },
   pickerOption: {
     borderRadius: 18,
-    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: "row",
@@ -104,7 +103,6 @@ export const styles = StyleSheet.create({
   },
   sideCard: {
     borderRadius: 18,
-    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: "row",

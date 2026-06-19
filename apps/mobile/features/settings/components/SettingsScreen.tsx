@@ -6,7 +6,13 @@ import { openBrowserAsync } from "expo-web-browser";
 import { useAuthIdentity, useOptionalUserId } from "@/features/auth/public";
 import type { PrivateBackupHealthStatus } from "@/features/backup/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
-import { Row, ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
+import {
+  Surface,
+  Row,
+  ScreenLayout,
+  SettingsSection,
+  TAB_BAR_CLEARANCE,
+} from "@/shared/components";
 import {
   Bell,
   ChevronRight,
@@ -120,13 +126,14 @@ export function SettingsScreen() {
             subtitleClassName="text-xs"
             isLast
             leading={
-              <View
-                className="items-center justify-center rounded-full"
+              <Surface
+                radius={20}
+                padded={false}
                 style={{
                   width: 40,
                   height: 40,
-                  backgroundColor: accentGreen,
-                  overflow: "hidden",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 {avatar.type === "image" ? (
@@ -137,11 +144,14 @@ export function SettingsScreen() {
                     onError={() => setFailedImageUrl(avatar.uri)}
                   />
                 ) : (
-                  <Text className="font-poppins-semibold text-white" style={{ fontSize: 14 }}>
+                  <Text
+                    className="font-poppins-semibold"
+                    style={{ color: accentGreen, fontSize: 14 }}
+                  >
                     {avatar.initials}
                   </Text>
                 )}
-              </View>
+              </Surface>
             }
             trailing={<ChevronRight size={18} color={tertiaryColor} />}
           />

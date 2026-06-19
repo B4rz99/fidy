@@ -14,5 +14,6 @@ export function PinnedFormStack({ children, style }: PinnedFormStackProps) {
 const styles = StyleSheet.create({
   stack: {
     gap: 12,
+    overflow: "visible",
   },
 });

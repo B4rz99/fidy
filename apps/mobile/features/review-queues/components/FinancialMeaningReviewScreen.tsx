@@ -176,7 +176,7 @@ export function FinancialMeaningReviewScreen() {
           subtitle={t("financialMeaningReview.reviewSubtitle")}
         />
 
-        <Card radius={20} borderWidth={1} contentStyle={styles.cardContent}>
+        <Card radius={20} contentStyle={styles.cardContent}>
           <Text style={[styles.metaLabel, { color: tertiary }]}>{subject}</Text>
           <View style={styles.titleRow}>
             <View style={styles.titleWrap}>
@@ -229,7 +229,7 @@ export function FinancialMeaningReviewScreen() {
           />
         </View>
 
-        <Card radius={18} borderWidth={1} contentStyle={styles.transferTipContent}>
+        <Card radius={18} contentStyle={styles.transferTipContent}>
           <ArrowLeftRight size={18} color={secondary} />
           <Text style={[styles.transferTipCopy, { color: secondary }]}>
             {t("financialMeaningReview.transferExplanation")}

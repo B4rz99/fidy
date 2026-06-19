@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
@@ -20,13 +20,13 @@ import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/routes.public";
 import {
   AddActionButton,
-  AppAuroraBackground,
+  ScreenLayout,
   SegmentedControl,
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
 import { Alert, Platform, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useColorScheme, useTranslation } from "@/shared/hooks";
+import { useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
 import { useNativeHeaderHeight } from "@/shared/navigation/use-native-header-height";
 import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
@@ -56,6 +56,7 @@ function SegmentControl({
       value={active}
       onChange={onSwitch}
       tone="success"
+      variant="detached"
       style={styles.headerSegment}
     />
   );
@@ -146,76 +147,51 @@ function FinanceCalendarPanel() {
   );
 }
 
-function useHeaderRight(activeTab: FinanceTab) {
+export default function FinanceScreen() {
   const { push } = useRouter();
   const { t } = useTranslation();
   const goals = useGoalStore((s) => s.goals);
-
-  if (activeTab === "calendar") {
-    return function AddBillAction() {
+  const [activeTab, setActiveTab] = useState<FinanceTab>("analytics");
+  const rightAction = (() => {
+    if (activeTab === "calendar") {
       return (
         <AddActionButton
           onPress={() => push("/add-bill")}
           accessibilityLabel={t("bills.addBill")}
         />
       );
-    };
-  }
-  if (activeTab === "goals" && goals.length > 0) {
-    return function AddGoalAction() {
+    }
+
+    if (activeTab === "goals" && goals.length > 0) {
       return (
         <AddActionButton
           onPress={() => push("/create-goal")}
           accessibilityLabel={t("goals.empty.createGoal")}
         />
       );
-    };
-  }
-  return function NoAction() {
-    return null;
-  };
-}
+    }
 
-export default function FinanceScreen() {
-  const [activeTab, setActiveTab] = useState<FinanceTab>("analytics");
-  const headerRight = useHeaderRight(activeTab);
-  const isDark = useColorScheme() === "dark";
+    return undefined;
+  })();
 
   return (
-    <View style={styles.container}>
-      <AppAuroraBackground isDark={isDark} />
-      {Platform.OS === "ios" && (
-        <Stack.Screen
-          options={{
-            headerTitle: () => <SegmentControl active={activeTab} onSwitch={setActiveTab} />,
-            headerRight,
-          }}
-        />
-      )}
-      {Platform.OS !== "ios" && (
-        <View style={styles.androidSegmentWrap}>
-          <SegmentControl active={activeTab} onSwitch={setActiveTab} />
-        </View>
-      )}
+    <ScreenLayout
+      includesNativeHeader={false}
+      centerAction={<SegmentControl active={activeTab} onSwitch={setActiveTab} />}
+      rightActions={rightAction}
+    >
       <View style={{ flex: 1 }}>
         {activeTab === "calendar" && <FinanceCalendarPanel />}
-        {activeTab === "goals" && <GoalsListScreen />}
+        {activeTab === "goals" && <GoalsListScreen includesHeader={false} />}
         {activeTab === "analytics" && <AnalyticsScreen />}
       </View>
-    </View>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  androidSegmentWrap: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
   headerSegment: {
-    width: 320,
+    width: "100%",
   },
   calendarPanel: {
     flex: 1,

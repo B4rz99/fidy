@@ -23,7 +23,6 @@ export const styles = StyleSheet.create({
   input: {
     borderRadius: 10,
     borderCurve: "continuous",
-    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontFamily: "Poppins_500Medium",
@@ -38,7 +37,6 @@ export const styles = StyleSheet.create({
   chip: {
     borderRadius: 8,
     borderCurve: "continuous",
-    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
     minHeight: 44,

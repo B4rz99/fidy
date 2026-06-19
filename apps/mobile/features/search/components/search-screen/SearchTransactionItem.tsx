@@ -2,7 +2,7 @@ import { memo } from "react";
 import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
 import { getTransferActivityCopy } from "@/features/transfers/display.public";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
@@ -42,15 +42,20 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
         </View>
       ) : null}
       <View className="px-4 pb-2">
-        <GlassSurface testID="resultCard" padded={false} radius={8} style={styles.resultCard}>
-          <View
+        <Surface testID="resultCard" padded={false} radius={8} style={styles.resultCard}>
+          <Surface
+            radius={12}
+            padded={false}
             className="size-10 items-center justify-center rounded-icon"
             style={{
-              backgroundColor: category?.color ?? "rgba(244, 177, 131, 0.18)",
+              alignItems: "center",
+              height: 40,
+              justifyContent: "center",
+              width: 40,
             }}
           >
             <Text>{category?.icon ?? "✨"}</Text>
-          </View>
+          </Surface>
           <View className="ml-3 flex-1">
             <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
               {tx
@@ -76,7 +81,7 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
           >
             {tx ? formatSignedMoney(tx.amount, tx.type) : formatMoney(transfer?.amount ?? 0)}
           </Text>
-        </GlassSurface>
+        </Surface>
       </View>
     </View>
   );

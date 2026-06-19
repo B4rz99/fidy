@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Surface } from "@/shared/components";
 import { CircleCheck } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -19,9 +20,7 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const supportTextColor = useAiSupportTextColor();
-  const chatAssistantBubble = useThemeColor("chatAssistantBubble");
   const chatAssistantText = useThemeColor("chatAssistantText");
-  const chatUserBubble = useThemeColor("chatUserBubble");
   const chatUserText = useThemeColor("chatUserText");
 
   const isUser = message.role === "user";
@@ -34,11 +33,11 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
     <View style={{ marginBottom: 10 }}>
       {isUser ? (
         <View style={{ alignItems: "flex-end" }}>
-          <View
+          <Surface
+            padded={false}
+            radius={18}
             style={{
               maxWidth: "85%",
-              backgroundColor: chatUserBubble,
-              borderRadius: 18,
               borderBottomRightRadius: 6,
               paddingVertical: 12,
               paddingHorizontal: 15,
@@ -47,16 +46,16 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
             <Text className="font-poppins-medium text-body" style={{ color: chatUserText }}>
               {contentWithoutAction}
             </Text>
-          </View>
+          </Surface>
         </View>
       ) : (
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-          <View
+          <Surface
+            padded={false}
+            radius={15}
             style={{
               width: 30,
               height: 30,
-              borderRadius: 15,
-              backgroundColor: chatAssistantBubble,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -64,14 +63,14 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
             <Text className="font-poppins-semibold text-body" style={{ color: accentGreen }}>
               {agentIcon}
             </Text>
-          </View>
+          </Surface>
           <View style={{ flex: 1 }}>
-            <View
+            <Surface
+              padded={false}
+              radius={18}
               style={{
                 maxWidth: "90%",
-                borderRadius: 18,
                 borderBottomLeftRadius: 6,
-                backgroundColor: chatAssistantBubble,
                 paddingVertical: 12,
                 paddingHorizontal: 15,
               }}
@@ -114,7 +113,7 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
                   </Text>
                 )
               )}
-            </View>
+            </Surface>
           </View>
         </View>
       )}

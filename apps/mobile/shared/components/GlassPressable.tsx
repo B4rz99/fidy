@@ -6,12 +6,11 @@ import type { SurfaceLayoutStyle } from "./surface-style";
 
 type GlassPressableProps = Omit<PressableProps, "children"> & {
   readonly backgroundColor?: string;
-  readonly borderColor?: string;
-  readonly borderWidth?: number;
   readonly children: ReactNode;
   readonly className?: string;
   readonly disabledOpacity?: number;
   readonly isInteractive?: boolean;
+  readonly layoutStyle?: SurfaceLayoutStyle;
   readonly nativeGlass?: boolean;
   readonly padded?: boolean;
   readonly radius?: number;
@@ -34,13 +33,12 @@ function getPressableStyle(
 export function GlassPressable({
   accessibilityRole,
   backgroundColor,
-  borderColor,
-  borderWidth,
   children,
   className,
   disabled,
   disabledOpacity = 0.6,
   isInteractive = false,
+  layoutStyle,
   nativeGlass = true,
   padded = false,
   radius,
@@ -58,16 +56,14 @@ export function GlassPressable({
       style={getPressableStyle(disabled, disabledOpacity, style)}
     >
       <GlassSurface
-        pointerEvents="none"
+        pointerEvents={isInteractive ? "auto" : "none"}
         backgroundColor={backgroundColor}
-        borderColor={borderColor}
-        borderWidth={borderWidth}
         isInteractive={isInteractive}
         nativeGlass={nativeGlass}
         padded={padded}
         radius={radius}
         className={surfaceClassName}
-        style={surfaceLayoutStyle}
+        style={layoutStyle ?? surfaceLayoutStyle}
       >
         {children}
       </GlassSurface>

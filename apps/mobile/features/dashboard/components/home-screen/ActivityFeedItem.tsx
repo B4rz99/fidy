@@ -45,7 +45,7 @@ function TransactionActivityItem({
           })}
         />
       ) : null}
-      <View className="px-4 py-1">
+      <View className="px-4 pb-2">
         <TransactionRow
           icon={category?.icon ?? "✨"}
           iconBgColor="transparent"
@@ -85,7 +85,7 @@ function TransferActivityItem({ accountNames, item, showDateHeader }: TransferAc
           })}
         />
       ) : null}
-      <View className="px-4 py-1">
+      <View className="px-4 pb-2">
         <TransactionRow
           icon="↔️"
           iconBgColor={accentGreenLight}

@@ -1,8 +1,9 @@
 import { Image } from "expo-image";
 import * as Updates from "expo-updates";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { useTranslation } from "@/shared/hooks/use-translation";
+import { GlassPressable } from "./GlassPressable";
 
 export function ErrorFallback() {
   const { t } = useTranslation();
@@ -17,28 +18,26 @@ export function ErrorFallback() {
       />
       <Text style={styles.title}>{t("errorFallback.title")}</Text>
       <Text style={styles.body}>{t("errorFallback.body")}</Text>
-      <Pressable
+      <GlassPressable
         onPress={() => {
           void Updates.reloadAsync().catch(() => undefined);
         }}
-        style={({ pressed }) => ({
-          backgroundColor: Colors.light.primary,
-          paddingHorizontal: 32,
-          paddingVertical: 14,
-          borderRadius: 12,
-          opacity: pressed ? 0.7 : 1,
-        })}
+        android_ripple={{ color: "rgba(255, 255, 255, 0.28)", borderless: false }}
+        padded={false}
+        radius={12}
+        style={styles.restartButton}
+        surfaceLayoutStyle={styles.restartSurface}
       >
         <Text
           style={{
             fontSize: 16,
             fontFamily: "Poppins_600SemiBold",
-            color: Colors.light.card,
+            color: Colors.light.primary,
           }}
         >
           {t("errorFallback.restart")}
         </Text>
-      </Pressable>
+      </GlassPressable>
     </View>
   );
 }
@@ -71,5 +70,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 32,
     lineHeight: 22,
+  },
+  restartButton: {
+    alignSelf: "center",
+  },
+  restartSurface: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
   },
 });

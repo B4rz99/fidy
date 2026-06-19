@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Card, ProgressBar } from "@/shared/components";
+import { Card, Surface, ProgressBar } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -17,15 +17,12 @@ function BudgetCardInner({ progress, onPress }: Props) {
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const peachLight = useThemeColor("peachLight");
 
   const category = CATEGORY_MAP[progress.categoryId] ?? null;
   const CategoryIcon = category?.icon;
   const categoryLabel = category ? getCategoryLabel(category, locale) : progress.categoryId;
   const model = deriveBudgetPulseCardModel({ progress, t });
-  const badgeColor =
-    model.tone === "danger" ? accentRed : model.tone === "warning" ? peachLight : accentGreen;
-  const badgeTextColor = model.tone === "warning" ? "#3A2820" : "#0D0D0D";
+  const badgeColor = model.tone === "danger" ? accentRed : accentGreen;
   const progressColor = model.tone === "danger" ? accentRed : accentGreen;
 
   const handlePress = () => onPress(progress.budgetId);
@@ -35,18 +32,18 @@ function BudgetCardInner({ progress, onPress }: Props) {
       <View style={styles.header}>
         <View style={styles.categoryRow}>
           {category && CategoryIcon ? (
-            <View style={[styles.emojiBubble, { backgroundColor: `${category.color}24` }]}>
+            <Surface radius={8} padded={false} style={styles.emojiBubble}>
               <Text style={styles.emoji}>{CategoryIcon}</Text>
-            </View>
+            </Surface>
           ) : null}
           <View style={styles.categoryText}>
             <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
             <Text style={[styles.amountLine, { color: secondaryColor }]}>{model.amountLine}</Text>
           </View>
         </View>
-        <View style={[styles.badge, { backgroundColor: badgeColor }]}>
-          <Text style={[styles.badgeText, { color: badgeTextColor }]}>{model.percentLabel}</Text>
-        </View>
+        <Surface radius={999} padded={false} style={styles.badge}>
+          <Text style={[styles.badgeText, { color: badgeColor }]}>{model.percentLabel}</Text>
+        </Surface>
       </View>
 
       <ProgressBar

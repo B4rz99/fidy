@@ -73,12 +73,12 @@ export function AppToastHost() {
         ]}
         accessibilityLiveRegion="polite"
       >
-        <GlassSurface padded={false} radius={18} borderColor={accent} style={styles.toast}>
+        <GlassSurface padded={false} radius={18} style={styles.toast}>
           <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
             {toast.message}
           </Text>
-          <View style={[styles.icon, { backgroundColor: accent }]}>
-            <ToastIcon size={16} color={onAccent} strokeWidth={2.5} />
+          <View style={styles.icon}>
+            <ToastIcon size={16} color={accent} strokeWidth={2.5} />
           </View>
         </GlassSurface>
       </Animated.View>

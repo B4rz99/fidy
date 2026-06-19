@@ -8,6 +8,19 @@ export const styles = StyleSheet.create({
   fullScreenAmount: {
     alignItems: "center",
   },
+  amountPressTarget: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 96,
+    width: "100%",
+  },
+  amountText: {
+    fontFamily: "Poppins_300Light",
+    fontSize: 78,
+    fontWeight: "300",
+    textAlign: "center",
+    width: "100%",
+  },
   fullScreenBottomForm: {
     gap: 10,
   },

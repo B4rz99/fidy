@@ -4,25 +4,27 @@ import { describe, expect, test } from "vitest";
 
 describe("AI tab", () => {
   const source = readFileSync(resolve(__dirname, "../../app/(tabs)/(ai)/index.tsx"), "utf-8");
+  const chatRouteSource = readFileSync(
+    resolve(__dirname, "../../app/(tabs)/(ai)/chat.tsx"),
+    "utf-8"
+  );
 
   test("imports ConversationList component", () => {
     expect(source).toContain("ConversationList");
   });
 
-  test("imports ChatScreen component", () => {
-    expect(source).toContain("ChatScreen");
+  test("renders ChatScreen from the chat route", () => {
+    expect(chatRouteSource).toContain("ChatScreen");
   });
 
-  test("passes new-chat action into the chat view", () => {
-    expect(source).toContain(
-      "<ChatScreen onBack={handleBackFromChat} onNewChat={handleNewChat} />"
-    );
+  test("opens chats through the nested chat route", () => {
+    expect(source).toContain('push("/(tabs)/(ai)/chat")');
+    expect(chatRouteSource).toContain("<ChatScreen />");
   });
 
-  test("manages view state for navigation", () => {
-    expect(source).toContain("AiView");
-    expect(source).toContain('"list"');
-    expect(source).toContain('"chat"');
+  test("does not use local view state for navigation", () => {
+    expect(source).not.toContain("AiView");
+    expect(source).not.toContain("useState<");
   });
 
   test("does not extract memories when leaving chat", () => {

@@ -110,10 +110,13 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   );
   expect(typeFilterSource).not.toContain('style={getStyle("all")}');
   expect(typeFilterSource).toContain("SegmentedControl");
+  expect(typeFilterSource).toContain('variant="detached"');
+  expect(filterControlsSource).toContain('activePanel === "type" ? filterPanel : null');
+  expect(filterControlsSource).toContain('activePanel !== "type"');
   expect(typeFilterSource).not.toContain("getOptionTone");
   expect(typeFilterSource).not.toContain('"danger"');
   expect(typeFilterSource).not.toContain('"success"');
-  expect(typeFilterSource).toContain("search.transfers");
+  expect(typeFilterSource).toContain("search.transferType");
   expect(categoryFilterSource).toContain('useThemeColor("accentGreen")');
   expect(categoryFilterSource).toContain("selectedColor={accentGreen}");
   expect(filterChipRowSource).not.toContain('"clearAll"');

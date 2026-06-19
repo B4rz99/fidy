@@ -1,9 +1,18 @@
+import { createElement } from "react";
 import { Platform } from "@/shared/components/rn";
+import { HeaderBackButton } from "./HeaderBackButton";
 
 type RouteTheme = {
   readonly page: string;
   readonly primary: string;
 };
+
+const customBackHeaderOptions = {
+  headerBackButtonDisplayMode: "minimal",
+  headerBackTitle: "",
+  headerBackVisible: false,
+  headerLeft: () => createElement(HeaderBackButton),
+} as const;
 
 export function createTransparentHeaderRouteOptions(theme: RouteTheme) {
   return {
@@ -12,6 +21,7 @@ export function createTransparentHeaderRouteOptions(theme: RouteTheme) {
     headerShown: Platform.OS === "ios",
     headerStyle: { backgroundColor: "transparent" },
     headerTransparent: true,
+    ...customBackHeaderOptions,
     headerTintColor: theme.primary,
   } as const;
 }
@@ -23,6 +33,7 @@ export function createFullScreenRouteOptions(theme: RouteTheme) {
     headerShown: true,
     headerStyle: { backgroundColor: Platform.OS === "ios" ? "transparent" : theme.page },
     headerTransparent: Platform.OS === "ios",
+    ...customBackHeaderOptions,
     headerTintColor: theme.primary,
     presentation: "card",
   } as const;

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { GlassSurface } from "@/shared/components";
+import { GlassPressable, Surface } from "@/shared/components";
 import { SendHorizonal } from "@/shared/components/icons";
-import { Pressable, StyleSheet, TextInput, View } from "@/shared/components/rn";
+import { StyleSheet, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { resolveChatComposerSend } from "../lib/chat-composer";
 import { useAiSupportTextColor } from "./use-ai-support-text-color";
@@ -25,12 +25,10 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   };
 
   const canSend = !disabled && text.trim().length > 0;
-  const sendButtonBackground = canSend ? accentGreen : "rgba(13, 13, 13, 0.72)";
-  const sendButtonBorderColor = canSend ? "transparent" : "rgba(255, 255, 255, 0.24)";
-  const sendIconColor = canSend ? "#fff" : "rgba(255, 255, 255, 0.72)";
+  const sendIconColor = canSend ? accentGreen : "rgba(255, 255, 255, 0.72)";
 
   return (
-    <GlassSurface nativeGlass={false} padded={false} radius={24} style={styles.composer}>
+    <Surface padded={false} radius={24} style={styles.composer}>
       <View style={styles.inputWrap}>
         <TextInput
           className="flex-1 text-primary dark:text-primary-dark"
@@ -45,22 +43,18 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           blurOnSubmit={false}
         />
       </View>
-      <Pressable
+      <GlassPressable
         accessibilityLabel={t("common.send")}
         accessibilityRole="button"
         onPress={handleSend}
         disabled={!canSend}
-        style={[
-          styles.sendButton,
-          {
-            backgroundColor: sendButtonBackground,
-            borderColor: sendButtonBorderColor,
-          },
-        ]}
+        radius={20}
+        padded={false}
+        layoutStyle={styles.sendButton}
       >
         <SendHorizonal size={18} color={sendIconColor} />
-      </Pressable>
-    </GlassSurface>
+      </GlassPressable>
+    </Surface>
   );
 }
 
@@ -83,7 +77,6 @@ const styles = StyleSheet.create({
   sendButton: {
     alignItems: "center",
     borderRadius: 20,
-    borderWidth: 1,
     height: 40,
     justifyContent: "center",
     width: 40,

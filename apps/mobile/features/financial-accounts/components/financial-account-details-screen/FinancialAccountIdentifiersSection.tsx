@@ -7,10 +7,9 @@ import { styles } from "./FinancialAccountDetailsScreen.styles";
 
 function IdentifierChip({ value }: { readonly value: string }) {
   const primary = useThemeColor("primary");
-  const peachLight = useThemeColor("peachLight");
 
   return (
-    <View style={[styles.identifierChip, { backgroundColor: peachLight }]}>
+    <View style={styles.identifierChip}>
       <Text style={[styles.identifierChipText, { color: primary }]}>{value}</Text>
     </View>
   );

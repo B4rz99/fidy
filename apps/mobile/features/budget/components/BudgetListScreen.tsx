@@ -84,7 +84,7 @@ export function BudgetListScreen() {
     pendingPermissionRequest
   );
 
-  const secondaryColor = useThemeColor("secondary");
+  const primaryColor = useThemeColor("primary");
 
   const monthAsDate = new Date(
     Number.parseInt(currentMonth.slice(0, 4), 10),
@@ -147,16 +147,21 @@ export function BudgetListScreen() {
     <EmptyState
       title={t("budgets.empty.title")}
       subtitle={t("budgets.empty.subtitle")}
-      icon={<Wallet size={48} color={secondaryColor} />}
-      className="pt-20"
+      icon={<Wallet size={48} color={primaryColor} />}
+      className="justify-start"
+      style={styles.emptyState}
       action={
-        <View className="mt-4 items-center" style={{ gap: 12 }}>
-          <Button label={t("budgets.empty.autoSetup")} onPress={handleAutoSetup} className="px-8" />
+        <View style={styles.emptyActions}>
+          <Button
+            label={t("budgets.empty.autoSetup")}
+            onPress={handleAutoSetup}
+            className="w-full max-w-[360px]"
+          />
           <Button
             label={t("budgets.empty.createManually")}
-            variant="ghost"
-            size="compact"
+            variant="secondary"
             onPress={handleCreateManually}
+            className="w-full max-w-[360px]"
           />
         </View>
       }
@@ -210,5 +215,18 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     gap: 8,
+  },
+  emptyState: {
+    flex: 0,
+    gap: 10,
+    minHeight: 430,
+    paddingHorizontal: 20,
+    paddingTop: 104,
+  },
+  emptyActions: {
+    alignItems: "center",
+    gap: 12,
+    marginTop: 14,
+    width: "100%",
   },
 });

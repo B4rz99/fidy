@@ -1,4 +1,4 @@
-import { Card } from "@/shared/components";
+import { Card, Surface } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
@@ -18,13 +18,12 @@ export function BackupStatusCard({
 }: BackupStatusCardProps) {
   const accentGreen = useThemeColor("accentGreen");
   const iconColor = tone === "green" ? accentGreen : "#C46A2B";
-  const iconBackground = tone === "green" ? "bg-accent-green-light" : "bg-peach-light";
   return (
     <Card contentStyle={{ gap: 10 }}>
       <View className="flex-row items-start" style={{ gap: 12 }}>
-        <View className={iconBackground} style={{ borderRadius: 12, padding: 8 }}>
+        <Surface radius={12} padded={false} style={{ padding: 8 }}>
           <Icon size={20} color={iconColor} />
-        </View>
+        </Surface>
         <View className="flex-1" style={{ gap: 4 }}>
           <Text className="font-poppins-semibold text-primary dark:text-primary-dark">{title}</Text>
           <Text className="font-poppins text-xs text-secondary dark:text-secondary-dark">

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { PressableProps } from "react-native";
-import { ActivityIndicator, Pressable, StyleSheet, Text } from "@/shared/components/rn";
+import { ActivityIndicator, StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { GlassPressable } from "./GlassPressable";
 
@@ -13,7 +13,6 @@ type ButtonProps = Omit<PressableProps, "children"> & {
   size?: ButtonSize;
   loading?: boolean;
   icon?: ReactNode;
-  borderColor?: string;
   className?: string;
 };
 
@@ -49,7 +48,6 @@ export function Button({
   size = "default",
   loading = false,
   icon,
-  borderColor,
   disabled,
   className,
   style,
@@ -64,14 +62,6 @@ export function Button({
       : variant === "danger"
         ? accentRed
         : accentGreen;
-  const usesGlassSurface = variant !== "ghost";
-  const semanticBorderColor =
-    borderColor ??
-    (variant === "primary"
-      ? accentGreen
-      : variant === "danger" || variant === "dangerSecondary"
-        ? accentRed
-        : undefined);
   const content = (
     <>
       {loading ? <ActivityIndicator color={loadingIndicatorColor} /> : icon}
@@ -83,31 +73,13 @@ export function Button({
     </>
   );
 
-  if (!usesGlassSurface) {
-    return (
-      <Pressable
-        {...pressableProps}
-        accessibilityRole={pressableProps.accessibilityRole ?? "button"}
-        disabled={isDisabled}
-        style={style}
-        className={`${SIZE_CLASS_NAMES[size]} flex-row items-center justify-center gap-2 rounded-xl px-4 ${
-          CONTAINER_CLASS_NAMES[variant]
-        } ${isDisabled ? "opacity-60" : ""} ${className ?? ""}`}
-      >
-        {content}
-      </Pressable>
-    );
-  }
-
   return (
     <GlassPressable
       {...pressableProps}
       accessibilityRole={pressableProps.accessibilityRole ?? "button"}
       disabled={isDisabled}
       style={style}
-      nativeGlass={false}
       radius={12}
-      borderColor={semanticBorderColor}
       surfaceLayoutStyle={styles.glassContent}
       className={`${SIZE_CLASS_NAMES[size]} ${CONTAINER_CLASS_NAMES[variant]} ${
         isDisabled ? "opacity-60" : ""

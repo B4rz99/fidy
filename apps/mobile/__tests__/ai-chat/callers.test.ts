@@ -41,7 +41,6 @@ const chatScreenSource = readFileSync(
   "utf-8"
 );
 
-
 describe("ai chat callers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -96,9 +95,10 @@ describe("ai chat callers", () => {
     );
   });
 
-  test("ChatScreen exposes a header action for starting a new chat", () => {
-    expect(chatScreenSource).toContain("rightActions={<NewChatButton onPress={onNewChat} />}");
-    expect(chatScreenSource).toContain("readonly onNewChat: () => void");
+  test("ChatScreen does not expose a header action for starting a new chat", () => {
+    expect(chatScreenSource).not.toContain("NewChatButton");
+    expect(chatScreenSource).not.toContain("readonly onNewChat: () => void");
+    expect(chatScreenSource).not.toContain("rightActions=");
   });
 
   test("ChatScreen keyboard offset matches the custom header height", () => {

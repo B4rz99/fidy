@@ -1,8 +1,11 @@
-import { MetricCard } from "@/shared/components";
-import { Text, View } from "@/shared/components/rn";
+import { Surface, MetricCard } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import type { CategorySpendingItem } from "./useHomeScreen";
 import { deriveHomeSpendingCardModel } from "./HomeSpendingCard.model";
+
+const CATEGORY_BAR_MAX_HEIGHT = 84;
+const CATEGORY_BAR_MIN_HEIGHT = 24;
 
 type HomeSpendingCardProps = {
   readonly balance: number;
@@ -52,30 +55,30 @@ export function HomeSpendingCard({
             {model.guidance}
           </Text>
         </View>
-        <View
-          className="h-28 flex-row items-end gap-2 pt-4"
-          accessibilityLabel={t("dashboard.categoryBars")}
-        >
-          {model.bars.map((bar) => (
-            <View key={bar.categoryId} className="flex-1 items-center gap-1">
+        <View style={styles.categoryRibbon} accessibilityLabel={t("dashboard.categoryBars")}>
+          {model.bars.map((bar) => {
+            const height =
+              CATEGORY_BAR_MIN_HEIGHT +
+              (bar.percentage / 100) * (CATEGORY_BAR_MAX_HEIGHT - CATEGORY_BAR_MIN_HEIGHT);
+
+            return (
               <View
-                className="w-full items-center justify-end rounded-icon"
-                style={{
-                  height: `${bar.percentage}%`,
-                  minHeight: 24,
-                  backgroundColor: bar.color,
-                  borderTopLeftRadius: 999,
-                  borderTopRightRadius: 999,
-                  borderBottomLeftRadius: 4,
-                  borderBottomRightRadius: 4,
-                }}
+                key={bar.categoryId}
+                style={styles.categoryBarContainer}
                 accessible
                 accessibilityLabel={`${bar.label}, ${bar.amountLabel}`}
               >
-                <Text className="pb-1 text-caption">{bar.icon}</Text>
+                <Surface
+                  backgroundColor={bar.color}
+                  radius={8}
+                  padded={false}
+                  style={[styles.categoryBar, { height }]}
+                >
+                  <Text style={styles.categoryBarIcon}>{bar.icon}</Text>
+                </Surface>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
         <View className="flex-row gap-4">
           <View className="flex-1 flex-row items-baseline gap-2">
@@ -99,3 +102,32 @@ export function HomeSpendingCard({
     </MetricCard>
   );
 }
+
+const styles = StyleSheet.create({
+  categoryRibbon: {
+    height: CATEGORY_BAR_MAX_HEIGHT + 6,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 7,
+    paddingTop: 6,
+  },
+  categoryBarContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  categoryBar: {
+    width: "100%",
+    maxWidth: 44,
+    minHeight: CATEGORY_BAR_MIN_HEIGHT,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    borderRadius: 8,
+    borderCurve: "continuous",
+    paddingTop: 7,
+  },
+  categoryBarIcon: {
+    fontSize: 16,
+  },
+});

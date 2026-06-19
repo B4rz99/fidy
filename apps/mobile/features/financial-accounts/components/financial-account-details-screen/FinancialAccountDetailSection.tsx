@@ -37,7 +37,6 @@ export function FinancialAccountFieldRow({
   return (
     <ListRowSurface
       variant="grouped"
-      nativeGlass={false}
       divider
       dividerColor={borderSubtle}
       contentStyle={styles.fieldRow}

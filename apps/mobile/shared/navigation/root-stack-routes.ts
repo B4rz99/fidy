@@ -18,7 +18,6 @@ export const ROOT_STACK_ROUTES = {
     "add-bill",
     "day-detail",
     "goal-detail",
-    "create-goal",
     "add-payment",
     "edit-goal",
     "create-category",
@@ -64,6 +63,10 @@ export function createRootStackRouteOptions(theme: RootRouteTheme, t: Translate)
       createBudget: {
         ...fullScreen,
         title: t("budgets.create.title"),
+      },
+      createGoal: {
+        ...fullScreen,
+        title: t("goals.create.title"),
       },
     },
   } as const;

@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Button, Card, ProgressBar } from "@/shared/components";
+import { Button, Card, Surface, ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -53,18 +53,18 @@ function GoalCardStatus(props: {
   })();
 
   return (
-    <View
+    <Surface
+      radius={8}
+      padded={false}
       style={{
         paddingVertical: 3,
         paddingHorizontal: 8,
-        borderRadius: 8,
-        backgroundColor: `${chip.color}26`,
       }}
     >
       <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: chip.color }}>
         {chip.label}
       </Text>
-    </View>
+    </Surface>
   );
 }
 
@@ -91,9 +91,9 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
       <Pressable style={styles.summaryArea} onPress={onPress}>
         <View style={styles.headerRow}>
           <View style={styles.titleGroup}>
-            <View style={[styles.iconBadge, { backgroundColor: goalColor }]}>
+            <Surface radius={8} padded={false} style={styles.iconBadge}>
               <Text style={styles.iconText}>{goalIcon}</Text>
-            </View>
+            </Surface>
             <View style={styles.titleCopy}>
               <Text style={[styles.goalName, { color: primaryColor }]} numberOfLines={1}>
                 {goal.name}
@@ -106,16 +106,11 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
               </Text>
             </View>
           </View>
-          <View
-            style={[
-              styles.percentPill,
-              { backgroundColor: goal.type === "debt" ? peachLight : accentGreenLight },
-            ]}
-          >
+          <Surface radius={999} padded={false} style={styles.percentPill}>
             <Text style={[styles.percentText, { color: goalColor }]}>
               {Math.round(progress.percentComplete)}%
             </Text>
-          </View>
+          </Surface>
         </View>
 
         <ProgressBar

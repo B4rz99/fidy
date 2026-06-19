@@ -1,5 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View } from "@/shared/components/rn";
+import { GlassSurface } from "../GlassSurface";
 import { AddNavButton } from "./AddNavButton";
 import { NavItem } from "./NavItem";
 import { TAB_CONFIG } from "./tab-config";
@@ -23,8 +23,10 @@ export const CustomTabBar = ({ state, navigation }: CustomTabBarProps) => {
   const insets = useSafeAreaInsets();
 
   return (
-    <View
-      className="absolute left-5 right-5 flex-row items-center justify-around rounded-nav-pill bg-nav p-2 dark:bg-nav-dark"
+    <GlassSurface
+      padded={false}
+      radius={28}
+      className="absolute left-5 right-5 flex-row items-center justify-around p-2"
       style={{ bottom: Math.max(insets.bottom, 16) }}
     >
       {state.routes.map((route, index) => {
@@ -58,6 +60,6 @@ export const CustomTabBar = ({ state, navigation }: CustomTabBarProps) => {
           />
         );
       })}
-    </View>
+    </GlassSurface>
   );
 };

@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { getBuiltInCategory } from "@/shared/categories";
-import { Card, IconActionButton } from "@/shared/components";
+import { Card, Surface, IconActionButton } from "@/shared/components";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -30,20 +30,13 @@ export function CalendarBillRow({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
   const peach = useThemeColor("peach");
-  const peachLight = useThemeColor("peachLight");
   const category = getBuiltInCategory(occurrence.bill.categoryId);
   const paid = occurrence.isPaid;
 
   return (
-    <Card
-      padded={false}
-      radius={radius}
-      backgroundColor={paid ? accentGreenLight : undefined}
-      contentStyle={styles.cardContent}
-    >
+    <Card padded={false} radius={radius} contentStyle={styles.cardContent}>
       <View style={styles.billRow}>
         <View style={styles.billMain}>
           <Text style={styles.billIcon}>{category.icon}</Text>
@@ -67,26 +60,19 @@ export function CalendarBillRow({
       </View>
 
       <View style={styles.cardFooter}>
-        <Text
-          style={[
-            styles.statusPill,
-            {
-              color: paid ? accentGreen : peach,
-              backgroundColor: paid ? `${accentGreen}1A` : `${peach}1A`,
-            },
-          ]}
-        >
-          {paid ? t("calendar.paid") : t("calendar.pending")}
-        </Text>
+        <Surface radius={8} padded={false} style={styles.statusPill}>
+          <Text style={[styles.statusPillText, { color: paid ? accentGreen : peach }]}>
+            {paid ? t("calendar.paid") : t("calendar.pending")}
+          </Text>
+        </Surface>
         <View style={styles.actions}>
           {onPaymentToggle ? (
             <IconActionButton
               accessibilityLabel={paid ? t("calendar.paid") : t("calendar.pending")}
-              icon={<Check size={16} color={paid ? "#FFFFFF" : primary} />}
+              icon={<Check size={16} color={paid ? accentGreen : primary} />}
               onPress={() => onPaymentToggle(occurrence)}
               size="size-[34px]"
               tone="surface"
-              backgroundColor={paid ? accentGreen : peachLight}
             />
           ) : null}
           {onEdit ? (
@@ -96,7 +82,6 @@ export function CalendarBillRow({
               onPress={() => onEdit(occurrence.bill)}
               size="size-[34px]"
               tone="surface"
-              backgroundColor={peachLight}
             />
           ) : null}
           {onDelete ? (
@@ -106,7 +91,6 @@ export function CalendarBillRow({
               onPress={() => onDelete(occurrence.bill)}
               size="size-[34px]"
               tone="surface"
-              backgroundColor={peachLight}
             />
           ) : null}
         </View>
@@ -161,10 +145,10 @@ const styles = StyleSheet.create({
   },
   statusPill: {
     alignSelf: "flex-start",
-    borderRadius: 8,
-    overflow: "hidden",
     paddingHorizontal: 8,
     paddingVertical: 4,
+  },
+  statusPillText: {
     fontFamily: "Poppins_700Bold",
     fontSize: 11,
   },

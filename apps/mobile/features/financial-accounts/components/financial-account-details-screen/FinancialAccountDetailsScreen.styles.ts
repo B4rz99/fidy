@@ -48,7 +48,6 @@ export const styles = StyleSheet.create({
   fieldRow: {
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   fieldText: {
     flex: 1,

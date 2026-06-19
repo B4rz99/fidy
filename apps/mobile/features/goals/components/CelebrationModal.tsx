@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { GlassSurface } from "@/shared/components";
+import { Button, Surface } from "@/shared/components";
 import { Modal, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -44,7 +44,6 @@ export const CelebrationModal = memo(function CelebrationModal({
 }: CelebrationModalProps) {
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
   const textPrimary = useThemeColor("primary");
   const textSecondary = useThemeColor("secondary");
 
@@ -65,7 +64,7 @@ export const CelebrationModal = memo(function CelebrationModal({
           padding: 32,
         }}
       >
-        <GlassSurface
+        <Surface
           padded={false}
           radius={24}
           style={{
@@ -76,19 +75,18 @@ export const CelebrationModal = memo(function CelebrationModal({
             gap: 20,
           }}
         >
-          {/* Trophy icon circle */}
-          <View
+          <Surface
+            radius={48}
+            padded={false}
             style={{
               width: 96,
               height: 96,
-              borderRadius: 48,
-              backgroundColor: accentGreenLight,
               justifyContent: "center",
               alignItems: "center",
             }}
           >
             <Text style={{ fontSize: 44 }}>{"🏆"}</Text>
-          </View>
+          </Surface>
 
           {/* Title */}
           <Text
@@ -126,29 +124,8 @@ export const CelebrationModal = memo(function CelebrationModal({
             {formatMoney(displayAmount)}
           </Text>
 
-          {/* Continue button */}
-          <Pressable
-            style={{
-              width: "100%",
-              height: 48,
-              borderRadius: 12,
-              backgroundColor: accentGreen,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-            onPress={onDismiss}
-          >
-            <Text
-              style={{
-                fontFamily: "Poppins_600SemiBold",
-                fontSize: 16,
-                color: "#FFFFFF",
-              }}
-            >
-              {t("goals.celebration.continueButton")}
-            </Text>
-          </Pressable>
-        </GlassSurface>
+          <Button label={t("goals.celebration.continueButton")} onPress={onDismiss} />
+        </Surface>
       </View>
     </Modal>
   );

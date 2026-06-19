@@ -188,7 +188,6 @@ export function PrivateBackupScreen() {
               inputStyle={{
                 minHeight: 52,
                 borderRadius: 16,
-                borderWidth: 1,
                 paddingHorizontal: 16,
                 fontFamily: "Poppins_400Regular",
                 fontSize: 14,
