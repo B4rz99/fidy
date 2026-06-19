@@ -1,0 +1,61 @@
+apps/mobile/shared/components/DatePickerDialog.tsx
+  s_684b36ec2a2ec9::t_34bf60a19a47ec 5-6
+  s_684b36ec2a2ec9::t_265d87e69131ba 1-4,7-52
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_684b36ec2a2ec9::t_cea18452223692 45-46
+apps/mobile/shared/components/DatePickerControl.tsx
+  s_684b36ec2a2ec9::t_265d87e69131ba 1-50
+apps/mobile/__tests__/transactions/add-screen-source.test.ts
+  s_684b36ec2a2ec9::t_7f99103d7a8408 31,149,171-174,184
+  s_684b36ec2a2ec9::t_eeedadf30f8123 189
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_684b36ec2a2ec9::t_34bf60a19a47ec 10
+  s_684b36ec2a2ec9::t_add9ae16142dc6 1
+  s_684b36ec2a2ec9::t_265d87e69131ba 7-8,12-17,19-23,26-33,36-43
+docs/adr/0005-sdk-56-improvements-plan.md
+  s_684b36ec2a2ec9::t_566ab317795205 54-60
+apps/mobile/features/transfers/components/TransferFormScreen.tsx
+  s_684b36ec2a2ec9::t_265d87e69131ba 2,50,54-55
+apps/mobile/features/transactions/components/TransactionDatePickerDialog.tsx
+  s_684b36ec2a2ec9::t_265d87e69131ba 1,12
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_684b36ec2a2ec9::t_265d87e69131ba 2,93,98
+apps/mobile/features/financial-accounts/public.ts
+  s_684b36ec2a2ec9::t_265d87e69131ba 1-25
+apps/mobile/__tests__/ui/date-picker-imports.test.ts
+  s_684b36ec2a2ec9::t_42e94b7b1e6ed0 18,20-26,28,31,33-38,41-45,62
+  s_684b36ec2a2ec9::t_eeedadf30f8123 46-49
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_684b36ec2a2ec9::t_d78b9a5817e826 2,33
+  s_684b36ec2a2ec9::t_265d87e69131ba 6,8,106-112
+apps/mobile/features/financial-accounts/ui.public.ts
+  s_684b36ec2a2ec9::t_265d87e69131ba 1
+apps/mobile/features/transactions/components/TransactionEntryPickers.tsx
+  s_684b36ec2a2ec9::t_872ca1e9e60ab0 8
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_684b36ec2a2ec9::t_265d87e69131ba 5,15,59-64,127,130-131
+apps/mobile/__tests__/shared/glass-layout-contracts.test.ts
+  s_684b36ec2a2ec9::t_28263e887ad623 1-2,15-23,115,119-128,130-140
+apps/mobile/features/transfers/components/TransferEntryContent.tsx
+  s_684b36ec2a2ec9::t_265d87e69131ba 5,14-15,99-100,102,104
+apps/mobile/features/transfers/components/transfer-form/useTransferFormActions.ts
+  s_684b36ec2a2ec9::t_265d87e69131ba 83-85
+apps/mobile/shared/components/index.ts
+  s_684b36ec2a2ec9::t_265d87e69131ba 11-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "d02aafe12c1c7bfe394acf6dd7d231e2aea8cb2c",
+  "prompts": {},
+  "sessions": {
+    "s_684b36ec2a2ec9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd1d-eae0-7511-a447-ae0901cc4de2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
