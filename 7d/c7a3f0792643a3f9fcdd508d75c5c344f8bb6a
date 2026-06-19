@@ -1,0 +1,29 @@
+apps/mobile/shared/components/SelectableChipRow.tsx
+  s_684b36ec2a2ec9::t_236c7a0f118461 2,22,35,61
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_684b36ec2a2ec9::t_9b4f868b8c9d71 415-418
+  s_684b36ec2a2ec9::t_236c7a0f118461 9,366,375-412,414,419
+  s_684b36ec2a2ec9::t_139437bdcc8c06 413
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_684b36ec2a2ec9::t_236c7a0f118461 37-38,42
+apps/mobile/__tests__/financial-accounts/form-screen.test.tsx
+  s_684b36ec2a2ec9::t_9b4f868b8c9d71 82-96
+apps/mobile/shared/components/DatePickerDialog.tsx
+  s_684b36ec2a2ec9::t_236c7a0f118461 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "7dc7a3f0792643a3f9fcdd508d75c5c344f8bb6a",
+  "prompts": {},
+  "sessions": {
+    "s_684b36ec2a2ec9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019edd1d-eae0-7511-a447-ae0901cc4de2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
