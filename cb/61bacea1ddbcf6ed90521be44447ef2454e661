@@ -1,0 +1,26 @@
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_775dcfa08b2193::t_ff884f8812d831 704
+  s_775dcfa08b2193::t_0804e6a8672172 677,695-696,701-703,705-707
+  s_775dcfa08b2193::t_9d7ae769456505 697-700
+apps/mobile/features/budget/components/create-budget/CreateBudget.styles.ts
+  s_775dcfa08b2193::t_0804e6a8672172 4-17
+apps/mobile/features/budget/components/create-budget/CreateBudgetFormContent.tsx
+  s_775dcfa08b2193::t_ff884f8812d831 93,105
+  s_775dcfa08b2193::t_0804e6a8672172 4,6,8,51,94-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "cb61bacea1ddbcf6ed90521be44447ef2454e661",
+  "prompts": {},
+  "sessions": {
+    "s_775dcfa08b2193": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede2b-cb9c-7f33-88f4-0adec319cf33",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
