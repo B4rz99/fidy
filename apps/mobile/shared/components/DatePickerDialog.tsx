@@ -29,7 +29,7 @@ export function DatePickerDialog({
 }: DatePickerDialogProps) {
   const { t } = useTranslation();
   const currentDate = useCurrentDate();
-  const resolvedMaximumDate = allowFuture ? undefined : (maximumDate ?? currentDate);
+  const resolvedMaximumDate = maximumDate ?? (allowFuture ? undefined : currentDate);
 
   return (
     <DialogFrame visible={visible} testID={testID} onClose={onClose}>

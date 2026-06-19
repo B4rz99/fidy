@@ -34,9 +34,12 @@ export function FinancialAccountKindPicker({
 
   return (
     <SelectableChipRow
+      accessibilityLabel={t("financialAccounts.form.kindLabel")}
+      accessibilityRole="radiogroup"
       options={options}
       value={value}
       onChange={onChange}
+      optionAccessibilityRole="radio"
       selectedTone="primary"
       chipStyle={chipStyle}
       style={style}
