@@ -674,10 +674,7 @@ describe("shared UI kit", () => {
   });
 
   it("keeps money-entry amount controls on shared money amount primitives", () => {
-    const files = [
-      "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx",
-      "../../features/goals/components/AddPaymentScreen.tsx",
-    ];
+    const files = ["../../features/goals/components/AddPaymentScreen.tsx"];
 
     files.forEach((file) => {
       const source = readFileSync(resolve(__dirname, file), "utf-8");
@@ -695,6 +692,19 @@ describe("shared UI kit", () => {
     expect(goalAmountSource).toContain("<Text");
     expect(goalAmountSource).not.toContain("<MoneyEntryAmountField");
     expect(goalAmountSource).not.toContain("cursorVisible");
+
+    const budgetAmountSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx"
+      ),
+      "utf-8"
+    );
+
+    expect(budgetAmountSource).toContain('import { Text, View } from "@/shared/components/rn"');
+    expect(budgetAmountSource).toContain("<Text");
+    expect(budgetAmountSource).not.toContain("<MoneyEntryAmountField");
+    expect(budgetAmountSource).not.toContain("cursorVisible");
   });
 
   it("keeps repeated form text inputs on the shared FormTextField primitive", () => {

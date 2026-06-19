@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { CategoryPill } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { Button, ChoiceTray, MoneyEntryAmountField, MoneyEntryScreen } from "@/shared/components";
+import { Button, ChoiceTray, MoneyEntryScreen } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
-import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib";
+import { formatInputDisplay, formatMoney } from "@/shared/lib";
 import type { BudgetSuggestion } from "../../lib/derive";
 import { styles } from "./CreateBudget.styles";
 
@@ -37,7 +37,6 @@ export function CreateBudgetFormContent({
   setCategory,
 }: CreateBudgetFormContentProps) {
   const { locale, t } = useTranslation();
-  const { cursorStyle } = useBlinkingCursor();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
@@ -49,6 +48,7 @@ export function CreateBudgetFormContent({
     (suggestion) => suggestion.categoryId === category
   );
   const selectedCategory = CATEGORIES.find((categoryOption) => categoryOption.id === category);
+  const displayAmount = formatInputDisplay(digits);
 
   return (
     <MoneyEntryScreen
@@ -90,22 +90,19 @@ export function CreateBudgetFormContent({
         </>
       }
       amountContent={
-        <MoneyEntryAmountField
-          color={primaryColor}
-          cursorStyle={cursorStyle}
-          cursorVisible
-          digits={digits}
-          helper={
-            selectedSuggestion && selectedCategory ? (
-              <Text style={[styles.suggestionHint, { color: secondaryColor }]}>
-                {t("budgets.create.lastMonthHint", {
-                  amount: formatMoney(selectedSuggestion.suggestedAmount),
-                  category: getCategoryLabel(selectedCategory, locale),
-                })}
-              </Text>
-            ) : null
-          }
-        />
+        <View style={styles.amountPressTarget}>
+          <Text numberOfLines={1} style={[styles.amountText, { color: primaryColor }]}>
+            {displayAmount}
+          </Text>
+          {selectedSuggestion && selectedCategory ? (
+            <Text style={[styles.suggestionHint, { color: secondaryColor }]}>
+              {t("budgets.create.lastMonthHint", {
+                amount: formatMoney(selectedSuggestion.suggestedAmount),
+                category: getCategoryLabel(selectedCategory, locale),
+              })}
+            </Text>
+          ) : null}
+        </View>
       }
       onKeyPress={handleKey}
     />
