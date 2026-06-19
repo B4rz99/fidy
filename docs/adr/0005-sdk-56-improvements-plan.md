@@ -51,6 +51,13 @@ Migration result:
 - Android dismiss/cancel/backdrop behavior remains explicit so dismissed pickers do not commit dates.
 - `@react-native-community/datetimepicker` was removed once source imports were gone.
 
+Current worktree note, 2026-06-18:
+
+- This worktree is on Expo SDK 55 and still depends on `@react-native-community/datetimepicker`.
+- Native picker package and event semantics are isolated behind `shared/components/DatePickerControl`.
+- Feature modules should use `DatePickerControl` or `DatePickerDialog` and receive selected dates, not native picker events.
+- When the SDK 56 migration is reapplied, the package swap should be localized to `DatePickerControl`.
+
 ### 3. Add declarative Android NavigationBar handling
 
 Status: completed in PR 407; Android edge-to-edge behavior still needs manual device/simulator QA.

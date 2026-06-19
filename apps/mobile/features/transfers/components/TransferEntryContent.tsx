@@ -1,9 +1,8 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import {
-  Button,
+  DatePickerDialog,
   DialogCancelButton,
   DialogFrame,
   DialogPanel,
@@ -12,8 +11,8 @@ import {
 } from "@/shared/components";
 import { ArrowLeftRight, Calendar, Pencil, Tag } from "@/shared/components/icons";
 import { EntryField, EntryTextInputField } from "@/shared/components/EntryScaffold";
-import { Platform, View } from "@/shared/components/rn";
-import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
+import { View } from "@/shared/components/rn";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, showSuccessToast } from "@/shared/lib";
 import type { TransferSide } from "../lib/build-transfer";
 import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
@@ -37,7 +36,6 @@ export function useTransferEntry(props: { readonly enabled?: boolean } = {}) {
     onSuccessfulSave: () => showSuccessToast(t("transfers.saved"), 1.6),
   });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-  const maximumDate = useCurrentDate();
   const secondary = useThemeColor("secondary");
 
   return {
@@ -98,23 +96,12 @@ export function useTransferEntry(props: { readonly enabled?: boolean } = {}) {
           onClose={form.handlePickerClose}
           onSelect={form.applySelectedSide}
         />
-        <DialogFrame
+        <DatePickerDialog
+          date={form.date}
           visible={form.showDatePicker}
-          testID="calendar-picker.backdrop"
+          onChange={form.handleDateSelect}
           onClose={() => form.setShowDatePicker(false)}
-        >
-          <DialogPanel>
-            <DialogTitle>{t("common.date")}</DialogTitle>
-            <DateTimePicker
-              value={form.date}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              maximumDate={maximumDate}
-              onChange={form.handleDateChange}
-            />
-            <Button label={t("common.confirm")} onPress={() => form.setShowDatePicker(false)} />
-          </DialogPanel>
-        </DialogFrame>
+        />
         <DialogFrame
           visible={showCategoryPicker}
           testID="category-picker.backdrop"

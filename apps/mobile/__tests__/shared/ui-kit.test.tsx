@@ -42,6 +42,8 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { Chip } from "./Chip"');
     expect(source).toContain('export { Callout } from "./Callout"');
     expect(source).toContain('export { EmptyState } from "./EmptyState"');
+    expect(source).toContain('export { DatePickerControl } from "./DatePickerControl"');
+    expect(source).toContain('export { DatePickerDialog } from "./DatePickerDialog"');
     expect(source).toContain('export { FieldButton } from "./FieldButton"');
     expect(source).toContain('export { FieldSurface } from "./FieldSurface"');
     expect(source).toContain('export { FilterPill } from "./FilterPill"');

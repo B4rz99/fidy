@@ -124,7 +124,6 @@ function useTransferFormDerivedState(
       db: route.db,
       digits: state.digits,
       fromSide: state.fromSide,
-      isIos: route.isIos,
       onSuccessfulSave: props.onSuccessfulSave ?? route.onSuccessfulSave,
       processedSourceEventId: route.processedSourceEventId,
       reviewCandidateId: route.reviewCandidateId,

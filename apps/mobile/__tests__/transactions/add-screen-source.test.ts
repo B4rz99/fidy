@@ -28,6 +28,7 @@ const transferSidePickerSource = readSource(
   "../../features/transfers/components/transfer-form/TransferSidePicker.tsx"
 );
 const sharedDialogSource = readSource("../../shared/components/DialogFrame.tsx");
+const sharedDatePickerDialogSource = readSource("../../shared/components/DatePickerDialog.tsx");
 const themeSource = readSource("../../shared/constants/theme.ts");
 
 test("add transaction routes use the Transaction entry screen from scratch", () => {
@@ -145,7 +146,7 @@ test("Transaction entry supports expense income transfer and calendar", () => {
   expect(transactionEntrySource).toContain("useTransferEntry");
   expect(transferEntryContentSource).toContain("useTransferForm");
   expect(transactionEntrySource).not.toContain('push("/add-transfer');
-  expect(transactionPickersSource).toContain("DateTimePicker");
+  expect(transactionPickersSource).toContain("TransactionDatePickerDialog");
   expect(transactionEntrySource).toContain('uiState.picker === "account"');
   expect(transactionEntrySource).toContain('uiState.picker === "category"');
   expect(transactionPickersSource).toContain("Modal");
@@ -167,8 +168,10 @@ test("Transaction entry confirms saves with a toast without leaving the add scre
 });
 
 test("Add screens do not allow future transaction dates", () => {
-  expect(transactionPickersSource).toContain("useCurrentDate");
-  expect(transferEntryContentSource).toContain("useCurrentDate");
+  expect(sharedDatePickerDialogSource).toContain("useCurrentDate");
+  expect(sharedDatePickerDialogSource).toContain("allowFuture");
+  expect(transactionPickersSource).toContain("TransactionDatePickerDialog");
+  expect(transferEntryContentSource).toContain("DatePickerDialog");
 });
 
 test("Transfer entry supports transfer side pickers and calendar", () => {
@@ -178,11 +181,11 @@ test("Transfer entry supports transfer side pickers and calendar", () => {
   expect(transferEntryContentSource).toContain('setPickerTarget("from")');
   expect(transferEntrySource).toContain("onTransactionTabSelect");
   expect(transferEntrySource).not.toContain('replace("/add-transaction');
-  expect(transferEntryContentSource).toContain("DateTimePicker");
+  expect(transferEntryContentSource).toContain("DatePickerDialog");
   expect(transferEntryContentSource).toContain("showCategoryPicker");
   expect(transferEntryContentSource).toContain("DialogFrame");
   expect(transferEntryContentSource).toContain("DialogPanel");
   expect(transferEntryContentSource).toContain("PickerOptionRow");
-  expect(transferEntryContentSource).toContain("calendar-picker.backdrop");
+  expect(sharedDatePickerDialogSource).toContain("calendar-picker.backdrop");
   expect(transferEntryContentSource).toContain("category-picker.backdrop");
 });

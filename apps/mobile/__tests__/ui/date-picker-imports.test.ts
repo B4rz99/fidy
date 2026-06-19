@@ -15,27 +15,38 @@ function readSources(dir: string): readonly { readonly path: string; readonly so
 }
 
 describe("date picker imports", () => {
-  it("uses the SDK 55 community DateTimePicker package", () => {
+  it("keeps the native date picker package behind the shared adapter", () => {
     const sources = sourceRoots.flatMap((root) => readSources(resolve(appRoot, root)));
-    const communityImports = sources.filter(({ source }) =>
-      source.includes("@react-native-community/datetimepicker")
-    );
+    const nativeDatePickerImports = sources
+      .filter(
+        ({ source }) =>
+          source.includes("@react-native-community/datetimepicker") ||
+          source.includes("@expo/ui/community/datetime-picker")
+      )
+      .map(({ path }) => path);
 
-    expect(communityImports).not.toEqual([]);
-    expect(
-      sources.filter(({ source }) => source.includes("@expo/ui/community/datetime-picker"))
-    ).toEqual([]);
+    expect(nativeDatePickerImports).toEqual(["shared/components/DatePickerControl.tsx"]);
   });
 
-  it("uses the SDK 55 DateTimePicker change event", () => {
+  it("exposes date selection instead of native DateTimePicker events", () => {
     const sources = sourceRoots.flatMap((root) => readSources(resolve(appRoot, root)));
-    const datePickerSources = sources.filter(({ source }) =>
-      source.includes("@react-native-community/datetimepicker")
+    const featureDatePickerSources = sources.filter(
+      ({ path, source }) => path.startsWith("features/") && source.includes("DatePicker")
+    );
+    const datePickerControlSource = readFileSync(
+      resolve(appRoot, "shared/components/DatePickerControl.tsx"),
+      "utf-8"
     );
 
-    expect(datePickerSources).not.toEqual([]);
-    expect(datePickerSources.every(({ source }) => source.includes("onChange="))).toBe(true);
-    expect(datePickerSources.filter(({ source }) => source.includes("onValueChange="))).toEqual([]);
+    expect(datePickerControlSource).toContain("onSelect");
+    expect(datePickerControlSource).toContain("isDatePickerDismissed");
+    expect(
+      featureDatePickerSources.filter(({ source }) => source.includes("@react-native-community"))
+    ).toEqual([]);
+    expect(featureDatePickerSources.filter(({ source }) => source.includes("event.type"))).toEqual(
+      []
+    );
+    expect(featureDatePickerSources.filter(({ source }) => source.includes("_event"))).toEqual([]);
   });
 
   it("keeps goal date selection on the shared transaction date picker sheet", () => {
@@ -48,5 +59,6 @@ describe("date picker imports", () => {
     expect(source).toContain("allowFuture");
     expect(source).toContain("minimumDate={minimumDate}");
     expect(source).not.toContain("@react-native-community/datetimepicker");
+    expect(source).not.toContain("@expo/ui/community/datetime-picker");
   });
 });

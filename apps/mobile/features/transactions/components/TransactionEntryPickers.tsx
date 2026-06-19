@@ -5,8 +5,7 @@ export { TransactionDatePickerDialog } from "./TransactionDatePickerDialog";
 // backgroundColor: `${modalBackdrop}40`
 // justifyContent: "center"
 // maxWidth: 480
-// DateTimePicker
-// useCurrentDate
+// DatePickerDialog
 // Modal
 // account-picker.backdrop
 // calendar-picker.backdrop

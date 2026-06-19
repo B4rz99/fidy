@@ -1,17 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
+import { FinancialAccountKindPicker } from "@/features/financial-accounts/ui.public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import {
-  Button,
-  Card,
-  EmptyState,
-  FormTextField,
-  GlassPressable,
-  ScreenLayout,
-} from "@/shared/components";
+import { Button, Card, EmptyState, FormTextField, ScreenLayout } from "@/shared/components";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -21,14 +15,6 @@ import type { AccountCreationSuggestion } from "../lib/derive-account-suggestion
 import { shouldAdvanceOnboardingAfterSuggestionMutation } from "../lib/onboarding-review";
 import { buildSuggestedFinancialAccountDraft } from "../lib/presentation";
 import { createAccountSuggestionService } from "../services/create-account-suggestion-service";
-
-const ACCOUNT_KIND_OPTIONS = [
-  "checking",
-  "savings",
-  "wallet",
-  "cash",
-  "credit_card",
-] as const satisfies readonly FinancialAccountKind[];
 
 function ResolvedCreateSuggestedAccountForm({
   db,
@@ -44,10 +30,9 @@ function ResolvedCreateSuggestedAccountForm({
   const { bottom } = useSafeAreaInsets();
   const onboardingStep = useOnboardingStore((state) => state.step);
   const nextStep = useOnboardingStore((state) => state.nextStep);
-  const service = useMemo(() => createAccountSuggestionService(), []);
+  const service = createAccountSuggestionService();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
 
   const draft = buildSuggestedFinancialAccountDraft(suggestion);
@@ -118,27 +103,13 @@ function ResolvedCreateSuggestedAccountForm({
           <Text style={[styles.fieldLabel, { color: secondary }]}>
             {t("accountSuggestions.create.kindLabel")}
           </Text>
-          <View style={styles.kindRow}>
-            {ACCOUNT_KIND_OPTIONS.map((option) => {
-              const isSelected = option === kind;
-
-              return (
-                <GlassPressable
-                  key={option}
-                  onPress={() => setKind(option)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: isSelected }}
-                  radius={12}
-                  borderColor={isSelected ? accentGreen : undefined}
-                  surfaceLayoutStyle={styles.kindPill}
-                >
-                  <Text style={[styles.kindText, { color: primary }]}>
-                    {t(`financialAccounts.kinds.${option}`)}
-                  </Text>
-                </GlassPressable>
-              );
-            })}
-          </View>
+          <FinancialAccountKindPicker
+            value={kind}
+            onChange={setKind}
+            showEmoji={false}
+            style={styles.kindRow}
+            chipStyle={styles.kindPill}
+          />
         </View>
 
         <Button
@@ -213,10 +184,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     justifyContent: "center",
-  },
-  kindText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
   },
   identifierBox: {
     paddingHorizontal: 12,

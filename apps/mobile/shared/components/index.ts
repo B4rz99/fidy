@@ -8,6 +8,10 @@ export { Card } from "./Card";
 export type { GlassCardTokens } from "./card-tokens";
 export { Chip } from "./Chip";
 export { ChoiceTray } from "./ChoiceTray";
+export { DatePickerControl } from "./DatePickerControl";
+export type { DatePickerControlProps, DatePickerDisplay } from "./DatePickerControl";
+export { DatePickerDialog } from "./DatePickerDialog";
+export type { DatePickerDialogProps } from "./DatePickerDialog";
 export {
   DialogActionButton,
   DialogActionStack,

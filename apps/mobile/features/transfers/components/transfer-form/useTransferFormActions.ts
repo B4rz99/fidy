@@ -46,7 +46,6 @@ export function useTransferFormActions(input: {
   readonly db: Parameters<typeof submitTransferForm>[0]["db"];
   readonly digits: string;
   readonly fromSide: TransferSide | null;
-  readonly isIos: boolean;
   readonly onSuccessfulSave: (destination: "needs-review" | "tabs") => Promise<void> | void;
   readonly processedSourceEventId: Parameters<
     typeof submitTransferForm
@@ -81,11 +80,9 @@ export function useTransferFormActions(input: {
       },
       [input]
     ),
-    handleDateChange: useCallback(
-      (_event: unknown, nextDate?: Date) => {
-        if (!input.isIos) input.setShowDatePicker(false);
-        if (isDatePickerDismissed(_event)) return;
-        if (nextDate) input.setDate(clampDateToToday(nextDate));
+    handleDateSelect: useCallback(
+      (nextDate: Date) => {
+        input.setDate(clampDateToToday(nextDate));
       },
       [input]
     ),
@@ -114,10 +111,4 @@ export function useTransferFormActions(input: {
       ),
     isSaving,
   };
-}
-
-function isDatePickerDismissed(event: unknown) {
-  return (
-    typeof event === "object" && event !== null && "type" in event && event.type === "dismissed"
-  );
 }
