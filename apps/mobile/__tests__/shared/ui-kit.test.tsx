@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Callout } from "@/shared/components/Callout";
 import { Chip } from "@/shared/components/Chip";
+import { DatePickerDialog } from "@/shared/components/DatePickerDialog";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { FieldButton } from "@/shared/components/FieldButton";
 import { FieldSurface } from "@/shared/components/FieldSurface";
@@ -42,6 +43,8 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { Chip } from "./Chip"');
     expect(source).toContain('export { Callout } from "./Callout"');
     expect(source).toContain('export { EmptyState } from "./EmptyState"');
+    expect(source).toContain('export { DatePickerControl } from "./DatePickerControl"');
+    expect(source).toContain('export { DatePickerDialog } from "./DatePickerDialog"');
     expect(source).toContain('export { FieldButton } from "./FieldButton"');
     expect(source).toContain('export { FieldSurface } from "./FieldSurface"');
     expect(source).toContain('export { FilterPill } from "./FilterPill"');
@@ -360,12 +363,60 @@ describe("shared UI kit", () => {
     const foodButton = screen.getByA11yLabel("Food");
     const rentButton = screen.getByA11yLabel("Rent");
 
+    expect(foodButton.props.accessibilityRole).toBe("button");
     expect(foodButton.props.accessibilityState).toMatchObject({ selected: true });
     expect(rentButton.props.accessibilityState).toMatchObject({ selected: false });
 
     screen.press(rentButton);
 
     expect(selections).toEqual(["rent"]);
+  });
+
+  it("can expose mutually exclusive chip row options as radios", () => {
+    const screen = renderFidy(
+      <SelectableChipRow
+        accessibilityLabel="Account type"
+        accessibilityRole="radiogroup"
+        optionAccessibilityRole="radio"
+        options={[
+          { label: "Cash", value: "cash" },
+          { label: "Credit card", value: "credit_card" },
+        ]}
+        value="cash"
+        onChange={() => undefined}
+      />
+    );
+
+    const group = screen.getByA11yLabel("Account type");
+    const cashOption = screen.getByA11yLabel("Cash");
+    const creditOption = screen.getByA11yLabel("Credit card");
+
+    expect(group.props.accessibilityRole).toBe("radiogroup");
+    expect(cashOption.props.accessibilityRole).toBe("radio");
+    expect(cashOption.props.accessibilityState).toMatchObject({ selected: true });
+    expect(creditOption.props.accessibilityRole).toBe("radio");
+    expect(creditOption.props.accessibilityState).toMatchObject({ selected: false });
+  });
+
+  it("keeps explicit date picker maximum dates when future dates are allowed", () => {
+    const maximumDate = new Date("2026-01-15T00:00:00.000Z");
+    const screen = renderFidy(
+      <DatePickerDialog
+        allowFuture
+        date={new Date("2026-01-01T00:00:00.000Z")}
+        maximumDate={maximumDate}
+        onChange={() => undefined}
+        onClose={() => undefined}
+        visible
+      />
+    );
+    const picker = screen.root.findAll((node) => node.props.maximumDate === maximumDate)[0];
+
+    if (picker == null) {
+      throw new Error("Date picker did not receive the explicit maximumDate");
+    }
+
+    expect(picker.props.maximumDate).toBe(maximumDate);
   });
 
   it("renders icon action buttons with optional badges", () => {

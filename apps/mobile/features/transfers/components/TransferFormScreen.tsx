@@ -1,6 +1,5 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import { ScreenLayout } from "@/shared/components";
+import { DatePickerControl, ScreenLayout } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useCurrentDate, useTranslation } from "@/shared/hooks";
 import type { TransferFormScreenProps } from "./transfer-form/TransferForm.types";
@@ -48,12 +47,12 @@ export function TransferFormScreen(props: TransferFormScreenProps = {}) {
       />
 
       {!form.isIos && form.showDatePicker ? (
-        <DateTimePicker
+        <DatePickerControl
           value={form.date}
-          mode="date"
           display="default"
           maximumDate={maximumDate}
-          onChange={form.handleDateChange}
+          onSelect={form.handleDateSelect}
+          onClose={() => form.setShowDatePicker(false)}
         />
       ) : null}
     </>

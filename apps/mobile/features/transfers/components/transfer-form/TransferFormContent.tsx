@@ -1,6 +1,5 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, GlassSurface, MoneyAmountDisplay } from "@/shared/components";
+import { Button, DatePickerControl, GlassSurface, MoneyAmountDisplay } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
   KeyboardAvoidingView,
@@ -91,13 +90,12 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
             ]}
           >
             {props.form.isIos ? (
-              <DateTimePicker
+              <DatePickerControl
                 testID={TRANSFER_FORM_TEST_IDS.date}
                 value={props.form.date}
-                mode="date"
                 display="compact"
                 maximumDate={maximumDate}
-                onChange={props.form.handleDateChange}
+                onSelect={props.form.handleDateSelect}
               />
             ) : (
               <Pressable

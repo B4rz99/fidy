@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sharedDir = resolve(__dirname, "../../shared/components");
@@ -10,6 +10,15 @@ function readShared(file: string) {
 
 function readSource(path: string) {
   return readFileSync(resolve(__dirname, path), "utf-8");
+}
+
+function readSources(dir: string): readonly { readonly path: string; readonly source: string }[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return readSources(path);
+    if (!/\.(ts|tsx)$/.test(entry.name)) return [];
+    return [{ path, source: readFileSync(path, "utf-8") }];
+  });
 }
 
 describe("glass layout contracts", () => {
@@ -103,13 +112,32 @@ describe("glass layout contracts", () => {
     expect(formSectionSource).toContain("nativeGlass={false}");
   });
 
-  it("routes selected account kind color through glass visual props", () => {
+  it("keeps account kind selection behind the shared chip row interface", () => {
     const accountKindSource = readSource(
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx"
     );
+    const accountSuggestionCreateSource = readSource(
+      "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx"
+    );
 
-    expect(accountKindSource).toContain("backgroundColor={isSelected ? accentGreen : undefined}");
-    expect(accountKindSource).not.toMatch(/style=\{\[[\s\S]*backgroundColor:/);
+    expect(accountKindSource).toContain("SelectableChipRow");
+    expect(accountKindSource).toContain('selectedTone="primary"');
+    expect(accountKindSource).not.toContain("GlassPressable");
+    expect(accountSuggestionCreateSource).toContain("FinancialAccountKindPicker");
+    expect(accountSuggestionCreateSource).not.toContain("GlassPressable");
+  });
+
+  it("keeps direct feature GlassPressable usage allowlisted", () => {
+    const featureRoot = resolve(__dirname, "../../features");
+    const directFeatureUsages = readSources(featureRoot)
+      .filter(({ source }) => source.includes("GlassPressable"))
+      .map(({ path }) => relative(resolve(__dirname, "../.."), path))
+      .sort();
+
+    expect(directFeatureUsages).toEqual([
+      "features/auth/components/OAuthButton.tsx",
+      "features/qa/components/qa-tools/QaToolsCardButton.tsx",
+    ]);
   });
 
   it("keeps toast shadows on new architecture boxShadow with Android fallback", () => {

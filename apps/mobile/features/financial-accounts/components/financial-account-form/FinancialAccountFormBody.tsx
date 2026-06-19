@@ -1,8 +1,8 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { DatePickerControl } from "@/shared/components/DatePickerControl";
 import { FieldButton } from "@/shared/components/FieldButton";
 import { FormScreen } from "@/shared/components/FormScreen";
 import { FormSection } from "@/shared/components/FormSection";
@@ -12,7 +12,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { canFinancialAccountHaveIdentifiers } from "../../lib/kind";
 import { styles } from "./FinancialAccountForm.styles";
-import { ACCOUNT_KIND_OPTIONS, KindChip } from "./FinancialAccountFormFields";
+import { FinancialAccountKindPicker } from "./FinancialAccountFormFields";
 import { FinancialAccountIdentifiersSection } from "./FinancialAccountIdentifiersSection";
 import {
   type FinancialAccountFormDetails,
@@ -56,16 +56,12 @@ export function FinancialAccountFormBody({
   return (
     <FormScreen contentContainerStyle={styles.content}>
       <FormSection title={t("financialAccounts.form.kindLabel")}>
-        <View style={[styles.kindWrap, styles.typeFirstSection]}>
-          {ACCOUNT_KIND_OPTIONS.map((option) => (
-            <KindChip
-              key={option}
-              kind={option}
-              isSelected={option === kind}
-              onPress={() => setKind(option)}
-            />
-          ))}
-        </View>
+        <FinancialAccountKindPicker
+          value={kind}
+          onChange={setKind}
+          style={[styles.kindWrap, styles.typeFirstSection]}
+          chipStyle={styles.kindChip}
+        />
       </FormSection>
 
       <FormSection title={t("financialAccounts.form.basicInfoSection")}>
@@ -128,18 +124,11 @@ export function FinancialAccountFormBody({
           />
 
           {showDatePicker ? (
-            <DateTimePicker
+            <DatePickerControl
               value={effectiveDate ?? datePickerFallback}
-              mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={(_event, date) => {
-                if (Platform.OS === "android") {
-                  setShowDatePicker(false);
-                }
-                if (date) {
-                  setEffectiveDate(date);
-                }
-              }}
+              onSelect={setEffectiveDate}
+              onClose={() => setShowDatePicker(false)}
             />
           ) : null}
         </View>

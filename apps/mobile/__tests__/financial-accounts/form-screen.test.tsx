@@ -79,6 +79,21 @@ describe("FinancialAccountFormBody", () => {
     expect(screen.getByText("Create account")).toBeTruthy();
   });
 
+  it("exposes account kind chips as a radio group", () => {
+    const screen = renderFidy(
+      <FinancialAccountFormBody existingDetails={null} onManageIdentifiers={null} />
+    );
+    const kindGroup = screen.getByA11yLabel("Account type");
+    const checkingOption = screen.getByA11yLabel(/Checking/);
+    const cashOption = screen.getByA11yLabel(/Cash/);
+
+    expect(kindGroup.props.accessibilityRole).toBe("radiogroup");
+    expect(checkingOption.props.accessibilityRole).toBe("radio");
+    expect(checkingOption.props.accessibilityState).toMatchObject({ selected: true });
+    expect(cashOption.props.accessibilityRole).toBe("radio");
+    expect(cashOption.props.accessibilityState).toMatchObject({ selected: false });
+  });
+
   it("renders credit-card billing fields after selecting the credit card kind", () => {
     const screen = renderFidy(
       <FinancialAccountFormBody existingDetails={null} onManageIdentifiers={null} />

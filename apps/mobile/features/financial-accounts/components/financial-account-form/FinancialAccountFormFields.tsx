@@ -1,42 +1,48 @@
+import type { StyleProp, ViewStyle } from "react-native";
 import {
   type FinancialAccountKind,
   financialAccountKindSchema,
 } from "@/features/financial-accounts/schema";
 import { getKindEmoji } from "@/features/financial-accounts/lib/kind-display";
-import { GlassPressable } from "@/shared/components/GlassPressable";
-import { Text } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { styles } from "./FinancialAccountForm.styles";
+import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
+import { useTranslation } from "@/shared/hooks";
 
-export const ACCOUNT_KIND_OPTIONS = financialAccountKindSchema.options;
+const ACCOUNT_KIND_OPTIONS = financialAccountKindSchema.options;
 
-export function KindChip({
-  kind,
-  isSelected,
-  onPress,
+export function FinancialAccountKindPicker({
+  chipStyle,
+  showEmoji = true,
+  style,
+  value,
+  onChange,
 }: {
-  readonly kind: FinancialAccountKind;
-  readonly isSelected: boolean;
-  readonly onPress: () => void;
+  readonly chipStyle?: StyleProp<ViewStyle>;
+  readonly showEmoji?: boolean;
+  readonly style?: StyleProp<ViewStyle>;
+  readonly value: FinancialAccountKind;
+  readonly onChange: (kind: FinancialAccountKind) => void;
 }) {
   const { t } = useTranslation();
-  const primary = useThemeColor("primary");
-  const onAccent = useThemeColor("onAccent");
-  const accentGreen = useThemeColor("accentGreen");
+  const options = ACCOUNT_KIND_OPTIONS.map((kind) => {
+    const label = t(`financialAccounts.kinds.${kind}`);
+
+    return {
+      value: kind,
+      label: showEmoji ? `${getKindEmoji(kind)} ${label}` : label,
+    };
+  });
 
   return (
-    <GlassPressable
-      onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityState={{ checked: isSelected }}
-      backgroundColor={isSelected ? accentGreen : undefined}
-      nativeGlass={false}
-      radius={999}
-      surfaceLayoutStyle={styles.kindChip}
-    >
-      <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
-        {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
-      </Text>
-    </GlassPressable>
+    <SelectableChipRow
+      accessibilityLabel={t("financialAccounts.form.kindLabel")}
+      accessibilityRole="radiogroup"
+      options={options}
+      value={value}
+      onChange={onChange}
+      optionAccessibilityRole="radio"
+      selectedTone="primary"
+      chipStyle={chipStyle}
+      style={style}
+    />
   );
 }
