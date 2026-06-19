@@ -108,6 +108,10 @@ vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
 }));
 
+vi.mock("@/features/financial-accounts/public", () => ({
+  ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
 vi.mock("@/features/account-suggestions", () => ({
   findMatchingFinancialAccountId: (...args: any[]) => mockFindMatchingFinancialAccountId(...args),
 }));

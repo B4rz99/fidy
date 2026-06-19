@@ -86,6 +86,10 @@ vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),
 }));
 
+vi.mock("@/features/financial-accounts/public", () => ({
+  ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
 vi.mock("@/features/capture-evidence", () => ({
   buildEmailCaptureEvidence: (...args: unknown[]) => mockBuildEmailCaptureEvidence(...args),
   materializeCaptureEvidenceRows: (
