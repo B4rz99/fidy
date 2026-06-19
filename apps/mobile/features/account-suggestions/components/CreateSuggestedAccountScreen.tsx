@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
@@ -44,7 +44,7 @@ function ResolvedCreateSuggestedAccountForm({
   const { bottom } = useSafeAreaInsets();
   const onboardingStep = useOnboardingStore((state) => state.step);
   const nextStep = useOnboardingStore((state) => state.nextStep);
-  const service = useMemo(() => createAccountSuggestionService(), []);
+  const [service] = useState(createAccountSuggestionService);
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const draft = buildSuggestedFinancialAccountDraft(suggestion);
@@ -121,7 +121,7 @@ function ResolvedCreateSuggestedAccountForm({
                   accessibilityRole="radio"
                   accessibilityState={{ checked: isSelected }}
                   radius={12}
-                  surfaceLayoutStyle={styles.kindPill}
+                  layoutStyle={styles.kindPill}
                 >
                   <Text style={[styles.kindText, { color: primary }]}>
                     {t(`financialAccounts.kinds.${option}`)}

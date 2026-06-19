@@ -1,4 +1,4 @@
-import { FormTextField, GlassSurface } from "@/shared/components";
+import { FormTextField, Surface } from "@/shared/components";
 import { Calendar } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { styles } from "./TransactionForm.styles";
@@ -40,7 +40,7 @@ export function TransactionMetadataRow({
         onBlur={onDescriptionBlur}
         maxLength={200}
       />
-      <GlassSurface
+      <Surface
         testID="transaction-form.date"
         padded={false}
         radius={10}
@@ -56,7 +56,7 @@ export function TransactionMetadataRow({
         >
           {dateLabel}
         </Text>
-      </GlassSurface>
+      </Surface>
     </View>
   );
 }

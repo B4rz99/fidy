@@ -37,6 +37,8 @@ describe("ScreenLayout platform awareness", () => {
     expect(headerBackButtonSource).not.toContain("GlassPressable");
     expect(headerBackButtonSource).not.toContain("borderColor");
     expect(headerBackButtonSource).not.toContain("borderWidth");
-    expect(headerBackButtonSource).toContain("shadowOpacity: 0");
+    expect(headerBackButtonSource).not.toContain("shadowColor");
+    expect(headerBackButtonSource).not.toContain("shadowOpacity");
+    expect(headerBackButtonSource).not.toContain("shadowRadius");
   });
 });

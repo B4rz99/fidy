@@ -5,7 +5,7 @@ import {
   DialogActionButton,
   DialogActionStack,
   DialogRouteFrame,
-  GlassSurface,
+  Surface,
 } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import { Alert, Text, View } from "@/shared/components/rn";
@@ -30,7 +30,7 @@ export default function DeleteAccountDialogRoute() {
   return (
     <DialogRouteFrame>
       <View style={{ padding: 24, alignItems: "center", gap: 16 }}>
-        <GlassSurface
+        <Surface
           radius={32}
           padded={false}
           style={{
@@ -41,7 +41,7 @@ export default function DeleteAccountDialogRoute() {
           }}
         >
           <TriangleAlert size={32} color={accentRed} />
-        </GlassSurface>
+        </Surface>
         <Text
           className="font-poppins-semibold text-primary dark:text-primary-dark"
           style={{ fontSize: 16 }}

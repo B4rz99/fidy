@@ -8,7 +8,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture/public";
-import { Button, GlassSurface } from "@/shared/components";
+import { Button, Surface } from "@/shared/components";
 import { CheckCircle, Mail, Shield } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -95,7 +95,7 @@ export function ConnectEmailStep() {
         <View style={styles.buttons}>
           {checklist.map((item) =>
             item.connected ? (
-              <GlassSurface
+              <Surface
                 key={item.provider}
                 padded={false}
                 radius={12}
@@ -108,7 +108,7 @@ export function ConnectEmailStep() {
                   </Text>
                 </View>
                 <CheckCircle size={22} color={accentGreen} />
-              </GlassSurface>
+              </Surface>
             ) : (
               <OAuthButton
                 key={item.provider}
@@ -123,12 +123,12 @@ export function ConnectEmailStep() {
           )}
         </View>
 
-        <GlassSurface padded={false} radius={12} style={styles.trustBadge}>
+        <Surface padded={false} radius={12} style={styles.trustBadge}>
           <Shield size={18} color={accentGreen} />
           <Text style={[styles.trustText, { color: secondaryColor }]}>
             {t("onboarding.connectEmail.trustBadge")}
           </Text>
-        </GlassSurface>
+        </Surface>
       </View>
 
       <Button

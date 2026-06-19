@@ -10,6 +10,7 @@ type GlassPressableProps = Omit<PressableProps, "children"> & {
   readonly className?: string;
   readonly disabledOpacity?: number;
   readonly isInteractive?: boolean;
+  readonly layoutStyle?: SurfaceLayoutStyle;
   readonly nativeGlass?: boolean;
   readonly padded?: boolean;
   readonly radius?: number;
@@ -37,6 +38,7 @@ export function GlassPressable({
   disabled,
   disabledOpacity = 0.6,
   isInteractive = false,
+  layoutStyle,
   nativeGlass = true,
   padded = false,
   radius,
@@ -61,7 +63,7 @@ export function GlassPressable({
         padded={padded}
         radius={radius}
         className={surfaceClassName}
-        style={surfaceLayoutStyle}
+        style={layoutStyle ?? surfaceLayoutStyle}
       >
         {children}
       </GlassSurface>

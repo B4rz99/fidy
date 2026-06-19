@@ -25,7 +25,7 @@ const ColorSwatch = memo(function ColorSwatch({ color, isSelected, onPress }: Co
       backgroundColor={color}
       radius={18}
       padded={false}
-      surfaceLayoutStyle={styles.swatch}
+      layoutStyle={styles.swatch}
     >
       {isSelected ? <Check size={16} color={color} /> : null}
     </GlassPressable>

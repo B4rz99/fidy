@@ -90,6 +90,8 @@ export { HEADER_HEIGHT, ScreenLayout, TAB_BAR_CLEARANCE } from "./ScreenLayout";
 export { ScreenShell } from "./ScreenShell";
 export type { ScreenShellProps } from "./ScreenShell";
 export { SettingsSection } from "./SettingsSection";
+export { Surface } from "./Surface";
+export type { SurfaceProps } from "./Surface";
 export { TextActionButton } from "./TextActionButton";
 export type { TextActionButtonProps, TextActionButtonTone } from "./TextActionButton";
 export { TransactionRow } from "./TransactionRow";

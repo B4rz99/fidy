@@ -43,7 +43,7 @@ const IconCell = memo(function IconCell({
         onPress={handlePress}
         radius={12}
         padded={false}
-        surfaceLayoutStyle={styles.iconCell}
+        layoutStyle={styles.iconCell}
       >
         <Text style={{ color: iconColor }}>{icon}</Text>
       </GlassPressable>

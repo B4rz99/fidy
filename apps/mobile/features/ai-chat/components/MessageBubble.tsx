@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { GlassSurface } from "@/shared/components/GlassSurface";
+import { Surface } from "@/shared/components";
 import { CircleCheck } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -33,7 +33,7 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
     <View style={{ marginBottom: 10 }}>
       {isUser ? (
         <View style={{ alignItems: "flex-end" }}>
-          <GlassSurface
+          <Surface
             padded={false}
             radius={18}
             style={{
@@ -46,11 +46,11 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
             <Text className="font-poppins-medium text-body" style={{ color: chatUserText }}>
               {contentWithoutAction}
             </Text>
-          </GlassSurface>
+          </Surface>
         </View>
       ) : (
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-          <GlassSurface
+          <Surface
             padded={false}
             radius={15}
             style={{
@@ -63,9 +63,9 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
             <Text className="font-poppins-semibold text-body" style={{ color: accentGreen }}>
               {agentIcon}
             </Text>
-          </GlassSurface>
+          </Surface>
           <View style={{ flex: 1 }}>
-            <GlassSurface
+            <Surface
               padded={false}
               radius={18}
               style={{
@@ -113,7 +113,7 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
                   </Text>
                 )
               )}
-            </GlassSurface>
+            </Surface>
           </View>
         </View>
       )}

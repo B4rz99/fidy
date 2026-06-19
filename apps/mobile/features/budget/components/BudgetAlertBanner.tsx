@@ -1,5 +1,5 @@
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Callout, GlassSurface } from "@/shared/components";
+import { Callout, Surface } from "@/shared/components";
 import { Text } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -46,7 +46,7 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
           : undefined
       }
       icon={
-        <GlassSurface
+        <Surface
           radius={16}
           padded={false}
           className="size-8 items-center justify-center rounded-full"
@@ -58,7 +58,7 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
           }}
         >
           {CategoryIcon ? <Text style={{ color: iconColor }}>{CategoryIcon}</Text> : null}
-        </GlassSurface>
+        </Surface>
       }
       onDismiss={handleDismiss}
       dismissAccessibilityLabel={t("common.dismiss")}

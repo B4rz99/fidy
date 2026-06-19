@@ -19,7 +19,7 @@ export function ManageIdentifiersButton({
       onPress={onPress}
       radius={14}
       padded={false}
-      surfaceLayoutStyle={styles.manageButton}
+      layoutStyle={styles.manageButton}
     >
       <Text style={[styles.manageButtonText, { color: primary }]}>{label}</Text>
       <ChevronRight size={16} color={secondary} />

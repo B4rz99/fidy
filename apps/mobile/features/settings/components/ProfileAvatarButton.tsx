@@ -33,7 +33,7 @@ export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
       className="items-center justify-center rounded-full"
       radius={size / 2}
       padded={false}
-      surfaceLayoutStyle={{
+      layoutStyle={{
         alignItems: "center",
         height: size,
         justifyContent: "center",

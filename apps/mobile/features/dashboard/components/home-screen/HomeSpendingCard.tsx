@@ -1,4 +1,4 @@
-import { GlassSurface, MetricCard } from "@/shared/components";
+import { Surface, MetricCard } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import type { CategorySpendingItem } from "./useHomeScreen";
@@ -68,14 +68,14 @@ export function HomeSpendingCard({
                 accessible
                 accessibilityLabel={`${bar.label}, ${bar.amountLabel}`}
               >
-                <GlassSurface
+                <Surface
                   backgroundColor={bar.color}
                   radius={8}
                   padded={false}
                   style={[styles.categoryBar, { height }]}
                 >
                   <Text style={styles.categoryBarIcon}>{bar.icon}</Text>
-                </GlassSurface>
+                </Surface>
               </View>
             );
           })}

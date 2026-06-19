@@ -31,7 +31,7 @@ export function QaToolsCardButton({
       testID={testId}
       radius={scenario ? 18 : 16}
       accessibilityState={{ selected: highlighted }}
-      surfaceLayoutStyle={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
+      layoutStyle={[styles.cardButton, scenario ? styles.scenarioButton : undefined]}
     >
       <Text style={[styles.cardTitle, { color: primary }]}>{title}</Text>
       {description ? (

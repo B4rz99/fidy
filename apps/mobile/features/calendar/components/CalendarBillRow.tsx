@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { getBuiltInCategory } from "@/shared/categories";
-import { Card, GlassSurface, IconActionButton } from "@/shared/components";
+import { Card, Surface, IconActionButton } from "@/shared/components";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -60,11 +60,11 @@ export function CalendarBillRow({
       </View>
 
       <View style={styles.cardFooter}>
-        <GlassSurface radius={8} padded={false} style={styles.statusPill}>
+        <Surface radius={8} padded={false} style={styles.statusPill}>
           <Text style={[styles.statusPillText, { color: paid ? accentGreen : peach }]}>
             {paid ? t("calendar.paid") : t("calendar.pending")}
           </Text>
-        </GlassSurface>
+        </Surface>
         <View style={styles.actions}>
           {onPaymentToggle ? (
             <IconActionButton

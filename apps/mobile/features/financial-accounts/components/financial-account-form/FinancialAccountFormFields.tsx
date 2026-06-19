@@ -69,7 +69,7 @@ export function KindChip({
       accessibilityRole="radio"
       accessibilityState={{ checked: isSelected }}
       radius={999}
-      surfaceLayoutStyle={styles.kindChip}
+      layoutStyle={styles.kindChip}
     >
       <Text style={[styles.kindChipText, { color: isSelected ? accentGreen : primary }]}>
         {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}

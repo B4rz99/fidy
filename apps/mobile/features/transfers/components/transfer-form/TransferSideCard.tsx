@@ -1,7 +1,7 @@
 import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransferSide } from "@/features/transfers/build.public";
-import { FieldButton, GlassSurface } from "@/shared/components";
+import { FieldButton, Surface } from "@/shared/components";
 import { ChevronRight, ExternalLink, Landmark } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -69,9 +69,9 @@ export function TransferSideCard(props: {
           </View>
         }
         leading={
-          <GlassSurface radius={12} padded={false} style={styles.sideIconWrap}>
+          <Surface radius={12} padded={false} style={styles.sideIconWrap}>
             <Icon size={18} color={props.side?.kind === "external" ? accentGreen : secondary} />
-          </GlassSurface>
+          </Surface>
         }
         trailing={
           <View className="flex-row items-center" style={{ gap: 8 }}>

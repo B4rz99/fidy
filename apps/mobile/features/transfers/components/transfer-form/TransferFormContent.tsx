@@ -1,5 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, DatePickerControl, GlassSurface, MoneyAmountDisplay } from "@/shared/components";
+import { Button, DatePickerControl, Surface, MoneyAmountDisplay } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
   KeyboardAvoidingView,
@@ -39,7 +39,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
       >
         <Text style={[styles.subtitle, { color: secondary }]}>{props.form.subtitle}</Text>
 
-        <GlassSurface padded={false} radius={18} style={styles.amountCard}>
+        <Surface padded={false} radius={18} style={styles.amountCard}>
           <Text style={[styles.sectionEyebrow, { color: tertiary }]}>
             {t("transfers.amountLabel")}
           </Text>
@@ -56,7 +56,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
               style={styles.amountInput}
             />
           </View>
-        </GlassSurface>
+        </Surface>
 
         <TransferSideCard
           label={t("transfers.fromLabel")}
@@ -80,7 +80,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
 
         <View style={{ gap: 8 }}>
           <Text style={[styles.sectionLabel, { color: primary }]}>{t("transfers.dateLabel")}</Text>
-          <GlassSurface
+          <Surface
             padded={false}
             radius={16}
             style={[
@@ -108,13 +108,13 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
                 <Text style={[styles.dateValue, { color: primary }]}>{props.form.dateLabel}</Text>
               </Pressable>
             )}
-          </GlassSurface>
+          </Surface>
         </View>
 
-        <GlassSurface padded={false} radius={16} style={styles.hintCard}>
+        <Surface padded={false} radius={16} style={styles.hintCard}>
           <TriangleAlert size={18} color={props.form.hintTone} />
           <Text style={[styles.hintText, { color: primary }]}>{props.form.hint}</Text>
-        </GlassSurface>
+        </Surface>
 
         <Button
           testID={TRANSFER_FORM_TEST_IDS.save}

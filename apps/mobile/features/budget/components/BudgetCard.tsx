@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Card, GlassSurface, ProgressBar } from "@/shared/components";
+import { Card, Surface, ProgressBar } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -32,18 +32,18 @@ function BudgetCardInner({ progress, onPress }: Props) {
       <View style={styles.header}>
         <View style={styles.categoryRow}>
           {category && CategoryIcon ? (
-            <GlassSurface radius={8} padded={false} style={styles.emojiBubble}>
+            <Surface radius={8} padded={false} style={styles.emojiBubble}>
               <Text style={styles.emoji}>{CategoryIcon}</Text>
-            </GlassSurface>
+            </Surface>
           ) : null}
           <View style={styles.categoryText}>
             <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
             <Text style={[styles.amountLine, { color: secondaryColor }]}>{model.amountLine}</Text>
           </View>
         </View>
-        <GlassSurface radius={999} padded={false} style={styles.badge}>
+        <Surface radius={999} padded={false} style={styles.badge}>
           <Text style={[styles.badgeText, { color: badgeColor }]}>{model.percentLabel}</Text>
-        </GlassSurface>
+        </Surface>
       </View>
 
       <ProgressBar

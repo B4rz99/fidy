@@ -1,7 +1,6 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { DialogFrame, DialogPanel, DialogTitle, GlassPressable } from "@/shared/components";
-import { Platform, Text } from "@/shared/components/rn";
-import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
+import { Button, DatePickerControl, DialogFrame, DialogPanel, DialogTitle } from "@/shared/components";
+import { Platform } from "@/shared/components/rn";
+import { useCurrentDate, useTranslation } from "@/shared/hooks";
 
 export function TransactionDatePickerDialog(props: {
   readonly allowFuture?: boolean;
@@ -13,7 +12,6 @@ export function TransactionDatePickerDialog(props: {
   readonly visible: boolean;
 }) {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
   const currentDate = useCurrentDate();
   const maximumDate = props.allowFuture ? undefined : (props.maximumDate ?? currentDate);
 
@@ -21,33 +19,15 @@ export function TransactionDatePickerDialog(props: {
     <DialogFrame visible={props.visible} testID="calendar-picker.backdrop" onClose={props.onClose}>
       <DialogPanel>
         <DialogTitle>{t("common.date")}</DialogTitle>
-        <DateTimePicker
+        <DatePickerControl
           value={props.date}
-          mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
           maximumDate={maximumDate}
           minimumDate={props.minimumDate}
-          onChange={(_event, nextDate) => {
-            if (Platform.OS !== "ios") props.onClose();
-            if (nextDate) {
-              props.onChange(nextDate);
-            }
-          }}
+          onClose={props.onClose}
+          onSelect={props.onChange}
         />
-        <GlassPressable
-          radius={16}
-          padded={false}
-          surfaceLayoutStyle={{
-            alignItems: "center",
-            paddingVertical: 14,
-          }}
-          onPress={props.onClose}
-          accessibilityRole="button"
-        >
-          <Text style={{ color: accentGreen, fontFamily: "Poppins_600SemiBold", fontSize: 15 }}>
-            {t("common.confirm")}
-          </Text>
-        </GlassPressable>
+        <Button label={t("common.confirm")} onPress={props.onClose} />
       </DialogPanel>
     </DialogFrame>
   );

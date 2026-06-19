@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import {
   Button,
   Card,
-  GlassSurface,
+  Surface,
   ProgressBar,
   ScreenLayout,
   SettingsSection,
@@ -159,9 +159,9 @@ function ColorSwatch({
 function GlassSwatch({ label }: { label: string }) {
   return (
     <View className="flex-1" style={{ gap: 6 }}>
-      <GlassSurface padded={false} radius={12} style={{ height: 48 }}>
+      <Surface padded={false} radius={12} style={{ height: 48 }}>
         <View />
-      </GlassSurface>
+      </Surface>
       <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
         {label}
       </Text>

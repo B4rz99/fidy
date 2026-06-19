@@ -1,5 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, GlassSurface } from "@/shared/components";
+import { Button, Surface } from "@/shared/components";
 import { ActivityIndicator, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { FLAG_KEYS, QA_PROFILES, QA_TARGET_LABEL_KEYS, QA_TARGET_LIST } from "./QaTools.constants";
@@ -127,7 +127,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
             .slice()
             .reverse()
             .map((entry) => (
-              <GlassSurface key={entry.id} padded={false} radius={16} style={styles.eventCard}>
+              <Surface key={entry.id} padded={false} radius={16} style={styles.eventCard}>
                 <Text style={[styles.eventTitle, { color: primary }]}>
                   {`${entry.level.toUpperCase()} · ${entry.message}`}
                 </Text>
@@ -137,7 +137,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
                     {JSON.stringify(entry.context)}
                   </Text>
                 ) : null}
-              </GlassSurface>
+              </Surface>
             ))
         )}
       </QaToolsSection>
@@ -152,12 +152,12 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
             .slice()
             .reverse()
             .map((event) => (
-              <GlassSurface key={event.id} padded={false} radius={16} style={styles.eventCard}>
+              <Surface key={event.id} padded={false} radius={16} style={styles.eventCard}>
                 <Text style={[styles.eventTitle, { color: primary }]}>
                   {`${event.method} · ${event.outcome.toUpperCase()}${event.status ? ` · ${event.status}` : ""}`}
                 </Text>
                 <Text style={[styles.eventSubtitle, { color: secondary }]}>{event.url}</Text>
-              </GlassSurface>
+              </Surface>
             ))
         )}
       </QaToolsSection>

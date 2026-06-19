@@ -32,7 +32,7 @@ export function TransactionFormHeader({
             accessibilityLabel={closeLabel}
             radius={18}
             padded={false}
-            surfaceLayoutStyle={styles.closeButton}
+            layoutStyle={styles.closeButton}
           >
             <X size={24} color={secondaryColor} />
           </GlassPressable>

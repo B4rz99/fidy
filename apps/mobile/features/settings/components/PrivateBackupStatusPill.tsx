@@ -1,4 +1,4 @@
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
@@ -11,7 +11,7 @@ export function StatusPill({ label, tone }: StatusPillProps) {
   const accentGreen = useThemeColor("accentGreen");
   const textColor = tone === "green" ? accentGreen : "#C46A2B";
   return (
-    <GlassSurface
+    <Surface
       radius={12}
       padded={false}
       style={{
@@ -23,6 +23,6 @@ export function StatusPill({ label, tone }: StatusPillProps) {
       <Text className="font-poppins-semibold" style={{ color: textColor, fontSize: 12 }}>
         {label.toUpperCase()}
       </Text>
-    </GlassSurface>
+    </Surface>
   );
 }

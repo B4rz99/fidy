@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Button, Card, GlassSurface, ProgressBar } from "@/shared/components";
+import { Button, Card, Surface, ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -53,7 +53,7 @@ function GoalCardStatus(props: {
   })();
 
   return (
-    <GlassSurface
+    <Surface
       radius={8}
       padded={false}
       style={{
@@ -64,7 +64,7 @@ function GoalCardStatus(props: {
       <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: chip.color }}>
         {chip.label}
       </Text>
-    </GlassSurface>
+    </Surface>
   );
 }
 
@@ -91,9 +91,9 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
       <Pressable style={styles.summaryArea} onPress={onPress}>
         <View style={styles.headerRow}>
           <View style={styles.titleGroup}>
-            <GlassSurface radius={8} padded={false} style={styles.iconBadge}>
+            <Surface radius={8} padded={false} style={styles.iconBadge}>
               <Text style={styles.iconText}>{goalIcon}</Text>
-            </GlassSurface>
+            </Surface>
             <View style={styles.titleCopy}>
               <Text style={[styles.goalName, { color: primaryColor }]} numberOfLines={1}>
                 {goal.name}
@@ -106,11 +106,11 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
               </Text>
             </View>
           </View>
-          <GlassSurface radius={999} padded={false} style={styles.percentPill}>
+          <Surface radius={999} padded={false} style={styles.percentPill}>
             <Text style={[styles.percentText, { color: goalColor }]}>
               {Math.round(progress.percentComplete)}%
             </Text>
-          </GlassSurface>
+          </Surface>
         </View>
 
         <ProgressBar

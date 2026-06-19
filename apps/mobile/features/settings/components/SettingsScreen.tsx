@@ -7,7 +7,7 @@ import { useAuthIdentity, useOptionalUserId } from "@/features/auth/public";
 import type { PrivateBackupHealthStatus } from "@/features/backup/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import {
-  GlassSurface,
+  Surface,
   Row,
   ScreenLayout,
   SettingsSection,
@@ -126,7 +126,7 @@ export function SettingsScreen() {
             subtitleClassName="text-xs"
             isLast
             leading={
-              <GlassSurface
+              <Surface
                 radius={20}
                 padded={false}
                 style={{
@@ -151,7 +151,7 @@ export function SettingsScreen() {
                     {avatar.initials}
                   </Text>
                 )}
-              </GlassSurface>
+              </Surface>
             }
             trailing={<ChevronRight size={18} color={tertiaryColor} />}
           />

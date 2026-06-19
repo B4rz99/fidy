@@ -1,4 +1,4 @@
-import { GlassSurface, MetricCard, ProgressBar } from "@/shared/components";
+import { Surface, MetricCard, ProgressBar } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { CopAmount } from "@/shared/types/branded";
@@ -25,9 +25,9 @@ export function BudgetSummaryCard({ totalBudget, totalSpent, percentUsed }: Prop
         <Text style={[styles.label, { color: secondaryColor }]}>
           {t("budgets.summary.totalBudget")}
         </Text>
-        <GlassSurface radius={999} padded={false} style={styles.percentPill}>
+        <Surface radius={999} padded={false} style={styles.percentPill}>
           <Text style={[styles.percentText, { color: progressColor }]}>{model.percentLabel}</Text>
-        </GlassSurface>
+        </Surface>
       </View>
 
       <Text style={[styles.amount, { color: primaryColor }]}>{model.totalBudgetLabel}</Text>

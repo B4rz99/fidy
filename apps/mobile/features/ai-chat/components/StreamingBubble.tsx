@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { Sparkles } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -45,7 +45,7 @@ function StreamingBubbleInner({ content }: StreamingBubbleProps) {
 
   return (
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
-      <GlassSurface
+      <Surface
         padded={false}
         radius={14}
         style={{
@@ -56,9 +56,9 @@ function StreamingBubbleInner({ content }: StreamingBubbleProps) {
         }}
       >
         <Sparkles size={16} color={accentGreen} />
-      </GlassSurface>
+      </Surface>
       <View style={{ flex: 1 }}>
-        <GlassSurface
+        <Surface
           padded={false}
           radius={16}
           style={{
@@ -80,7 +80,7 @@ function StreamingBubbleInner({ content }: StreamingBubbleProps) {
               <Text style={{ color: chatAssistantText, opacity: 0.45 }}> |</Text>
             </Text>
           )}
-        </GlassSurface>
+        </Surface>
       </View>
     </View>
   );

@@ -5,7 +5,7 @@ import {
   EmptyState,
   FeedList,
   AddActionButton,
-  GlassSurface,
+  Surface,
   ScreenLayout,
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
@@ -29,14 +29,14 @@ function GoalsEmpty({ onCreateGoal }: { readonly onCreateGoal: () => void }) {
       title={t("goals.empty.title")}
       subtitle={t("goals.empty.subtitle")}
       icon={
-        <GlassSurface
+        <Surface
           radius={36}
           padded={false}
           className="size-[72px] items-center justify-center"
           style={{ alignItems: "center", height: 72, justifyContent: "center", width: 72 }}
         >
           <Target size={36} color={accentGreen} />
-        </GlassSurface>
+        </Surface>
       }
       className="px-8"
       action={

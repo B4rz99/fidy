@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/features/auth/public";
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { StyleSheet, Text } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { useQaDevtoolsStore } from "../devtools-store";
@@ -15,7 +15,7 @@ export function QaStatusBanner() {
   }
 
   return (
-    <GlassSurface pointerEvents="none" radius={14} padded={false} style={styles.banner}>
+    <Surface pointerEvents="none" radius={14} padded={false} style={styles.banner}>
       <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: "#161616" }}>
         {t("qaTools.banner", {
           profile: localQaSession.profile,
@@ -24,7 +24,7 @@ export function QaStatusBanner() {
             : t("qaTools.bannerOfflineOff"),
         })}
       </Text>
-    </GlassSurface>
+    </Surface>
   );
 }
 

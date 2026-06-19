@@ -138,7 +138,7 @@ function CategoryBarRibbon({ bars, onSelect, selectedCategoryId }: CategoryBarRi
             backgroundColor={color}
             radius={8}
             padded={false}
-            surfaceLayoutStyle={[styles.categoryBar, { height }]}
+            layoutStyle={[styles.categoryBar, { height }]}
           >
             <Text style={styles.categoryBarIcon}>{category?.icon ?? ""}</Text>
           </GlassPressable>

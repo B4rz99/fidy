@@ -1,4 +1,4 @@
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountDetailsScreen.styles";
@@ -18,7 +18,7 @@ export function FinancialAccountDetailsHero({
   const nav = useThemeColor("nav");
 
   return (
-    <GlassSurface padded={false} radius={22} style={styles.heroCard}>
+    <Surface padded={false} radius={22} style={styles.heroCard}>
       <View style={styles.heroHeader}>
         <View style={styles.heroText}>
           <Text style={[styles.heroTitle, { color: primary }]}>{name}</Text>
@@ -26,13 +26,13 @@ export function FinancialAccountDetailsHero({
         </View>
 
         {isDefault ? (
-          <GlassSurface padded={false} radius={999} style={styles.badge}>
+          <Surface padded={false} radius={999} style={styles.badge}>
             <Text style={[styles.badgeText, { color: nav }]}>
               {t("financialAccounts.labels.default")}
             </Text>
-          </GlassSurface>
+          </Surface>
         ) : null}
       </View>
-    </GlassSurface>
+    </Surface>
   );
 }

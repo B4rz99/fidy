@@ -13,7 +13,7 @@ import {
   DialogActionButton,
   DialogActionStack,
   DialogRouteFrame,
-  GlassSurface,
+  Surface,
 } from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
 import { ScrollView, Text } from "@/shared/components/rn";
@@ -100,7 +100,7 @@ export default function EnableNotificationsDialogRoute() {
         contentInset={{ bottom }}
         contentInsetAdjustmentBehavior="automatic"
       >
-        <GlassSurface
+        <Surface
           radius={32}
           padded={false}
           style={{
@@ -111,7 +111,7 @@ export default function EnableNotificationsDialogRoute() {
           }}
         >
           <Bell size={32} color={accentGreen} />
-        </GlassSurface>
+        </Surface>
         <Text
           className="font-poppins-semibold text-primary dark:text-primary-dark"
           style={{ fontSize: 16 }}

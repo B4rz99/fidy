@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GlassPressable, GlassSurface } from "@/shared/components";
+import { GlassPressable, Surface } from "@/shared/components";
 import { SendHorizonal } from "@/shared/components/icons";
 import { StyleSheet, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -28,7 +28,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const sendIconColor = canSend ? accentGreen : "rgba(255, 255, 255, 0.72)";
 
   return (
-    <GlassSurface padded={false} radius={24} style={styles.composer}>
+    <Surface padded={false} radius={24} style={styles.composer}>
       <View style={styles.inputWrap}>
         <TextInput
           className="flex-1 text-primary dark:text-primary-dark"
@@ -50,11 +50,11 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
         disabled={!canSend}
         radius={20}
         padded={false}
-        surfaceLayoutStyle={styles.sendButton}
+        layoutStyle={styles.sendButton}
       >
         <SendHorizonal size={18} color={sendIconColor} />
       </GlassPressable>
-    </GlassSurface>
+    </Surface>
   );
 }
 

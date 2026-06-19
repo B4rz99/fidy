@@ -5,7 +5,7 @@ import { useOptionalUserId } from "@/features/auth/public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import { getTransactionDisplayName } from "@/features/transactions/display.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
-import { GlassSurface, ScreenLayout } from "@/shared/components";
+import { Surface, ScreenLayout } from "@/shared/components";
 import { Info, Landmark, TriangleAlert } from "@/shared/components/icons";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -155,12 +155,12 @@ export function AttributionReviewScreen() {
           />
         </View>
 
-        <GlassSurface padded={false} radius={18} style={styles.noteCard}>
+        <Surface padded={false} radius={18} style={styles.noteCard}>
           <Info size={18} color={secondary} />
           <Text style={[styles.noteCopy, { color: secondary }]}>
             {t("attributionReview.balanceHint")}
           </Text>
-        </GlassSurface>
+        </Surface>
       </ScrollView>
     </ScreenLayout>
   );

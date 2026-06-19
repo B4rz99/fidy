@@ -4,7 +4,7 @@ import {
   Callout,
   Card,
   EmptyState as SharedEmptyState,
-  GlassSurface,
+  Surface,
   Row,
 } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
@@ -49,14 +49,14 @@ export function SummaryCard({ icon: Icon, title, subtitle, tone = "warning" }: S
       subtitle={subtitle}
       tone={tone === "green" ? "success" : "warning"}
       icon={
-        <GlassSurface
+        <Surface
           radius={12}
           padded={false}
           className="size-9 items-center justify-center"
           style={{ alignItems: "center", height: 36, justifyContent: "center", width: 36 }}
         >
           <Icon size={18} color={iconColor} />
-        </GlassSurface>
+        </Surface>
       }
     />
   );

@@ -29,7 +29,7 @@ export function CalendarDayCell({ day, date, bills, paidBillIds, minHeight, onDa
   return (
     <GlassPressable
       style={[styles.cellLayout, minHeight != null ? { minHeight } : undefined]}
-      surfaceLayoutStyle={styles.cellSurface}
+      layoutStyle={styles.cellSurface}
       radius={8}
       padded={false}
       onPress={() => onDayPress(date)}

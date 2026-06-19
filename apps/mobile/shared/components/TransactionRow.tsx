@@ -131,7 +131,7 @@ export function TransactionRow({
               accessibilityLabel={t("common.edit")}
               radius={0}
               padded={false}
-              surfaceLayoutStyle={styles.swipeAction}
+              layoutStyle={styles.swipeAction}
               onPress={handleEditPress}
             >
               <Text
@@ -148,7 +148,7 @@ export function TransactionRow({
               accessibilityLabel={t("common.delete")}
               radius={0}
               padded={false}
-              surfaceLayoutStyle={styles.swipeAction}
+              layoutStyle={styles.swipeAction}
               onPress={handleDeletePress}
             >
               <Text className="font-poppins-semibold text-caption" style={{ color: accentRed }}>
@@ -159,7 +159,7 @@ export function TransactionRow({
         </SwipeActionPanel>
       );
     },
-    [onDelete, onEdit, t]
+    [accentRed, onDelete, onEdit, secondaryColor, t]
   );
 
   const hasActions = onEdit != null || onDelete != null;

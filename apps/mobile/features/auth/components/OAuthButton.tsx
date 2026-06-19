@@ -40,7 +40,7 @@ export function OAuthButton({
       radius={12}
       nativeGlass={useGlassSurface}
       className={`h-[52px] items-center justify-center ${containerClassName ?? ""}`}
-      surfaceLayoutStyle={styles.glassContent}
+      layoutStyle={styles.glassContent}
     >
       {content}
     </GlassPressable>

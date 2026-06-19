@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
-import { Button, GlassSurface, ScreenLayout, TextActionButton } from "@/shared/components";
+import { Button, Surface, ScreenLayout, TextActionButton } from "@/shared/components";
 import { LogOut } from "@/shared/components/icons";
 import { Alert, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -59,7 +59,7 @@ export function ProfileScreen() {
       >
         {/* Avatar & Info */}
         <View className="items-center" style={{ gap: 12 }}>
-          <GlassSurface
+          <Surface
             radius={40}
             padded={false}
             style={{
@@ -81,7 +81,7 @@ export function ProfileScreen() {
                 {avatar.initials}
               </Text>
             )}
-          </GlassSurface>
+          </Surface>
           <View className="items-center" style={{ gap: 4 }}>
             <Text className="font-poppins-semibold text-lg text-primary dark:text-primary-dark">
               {fullName}

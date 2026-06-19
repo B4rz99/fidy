@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Button, GlassSurface } from "@/shared/components";
+import { Button, Surface } from "@/shared/components";
 import { Modal, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -64,7 +64,7 @@ export const CelebrationModal = memo(function CelebrationModal({
           padding: 32,
         }}
       >
-        <GlassSurface
+        <Surface
           padded={false}
           radius={24}
           style={{
@@ -75,7 +75,7 @@ export const CelebrationModal = memo(function CelebrationModal({
             gap: 20,
           }}
         >
-          <GlassSurface
+          <Surface
             radius={48}
             padded={false}
             style={{
@@ -86,7 +86,7 @@ export const CelebrationModal = memo(function CelebrationModal({
             }}
           >
             <Text style={{ fontSize: 44 }}>{"🏆"}</Text>
-          </GlassSurface>
+          </Surface>
 
           {/* Title */}
           <Text
@@ -125,7 +125,7 @@ export const CelebrationModal = memo(function CelebrationModal({
           </Text>
 
           <Button label={t("goals.celebration.continueButton")} onPress={onDismiss} />
-        </GlassSurface>
+        </Surface>
       </View>
     </Modal>
   );

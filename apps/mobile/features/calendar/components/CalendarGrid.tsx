@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { GlassSurface } from "@/shared/components";
+import { Surface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { toIsoDate } from "@/shared/lib";
@@ -71,7 +71,7 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
   const tertiaryColor = useThemeColor("tertiary");
 
   return (
-    <GlassSurface padded={false} radius={12} style={styles.container}>
+    <Surface padded={false} radius={12} style={styles.container}>
       {/* Weekday header */}
       <View style={styles.headerRow}>
         {weekdayLabels.map(({ key, label }) => (
@@ -104,7 +104,7 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
           ))}
         </View>
       ))}
-    </GlassSurface>
+    </Surface>
   );
 }
 
