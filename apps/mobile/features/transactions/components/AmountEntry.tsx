@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useShallow } from "zustand/react/shallow";
+import { Button } from "@/shared/components/Button";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { cleanDigitInput, formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
@@ -55,7 +56,6 @@ export const AmountEntry = () => {
   const emptyDisplayAmount = isFocused ? "$" : "$0";
   const displayAmount = hasDigits ? formatInputDisplay(digits) : emptyDisplayAmount;
   const canProceed = parseDigitsToAmount(digits) > 0;
-  const buttonBg = canProceed ? accentGreen : "#CCCCCC";
 
   const handleChangeText = (text: string) => {
     setDigits(cleanDigitInput(text));
@@ -112,16 +112,12 @@ export const AmountEntry = () => {
       />
 
       <View className="w-full">
-        <Pressable
-          className="h-[52px] w-full items-center justify-center rounded-xl"
-          style={{ backgroundColor: buttonBg }}
+        <Button
+          label="Next"
           onPress={() => canProceed && setStep(2)}
           disabled={!canProceed}
-          accessibilityRole="button"
           accessibilityLabel="Next"
-        >
-          <Text className="font-poppins-semibold text-section text-white">Next</Text>
-        </Pressable>
+        />
       </View>
     </View>
   );

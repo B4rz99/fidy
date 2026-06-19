@@ -1,4 +1,5 @@
-import { Text, View } from "@/shared/components/rn";
+import { GlassSurface } from "@/shared/components";
+import { Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type StatusPillProps = {
@@ -10,11 +11,11 @@ export function StatusPill({ label, tone }: StatusPillProps) {
   const accentGreen = useThemeColor("accentGreen");
   const textColor = tone === "green" ? accentGreen : "#C46A2B";
   return (
-    <View
-      className={tone === "green" ? "bg-accent-green-light" : "bg-peach-light"}
+    <GlassSurface
+      radius={12}
+      padded={false}
       style={{
         alignSelf: "flex-start",
-        borderRadius: 12,
         paddingHorizontal: 10,
         paddingVertical: 6,
       }}
@@ -22,6 +23,6 @@ export function StatusPill({ label, tone }: StatusPillProps) {
       <Text className="font-poppins-semibold" style={{ color: textColor, fontSize: 12 }}>
         {label.toUpperCase()}
       </Text>
-    </View>
+    </GlassSurface>
   );
 }

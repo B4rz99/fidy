@@ -13,6 +13,8 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { GlassPressable } from "./GlassPressable";
+import { GlassSurface } from "./GlassSurface";
 import { ListRowSurface } from "./ListRowSurface";
 
 type TransactionRowProps = {
@@ -60,7 +62,7 @@ function getAmountClassName(amountTone: NonNullable<TransactionRowProps["amountT
 
 export function TransactionRow({
   icon,
-  iconBgColor,
+  iconBgColor: _iconBgColor,
   iconColor: iconColorOverride,
   name,
   date,
@@ -71,8 +73,9 @@ export function TransactionRow({
   onEdit,
   onDelete,
 }: TransactionRowProps) {
-  const defaultIconBg = useThemeColor("peachLight");
   const defaultIconColor = useThemeColor("tertiary");
+  const secondaryColor = useThemeColor("secondary");
+  const accentRed = useThemeColor("accentRed");
   const iconColor = iconColorOverride ?? defaultIconColor;
   const { t } = useTranslation();
   const resolvedAmountTone = amountTone ?? (isPositive ? "positive" : "negative");
@@ -123,30 +126,35 @@ export function TransactionRow({
       return (
         <SwipeActionPanel actionWidth={actionWidth} translation={_translation}>
           {onEdit ? (
-            <Pressable
+            <GlassPressable
               accessibilityRole="button"
               accessibilityLabel={t("common.edit")}
-              className="items-center justify-center bg-secondary dark:bg-secondary-dark"
-              style={styles.swipeAction}
+              radius={0}
+              padded={false}
+              surfaceLayoutStyle={styles.swipeAction}
               onPress={handleEditPress}
             >
-              <Text className="font-poppins-semibold text-caption text-white">
+              <Text
+                className="font-poppins-semibold text-caption"
+                style={{ color: secondaryColor }}
+              >
                 {t("common.edit")}
               </Text>
-            </Pressable>
+            </GlassPressable>
           ) : null}
           {onDelete ? (
-            <Pressable
+            <GlassPressable
               accessibilityRole="button"
               accessibilityLabel={t("common.delete")}
-              className="items-center justify-center bg-accent-red dark:bg-accent-red-dark"
-              style={styles.swipeAction}
+              radius={0}
+              padded={false}
+              surfaceLayoutStyle={styles.swipeAction}
               onPress={handleDeletePress}
             >
-              <Text className="font-poppins-semibold text-caption text-white">
+              <Text className="font-poppins-semibold text-caption" style={{ color: accentRed }}>
                 {t("common.delete")}
               </Text>
-            </Pressable>
+            </GlassPressable>
           ) : null}
         </SwipeActionPanel>
       );
@@ -158,28 +166,23 @@ export function TransactionRow({
 
   const content = (
     <ListRowSurface radius={8} minHeight={64} layoutStyle={styles.rowSurface}>
-      <View
+      <GlassSurface
+        radius={12}
+        padded={false}
         className="size-10 items-center justify-center rounded-icon"
-        style={{ backgroundColor: iconBgColor ?? defaultIconBg }}
+        style={{ alignItems: "center", height: 40, justifyContent: "center", width: 40 }}
       >
         <Text style={{ color: iconColor }}>{icon}</Text>
-      </View>
-      <View className="flex-1">
-        <Text className="font-poppins-medium text-body text-primary dark:text-primary-dark">
+      </GlassSurface>
+      <View className="ml-3 flex-1">
+        <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
           {name}
         </Text>
-        {date != null && (
-          <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
-            {date}
-          </Text>
-        )}
-      </View>
-      <View className="items-end">
-        <Text className={`font-poppins-semibold text-body ${amountClassName}`}>{amount}</Text>
         <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
-          {category}
+          {date ?? category}
         </Text>
       </View>
+      <Text className={`font-poppins-semibold text-body ${amountClassName}`}>{amount}</Text>
     </ListRowSurface>
   );
 
@@ -201,6 +204,7 @@ const styles = StyleSheet.create({
   rowSurface: {
     alignItems: "center",
     flexDirection: "row",
+    gap: 0,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },

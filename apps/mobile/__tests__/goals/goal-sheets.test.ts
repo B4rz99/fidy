@@ -133,12 +133,12 @@ test("goal payment date opens the shared calendar picker instead of editing raw 
 
 test("create-goal opens as a full screen route, not a dialog", () => {
   expect(createGoalRouteSource).not.toContain("DialogRouteFrame");
-  expect(createGoalRouteSource).toContain('headerBackTitle: ""');
-  expect(createGoalRouteSource).toContain('headerTitle: t("goals.create.title")');
+  expect(createGoalRouteSource).not.toContain("<Stack.Screen");
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
   expect(rootLayoutSource).toContain("routeOptions.fullScreen");
-  expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "create-goal");
+  expect(rootLayoutSource).toContain('name="create-goal"');
+  expect(rootStackRoutesSource).toContain('title: t("goals.create.title")');
 });
 
 test("goal payment and edit open as full screen routes, not dialogs", () => {
@@ -163,7 +163,7 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(frameSource).toContain("numpadVisible={numpadEnabled}");
   expect(numpadFormScreenSource).toContain("<ScreenShell>");
   expect(numpadFormScreenSource).toContain("<FidyNumpad");
-  expect(numpadFormScreenSource).toContain("<ScrollView");
+  expect(numpadFormScreenSource).toContain("<Pressable");
   expect(numpadFormScreenSource).toContain("accessible={false}");
   expect(numpadFormScreenSource).toContain("Math.max(bottom, 16)");
   expect(numpadFormScreenSource).toContain('justifyContent: "center"');
@@ -171,6 +171,7 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(stylesSource).toMatch(/fullScreenContainer:\s*\{\s*gap:\s*16,\s*paddingBottom:\s*12,/);
   expect(typeToggleSource).toContain("<SegmentedControl");
   expect(typeToggleSource).toContain('type === "debt" ? "danger" : "success"');
+  expect(typeToggleSource).toContain('variant="detached"');
 });
 
 test("goal detail hides inherited tab title from the back button", () => {

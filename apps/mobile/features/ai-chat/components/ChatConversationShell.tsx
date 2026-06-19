@@ -182,7 +182,11 @@ export function ChatConversationShell({
           accessibilityLabel={scrollToBottomLabel}
           onPress={() => scrollToBottom()}
           icon={
-            <ChevronLeft size={20} color="#fff" style={{ transform: [{ rotate: "-90deg" }] }} />
+            <ChevronLeft
+              size={20}
+              color="rgba(255,255,255,0.84)"
+              style={{ transform: [{ rotate: "-90deg" }] }}
+            />
           }
           size="size-10"
           style={[styles.scrollToBottomButton, { bottom: scrollButtonBottom }]}
@@ -208,6 +212,5 @@ const styles = StyleSheet.create({
   scrollToBottomButton: {
     position: "absolute",
     right: 16,
-    backgroundColor: "rgba(0,0,0,0.64)",
   },
 });

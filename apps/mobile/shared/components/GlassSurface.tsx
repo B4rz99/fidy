@@ -9,9 +9,6 @@ import { getSurfaceLayoutStyle } from "./surface-style";
 type GlassSurfaceProps = ViewProps & {
   children: ReactNode;
   backgroundColor?: string;
-  borderColor?: string;
-  borderStyle?: ViewStyle["borderStyle"];
-  borderWidth?: number;
   className?: string;
   isInteractive?: boolean;
   nativeGlass?: boolean;
@@ -22,9 +19,6 @@ type GlassSurfaceProps = ViewProps & {
 
 export function GlassSurface({
   backgroundColor,
-  borderColor,
-  borderStyle,
-  borderWidth,
   children,
   className,
   isInteractive = false,
@@ -38,19 +32,12 @@ export function GlassSurface({
   const isDark = colorScheme === "dark";
   const tokens = getSubtleGlassCardTokens(isDark);
   const canUseLiquidGlass = nativeGlass && Platform.OS === "ios" && isLiquidGlassAvailable();
-  const fallbackBackgroundColor =
-    !nativeGlass && isDark ? "rgba(255, 255, 255, 0.10)" : tokens.fallbackBackgroundColor;
   const layoutStyle = getSurfaceLayoutStyle(style);
   const surfaceStyle = [
     {
-      backgroundColor: canUseLiquidGlass
-        ? "transparent"
-        : (backgroundColor ?? fallbackBackgroundColor),
-      borderColor: borderColor ?? tokens.borderColor,
+      backgroundColor: backgroundColor ?? "transparent",
       borderCurve: "continuous" as const,
       borderRadius: radius,
-      borderStyle,
-      borderWidth: borderWidth ?? 1,
       overflow: "hidden" as const,
       padding: padded ? 16 : 0,
     },

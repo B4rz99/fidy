@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Image } from "expo-image";
 import { type Href, useRouter } from "expo-router";
 import { useAuthIdentity } from "@/features/auth/hooks.public";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { GlassPressable } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
 
@@ -24,13 +25,20 @@ export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
   });
 
   return (
-    <Pressable
+    <GlassPressable
       accessibilityLabel={t("settings.openSettings")}
       accessibilityRole="button"
       onPress={() => push("/settings" as Href)}
       testID="settings.profile-avatar-button"
       className="items-center justify-center rounded-full"
-      style={{ width: size, height: size, backgroundColor: accentGreen, overflow: "hidden" }}
+      radius={size / 2}
+      padded={false}
+      surfaceLayoutStyle={{
+        alignItems: "center",
+        height: size,
+        justifyContent: "center",
+        width: size,
+      }}
     >
       {avatar.type === "image" ? (
         <Image
@@ -41,11 +49,14 @@ export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
         />
       ) : (
         <View className="items-center justify-center" style={{ width: size, height: size }}>
-          <Text className="font-poppins-semibold text-white" style={{ fontSize: size * 0.35 }}>
+          <Text
+            className="font-poppins-semibold"
+            style={{ color: accentGreen, fontSize: size * 0.35 }}
+          >
             {avatar.initials}
           </Text>
         </View>
       )}
-    </Pressable>
+    </GlassPressable>
   );
 }

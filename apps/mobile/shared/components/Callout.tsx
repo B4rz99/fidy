@@ -99,7 +99,6 @@ export function Callout({
       className={className}
       padded={false}
       radius={12}
-      borderColor={toneBorderColor[tone]}
       style={[styles.surface, contentProps.style]}
     >
       {icon}

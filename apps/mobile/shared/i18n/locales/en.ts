@@ -996,6 +996,7 @@ const en = {
     min: "Min",
     max: "Max",
     allTypes: "All",
+    transferType: "Transfer",
     transfers: "Transfers",
   },
 

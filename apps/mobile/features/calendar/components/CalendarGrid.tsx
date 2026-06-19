@@ -113,7 +113,6 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     borderCurve: "continuous",
-    borderWidth: 1,
     overflow: "hidden",
   },
   headerRow: {

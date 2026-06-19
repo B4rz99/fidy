@@ -28,7 +28,6 @@ export function TransferSidePicker(props: {
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const peachLight = useThemeColor("peachLight");
 
   return (
     <PickerDialog
@@ -62,7 +61,7 @@ export function TransferSidePicker(props: {
             accessibilityHint={t(`financialAccounts.kinds.${kind}`)}
             selected={isSelected}
             leading={
-              <View style={[styles.sideIconWrap, { backgroundColor: peachLight }]}>
+              <View style={styles.sideIconWrap}>
                 <Icon size={18} color={secondary} />
               </View>
             }
@@ -96,7 +95,7 @@ export function TransferSidePicker(props: {
         accessibilityLabel={t("transfers.outsideFidy")}
         accessibilityHint={t("transfers.outsideFidyDescription")}
         leading={
-          <View style={[styles.sideIconWrap, { backgroundColor: peachLight }]}>
+          <View style={styles.sideIconWrap}>
             <ExternalLink size={18} color={accentGreen} />
           </View>
         }

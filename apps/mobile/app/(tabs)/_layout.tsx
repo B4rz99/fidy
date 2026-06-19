@@ -8,7 +8,7 @@ function IosTabs() {
   const { t } = useTranslation();
 
   return (
-    <NativeTabs tintColor="#7CB243" sidebarAdaptable>
+    <NativeTabs tintColor="#7CB243">
       <NativeTabs.Trigger name="(index)">
         <NativeTabs.Trigger.Icon sf="house.fill" />
         <NativeTabs.Trigger.Label>{t("tabs.home")}</NativeTabs.Trigger.Label>

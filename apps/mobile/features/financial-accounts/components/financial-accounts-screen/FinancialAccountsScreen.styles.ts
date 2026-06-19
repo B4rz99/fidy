@@ -3,7 +3,6 @@ import { StyleSheet } from "@/shared/components/rn";
 export const styles = StyleSheet.create({
   auroraLayer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(139, 195, 74, 0.04)",
   },
   content: {
     paddingHorizontal: 20,

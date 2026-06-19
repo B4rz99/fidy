@@ -40,7 +40,6 @@ export default function LoginScreen() {
               onPress={() => {
                 void useAuthStore.getState().signIn("google");
               }}
-              containerClassName="bg-login-google dark:bg-login-google-dark border border-login-google-border dark:border-login-google-border-dark"
               textClassName="text-primary dark:text-primary-dark"
             />
             <OAuthButton
@@ -50,7 +49,6 @@ export default function LoginScreen() {
               onPress={() => {
                 void useAuthStore.getState().signIn("azure");
               }}
-              containerClassName="bg-login-ms dark:bg-login-ms-dark"
               textClassName="text-primary dark:text-primary-dark"
             />
             <LocalQaLoginButton />

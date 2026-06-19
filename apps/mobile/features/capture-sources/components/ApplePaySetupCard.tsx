@@ -10,10 +10,8 @@ const StepList = ({ steps, circleColor }: { steps: readonly string[]; circleColo
     {steps.map((text, index) => (
       <View key={text} className="flex-row items-start" style={{ gap: 10 }}>
         <GlassSurface
-          nativeGlass={false}
           padded={false}
           radius={12}
-          borderColor={circleColor}
           style={{
             width: 24,
             height: 24,
@@ -73,10 +71,8 @@ export const ApplePaySetupCard = () => {
           </View>
 
           <GlassSurface
-            nativeGlass={false}
             padded={false}
             radius={999}
-            borderColor={isApplePaySetupComplete ? greenColor : primaryColor}
             style={{
               paddingHorizontal: 8,
               paddingVertical: 2,

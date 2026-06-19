@@ -23,7 +23,6 @@ export function CreateCategoryScreenContent({
 }: CreateCategoryScreenViewModel) {
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
-  const borderColor = useThemeColor("borderSubtle");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
@@ -35,7 +34,7 @@ export function CreateCategoryScreenContent({
       topPadding={12}
     >
       <View style={styles.previewRow}>
-        <View style={[styles.previewPill, { backgroundColor: selectedColor ?? accentGreen }]}>
+        <View style={styles.previewPill}>
           <Text>{previewIcon}</Text>
           <Text style={styles.previewText}>
             {trimmedName.length > 0 ? trimmedName : t("categories.create.namePlaceholder")}
@@ -59,7 +58,6 @@ export function CreateCategoryScreenContent({
       <FormSection title={t("categories.create.iconLabel")}>
         <CategoryIconGrid
           accentGreen={accentGreen}
-          borderColor={borderColor}
           onSelect={handleIconSelect}
           secondaryColor={secondaryColor}
           selectedColor={selectedColor}

@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { ScreenLayout, TextActionButton } from "@/shared/components";
-import { Platform, View } from "@/shared/components/rn";
+import { Platform } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { hasActiveFilters } from "../../lib/filters";
 import { SearchResultsList } from "./SearchResultsList";
@@ -45,33 +45,24 @@ export function SearchScreenContent({
         />
       ) : null}
       {ready ? (
-        <>
-          <View style={styles.nativeHeaderClearance} />
-          <SearchResultsList
-            activePanel={activePanel}
-            filterPanel={filterPanel}
-            filters={filters}
-            handleClearAll={handleClearAll}
-            handleEndReached={handleEndReached}
-            handleTextChange={handleTextChange}
-            handleTogglePanel={handleTogglePanel}
-            inputRef={inputRef}
-            inputText={inputText}
-            placeholder={t("search.placeholder")}
-            primary={primary}
-            results={results}
-            secondary={secondary}
-            showSummary={showSummary}
-            summary={summary}
-          />
-        </>
+        <SearchResultsList
+          activePanel={activePanel}
+          filterPanel={filterPanel}
+          filters={filters}
+          handleClearAll={handleClearAll}
+          handleEndReached={handleEndReached}
+          handleTextChange={handleTextChange}
+          handleTogglePanel={handleTogglePanel}
+          inputRef={inputRef}
+          inputText={inputText}
+          placeholder={t("search.placeholder")}
+          primary={primary}
+          results={results}
+          secondary={secondary}
+          showSummary={showSummary}
+          summary={summary}
+        />
       ) : null}
     </ScreenLayout>
   );
 }
-
-const styles = {
-  nativeHeaderClearance: {
-    height: Platform.OS === "ios" ? 116 : 0,
-  },
-};

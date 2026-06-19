@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
-import { FlatList, Pressable, Text, View } from "@/shared/components/rn";
+import { GlassPressable } from "@/shared/components";
+import { FlatList, Text, View } from "@/shared/components/rn";
 import { SELECTABLE_ICONS } from "../../lib/icon-map";
 import { styles } from "./CreateCategoryScreen.styles";
 
@@ -7,7 +8,6 @@ const ICON_GRID_COLUMNS = 6;
 
 type CategoryIconGridProps = {
   readonly accentGreen: string;
-  readonly borderColor: string;
   readonly onSelect: (name: string) => void;
   readonly secondaryColor: string;
   readonly selectedColor: string | null;
@@ -16,7 +16,6 @@ type CategoryIconGridProps = {
 
 type IconCellProps = {
   readonly accentGreen: string;
-  readonly borderColor: string;
   readonly icon: string;
   readonly isSelected: boolean;
   readonly name: string;
@@ -27,7 +26,6 @@ type IconCellProps = {
 
 const IconCell = memo(function IconCell({
   accentGreen,
-  borderColor,
   icon,
   isSelected,
   name,
@@ -40,19 +38,16 @@ const IconCell = memo(function IconCell({
   const iconColor = isSelected ? activeBorder : secondaryColor;
 
   return (
-    <Pressable onPress={handlePress} style={styles.iconCellWrapper}>
-      <View
-        style={[
-          styles.iconCell,
-          {
-            borderWidth: isSelected ? 2 : 1,
-            borderColor: isSelected ? activeBorder : borderColor,
-          },
-        ]}
+    <View style={styles.iconCellWrapper}>
+      <GlassPressable
+        onPress={handlePress}
+        radius={12}
+        padded={false}
+        surfaceLayoutStyle={styles.iconCell}
       >
         <Text style={{ color: iconColor }}>{icon}</Text>
-      </View>
-    </Pressable>
+      </GlassPressable>
+    </View>
   );
 });
 
@@ -60,7 +55,6 @@ const iconKeyExtractor = (item: (typeof SELECTABLE_ICONS)[number]) => item.name;
 
 export function CategoryIconGrid({
   accentGreen,
-  borderColor,
   onSelect,
   secondaryColor,
   selectedColor,
@@ -70,7 +64,6 @@ export function CategoryIconGrid({
     ({ item }: { item: (typeof SELECTABLE_ICONS)[number] }) => (
       <IconCell
         accentGreen={accentGreen}
-        borderColor={borderColor}
         icon={item.icon}
         isSelected={selectedIcon === item.name}
         name={item.name}
@@ -79,7 +72,7 @@ export function CategoryIconGrid({
         selectedColor={selectedColor}
       />
     ),
-    [accentGreen, borderColor, onSelect, secondaryColor, selectedColor, selectedIcon]
+    [accentGreen, onSelect, secondaryColor, selectedColor, selectedIcon]
   );
 
   return (

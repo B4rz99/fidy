@@ -1,14 +1,8 @@
 import type { ComponentProps } from "react";
 import Animated from "react-native-reanimated";
-import {
-  Pressable,
-  type StyleProp,
-  Text,
-  type TextStyle,
-  View,
-  type ViewStyle,
-} from "@/shared/components/rn";
+import { type StyleProp, Text, type TextStyle, View, type ViewStyle } from "@/shared/components/rn";
 import { formatInputDisplay } from "@/shared/lib";
+import { GlassPressable } from "./GlassPressable";
 
 type MoneyAmountDisplaySize = "medium" | "large" | "hero";
 
@@ -64,6 +58,9 @@ export function MoneyAmountDisplay({
       ]}
     >
       <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.35}
+        numberOfLines={1}
         style={[
           {
             color,
@@ -95,8 +92,15 @@ export function MoneyAmountDisplay({
   if (!onPress) return content;
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
+    <GlassPressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      padded={false}
+      radius={18}
+      surfaceLayoutStyle={{ paddingHorizontal: 12, paddingVertical: 4 }}
+    >
       {content}
-    </Pressable>
+    </GlassPressable>
   );
 }

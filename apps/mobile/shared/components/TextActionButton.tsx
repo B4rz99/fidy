@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { PressableProps } from "react-native";
-import { Pressable, Text } from "@/shared/components/rn";
+import { Text } from "@/shared/components/rn";
+import { GlassPressable } from "./GlassPressable";
 
 type TextActionButtonTone = "primary" | "danger" | "neutral";
 
@@ -26,20 +27,25 @@ export function TextActionButton({
   className,
   ...pressableProps
 }: TextActionButtonProps) {
-  const baseClassName =
-    appearance === "pill"
-      ? "min-h-8 flex-row items-center justify-center gap-1 rounded-full px-2"
-      : "flex-row items-center justify-center gap-1";
-
   return (
-    <Pressable
+    <GlassPressable
       {...pressableProps}
       accessibilityRole={pressableProps.accessibilityRole ?? "button"}
-      className={`${baseClassName} ${className ?? ""}`}
+      padded={false}
+      radius={appearance === "pill" ? 999 : 10}
+      className={`${className ?? ""}`}
+      surfaceLayoutStyle={{
+        alignItems: "center",
+        flexDirection: "row",
+        gap: 4,
+        justifyContent: "center",
+        minHeight: appearance === "pill" ? 32 : undefined,
+        paddingHorizontal: appearance === "pill" ? 8 : 4,
+      }}
     >
       {icon}
       <Text className={`font-poppins-medium text-caption ${LABEL_CLASS_NAMES[tone]}`}>{label}</Text>
-    </Pressable>
+    </GlassPressable>
   );
 }
 

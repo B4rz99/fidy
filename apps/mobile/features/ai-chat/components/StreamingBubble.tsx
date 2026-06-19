@@ -1,4 +1,5 @@
 import { memo, useEffect, useState } from "react";
+import { GlassSurface } from "@/shared/components";
 import { Sparkles } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -39,31 +40,29 @@ function ThinkingDots({ color }: { readonly color: string }) {
 function StreamingBubbleInner({ content }: StreamingBubbleProps) {
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
-  const chatAssistantBubble = useThemeColor("chatAssistantBubble");
   const chatAssistantText = useThemeColor("chatAssistantText");
   const display = getStreamingBubbleDisplay(content, t("aiChat.thinking"));
 
   return (
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
-      <View
+      <GlassSurface
+        padded={false}
+        radius={14}
         style={{
           width: 28,
           height: 28,
-          borderRadius: 14,
-          backgroundColor: chatAssistantBubble,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
         <Sparkles size={16} color={accentGreen} />
-      </View>
+      </GlassSurface>
       <View style={{ flex: 1 }}>
-        <View
+        <GlassSurface
+          padded={false}
+          radius={16}
           style={{
             maxWidth: "90%",
-            borderRadius: 16,
-            borderBottomLeftRadius: 4,
-            backgroundColor: chatAssistantBubble,
             paddingVertical: 10,
             paddingHorizontal: 14,
           }}
@@ -81,7 +80,7 @@ function StreamingBubbleInner({ content }: StreamingBubbleProps) {
               <Text style={{ color: chatAssistantText, opacity: 0.45 }}> |</Text>
             </Text>
           )}
-        </View>
+        </GlassSurface>
       </View>
     </View>
   );

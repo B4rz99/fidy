@@ -3,8 +3,8 @@ import { useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { trackOnboardingEvent } from "@/features/onboarding/telemetry.public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { Card } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Button, Card } from "@/shared/components";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
@@ -52,12 +52,7 @@ export function OnboardingAccountReviewStep() {
           {t("accountSuggestions.onboarding.subtitle")}
         </Text>
 
-        <Card
-          backgroundColor={accentGreenLight}
-          padded={false}
-          radius={12}
-          contentStyle={styles.noteBanner}
-        >
+        <Card padded={false} radius={12} contentStyle={styles.noteBanner}>
           <Text style={[styles.noteText, { color: primary }]}>
             {t("accountSuggestions.onboarding.note")}
           </Text>
@@ -119,8 +114,9 @@ export function OnboardingAccountReviewStep() {
         </View>
       </ScrollView>
 
-      <Pressable
-        style={[styles.continueButton, { backgroundColor: accentGreen }]}
+      <Button
+        label={t("accountSuggestions.onboarding.continue")}
+        style={styles.continueButton}
         onPress={() => {
           trackOnboardingEvent("account_review_continue", {
             suggestionCount: suggestions.length,
@@ -129,9 +125,7 @@ export function OnboardingAccountReviewStep() {
           });
           nextStep();
         }}
-      >
-        <Text style={styles.continueButtonText}>{t("accountSuggestions.onboarding.continue")}</Text>
-      </Pressable>
+      />
     </View>
   );
 }

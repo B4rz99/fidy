@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { PressableProps, ViewProps } from "react-native";
 import { StyleSheet, Text } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
 import { GlassPressable } from "./GlassPressable";
 import { GlassSurface } from "./GlassSurface";
 import type { SurfaceLayoutStyle } from "./surface-style";
@@ -39,18 +38,6 @@ export function Chip({
   labelClassName,
   ...viewProps
 }: ChipProps) {
-  const accentGreen = useThemeColor("accentGreen");
-  const success = useThemeColor("success");
-  const danger = useThemeColor("danger");
-  const warning = useThemeColor("warning");
-  const neutralBorderColor = useThemeColor("borderSubtle");
-  const toneBorderColor: Record<ChipTone, string | undefined> = {
-    neutral: undefined,
-    primary: accentGreen,
-    success,
-    danger,
-    warning,
-  };
   const {
     accessibilityHint,
     accessibilityLabel,
@@ -61,9 +48,6 @@ export function Chip({
     testID,
     ...containerProps
   } = viewProps;
-  const borderColor = selected
-    ? (toneBorderColor[tone] ?? neutralBorderColor)
-    : toneBorderColor[tone];
   const pressableProps = {
     accessibilityHint,
     accessibilityLabel,
@@ -93,11 +77,8 @@ export function Chip({
     <GlassSurface
       {...contentProps}
       className={className}
-      nativeGlass={false}
       padded={false}
       radius={999}
-      borderColor={borderColor}
-      borderWidth={selected ? 1.5 : undefined}
       style={surfaceStyle}
     >
       {contentBody}
@@ -113,9 +94,6 @@ export function Chip({
       {...pressableProps}
       onPress={onPress}
       radius={999}
-      borderColor={borderColor}
-      borderWidth={selected ? 1.5 : undefined}
-      nativeGlass={false}
       surfaceClassName={className}
       surfaceLayoutStyle={surfaceStyle}
     >

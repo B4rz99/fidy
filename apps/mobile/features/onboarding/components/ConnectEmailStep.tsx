@@ -8,9 +8,9 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture/public";
-import { GlassSurface } from "@/shared/components";
+import { Button, GlassSurface } from "@/shared/components";
 import { CheckCircle, Mail, Shield } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getEmailConnectionChecklist, hasConnectedEmailAccount } from "../lib/email-connections";
@@ -82,8 +82,8 @@ export function ConnectEmailStep() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <View style={[styles.iconCircle, { backgroundColor: accentGreen }]}>
-          <Mail size={40} color="#FFFFFF" />
+        <View style={styles.iconCircle}>
+          <Mail size={40} color={accentGreen} />
         </View>
         <Text style={[styles.title, { color: primaryColor }]}>
           {t("onboarding.connectEmail.title")}
@@ -117,7 +117,6 @@ export function ConnectEmailStep() {
                 onPress={() => {
                   void handleConnect(item.provider);
                 }}
-                containerClassName="border border-gray-300 dark:border-gray-600"
                 textClassName="text-gray-800 dark:text-gray-200"
               />
             )
@@ -132,23 +131,17 @@ export function ConnectEmailStep() {
         </GlassSurface>
       </View>
 
-      <Pressable
+      <Button
+        label={
+          hasConnectedAccount
+            ? t("onboarding.connectEmail.syncConnectedEmails")
+            : t("onboarding.connectEmail.skipForNow")
+        }
+        variant={hasConnectedAccount ? "primary" : "ghost"}
         onPress={hasConnectedAccount ? handleContinue : handleSkip}
         disabled={isBusy}
-        style={
-          hasConnectedAccount
-            ? [styles.continueButton, { backgroundColor: accentGreen }]
-            : styles.skipButton
-        }
-      >
-        <Text
-          style={[styles.skipText, { color: hasConnectedAccount ? "#FFFFFF" : secondaryColor }]}
-        >
-          {hasConnectedAccount
-            ? t("onboarding.connectEmail.syncConnectedEmails")
-            : t("onboarding.connectEmail.skipForNow")}
-        </Text>
-      </Pressable>
+        style={hasConnectedAccount ? styles.continueButton : styles.skipButton}
+      />
     </View>
   );
 }

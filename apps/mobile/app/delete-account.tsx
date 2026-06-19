@@ -1,7 +1,12 @@
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/features/auth/hooks.public";
 import { useDeleteAccountMutation } from "@/features/settings/hooks.public";
-import { DialogActionButton, DialogActionStack, DialogRouteFrame } from "@/shared/components";
+import {
+  DialogActionButton,
+  DialogActionStack,
+  DialogRouteFrame,
+  GlassSurface,
+} from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import { Alert, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -25,18 +30,18 @@ export default function DeleteAccountDialogRoute() {
   return (
     <DialogRouteFrame>
       <View style={{ padding: 24, alignItems: "center", gap: 16 }}>
-        <View
+        <GlassSurface
+          radius={32}
+          padded={false}
           style={{
             width: 64,
             height: 64,
-            borderRadius: 32,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: `${accentRed}1A`,
           }}
         >
           <TriangleAlert size={32} color={accentRed} />
-        </View>
+        </GlassSurface>
         <Text
           className="font-poppins-semibold text-primary dark:text-primary-dark"
           style={{ fontSize: 16 }}

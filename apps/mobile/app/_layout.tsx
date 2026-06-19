@@ -2,6 +2,8 @@
 import "../global.css";
 import "@/shared/polyfills/array-to-sorted";
 import {
+  Poppins_300Light,
+  Poppins_400Regular,
   Poppins_500Medium,
   Poppins_600SemiBold,
   Poppins_700Bold,
@@ -146,6 +148,8 @@ export function RootLayout() {
   useQaDevtoolsRuntime();
 
   const [fontsLoaded, fontsError] = useFonts({
+    Poppins_300Light,
+    Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,
     Poppins_700Bold,
@@ -227,6 +231,7 @@ export function RootLayout() {
             {ROOT_STACK_ROUTES.fullScreen.map((name) => (
               <Stack.Screen key={name} name={name} options={routeOptions.fullScreen} />
             ))}
+            <Stack.Screen name="create-goal" options={routeOptions.titled.createGoal} />
             {ROOT_STACK_ROUTES.dialog.map((name) => (
               <Stack.Screen key={name} name={name} options={routeOptions.dialog} />
             ))}

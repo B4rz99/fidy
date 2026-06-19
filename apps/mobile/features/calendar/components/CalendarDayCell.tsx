@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { GlassPressable } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import type { Bill } from "../schema";
 
@@ -18,22 +19,19 @@ export function CalendarDayCell({ day, date, bills, paidBillIds, minHeight, onDa
   const tertiaryColor = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
   const peach = useThemeColor("peach");
-  const borderColor = useThemeColor("borderSubtle");
 
   if (day === null || !date) {
-    return <View style={[styles.cell, minHeight != null ? { minHeight } : undefined]} />;
+    return <View style={[styles.cellLayout, minHeight != null ? { minHeight } : undefined]} />;
   }
 
   const visibleBills = bills.slice(0, MAX_VISIBLE_DOTS);
-  const hasDueBills = bills.length > 0;
 
   return (
-    <Pressable
-      style={[
-        styles.cell,
-        hasDueBills ? { borderColor, borderWidth: 1 } : undefined,
-        minHeight != null ? { minHeight } : undefined,
-      ]}
+    <GlassPressable
+      style={[styles.cellLayout, minHeight != null ? { minHeight } : undefined]}
+      surfaceLayoutStyle={styles.cellSurface}
+      radius={8}
+      padded={false}
       onPress={() => onDayPress(date)}
     >
       <Text style={[styles.dayNumber, { color: primaryColor }]}>{day}</Text>
@@ -55,20 +53,23 @@ export function CalendarDayCell({ day, date, bills, paidBillIds, minHeight, onDa
           +{bills.length - MAX_VISIBLE_DOTS}
         </Text>
       ) : null}
-    </Pressable>
+    </GlassPressable>
   );
 }
 
 const styles = StyleSheet.create({
-  cell: {
+  cellLayout: {
     flex: 1,
     minHeight: 72,
+    margin: 2,
+  },
+  cellSurface: {
+    flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 2,
     alignItems: "center",
     borderRadius: 8,
     borderCurve: "continuous",
-    margin: 2,
   },
   dayNumber: {
     fontFamily: "Poppins_600SemiBold",

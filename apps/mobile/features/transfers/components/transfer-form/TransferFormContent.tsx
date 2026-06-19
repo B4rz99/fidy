@@ -39,7 +39,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
       >
         <Text style={[styles.subtitle, { color: secondary }]}>{props.form.subtitle}</Text>
 
-        <GlassSurface nativeGlass={false} padded={false} radius={18} style={styles.amountCard}>
+        <GlassSurface padded={false} radius={18} style={styles.amountCard}>
           <Text style={[styles.sectionEyebrow, { color: tertiary }]}>
             {t("transfers.amountLabel")}
           </Text>
@@ -81,7 +81,6 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
         <View style={{ gap: 8 }}>
           <Text style={[styles.sectionLabel, { color: primary }]}>{t("transfers.dateLabel")}</Text>
           <GlassSurface
-            nativeGlass={false}
             padded={false}
             radius={16}
             style={[
@@ -112,10 +111,10 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
           </GlassSurface>
         </View>
 
-        <View style={[styles.hintCard, { backgroundColor: props.form.hintBackground }]}>
+        <GlassSurface padded={false} radius={16} style={styles.hintCard}>
           <TriangleAlert size={18} color={props.form.hintTone} />
           <Text style={[styles.hintText, { color: primary }]}>{props.form.hint}</Text>
-        </View>
+        </GlassSurface>
 
         <Button
           testID={TRANSFER_FORM_TEST_IDS.save}

@@ -56,17 +56,10 @@ test("Entry scaffold matches the requested layout structure", () => {
   expect(scaffoldSource).toContain("SWIPE_TAB_THRESHOLD");
   expect(scaffoldSource).toContain("onTabPress(nextTab.key)");
   expect(scaffoldSource).toContain("onTabPress(previousTab.key)");
-  expect(scaffoldSource).toContain("Animated.View");
-  expect(scaffoldSource).toContain("withTiming");
-  expect(scaffoldSource).toContain("useDerivedValue");
-  expect(scaffoldSource).toContain("animatedTabPillStyle");
-  expect(scaffoldSource).toContain("animatedTabPillX");
-  expect(scaffoldSource).toContain("animatedTabPillColor");
-  expect(scaffoldStylesSource).toContain("tabPill");
+  expect(scaffoldSource).not.toContain("Animated.View");
+  expect(scaffoldSource).not.toContain("animatedTabPill");
+  expect(scaffoldStylesSource).not.toContain("tabPill");
   expect(scaffoldStylesSource).not.toContain("tabLine");
-  expect(scaffoldSource).toContain("useWindowDimensions");
-  expect(scaffoldSource).toContain("ENTRY_HORIZONTAL_PADDING");
-  expect(scaffoldSource).toContain("TAB_GAP");
   expect(entryFieldSource).toContain("valueTone");
   expect(scaffoldSource).toContain("amountArea");
   expect(scaffoldSource).toContain("adjustsFontSizeToFit");
@@ -90,26 +83,23 @@ test("Entry numpad keeps the final row aligned to three columns", () => {
 test("Entry numpad feedback does not own layout styles", () => {
   expect(scaffoldSource).toContain("EntryNumpadButton");
   expect(scaffoldSource).toContain("Haptics.impactAsync");
+  expect(scaffoldSource).toContain("GlassPressable");
   expect(scaffoldSource).toContain("android_ripple");
-  expect(scaffoldSource).toContain("styles.keyFeedback");
-  expect(scaffoldStylesSource).toContain("keyFeedback");
+  expect(scaffoldSource).not.toContain("onPressIn={showFeedback}");
+  expect(scaffoldSource).not.toContain("onPressOut={hideFeedback}");
+  expect(scaffoldSource).not.toContain("styles.keyFeedback");
+  expect(scaffoldStylesSource).not.toContain("keyFeedback");
   expect(scaffoldStylesSource).not.toContain("keyPressed");
 });
 
-test("Entry tab indicator uses a centered pill instead of an underline", () => {
-  expect(scaffoldSource).toContain("animatedTabPillStyle");
-  expect(scaffoldSource).toContain("animatedTabPillX");
-  expect(scaffoldSource).toContain("animatedTabPillColor");
-  expect(scaffoldSource).toContain("tabPillWidth");
-  expect(scaffoldSource).toContain("totalTabGap");
-  expect(scaffoldSource).toContain("transform: [{ translateX: animatedTabPillX.value }]");
-  expect(scaffoldSource).toContain("{ width: tabPillWidth }");
+test("Entry tab indicator relies on text state instead of decorative pills or underlines", () => {
+  expect(scaffoldSource).not.toContain("animatedTabPill");
+  expect(scaffoldSource).not.toContain("tabPillWidth");
+  expect(scaffoldSource).not.toContain("totalTabGap");
+  expect(scaffoldSource).not.toContain("transform: [{ translateX:");
   expect(scaffoldSource).not.toContain("scaleX");
   expect(scaffoldSource).not.toContain("TAB_LINE_WIDTH");
-  expect(scaffoldStylesSource).toContain("tabPill");
-  expect(scaffoldStylesSource).toContain("top: 2");
-  expect(scaffoldStylesSource).toContain("height: 30");
-  expect(scaffoldStylesSource).toContain("borderRadius: 999");
+  expect(scaffoldStylesSource).not.toContain("tabPill");
   expect(scaffoldStylesSource).toContain("height: 34");
   expect(scaffoldStylesSource).not.toContain("tabLine");
 });

@@ -36,7 +36,6 @@ export const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: "#00000012",
   },
   factBlock: {
     gap: 4,

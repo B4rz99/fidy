@@ -49,7 +49,6 @@ export default function DayDetailScreen() {
   const userId = useOptionalUserId();
 
   const secondaryColor = useThemeColor("secondary");
-  const pageBg = useThemeColor("page");
 
   const dateObj = parseDayDetailDateParam(date);
   const dueDateStr = toIsoDate(dateObj);
@@ -88,7 +87,7 @@ export default function DayDetailScreen() {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: pageBg }]}>
+    <View style={styles.screen}>
       <Stack.Screen
         options={{
           headerBackButtonDisplayMode: "minimal",

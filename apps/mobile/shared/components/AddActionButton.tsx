@@ -5,8 +5,6 @@ import { useThemeColor } from "@/shared/hooks";
 import { GlassPressable } from "./GlassPressable";
 
 type AddActionButtonProps = Omit<PressableProps, "children"> & {
-  readonly backgroundColor?: string;
-  readonly borderColor?: string;
   readonly iconColor?: string;
   readonly iconSize?: number;
   readonly size?: number;
@@ -15,8 +13,6 @@ type AddActionButtonProps = Omit<PressableProps, "children"> & {
 
 export function AddActionButton({
   accessibilityRole,
-  backgroundColor,
-  borderColor,
   hitSlop = 12,
   iconColor,
   iconSize = 24,
@@ -30,8 +26,7 @@ export function AddActionButton({
     <GlassPressable
       {...pressableProps}
       accessibilityRole={accessibilityRole ?? "button"}
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
+      android_ripple={{ borderless: false }}
       hitSlop={hitSlop}
       isInteractive
       padded={false}

@@ -23,7 +23,7 @@ export function FinancialAccountIdentifierScreen() {
   const db = userId ? tryGetDb(userId) : null;
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const accentGreenLight = useThemeColor("accentGreenLight");
+  const accentGreen = useThemeColor("accentGreen");
   const [value, setValue] = useState("");
   const { isBusy, run: guardedSave } = useAsyncGuard();
 
@@ -90,12 +90,7 @@ export function FinancialAccountIdentifierScreen() {
           placeholder={t("financialAccounts.identifierScreen.placeholder")}
         />
 
-        <Card
-          backgroundColor={accentGreenLight}
-          padded={false}
-          radius={14}
-          contentStyle={styles.noteBanner}
-        >
+        <Card padded={false} radius={14} contentStyle={styles.noteBanner}>
           <Text style={[styles.noteText, { color: secondary }]}>
             {t("financialAccounts.identifierScreen.note")}
           </Text>

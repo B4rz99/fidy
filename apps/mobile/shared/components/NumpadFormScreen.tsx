@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FidyNumpad } from "@/shared/components/FidyNumpad";
-import { Keyboard, Pressable, ScrollView, StyleSheet, View } from "@/shared/components/rn";
+import { Keyboard, Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { ScreenShell } from "./ScreenShell";
 
 type NumpadFormScreenProps = {
@@ -36,15 +36,7 @@ export function NumpadFormScreen({
         </View>
         {middle ? <View style={[styles.middleShell, middleStyle]}>{middle}</View> : null}
         <View style={[styles.bottomShell, { paddingBottom: Math.max(bottom, 16) }, footerStyle]}>
-          {footer ? (
-            <ScrollView
-              style={styles.footerScroller}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {footer}
-            </ScrollView>
-          ) : null}
+          {footer}
           {numpadVisible ? <FidyNumpad onKeyPress={onKeyPress} /> : null}
         </View>
       </Pressable>
@@ -68,11 +60,8 @@ const styles = StyleSheet.create({
   },
   bottomShell: {
     gap: 8,
+    overflow: "visible",
     paddingHorizontal: 16,
     paddingTop: 8,
-  },
-  footerScroller: {
-    flexGrow: 0,
-    flexShrink: 1,
   },
 });

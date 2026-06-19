@@ -4,7 +4,6 @@ import { useOptionalUserId } from "@/features/auth/public";
 import { formatMonthYear } from "@/features/calendar/public";
 import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
 import {
-  Button,
   EmptyState,
   FeedList,
   AddActionButton,
@@ -12,7 +11,7 @@ import {
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
 import { Wallet } from "@/shared/components/icons";
-import { StyleSheet, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
@@ -39,6 +38,52 @@ function AddBudgetButton({
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
     />
+  );
+}
+
+function EmptyStateActionButton({
+  label,
+  onPress,
+  tone,
+}: {
+  readonly label: string;
+  readonly onPress: () => void;
+  readonly tone: "primary" | "secondary";
+}) {
+  const accentGreen = useThemeColor("accentGreen");
+  const onAccent = useThemeColor("onAccent");
+  const primary = useThemeColor("primary");
+  const surface = useThemeColor("surface");
+
+  const isPrimary = tone === "primary";
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.emptyActionButton,
+        {
+          backgroundColor: isPrimary ? accentGreen : surface,
+          opacity: pressed ? 0.82 : 1,
+        },
+      ]}
+    >
+      <Text
+        numberOfLines={2}
+        adjustsFontSizeToFit
+        minimumFontScale={0.86}
+        style={[
+          styles.emptyActionLabel,
+          {
+            color: isPrimary ? onAccent : primary,
+            fontSize: isPrimary ? 17 : 15,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -84,7 +129,7 @@ export function BudgetListScreen() {
     pendingPermissionRequest
   );
 
-  const secondaryColor = useThemeColor("secondary");
+  const primaryColor = useThemeColor("primary");
 
   const monthAsDate = new Date(
     Number.parseInt(currentMonth.slice(0, 4), 10),
@@ -147,15 +192,19 @@ export function BudgetListScreen() {
     <EmptyState
       title={t("budgets.empty.title")}
       subtitle={t("budgets.empty.subtitle")}
-      icon={<Wallet size={48} color={secondaryColor} />}
-      className="pt-20"
+      icon={<Wallet size={48} color={primaryColor} />}
+      className="justify-start"
+      style={styles.emptyState}
       action={
-        <View className="mt-4 items-center" style={{ gap: 12 }}>
-          <Button label={t("budgets.empty.autoSetup")} onPress={handleAutoSetup} className="px-8" />
-          <Button
+        <View style={styles.emptyActions}>
+          <EmptyStateActionButton
+            label={t("budgets.empty.autoSetup")}
+            tone="primary"
+            onPress={handleAutoSetup}
+          />
+          <EmptyStateActionButton
             label={t("budgets.empty.createManually")}
-            variant="ghost"
-            size="compact"
+            tone="secondary"
             onPress={handleCreateManually}
           />
         </View>
@@ -210,5 +259,36 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     gap: 8,
+  },
+  emptyState: {
+    flex: 0,
+    gap: 10,
+    minHeight: 430,
+    paddingHorizontal: 20,
+    paddingTop: 104,
+  },
+  emptyActions: {
+    alignItems: "center",
+    gap: 12,
+    marginTop: 14,
+    width: "100%",
+  },
+  emptyActionButton: {
+    alignItems: "center",
+    borderRadius: 16,
+    height: 56,
+    justifyContent: "center",
+    maxWidth: 360,
+    paddingHorizontal: 18,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    width: "100%",
+  },
+  emptyActionLabel: {
+    fontFamily: "Poppins_600SemiBold",
+    lineHeight: 22,
+    textAlign: "center",
   },
 });

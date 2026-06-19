@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { Button, Callout, Card, EmptyState as SharedEmptyState, Row } from "@/shared/components";
+import {
+  Button,
+  Callout,
+  Card,
+  EmptyState as SharedEmptyState,
+  GlassSurface,
+  Row,
+} from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
@@ -42,9 +49,14 @@ export function SummaryCard({ icon: Icon, title, subtitle, tone = "warning" }: S
       subtitle={subtitle}
       tone={tone === "green" ? "success" : "warning"}
       icon={
-        <View className="size-9 items-center justify-center rounded-icon bg-white/70">
+        <GlassSurface
+          radius={12}
+          padded={false}
+          className="size-9 items-center justify-center"
+          style={{ alignItems: "center", height: 36, justifyContent: "center", width: 36 }}
+        >
           <Icon size={18} color={iconColor} />
-        </View>
+        </GlassSurface>
       }
     />
   );
@@ -72,11 +84,9 @@ export function ActionButton({
   );
 }
 
-export function DetailRow({ label, title, subtitle, icon, emphasis = "neutral" }: DetailRowProps) {
-  const accentGreen = useThemeColor("accentGreen");
-
+export function DetailRow({ label, title, subtitle, icon }: DetailRowProps) {
   return (
-    <Card padded={false} radius={18} borderColor={emphasis === "green" ? accentGreen : undefined}>
+    <Card padded={false} radius={18}>
       <Row
         title={
           <View style={{ gap: 2 }}>

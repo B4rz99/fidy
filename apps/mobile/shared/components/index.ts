@@ -78,6 +78,7 @@ export type {
   SegmentedControlOption,
   SegmentedControlProps,
   SegmentedControlTone,
+  SegmentedControlVariant,
 } from "./SegmentedControl";
 export { SelectableChipRow } from "./SelectableChipRow";
 export type {

@@ -15,7 +15,7 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
     { value: "all", label: t("search.allTypes") },
     { value: "expense", label: t("transactions.expense") },
     { value: "income", label: t("transactions.income") },
-    { value: "transfer", label: t("search.transfers") },
+    { value: "transfer", label: t("search.transferType") },
   ] as const;
 
   const handlePress = (type: FilterType) => {
@@ -23,5 +23,13 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
     onChange(type === value ? "all" : type);
   };
 
-  return <SegmentedControl options={options} value={value} onChange={handlePress} allowReselect />;
+  return (
+    <SegmentedControl
+      options={options}
+      value={value}
+      onChange={handlePress}
+      allowReselect
+      variant="detached"
+    />
+  );
 };

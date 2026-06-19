@@ -6,10 +6,6 @@ import type { SurfaceLayoutStyle } from "./surface-style";
 
 type CardProps = Omit<ViewProps, "children" | "style"> & {
   children: ReactNode;
-  borderColor?: string;
-  borderStyle?: ViewStyle["borderStyle"];
-  borderWidth?: number;
-  backgroundColor?: string;
   onPress?: PressableProps["onPress"];
   disabled?: boolean;
   padded?: boolean;
@@ -21,10 +17,6 @@ type CardProps = Omit<ViewProps, "children" | "style"> & {
 
 export function Card({
   children,
-  backgroundColor,
-  borderColor,
-  borderStyle,
-  borderWidth,
   onPress,
   disabled = false,
   padded = true,
@@ -59,10 +51,6 @@ export function Card({
   const surface = (
     <GlassSurface
       {...surfaceViewProps}
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      borderStyle={borderStyle}
-      borderWidth={borderWidth}
       isInteractive={onPress != null && !disabled}
       padded={false}
       radius={radius}

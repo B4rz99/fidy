@@ -5,6 +5,7 @@ import {
   EmptyState,
   FeedList,
   AddActionButton,
+  GlassSurface,
   ScreenLayout,
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
@@ -28,9 +29,14 @@ function GoalsEmpty({ onCreateGoal }: { readonly onCreateGoal: () => void }) {
       title={t("goals.empty.title")}
       subtitle={t("goals.empty.subtitle")}
       icon={
-        <View className="size-[72px] items-center justify-center rounded-full bg-white/40">
+        <GlassSurface
+          radius={36}
+          padded={false}
+          className="size-[72px] items-center justify-center"
+          style={{ alignItems: "center", height: 72, justifyContent: "center", width: 72 }}
+        >
           <Target size={36} color={accentGreen} />
-        </View>
+        </GlassSurface>
       }
       className="px-8"
       action={
@@ -57,7 +63,11 @@ const goalKeyExtractor = (item: { readonly goal: { readonly id: string } }) => i
 // Main screen
 // ---------------------------------------------------------------------------
 
-export function GoalsListScreen() {
+type GoalsListScreenProps = {
+  readonly includesHeader?: boolean;
+};
+
+export function GoalsListScreen({ includesHeader = true }: GoalsListScreenProps) {
   const { push } = useRouter();
   const { t } = useTranslation();
   const goals = useGoalStore((s) => s.goals);
@@ -94,6 +104,23 @@ export function GoalsListScreen() {
 
   const hasGoals = goals.length > 0;
 
+  const content =
+    !hasGoals && !isLoading ? (
+      <GoalsEmpty onCreateGoal={handleCreateGoal} />
+    ) : (
+      <FeedList
+        data={goals}
+        renderItem={renderItem}
+        keyExtractor={goalKeyExtractor}
+        contentContainerStyle={[styles.listContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
+        itemSeparatorHeight={12}
+      />
+    );
+
+  if (!includesHeader) {
+    return <View style={styles.embedded}>{content}</View>;
+  }
+
   return (
     <ScreenLayout
       title={t("goals.title")}
@@ -101,17 +128,7 @@ export function GoalsListScreen() {
         hasGoals && Platform.OS !== "ios" ? <AddGoalButton onPress={handleCreateGoal} /> : undefined
       }
     >
-      {!hasGoals && !isLoading ? (
-        <GoalsEmpty onCreateGoal={handleCreateGoal} />
-      ) : (
-        <FeedList
-          data={goals}
-          renderItem={renderItem}
-          keyExtractor={goalKeyExtractor}
-          contentContainerStyle={[styles.listContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
-          itemSeparatorHeight={12}
-        />
-      )}
+      {content}
     </ScreenLayout>
   );
 }
@@ -121,6 +138,9 @@ export function GoalsListScreen() {
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
+  embedded: {
+    flex: 1,
+  },
   listContent: {
     padding: 16,
   },

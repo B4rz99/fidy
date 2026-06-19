@@ -9,14 +9,14 @@ type Props = {
 
 export function StepIndicator({ currentStep, totalSteps }: Props) {
   const accentGreen = useThemeColor("accentGreen");
-  const borderColor = useThemeColor("borderSubtle");
+  const tertiary = useThemeColor("tertiary");
 
   return (
     <View style={styles.container}>
       {Array.from({ length: totalSteps }, (_, i) => (
         <View
           key={i}
-          style={[styles.dot, { backgroundColor: i < currentStep ? accentGreen : borderColor }]}
+          style={[styles.dot, { backgroundColor: i < currentStep ? accentGreen : tertiary }]}
         />
       ))}
     </View>

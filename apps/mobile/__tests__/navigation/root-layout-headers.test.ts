@@ -58,6 +58,15 @@ describe("Root layout native headers", () => {
     expect(source).toContain("routeOptions.fullScreen");
   });
 
+  test("custom native headers suppress the default back affordance", () => {
+    expect(routeOptionsSource).toContain("const customBackHeaderOptions");
+    expect(routeOptionsSource).toContain("headerBackVisible: false");
+    expect(routeOptionsSource).toContain('headerBackButtonDisplayMode: "minimal"');
+    expect(routeOptionsSource).toContain('headerBackTitle: ""');
+    expect(routeOptionsSource).toContain("headerLeft: () => createElement(HeaderBackButton)");
+    expect(routeOptionsSource).toContain("...customBackHeaderOptions");
+  });
+
   test("bills-calendar uses iosHeaderOptions to enable iOS-only native header", () => {
     expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", "bills-calendar");
     expect(source).toContain("ROOT_STACK_ROUTES.transparentHeader.map");

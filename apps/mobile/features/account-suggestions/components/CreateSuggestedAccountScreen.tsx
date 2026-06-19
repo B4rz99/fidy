@@ -1,11 +1,17 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
-import { FinancialAccountKindPicker } from "@/features/financial-accounts/ui.public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { Button, Card, EmptyState, FormTextField, ScreenLayout } from "@/shared/components";
+import {
+  Button,
+  Card,
+  EmptyState,
+  FormTextField,
+  GlassPressable,
+  ScreenLayout,
+} from "@/shared/components";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -15,6 +21,14 @@ import type { AccountCreationSuggestion } from "../lib/derive-account-suggestion
 import { shouldAdvanceOnboardingAfterSuggestionMutation } from "../lib/onboarding-review";
 import { buildSuggestedFinancialAccountDraft } from "../lib/presentation";
 import { createAccountSuggestionService } from "../services/create-account-suggestion-service";
+
+const ACCOUNT_KIND_OPTIONS = [
+  "checking",
+  "savings",
+  "wallet",
+  "cash",
+  "credit_card",
+] as const satisfies readonly FinancialAccountKind[];
 
 function ResolvedCreateSuggestedAccountForm({
   db,
@@ -30,11 +44,9 @@ function ResolvedCreateSuggestedAccountForm({
   const { bottom } = useSafeAreaInsets();
   const onboardingStep = useOnboardingStore((state) => state.step);
   const nextStep = useOnboardingStore((state) => state.nextStep);
-  const service = createAccountSuggestionService();
+  const service = useMemo(() => createAccountSuggestionService(), []);
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-
   const draft = buildSuggestedFinancialAccountDraft(suggestion);
   const [name, setName] = useState(draft.name);
   const [kind, setKind] = useState<FinancialAccountKind>(draft.kind);
@@ -80,12 +92,7 @@ function ResolvedCreateSuggestedAccountForm({
           {t("accountSuggestions.create.subtitle")}
         </Text>
 
-        <Card
-          backgroundColor={accentGreenLight}
-          padded={false}
-          radius={12}
-          contentStyle={styles.identifierBox}
-        >
+        <Card padded={false} radius={12} contentStyle={styles.identifierBox}>
           <Text style={[styles.identifierLabel, { color: secondary }]}>{draft.sourceLabel}</Text>
           <Text style={[styles.identifierValue, { color: primary }]}>{draft.evidenceLabel}</Text>
         </Card>
@@ -103,13 +110,26 @@ function ResolvedCreateSuggestedAccountForm({
           <Text style={[styles.fieldLabel, { color: secondary }]}>
             {t("accountSuggestions.create.kindLabel")}
           </Text>
-          <FinancialAccountKindPicker
-            value={kind}
-            onChange={setKind}
-            showEmoji={false}
-            style={styles.kindRow}
-            chipStyle={styles.kindPill}
-          />
+          <View style={styles.kindRow}>
+            {ACCOUNT_KIND_OPTIONS.map((option) => {
+              const isSelected = option === kind;
+
+              return (
+                <GlassPressable
+                  key={option}
+                  onPress={() => setKind(option)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: isSelected }}
+                  radius={12}
+                  surfaceLayoutStyle={styles.kindPill}
+                >
+                  <Text style={[styles.kindText, { color: primary }]}>
+                    {t(`financialAccounts.kinds.${option}`)}
+                  </Text>
+                </GlassPressable>
+              );
+            })}
+          </View>
         </View>
 
         <Button
@@ -184,6 +204,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     justifyContent: "center",
+  },
+  kindText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
   },
   identifierBox: {
     paddingHorizontal: 12,

@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Card } from "@/shared/components";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Card, GlassPressable } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
@@ -28,7 +28,6 @@ export function PeriodShiftContent({
   const { t, locale } = useTranslation();
   const secondaryColor = useThemeColor("secondary");
   const primaryColor = useThemeColor("primary");
-  const peachLight = useThemeColor("peachLight");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const selectedBar =
@@ -77,7 +76,7 @@ export function PeriodShiftContent({
         />
 
         {selectedBar && (
-          <View style={[styles.selectedAmountPill, { backgroundColor: peachLight }]}>
+          <View style={styles.selectedAmount}>
             <Text style={[styles.selectedAmountText, { color: primaryColor }]}>
               {selectedCategoryLabel
                 ? t("analytics.selectedCategoryAmount", {
@@ -119,7 +118,7 @@ function CategoryBarRibbon({ bars, onSelect, selectedCategoryId }: CategoryBarRi
           (item.heightPercent / 100) * (CATEGORY_BAR_MAX_HEIGHT - CATEGORY_BAR_MIN_HEIGHT);
 
         return (
-          <Pressable
+          <GlassPressable
             key={item.categoryId}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
@@ -135,21 +134,14 @@ function CategoryBarRibbon({ bars, onSelect, selectedCategoryId }: CategoryBarRi
                 : amount
             }
             onPress={() => onSelect(item.categoryId)}
-            style={styles.categoryBarTapTarget}
+            style={[styles.categoryBarTapTarget, { opacity: isSelected ? 1 : 0.72 }]}
+            backgroundColor={color}
+            radius={8}
+            padded={false}
+            surfaceLayoutStyle={[styles.categoryBar, { height }]}
           >
-            <View
-              style={[
-                styles.categoryBar,
-                {
-                  height,
-                  backgroundColor: color,
-                  opacity: isSelected ? 1 : 0.72,
-                },
-              ]}
-            >
-              <Text style={styles.categoryBarIcon}>{category?.icon ?? ""}</Text>
-            </View>
-          </Pressable>
+            <Text style={styles.categoryBarIcon}>{category?.icon ?? ""}</Text>
+          </GlassPressable>
         );
       })}
     </View>
@@ -246,12 +238,8 @@ const styles = StyleSheet.create({
   categoryBarIcon: {
     fontSize: 16,
   },
-  selectedAmountPill: {
+  selectedAmount: {
     alignSelf: "flex-start",
-    borderRadius: 8,
-    borderCurve: "continuous",
-    paddingHorizontal: 9,
-    paddingVertical: 5,
   },
   selectedAmountText: {
     fontFamily: "Poppins_600SemiBold",

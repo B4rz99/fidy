@@ -42,7 +42,6 @@ export const styles = StyleSheet.create({
     fontSize: 11,
   },
   cardButton: {
-    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 6,
@@ -59,7 +58,6 @@ export const styles = StyleSheet.create({
     fontSize: 12,
   },
   eventCard: {
-    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 4,

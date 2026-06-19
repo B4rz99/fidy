@@ -1,5 +1,5 @@
 import { Button, FidyLogo } from "@/shared/components";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { useOnboardingStore } from "../store";
 
@@ -27,16 +27,16 @@ export function WelcomeStep() {
 
       <View style={styles.actions}>
         <Button label={t("onboarding.welcome.getStarted")} onPress={nextStep} />
-        <Pressable
+        <Button
+          label={t("onboarding.welcome.alreadyHaveAccount")}
+          variant="ghost"
+          size="compact"
           onPress={() => {
             void handleAlreadyHaveAccount();
           }}
           disabled={isBusy}
-        >
-          <Text style={[styles.linkText, { color: secondaryColor }]}>
-            {t("onboarding.welcome.alreadyHaveAccount")}
-          </Text>
-        </Pressable>
+          style={styles.linkButton}
+        />
       </View>
     </View>
   );
@@ -71,8 +71,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
   },
-  linkText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
+  linkButton: {
+    alignSelf: "center",
   },
 });

@@ -1016,6 +1016,7 @@ const es = {
     min: "Mín",
     max: "Máx",
     allTypes: "Todos",
+    transferType: "Transfer",
     transfers: "Transferencias",
   },
 

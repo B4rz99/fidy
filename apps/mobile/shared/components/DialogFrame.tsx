@@ -42,7 +42,6 @@ type DialogPanelProps = {
 };
 
 export function DialogPanel({ children, maxHeight, showHandle = false, style }: DialogPanelProps) {
-  const borderSubtle = useThemeColor("borderSubtle");
   const panelStyle = [
     {
       gap: 12,
@@ -63,7 +62,6 @@ export function DialogPanel({ children, maxHeight, showHandle = false, style }: 
             width: 44,
             height: 4,
             borderRadius: 999,
-            backgroundColor: borderSubtle,
           }}
         />
       ) : null}

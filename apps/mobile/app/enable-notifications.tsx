@@ -9,9 +9,14 @@ import {
   registerPushToken,
   requestNotificationPermissionStatus,
 } from "@/features/notifications/hooks.public";
-import { DialogActionButton, DialogActionStack, DialogRouteFrame } from "@/shared/components";
+import {
+  DialogActionButton,
+  DialogActionStack,
+  DialogRouteFrame,
+  GlassSurface,
+} from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
-import { ScrollView, Text, View } from "@/shared/components/rn";
+import { ScrollView, Text } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError, captureWarning } from "@/shared/lib";
 
@@ -95,18 +100,18 @@ export default function EnableNotificationsDialogRoute() {
         contentInset={{ bottom }}
         contentInsetAdjustmentBehavior="automatic"
       >
-        <View
+        <GlassSurface
+          radius={32}
+          padded={false}
           style={{
             width: 64,
             height: 64,
-            borderRadius: 32,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: `${accentGreen}1A`,
           }}
         >
           <Bell size={32} color={accentGreen} />
-        </View>
+        </GlassSurface>
         <Text
           className="font-poppins-semibold text-primary dark:text-primary-dark"
           style={{ fontSize: 16 }}

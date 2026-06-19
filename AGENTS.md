@@ -10,6 +10,7 @@
 - `apps/mobile/features/qa/index.ts` must lazy-load `start-local-qa-session`; eager re-exports pull Drizzle SQL into unrelated tests.
 - Keep notification deep-link builders and route readers in sync; support both legacy params (`category`, `id`) and normalized params (`categoryId`, `goalId`) when needed.
 - Lizard can overcount regex-heavy files and TypeScript overloads; verify hotspots manually before acting on the metric.
+- Budgets are calendar-month only.
 
 ## Testing
 
@@ -31,7 +32,6 @@
 
 ## Architecture
 
-- Budgets are calendar-month only.
 - User financial data remains local-first; remote durability belongs to encrypted backups, not plaintext Supabase tables.
 - Transaction search uses SQL `LIKE`; do not add FTS5 without profiling evidence.
 - `deriveBudgetProgress()` stays pure.

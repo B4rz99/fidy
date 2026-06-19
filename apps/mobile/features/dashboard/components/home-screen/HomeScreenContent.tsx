@@ -43,9 +43,9 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
 
   const headerActions =
     Platform.OS === "ios" ? (
-      <HomeScreenActions gap={20} paddingHorizontal={4} />
+      <HomeScreenActions gap={10} paddingHorizontal={4} />
     ) : (
-      <HomeScreenActions gap={16} />
+      <HomeScreenActions gap={8} />
     );
 
   return (

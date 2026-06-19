@@ -29,7 +29,7 @@ export function FinancialAccountFormBody({
   const { t, locale } = useTranslation();
   const [datePickerFallback] = useState(() => new Date());
   const secondary = useThemeColor("secondary");
-  const accentGreenLight = useThemeColor("accentGreenLight");
+  const accentGreen = useThemeColor("accentGreen");
   const {
     amountDigits,
     amountPreview,
@@ -154,12 +154,7 @@ export function FinancialAccountFormBody({
             maxLength={2}
           />
 
-          <Card
-            backgroundColor={accentGreenLight}
-            padded={false}
-            radius={8}
-            contentStyle={styles.noteBanner}
-          >
+          <Card padded={false} radius={8} contentStyle={styles.noteBanner}>
             <Text style={[styles.noteText, { color: secondary }]}>
               {t("financialAccounts.form.billingHint")}
             </Text>

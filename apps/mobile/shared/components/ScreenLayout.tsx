@@ -1,9 +1,8 @@
 import { Stack } from "expo-router";
 import type { ReactNode } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft } from "@/shared/components/icons";
-import { Platform, Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { Platform, Text, View } from "@/shared/components/rn";
+import { HeaderBackButton } from "./HeaderBackButton";
 import { ScreenShell } from "./ScreenShell";
 
 export const TAB_BAR_CLEARANCE = Platform.OS === "ios" ? 0 : 96;
@@ -31,11 +30,10 @@ export function ScreenLayout({
   leftAction,
   rightActions,
   onBack,
-  includesNativeHeader = true,
+  includesNativeHeader = false,
   children,
 }: ScreenLayoutProps) {
   const insets = useSafeAreaInsets();
-  const primaryColor = useThemeColor("primary");
   const isTab = variant === "tab";
   const customHeaderTopInset = process.env.EXPO_OS === "web" ? 0 : insets.top;
   const shouldRenderRightSlot = rightActions != null || (isTab && leftAction != null);
@@ -44,42 +42,41 @@ export function ScreenLayout({
   const shouldRenderCustomHeader =
     Platform.OS !== "ios" ||
     (!includesNativeHeader &&
-      (!isTab ||
-        centerAction != null ||
-        leftAction != null ||
-        rightActions != null ||
-        onBack != null));
+      (!isTab || centerAction != null || leftAction != null || rightActions != null));
+  const shouldShowIosNativeHeader = !isTab || centerAction != null || rightActions != null;
   const iosHeaderOptions = {
     contentStyle: { backgroundColor: "transparent" },
     headerShadowVisible: false,
+    headerShown: shouldShowIosNativeHeader,
     headerStyle: { backgroundColor: "transparent" },
     headerTransparent: true,
+    headerBackVisible: false,
+    headerBackButtonDisplayMode: "minimal" as const,
+    headerBackTitle: "",
     title: isTab ? "" : title,
+    ...(centerAction != null && {
+      headerTitle: () => centerAction,
+    }),
     ...(rightActions != null && {
       headerRight: () => rightActions,
     }),
-    ...(onBack != null && {
-      headerLeft: () => (
-        <Pressable onPress={onBack} hitSlop={12}>
-          <ChevronLeft size={24} color={primaryColor} />
-        </Pressable>
-      ),
+    ...(!isTab && {
+      headerLeft: () => <HeaderBackButton onPress={onBack} />,
     }),
   };
 
   return (
     <ScreenShell backgroundColor={backgroundColor} backgroundLayer={backgroundLayer}>
       {Platform.OS === "ios" && includesNativeHeader && <Stack.Screen options={iosHeaderOptions} />}
+      {Platform.OS === "ios" && !includesNativeHeader && (
+        <Stack.Screen options={{ headerShown: false }} />
+      )}
       {shouldRenderCustomHeader && (
         <View style={{ paddingTop: customHeaderTopInset }}>
           <View className="px-4 flex-row items-center justify-between h-12">
             <View className="flex-1 flex-row items-center" style={{ gap: 12 }}>
               {leftAction}
-              {!isTab && onBack != null && (
-                <Pressable onPress={onBack} hitSlop={12}>
-                  <ChevronLeft size={24} color={primaryColor} />
-                </Pressable>
-              )}
+              {!isTab && <HeaderBackButton onPress={onBack} />}
               {!shouldRenderCenterAction ? (
                 <Text
                   className={

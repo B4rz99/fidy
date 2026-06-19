@@ -51,7 +51,8 @@ export function SearchFilterControls({
         activePanel={activePanel}
         onTogglePanel={handleTogglePanel}
       />
-      {filterPanel ? (
+      {filterPanel && activePanel === "type" ? filterPanel : null}
+      {filterPanel && activePanel !== "type" ? (
         <GlassSurface
           padded={false}
           radius={8}

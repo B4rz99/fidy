@@ -1,5 +1,6 @@
+import { GlassPressable } from "@/shared/components";
 import { X } from "@/shared/components/icons";
-import { Pressable, View } from "@/shared/components/rn";
+import { View } from "@/shared/components/rn";
 import type { TransactionType } from "../../schema";
 import { TypeToggle } from "../TypeToggle";
 import { styles } from "./TransactionForm.styles";
@@ -23,15 +24,18 @@ export function TransactionFormHeader({
     <>
       {onClose ? (
         <View style={styles.closeButtonContainer}>
-          <Pressable
+          <GlassPressable
             onPress={onClose}
             hitSlop={12}
             testID="transaction-form.close"
             accessibilityRole="button"
             accessibilityLabel={closeLabel}
+            radius={18}
+            padded={false}
+            surfaceLayoutStyle={styles.closeButton}
           >
             <X size={24} color={secondaryColor} />
-          </Pressable>
+          </GlassPressable>
         </View>
       ) : null}
 

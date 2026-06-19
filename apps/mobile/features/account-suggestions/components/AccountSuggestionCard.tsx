@@ -1,5 +1,8 @@
 import { memo, useCallback } from "react";
-import { Button, Card, Chip } from "@/shared/components";
+import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { Chip } from "@/shared/components/Chip";
+import { GlassSurface } from "@/shared/components/GlassSurface";
 import { Building2, CreditCard, Sparkles, Wallet } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -58,9 +61,14 @@ function AccountSuggestionCardInner({
   return (
     <Card padded={false} contentStyle={{ gap: 14, padding: 18 }}>
       <View className="flex-row items-start" style={{ gap: 12 }}>
-        <View className="size-11 items-center justify-center rounded-[14px] bg-accent-green-light dark:bg-accent-green-light-dark">
+        <GlassSurface
+          radius={14}
+          padded={false}
+          className="size-11 items-center justify-center"
+          style={{ alignItems: "center", height: 44, justifyContent: "center", width: 44 }}
+        >
           <AccountIcon size={20} color={accentGreen} />
-        </View>
+        </GlassSurface>
         <View className="flex-1" style={{ gap: 2 }}>
           <Text className="font-poppins-semibold text-section text-text-primary dark:text-text-primary-dark">
             {draft.name}

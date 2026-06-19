@@ -43,14 +43,19 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
       ) : null}
       <View className="px-4 pb-2">
         <GlassSurface testID="resultCard" padded={false} radius={8} style={styles.resultCard}>
-          <View
+          <GlassSurface
+            radius={12}
+            padded={false}
             className="size-10 items-center justify-center rounded-icon"
             style={{
-              backgroundColor: category?.color ?? "rgba(244, 177, 131, 0.18)",
+              alignItems: "center",
+              height: 40,
+              justifyContent: "center",
+              width: 40,
             }}
           >
             <Text>{category?.icon ?? "✨"}</Text>
-          </View>
+          </GlassSurface>
           <View className="ml-3 flex-1">
             <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
               {tx

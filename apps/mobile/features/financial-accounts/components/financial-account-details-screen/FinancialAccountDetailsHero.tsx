@@ -16,10 +16,9 @@ export function FinancialAccountDetailsHero({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const nav = useThemeColor("nav");
-  const accentGreenLight = useThemeColor("accentGreenLight");
 
   return (
-    <View style={[styles.heroCard, { backgroundColor: accentGreenLight }]}>
+    <GlassSurface padded={false} radius={22} style={styles.heroCard}>
       <View style={styles.heroHeader}>
         <View style={styles.heroText}>
           <Text style={[styles.heroTitle, { color: primary }]}>{name}</Text>
@@ -34,6 +33,6 @@ export function FinancialAccountDetailsHero({
           </GlassSurface>
         ) : null}
       </View>
-    </View>
+    </GlassSurface>
   );
 }

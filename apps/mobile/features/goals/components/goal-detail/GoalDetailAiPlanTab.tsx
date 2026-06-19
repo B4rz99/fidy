@@ -8,13 +8,12 @@ import { MilestoneRow } from "./MilestoneRow";
 function GoalRecommendationCard(props: { readonly recommendationText: string }) {
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
   return (
     <GlassSurface padded={false} style={styles.recommendationCard}>
-      <View style={[styles.recommendationIcon, { backgroundColor: accentGreenLight }]}>
+      <View style={styles.recommendationIcon}>
         <Text style={{ color: accentGreen, fontSize: 18 }}>{"*"}</Text>
       </View>
       <View style={styles.recommendationContent}>

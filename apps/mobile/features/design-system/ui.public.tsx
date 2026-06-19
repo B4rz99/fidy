@@ -85,7 +85,7 @@ export function DesignSystemScreen() {
           <View className="p-4" style={{ gap: 12 }}>
             <Card>
               <View className="flex-row items-center" style={{ gap: 12 }}>
-                <View className="size-10 items-center justify-center rounded-icon bg-accent-green-light dark:bg-accent-green-light-dark">
+                <View className="size-10 items-center justify-center rounded-icon">
                   <Wallet size={20} color={accentGreen} />
                 </View>
                 <View className="flex-1" style={{ gap: 2 }}>

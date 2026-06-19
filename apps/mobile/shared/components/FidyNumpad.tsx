@@ -1,8 +1,9 @@
 import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { Delete } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View, type ViewStyle } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { GlassPressable } from "./GlassPressable";
 import { useNumpadGlassStyles } from "./use-numpad-glass-styles";
 
 type FidyNumpadProps = {
@@ -34,14 +35,22 @@ export const FidyNumpad = memo(({ compact = false, onKeyPress }: FidyNumpadProps
         <View key={row.join("-")} style={[styles.row, compact ? styles.compactRow : undefined]}>
           {row.map((key) => {
             const isSpecial = key === "000" || key === "delete";
+            const keyStyle = [
+              styles.key,
+              compact ? styles.compactKey : undefined,
+              isSpecial ? specialKeySurfaceStyle : keySurfaceStyle,
+            ];
+            const flattenedStyle = StyleSheet.flatten(keyStyle) as ViewStyle;
+            const radius =
+              typeof flattenedStyle?.borderRadius === "number" ? flattenedStyle.borderRadius : 14;
             return (
-              <Pressable
+              <GlassPressable
                 key={key}
-                style={[
-                  styles.key,
-                  compact ? styles.compactKey : undefined,
-                  isSpecial ? specialKeySurfaceStyle : keySurfaceStyle,
-                ]}
+                style={styles.keyLayout}
+                surfaceLayoutStyle={styles.keySurface}
+                radius={radius}
+                padded={false}
+                isInteractive
                 onPress={() => handlePress(key)}
                 accessibilityRole="button"
                 accessibilityLabel={key === "delete" ? t("common.delete") : key}
@@ -61,7 +70,7 @@ export const FidyNumpad = memo(({ compact = false, onKeyPress }: FidyNumpadProps
                     {key}
                   </Text>
                 )}
-              </Pressable>
+              </GlassPressable>
             );
           })}
         </View>
@@ -93,9 +102,17 @@ const styles = StyleSheet.create({
     height: 52,
   },
   key: {
-    flex: 1,
+    alignItems: "center",
     borderRadius: 14,
-    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+  },
+  keyLayout: {
+    flex: 1,
+    position: "relative",
+  },
+  keySurface: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
   },

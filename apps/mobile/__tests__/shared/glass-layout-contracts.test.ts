@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sharedDir = resolve(__dirname, "../../shared/components");
@@ -12,17 +12,8 @@ function readSource(path: string) {
   return readFileSync(resolve(__dirname, path), "utf-8");
 }
 
-function readSources(dir: string): readonly { readonly path: string; readonly source: string }[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return readSources(path);
-    if (!/\.(ts|tsx)$/.test(entry.name)) return [];
-    return [{ path, source: readFileSync(path, "utf-8") }];
-  });
-}
-
 describe("glass layout contracts", () => {
-  it("keeps core layout native in chip and segmented primitives", () => {
+  it("keeps core layout on shared glass primitives", () => {
     const chipSource = readShared("Chip.tsx");
     const segmentedSource = readShared("SegmentedControl.tsx");
     const filterPillSource = readShared("FilterPill.tsx");
@@ -33,17 +24,17 @@ describe("glass layout contracts", () => {
     expect(chipSource).toMatch(/surface:\s*\{[\s\S]*paddingHorizontal:\s*12/);
     expect(chipSource).toContain('size = "default"');
     expect(chipSource).toContain("compactSurface");
-    expect(chipSource).toContain("toneBorderColor[tone] ?? neutralBorderColor");
+    expect(chipSource).not.toContain("toneBorderColor");
     expect(chipSource).not.toMatch(/className=\{`[^`]*(?:flex-row|h-\d|px-\d|gap-)/);
 
     expect(segmentedSource).toContain("StyleSheet.create");
-    expect(segmentedSource).toMatch(/container:\s*\{[\s\S]*flexDirection:\s*"row"/);
-    expect(segmentedSource).toMatch(/container:\s*\{[\s\S]*height:\s*40/);
-    expect(segmentedSource).toMatch(/optionBase:\s*\{[\s\S]*flex:\s*1/);
-    expect(segmentedSource).toContain("nativeGlass={false}");
+    expect(segmentedSource).toMatch(/groupedContainer:\s*\{[\s\S]*flexDirection:\s*"row"/);
+    expect(segmentedSource).toMatch(/groupedContainer:\s*\{[\s\S]*height:\s*40/);
+    expect(segmentedSource).toMatch(/optionShell:\s*\{[\s\S]*flex:\s*1/);
+    expect(segmentedSource).not.toContain("nativeGlass={false}");
     expect(segmentedSource).not.toMatch(/className=\{`[^`]*(?:flex-row|h-\d|px-\d|gap-)/);
 
-    expect(filterPillSource).toContain("nativeGlass={false}");
+    expect(filterPillSource).not.toContain("nativeGlass={false}");
   });
 
   it("keeps glass visual overrides explicit instead of passing them through style", () => {
@@ -65,12 +56,22 @@ describe("glass layout contracts", () => {
     expect(surfaceStyleSource).toContain("borderStyle: _borderStyle");
     expect(surfaceStyleSource).toContain("borderWidth: _borderWidth");
 
+    expect(buttonSource).not.toContain("borderColor=");
+    expect(glassSource).not.toContain("borderWidth");
+    expect(glassPressableSource).not.toContain("borderWidth");
+    expect(fieldButtonSource).not.toContain("borderColor={active");
     [buttonSource, fieldButtonSource].forEach((source) => {
-      expect(source).toContain("borderColor=");
       expect(source).not.toMatch(/style=\{\[[^\]]*\{\s*borderColor:/);
     });
-    expect(listRowSurfaceSource).toContain("borderColor={selected ? selectedColor : undefined}");
+    expect(listRowSurfaceSource).not.toContain("borderColor={selected");
     expect(listRowSurfaceSource).not.toMatch(/style=\{\[[^\]]*\{\s*borderColor:/);
+  });
+
+  it("keeps light glass tint subtle enough to avoid reading as an opaque card", () => {
+    const cardTokensSource = readShared("card-tokens.ts");
+
+    expect(cardTokensSource).toContain('tintColor: "rgba(255, 255, 255, 0.06)"');
+    expect(cardTokensSource).toContain('tintColor: "rgba(28, 28, 30, 0.18)"');
   });
 
   it("keeps migrated chip callsites on native chipStyle/style sizing", () => {
@@ -106,38 +107,21 @@ describe("glass layout contracts", () => {
     expect(transactionAccountSource).toContain("chipStyle");
   });
 
-  it("keeps field-heavy form sections out of native glass", () => {
+  it("keeps field-heavy form sections on shared glass surfaces", () => {
     const formSectionSource = readShared("FormSection.tsx");
 
-    expect(formSectionSource).toContain("nativeGlass={false}");
+    expect(formSectionSource).toContain("<GlassSurface");
+    expect(formSectionSource).not.toContain("nativeGlass={false}");
   });
 
-  it("keeps account kind selection behind the shared chip row interface", () => {
+  it("keeps selected account kind state out of glass background and border props", () => {
     const accountKindSource = readSource(
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx"
     );
-    const accountSuggestionCreateSource = readSource(
-      "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx"
-    );
 
-    expect(accountKindSource).toContain("SelectableChipRow");
-    expect(accountKindSource).toContain('selectedTone="primary"');
-    expect(accountKindSource).not.toContain("GlassPressable");
-    expect(accountSuggestionCreateSource).toContain("FinancialAccountKindPicker");
-    expect(accountSuggestionCreateSource).not.toContain("GlassPressable");
-  });
-
-  it("keeps direct feature GlassPressable usage allowlisted", () => {
-    const featureRoot = resolve(__dirname, "../../features");
-    const directFeatureUsages = readSources(featureRoot)
-      .filter(({ source }) => source.includes("GlassPressable"))
-      .map(({ path }) => relative(resolve(__dirname, "../.."), path))
-      .sort();
-
-    expect(directFeatureUsages).toEqual([
-      "features/auth/components/OAuthButton.tsx",
-      "features/qa/components/qa-tools/QaToolsCardButton.tsx",
-    ]);
+    expect(accountKindSource).not.toContain("backgroundColor={isSelected");
+    expect(accountKindSource).not.toContain("borderColor={isSelected");
+    expect(accountKindSource).not.toMatch(/style=\{\[[\s\S]*backgroundColor:/);
   });
 
   it("keeps toast shadows on new architecture boxShadow with Android fallback", () => {

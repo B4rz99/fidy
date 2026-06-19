@@ -42,11 +42,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  keyFeedback: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.42)",
-    borderRadius: 14,
-  },
   keyText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 19,
@@ -74,15 +69,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     zIndex: 1,
-  },
-  tabPill: {
-    borderCurve: "continuous",
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 30,
-    left: 0,
-    position: "absolute",
-    top: 2,
   },
   tabText: {
     fontFamily: "Poppins_600SemiBold",
