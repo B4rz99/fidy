@@ -1,0 +1,25 @@
+apps/mobile/features/transactions/components/transaction-form/TransactionMetadataRow.tsx
+  s_3f087eb59a5628::t_e8d46ea6950627 43
+apps/mobile/features/financial-accounts/components/financial-account-form/ManageIdentifiersButton.tsx
+  s_3f087eb59a5628::t_e8d46ea6950627 18
+apps/mobile/features/onboarding/components/ConnectEmailStep.tsx
+  s_3f087eb59a5628::t_e8d46ea6950627 98
+apps/mobile/features/transactions/components/TransactionDatePickerDialog.tsx
+  s_3f087eb59a5628::t_e8d46ea6950627 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "3a2f3fb65c3afe5cae495c3af8823feb52b01b92",
+  "prompts": {},
+  "sessions": {
+    "s_3f087eb59a5628": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ede38-f6df-7c03-a89b-cef684fa74da",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
