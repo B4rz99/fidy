@@ -1,0 +1,51 @@
+apps/mobile/__tests__/email-capture/bank-senders-query.test.ts
+  s_d320ec8bd0187a::t_9b3fe0f5199b78 1-8,12-14,16-37,41-48,50,52-54,56-58,61-66,68,72-91
+  s_d320ec8bd0187a::t_977eaf2b82ce0b 38
+apps/mobile/features/transactions/lib/group-by-date.ts
+  s_d320ec8bd0187a::t_520ad1a65ceb42 11-14,18-23,31
+  s_d320ec8bd0187a::t_223829aa821dba 25-27,34-35
+  s_d320ec8bd0187a::t_08969bc25bc473 33,39-42,48
+  s_d320ec8bd0187a::t_387bc9b0558d09 16,24,29-30,32,37-38,44-45
+  s_d320ec8bd0187a::t_102ba4a78a7047 47
+apps/mobile/shared/components/ListDateHeader.tsx
+  s_d320ec8bd0187a::t_223829aa821dba 8
+  s_d320ec8bd0187a::t_5ea19c51edf80d 22
+apps/mobile/__tests__/categories/store.test.ts
+  s_d320ec8bd0187a::t_2d77129f6402f9 10-23,26-27,29-33,35-36,43-49,58-63,117,122-203,219-307,319,321,341
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_d320ec8bd0187a::t_7f428de045a165 4,7,20,42-88,91-99,118,120,143,152-155,164,209-214
+  s_d320ec8bd0187a::t_223829aa821dba 121-122
+  s_d320ec8bd0187a::t_88b3d7ee5da070 141,144-147,149,151,156,158-163,165-169,171-179,181-188,190-204,215
+apps/mobile/shared/components/RaisedSurface.tsx
+  s_d320ec8bd0187a::t_5ea19c51edf80d 89
+apps/mobile/features/transactions/components/CategoryStrip.tsx
+  s_d320ec8bd0187a::t_5ea19c51edf80d 1-5,7-11,13,15-24,26-31
+bunfig.toml
+  s_d320ec8bd0187a::t_223829aa821dba 4
+package.json
+  s_d320ec8bd0187a::t_88b3d7ee5da070 116
+  s_d320ec8bd0187a::t_223829aa821dba 95
+apps/mobile/shared/components/CategoryIconButton.tsx
+  s_d320ec8bd0187a::t_5ea19c51edf80d 131-134
+apps/mobile/__tests__/transactions/group-by-date.test.ts
+  s_d320ec8bd0187a::t_88b3d7ee5da070 2-3,5-7,10,14,17-18
+apps/mobile/__tests__/ai-chat/sessions.test.ts
+  s_d320ec8bd0187a::t_0a14dd92914c64 1,22-25,163
+  s_d320ec8bd0187a::t_61b7df6e0c89a3 2-3,122-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "9b43728076860c0e7e8448f631f4f7c7e4128c16",
+  "prompts": {},
+  "sessions": {
+    "s_d320ec8bd0187a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ee6b7-b73d-7722-bcaa-7fc8e98ee764",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
