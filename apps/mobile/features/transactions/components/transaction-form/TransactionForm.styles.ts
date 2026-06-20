@@ -11,6 +11,14 @@ export const styles = StyleSheet.create({
   amountZone: {
     alignItems: "center",
   },
+  amountBanner: {
+    alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 1,
+    minWidth: 220,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
   closeButtonContainer: {
     alignItems: "flex-end",
     paddingHorizontal: 16,
@@ -30,6 +38,9 @@ export const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 10,
   },
+  datePressable: {
+    height: 36,
+  },
   descriptionInput: {
     borderRadius: 10,
     flex: 1,
@@ -41,6 +52,10 @@ export const styles = StyleSheet.create({
   headerCenter: {
     alignItems: "center",
     gap: 4,
+  },
+  typeTabs: {
+    width: 380,
+    maxWidth: "100%",
   },
   headerZone: {
     gap: 12,

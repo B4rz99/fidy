@@ -29,7 +29,6 @@ export const ROOT_STACK_ROUTES = {
     "reclassify-transaction",
   ],
   transparentHeader: [
-    "analytics",
     "notifications",
     "search",
     "connected-accounts",
@@ -40,7 +39,6 @@ export const ROOT_STACK_ROUTES = {
     "financial-account-form",
     "profile",
     "settings",
-    "bills-calendar",
     "notification-preferences",
     "categories",
   ],

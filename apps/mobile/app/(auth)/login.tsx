@@ -1,7 +1,7 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth/hooks.public";
 import { GoogleIcon, MicrosoftIcon, OAuthButton } from "@/features/auth/ui.public";
-import { LocalQaLoginButton } from "@/features/qa/ui.public";
+import { LocalQaLoginButton } from "@/features/qa/routes.public";
 import { AppAuroraBackground, FidyLogo } from "@/shared/components";
 import { ActivityIndicator, Text, View } from "@/shared/components/rn";
 import { useColorScheme, useTranslation } from "@/shared/hooks";

@@ -2,6 +2,7 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useReducer, useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
+import { useAvailableCategories } from "@/features/categories/hooks.public";
 import {
   type FinancialAccountRow,
   getFinancialAccountsForUser,
@@ -68,6 +69,7 @@ export default function EditTransactionScreen() {
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
+  const categories = useAvailableCategories();
 
   const [draft, setDraft] = useReducer(updateDraft, initialDraft);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -172,6 +174,7 @@ export default function EditTransactionScreen() {
     <TransactionForm
       type={draft.type}
       digits={draft.digits}
+      categories={categories}
       categoryId={draft.categoryId}
       accounts={accounts}
       accountId={draft.accountId}
@@ -184,6 +187,7 @@ export default function EditTransactionScreen() {
       onCategoryChange={(categoryId) => setDraft({ type: "update", update: { categoryId } })}
       onAccountChange={(accountId) => setDraft({ type: "update", update: { accountId } })}
       onDescriptionChange={(description) => setDraft({ type: "update", update: { description } })}
+      onDateChange={(date) => setDraft({ type: "update", update: { date } })}
       onClose={back}
       onSave={handleSave}
       onDelete={handleDelete}

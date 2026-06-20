@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { getBuiltInCategory } from "@/shared/categories";
+import { getBuiltInCategory, type Category, type CategoryId } from "@/shared/categories";
 import { Card, Surface, IconActionButton } from "@/shared/components";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
@@ -10,6 +10,7 @@ import type { CalendarBillOccurrence } from "../lib/calendar-utils";
 import type { Bill } from "../schema";
 
 type CalendarBillRowProps = {
+  readonly categoryById: ReadonlyMap<CategoryId, Category>;
   readonly occurrence: CalendarBillOccurrence;
   readonly onDelete?: (bill: Bill) => void;
   readonly onEdit?: (bill: Bill) => void;
@@ -19,6 +20,7 @@ type CalendarBillRowProps = {
 };
 
 export function CalendarBillRow({
+  categoryById,
   occurrence,
   onDelete,
   onEdit,
@@ -32,14 +34,15 @@ export function CalendarBillRow({
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const peach = useThemeColor("peach");
-  const category = getBuiltInCategory(occurrence.bill.categoryId);
+  const category =
+    categoryById.get(occurrence.bill.categoryId) ?? getBuiltInCategory(occurrence.bill.categoryId);
   const paid = occurrence.isPaid;
 
   return (
     <Card padded={false} radius={radius} contentStyle={styles.cardContent}>
       <View style={styles.billRow}>
         <View style={styles.billMain}>
-          <Text style={styles.billIcon}>{category.icon}</Text>
+          <Text style={styles.billIcon}>{category?.icon}</Text>
           <View style={styles.billCopy}>
             <Text
               style={[styles.billName, { color: primary }, paid && styles.paidText]}

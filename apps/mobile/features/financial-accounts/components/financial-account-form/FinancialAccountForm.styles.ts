@@ -87,6 +87,9 @@ export const styles = StyleSheet.create({
     fontFamily: "Poppins_800ExtraBold",
     fontSize: 12,
   },
+  kindChipEmoji: {
+    fontSize: 14,
+  },
   dateButton: {
     flexDirection: "row",
     alignItems: "center",

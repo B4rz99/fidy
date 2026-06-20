@@ -265,13 +265,16 @@ describe("useBudgetStore", () => {
         db: mockDb,
         userId: USER_ID,
         id: "budget-1" as BudgetId,
+        categoryId: "transport" as CategoryId,
         amount: requireCopAmount(130000),
       })
     ).resolves.toBe(true);
     await expect(deleteBudget(mockDb, USER_ID, "budget-1" as BudgetId)).resolves.toBe(true);
 
     expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "budget.save" }));
-    expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "budget.update" }));
+    expect(mockCommit).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "budget.update", categoryId: "transport" })
+    );
     expect(mockCommit).toHaveBeenCalledWith(expect.objectContaining({ kind: "budget.delete" }));
   });
 

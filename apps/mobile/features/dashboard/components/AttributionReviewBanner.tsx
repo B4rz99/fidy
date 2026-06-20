@@ -3,10 +3,12 @@ import { useAttributionReviewQueue } from "@/features/review-queues/public";
 import { Callout } from "@/shared/components";
 import { ChevronRight, Landmark } from "@/shared/components/icons";
 import { tryGetDb } from "@/shared/db";
-import { useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export const AttributionReviewBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
+  const success = useThemeColor("success");
+  const secondary = useThemeColor("secondary");
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { items } = useAttributionReviewQueue({ db, userId });
@@ -21,8 +23,8 @@ export const AttributionReviewBanner = ({ onPress }: { onPress: () => void }) =>
       title={t("attributionReview.bannerTitle", { count })}
       subtitle={t("attributionReview.bannerSubtitle")}
       tone="success"
-      icon={<Landmark size={18} color="#4A7F1B" />}
-      trailing={<ChevronRight size={16} color="#55703B" />}
+      icon={<Landmark size={18} color={success} />}
+      trailing={<ChevronRight size={16} color={secondary} />}
       onPress={onPress}
     />
   );

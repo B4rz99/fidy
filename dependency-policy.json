@@ -111,11 +111,6 @@
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
-      "name": "expo-glass-effect",
-      "until": "2026-07-15",
-      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
-    },
-    {
       "name": "expo-haptics",
       "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."

@@ -1,1 +1,1 @@
-export { QaTransferConflictScreen as default } from "@/features/qa/ui.public";
+export { QaTransferConflictScreen as default } from "@/features/qa/routes.public";

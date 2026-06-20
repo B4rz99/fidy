@@ -9,7 +9,7 @@ type Violation = {
 
 const SOURCE_ROOTS = [join("apps", "mobile", "app"), join("apps", "mobile", "features")];
 
-const DIRECT_GLASS_SURFACE_ALLOWLIST = new Set([
+const DIRECT_SOLID_SURFACE_ALLOWLIST = new Set([
   normalizePath(join("apps", "mobile", "features", "ai-chat", "components", "ChatInput.tsx")),
   normalizePath(join("apps", "mobile", "features", "calendar", "components", "CalendarGrid.tsx")),
   normalizePath(
@@ -160,19 +160,19 @@ function collectFileViolations(root: string, path: string): readonly Violation[]
   const file = normalizePath(relative(root, path));
   const source = readFileSync(path, "utf8");
   const violations: Violation[] = [];
-  const directGlassSurfaceMatch =
+  const directSolidSurfaceMatch =
     source.match(
-      /import\s+\{[^}]*\bGlassSurface\b[^}]*\}\s+from\s+["']@\/shared\/components["']/
+      /import\s+\{[^}]*\bSolidSurface\b[^}]*\}\s+from\s+["']@\/shared\/components["']/
     ) ??
-    source.match(/from\s+["']@\/shared\/components\/GlassSurface["']/) ??
-    source.match(/<GlassSurface\b/);
+    source.match(/from\s+["']@\/shared\/components\/SolidSurface["']/) ??
+    source.match(/<SolidSurface\b/);
 
-  if (directGlassSurfaceMatch && !DIRECT_GLASS_SURFACE_ALLOWLIST.has(file)) {
+  if (directSolidSurfaceMatch && !DIRECT_SOLID_SURFACE_ALLOWLIST.has(file)) {
     violations.push({
       file,
-      line: toLine(source, directGlassSurfaceMatch.index ?? 0),
+      line: toLine(source, directSolidSurfaceMatch.index ?? 0),
       message:
-        "Feature/app code should use Card, FieldSurface, ListRowSurface, Dialog, Picker, or a new shared primitive instead of direct GlassSurface.",
+        "Feature/app code should use Card, FieldSurface, ListRowSurface, Dialog, Picker, or a new shared primitive instead of direct SolidSurface.",
     });
   }
 
@@ -200,7 +200,7 @@ function collectFileViolations(root: string, path: string): readonly Violation[]
       pattern:
         /\bclassName\s*=\s*(?:"[^"]*\bbg-(?:card|surface)\b[^"]*"|`[^`]*\bbg-(?:card|surface)\b[^`]*`)/g,
       message:
-        "Feature/app code should not use bg-card/bg-surface directly; use shared glass primitives.",
+        "Feature/app code should not use bg-card/bg-surface directly; use shared surface primitives.",
     }),
     ...collectPatternViolations({
       file,

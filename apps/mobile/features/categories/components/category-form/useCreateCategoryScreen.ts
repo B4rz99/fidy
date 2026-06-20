@@ -1,13 +1,13 @@
 import { useRouter } from "expo-router";
 import { useOptionalUserId } from "@/features/auth/public";
 import { useAsyncGuard } from "@/shared/hooks";
-import { ICON_MAP } from "../../lib/icon-map";
+import { resolveCategoryIconValue } from "../../lib/icon-map";
 import type { CreateCategoryScreenViewModel } from "./CreateCategoryScreen.types";
 import { useCreateCategoryDraft } from "./useCreateCategoryDraft";
 import { useCreateCategorySubmit } from "./useCreateCategorySubmit";
 
 function resolvePreviewIcon(selectedIcon: string | null) {
-  return selectedIcon ? (ICON_MAP[selectedIcon] ?? "✨") : "✨";
+  return selectedIcon ? resolveCategoryIconValue(selectedIcon) : "✨";
 }
 
 export function useCreateCategoryScreen(): CreateCategoryScreenViewModel {

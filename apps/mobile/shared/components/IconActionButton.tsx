@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { PressableProps } from "react-native";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
-import { GlassPressable } from "./GlassPressable";
+import { SurfacePressable } from "./SurfacePressable";
 
 type IconActionButtonTone = "plain" | "surface";
 
@@ -40,7 +40,7 @@ export function IconActionButton({
   );
 
   return (
-    <GlassPressable
+    <SurfacePressable
       {...pressableProps}
       accessibilityRole={accessibilityRole ?? "button"}
       hitSlop={hitSlop}
@@ -52,7 +52,7 @@ export function IconActionButton({
       }`}
     >
       {content}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 

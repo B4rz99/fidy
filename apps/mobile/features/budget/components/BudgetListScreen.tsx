@@ -43,6 +43,7 @@ function AddBudgetButton({
 }
 
 const budgetKeyExtractor = (item: BudgetProgress) => item.budgetId;
+const BUDGET_SCREEN_SECTION_GAP = 16;
 
 export function BudgetListScreen() {
   const { t, locale } = useTranslation();
@@ -171,7 +172,6 @@ export function BudgetListScreen() {
   return (
     <ScreenLayout
       title=""
-      includesNativeHeader={false}
       centerAction={
         <BudgetHeaderMonthNavigator
           monthLabel={monthLabel}
@@ -199,7 +199,7 @@ export function BudgetListScreen() {
         empty={emptyState}
         containerStyle={styles.content}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
-        itemSeparatorHeight={8}
+        itemSeparatorHeight={BUDGET_SCREEN_SECTION_GAP}
       />
     </ScreenLayout>
   );
@@ -211,10 +211,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scrollContent: {
-    gap: 8,
+    gap: BUDGET_SCREEN_SECTION_GAP,
+    paddingTop: BUDGET_SCREEN_SECTION_GAP,
   },
   headerContent: {
-    gap: 8,
+    gap: BUDGET_SCREEN_SECTION_GAP,
   },
   emptyState: {
     flex: 0,

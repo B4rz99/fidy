@@ -4,15 +4,15 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type NewChatButtonProps = {
   readonly onPress: () => void;
-  readonly presentation?: "glass" | "plain";
+  readonly presentation?: "surface" | "plain";
 };
 
-export function NewChatButton({ onPress, presentation = "glass" }: NewChatButtonProps) {
+export function NewChatButton({ onPress, presentation = "surface" }: NewChatButtonProps) {
   const { t } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const accessibilityLabel = t("aiChat.newChat");
 
-  if (presentation === "glass") {
+  if (presentation === "surface") {
     return <AddActionButton onPress={onPress} accessibilityLabel={accessibilityLabel} />;
   }
 

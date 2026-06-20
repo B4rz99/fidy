@@ -4,6 +4,7 @@ import type { CategoryId, CopAmount, UserId } from "@/shared/types/branded";
 
 const mockGetIncomeExpenseForPeriod = vi.fn<(...args: any[]) => any>();
 const mockGetSpendingByCategoryForPeriod = vi.fn<(...args: any[]) => any>();
+const mockGetExpenseTransactionsForPeriod = vi.fn<(...args: any[]) => any>();
 const testNow = () => new Date(2026, 2, 23);
 
 const currentIncomeExpense = {
@@ -23,6 +24,16 @@ const currentSpending = [
 
 const previousSpending = [{ categoryId: "food" as CategoryId, total: 100000 as CopAmount }];
 
+const currentCategoryExpenses = [
+  {
+    id: "tx-food-2",
+    categoryId: "food" as CategoryId,
+    amount: 50000 as CopAmount,
+    description: "Dinner",
+    date: new Date(2026, 2, 22),
+  },
+];
+
 const expectedIncomeExpenseCalls: ReadonlyArray<
   readonly [callIndex: number, startDate: string, endDate: string]
 > = [
@@ -41,6 +52,7 @@ const expectedSnapshot = {
     { categoryId: "food", total: 150000, percent: 75 },
     { categoryId: "transport", total: 50000, percent: 25 },
   ],
+  categoryExpenses: currentCategoryExpenses,
   periodDelta: {
     totalDelta: 100000,
     totalDeltaPercent: 100,
@@ -60,8 +72,10 @@ describe("analytics service", () => {
     mockGetSpendingByCategoryForPeriod
       .mockReturnValueOnce(currentSpending)
       .mockReturnValueOnce(previousSpending);
+    mockGetExpenseTransactionsForPeriod.mockReturnValueOnce(currentCategoryExpenses);
     const service = createAnalyticsService({
       getNow: testNow,
+      getExpenseTransactionsForPeriod: mockGetExpenseTransactionsForPeriod,
       getIncomeExpenseForPeriod: mockGetIncomeExpenseForPeriod,
       getSpendingByCategoryForPeriod: mockGetSpendingByCategoryForPeriod,
     });
@@ -73,13 +87,18 @@ describe("analytics service", () => {
     });
 
     expectedIncomeExpenseCalls.forEach(([callIndex, startDate, endDate]) => {
-      expect(mockGetIncomeExpenseForPeriod).toHaveBeenNthCalledWith(
-        callIndex,
-        expect.anything(),
-        "user-1",
+      expect(mockGetIncomeExpenseForPeriod).toHaveBeenNthCalledWith(callIndex, {
+        db: expect.anything(),
+        userId: "user-1",
         startDate,
-        endDate
-      );
+        endDate,
+      });
+    });
+    expect(mockGetExpenseTransactionsForPeriod).toHaveBeenCalledWith({
+      db: expect.anything(),
+      userId: "user-1",
+      startDate: "2026-02-22",
+      endDate: "2026-03-23",
     });
     expect(snapshot).toEqual(expectedSnapshot);
   });

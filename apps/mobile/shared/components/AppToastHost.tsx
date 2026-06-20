@@ -6,7 +6,8 @@ import { CheckCircle, TriangleAlert } from "@/shared/components/icons";
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { subscribeAppToasts } from "@/shared/lib";
-import { GlassSurface } from "./GlassSurface";
+import { TOAST_SURFACE_SHADOW } from "./effect-tokens";
+import { SolidSurface } from "./SolidSurface";
 
 type AppToast = Parameters<Parameters<typeof subscribeAppToasts>[0]>[0];
 const LEGACY_ANDROID_SHADOW_PROPERTY = "elevation";
@@ -25,7 +26,6 @@ export function AppToastHost() {
   const primary = useThemeColor("primary");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const onAccent = useThemeColor("onAccent");
   const accent = toast?.kind === "error" ? accentRed : accentGreen;
   const ToastIcon = toast?.kind === "error" ? TriangleAlert : CheckCircle;
   const animatedToastStyle = useAnimatedStyle(() => ({
@@ -73,14 +73,14 @@ export function AppToastHost() {
         ]}
         accessibilityLiveRegion="polite"
       >
-        <GlassSurface padded={false} radius={18} style={styles.toast}>
+        <SolidSurface padded={false} radius={18} style={styles.toast}>
           <Text style={[styles.message, { color: primary }]} numberOfLines={2}>
             {toast.message}
           </Text>
           <View style={styles.icon}>
             <ToastIcon size={16} color={accent} strokeWidth={2.5} />
           </View>
-        </GlassSurface>
+        </SolidSurface>
       </Animated.View>
     </View>
   );
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   toastPosition: {
     alignSelf: "center",
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
+    boxShadow: TOAST_SURFACE_SHADOW,
     maxWidth: 360,
     minHeight: 52,
     position: "absolute",

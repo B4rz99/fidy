@@ -6,6 +6,7 @@ import { createFinancialAccountManagementService } from "@/features/financial-ac
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
 import { canFinancialAccountHaveIdentifiers, readFinancialAccountKind } from "../lib/kind";
 import { Button, Card, FormTextField, ScreenLayout } from "@/shared/components";
+import { Tag } from "@/shared/components/icons";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -23,7 +24,6 @@ export function FinancialAccountIdentifierScreen() {
   const db = userId ? tryGetDb(userId) : null;
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
   const [value, setValue] = useState("");
   const { isBusy, run: guardedSave } = useAsyncGuard();
 
@@ -84,6 +84,7 @@ export function FinancialAccountIdentifierScreen() {
         </Text>
 
         <FormTextField
+          icon={Tag}
           label={t("financialAccounts.identifierScreen.label")}
           value={value}
           onChangeText={setValue}

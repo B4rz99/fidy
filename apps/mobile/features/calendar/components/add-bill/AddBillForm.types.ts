@@ -1,5 +1,3 @@
-import type { RefObject } from "react";
-import type { TextInput } from "@/shared/components/rn";
 import type { UserId } from "@/shared/types/branded";
 import type { Bill, BillFrequency } from "../../schema";
 import type { addBill, updateBill } from "../../store";
@@ -24,16 +22,17 @@ export type AddBillMutations = {
 
 export type AddBillFormProps = AddBillMutations & {
   readonly existingBill: Bill | undefined;
+  readonly headerTitle: string;
 };
 
 export type AuthenticatedAddBillFormProps = {
   readonly existingBill: Bill | undefined;
+  readonly headerTitle: string;
   readonly onDone: () => void;
   readonly userId: UserId;
 };
 
 export type AddBillDraftController = {
-  readonly amountRef: RefObject<TextInput | null>;
   readonly draft: AddBillDraftState;
   readonly isEdit: boolean;
   readonly setAmount: (amount: string) => void;

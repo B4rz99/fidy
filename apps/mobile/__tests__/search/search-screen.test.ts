@@ -71,20 +71,24 @@ test("keeps content and results rendering wired to the extracted list modules", 
 
 test("keeps the transaction search redesign surfaces wired into the screen", () => {
   expect(contentSource).toContain('variant="sub"');
-  expect(contentSource).toContain("rightActions={clearFiltersAction}");
-  expect(contentSource).toContain("<TextActionButton");
-  expect(contentSource).toContain('label={t("common.clear")}');
+  expect(contentSource).not.toContain("rightActions={clearFiltersAction}");
+  expect(contentSource).not.toContain("<TextActionButton");
+  expect(contentSource).not.toContain('label={t("common.clear")}');
   expect(contentSource).not.toContain("<SearchInputBar");
+  expect(inputBarSource).toContain("<FieldSurface");
   expect(inputBarSource).toContain("placeholder={placeholder}");
   expect(filterControlsSource).toContain("<SearchInputBar");
   expect(filterControlsSource).toContain("<FilterChipRow");
+  expect(filterControlsSource).toContain("<SolidSurface");
   expect(resultsListSource).toContain("handleTextChange={handleTextChange}");
   expect(controlsSource).not.toContain("previousCategoryCount > 0");
   expect(controlsSource).not.toContain("panel.setActivePanel(null)");
+  expect(summarySource).toContain("<SolidSurface");
   expect(summarySource).toContain("summaryCard");
   expect(summarySource).toContain("search.resultTotal");
   expect(summarySource).toContain("search.movements");
-  expect(transactionItemSource).toContain("resultCard");
+  expect(transactionItemSource).toContain("TransactionRow");
+  expect(transactionItemSource).not.toContain("RaisedSurface");
   expect(transactionItemSource).toContain("showDateHeader");
 });
 
@@ -92,8 +96,13 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   expect(filterChipRowSource).toContain("ItemSeparatorComponent={FilterChipSeparator}");
   expect(filterChipRowSource).toContain("width: 8");
   expect(filterChipRowSource).not.toContain("gap: 8");
+  expect(categoryFilterSource).toContain("<FlatList");
+  expect(categoryFilterSource).not.toContain("<ScrollView");
   expect(categoryFilterSource).not.toContain("<Check");
-  expect(categoryFilterSource).toContain("style={{ height: 44, paddingHorizontal: 0, width: 44 }}");
+  expect(categoryFilterSource).toContain("CategoryIconButton");
+  expect(categoryFilterSource).toContain('variant="filter"');
+  expect(categoryFilterSource).toContain('useThemeColor("surfaceRaised")');
+  expect(categoryFilterSource).toContain("idleColor={surfaceRaised}");
   expect(categoryFilterSource).not.toContain('className="h-0.5 w-5 rounded-full"');
   expect(categoryFilterSource).not.toContain("backgroundColor: isSelected ? category.color");
   expect(categoryFilterSource).not.toContain("peachLight");
@@ -102,12 +111,10 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   );
   expect(dateFilterSource).toContain("TransactionDatePickerDialog");
   expect(dateFilterSource).not.toContain("<TextInput");
-  expect(dateFilterSource).toContain('useThemeColor("accentGreen")');
-  expect(dateFilterSource).toContain("selectedColor={accentGreen}");
+  expect(dateFilterSource).toContain("dimmed={activePresetKey !== null && !isActive}");
+  expect(dateFilterSource).not.toContain("selectedColor={accentGreen}");
   expect(dateFilterSource).not.toContain("#2F7D32");
-  expect(dateFilterSource).toMatch(
-    /preset\.key\s*===\s*["']lastMonth["']\s*\?\s*\{\s*flex\s*:\s*1\.35,\s*minHeight\s*:\s*32,\s*paddingHorizontal\s*:\s*8\s*\}\s*:\s*\{\s*flex\s*:\s*1,\s*minHeight\s*:\s*32,\s*paddingHorizontal\s*:\s*8\s*\}/
-  );
+  expect(dateFilterSource).toContain("styles.lastMonthPreset");
   expect(typeFilterSource).not.toContain('style={getStyle("all")}');
   expect(typeFilterSource).toContain("SegmentedControl");
   expect(typeFilterSource).toContain('variant="detached"');
@@ -117,10 +124,12 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   expect(typeFilterSource).not.toContain('"danger"');
   expect(typeFilterSource).not.toContain('"success"');
   expect(typeFilterSource).toContain("search.transferType");
-  expect(categoryFilterSource).toContain('useThemeColor("accentGreen")');
-  expect(categoryFilterSource).toContain("selectedColor={accentGreen}");
+  expect(categoryFilterSource).toContain("dimmed={hasSelection && !isSelected}");
+  expect(categoryFilterSource).not.toContain("<View style={{ opacity }}>");
+  expect(categoryFilterSource).not.toContain("selectedColor={accentGreen}");
   expect(filterChipRowSource).not.toContain('"clearAll"');
-  expect(filterChipItemSource).toContain('isHighlighted ? "primary" : "neutral"');
+  expect(filterChipItemSource).toContain("dimmed={hasActiveFilters && !isHighlighted}");
+  expect(filterChipItemSource).toContain('tone="neutral"');
   expect(filterChipItemSource).not.toContain('isActive ? "primary" : "neutral"');
   expect(transactionItemSource).toContain("getTransferActivityCopy");
 });

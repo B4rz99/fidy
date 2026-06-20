@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import Animated from "react-native-reanimated";
 import { type StyleProp, Text, type TextStyle, View, type ViewStyle } from "@/shared/components/rn";
 import { formatInputDisplay } from "@/shared/lib";
-import { GlassPressable } from "./GlassPressable";
+import { SurfacePressable } from "./SurfacePressable";
 
 type MoneyAmountDisplaySize = "medium" | "large" | "hero";
 
@@ -92,7 +92,7 @@ export function MoneyAmountDisplay({
   if (!onPress) return content;
 
   return (
-    <GlassPressable
+    <SurfacePressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
@@ -101,6 +101,6 @@ export function MoneyAmountDisplay({
       surfaceLayoutStyle={{ paddingHorizontal: 12, paddingVertical: 4 }}
     >
       {content}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }

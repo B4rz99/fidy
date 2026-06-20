@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
-import { X } from "@/shared/components/icons";
+import type { PressableProps, StyleProp, TextStyle, ViewProps, ViewStyle } from "react-native";
+import { X, type LucideIcon } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { FieldSurface } from "./FieldSurface";
@@ -10,7 +10,9 @@ type FieldButtonProps = Omit<ViewProps, "children"> & {
   readonly label?: string;
   readonly value: ReactNode;
   readonly placeholder?: string;
+  readonly placeholderColor?: string;
   readonly leading?: ReactNode;
+  readonly icon?: LucideIcon;
   readonly trailing?: ReactNode;
   readonly onPress: PressableProps["onPress"];
   readonly onClear?: PressableProps["onPress"];
@@ -18,8 +20,12 @@ type FieldButtonProps = Omit<ViewProps, "children"> & {
   readonly clearAccessibilityLabel?: string;
   readonly active?: boolean;
   readonly disabled?: boolean;
+  readonly labelStyle?: StyleProp<TextStyle>;
   readonly className?: string;
   readonly buttonStyle?: StyleProp<ViewStyle>;
+  readonly surfaceBackgroundColor?: string;
+  readonly surfaceRadius?: number;
+  readonly valueStyle?: StyleProp<TextStyle>;
   readonly valueClassName?: string;
 };
 
@@ -62,15 +68,21 @@ export function FieldButton({
   label,
   value,
   placeholder,
+  placeholderColor,
   leading,
+  icon: Icon,
   trailing,
   onPress,
   onClear,
   clearAccessibilityLabel,
   active = false,
   disabled = false,
+  labelStyle,
   className,
   buttonStyle,
+  surfaceBackgroundColor,
+  surfaceRadius,
+  valueStyle,
   valueClassName,
   style,
   accessibilityHint,
@@ -87,13 +99,14 @@ export function FieldButton({
   const tertiary = useThemeColor("tertiary");
   const contentStyle = getFieldButtonContentStyle(buttonStyle);
   const containerStyle = getFieldButtonContainerStyle(buttonStyle);
+  const valueColor = value === "" && placeholder ? (placeholderColor ?? tertiary) : primary;
   const valueNode =
     typeof value === "string" ? (
       <Text
         className={`font-poppins-medium text-body ${
           value === "" && placeholder ? "text-text-tertiary dark:text-text-tertiary-dark" : ""
         } ${valueClassName ?? ""}`}
-        style={{ color: value === "" && placeholder ? tertiary : primary }}
+        style={[{ color: valueColor }, valueStyle]}
       >
         {value === "" && placeholder ? placeholder : value}
       </Text>
@@ -111,7 +124,10 @@ export function FieldButton({
   return (
     <View {...viewProps} className={className} style={style}>
       {label ? (
-        <Text className="mb-1 font-poppins-medium text-caption" style={{ color: secondary }}>
+        <Text
+          className="mb-1 font-poppins-medium text-caption"
+          style={[{ color: secondary }, labelStyle]}
+        >
           {label}
         </Text>
       ) : null}
@@ -128,8 +144,15 @@ export function FieldButton({
         className={`${disabled ? "opacity-60" : ""}`}
         style={{ minHeight: 40 }}
       >
-        <FieldSurface size="button" radius={8} style={containerStyle} contentStyle={contentStyle}>
+        <FieldSurface
+          backgroundColor={surfaceBackgroundColor}
+          size="button"
+          radius={surfaceRadius ?? 8}
+          style={containerStyle}
+          contentStyle={contentStyle}
+        >
           {leading}
+          {Icon ? <Icon size={18} color={secondary} /> : null}
           <View className="flex-1">{valueNode}</View>
           {handleClear ? (
             <IconActionButton

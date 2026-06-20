@@ -1,5 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { GlassSurface } from "../GlassSurface";
+import { SolidSurface } from "../SolidSurface";
 import { AddNavButton } from "./AddNavButton";
 import { NavItem } from "./NavItem";
 import { TAB_CONFIG } from "./tab-config";
@@ -23,7 +23,7 @@ export const CustomTabBar = ({ state, navigation }: CustomTabBarProps) => {
   const insets = useSafeAreaInsets();
 
   return (
-    <GlassSurface
+    <SolidSurface
       padded={false}
       radius={28}
       className="absolute left-5 right-5 flex-row items-center justify-around p-2"
@@ -60,6 +60,6 @@ export const CustomTabBar = ({ state, navigation }: CustomTabBarProps) => {
           />
         );
       })}
-    </GlassSurface>
+    </SolidSurface>
   );
 };

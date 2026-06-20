@@ -1,6 +1,7 @@
 import type { CategoryId } from "@/shared/categories";
 import { CATEGORY_MAP } from "@/shared/categories";
 import { FormTextField, ListRowSurface } from "@/shared/components";
+import { Wallet } from "@/shared/components/icons";
 import { StyleSheet, Switch, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -35,6 +36,7 @@ export function BudgetSuggestionRow({
       </View>
       <View style={styles.rowRight}>
         <FormTextField
+          icon={Wallet}
           label={categoryLabel}
           labelStyle={styles.hiddenLabel}
           style={styles.amountField}

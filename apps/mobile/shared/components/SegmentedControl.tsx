@@ -2,10 +2,9 @@ import type { ReactNode } from "react";
 import type { StyleProp, ViewProps, ViewStyle } from "react-native";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassPressable } from "./GlassPressable";
-import { GlassSurface } from "./GlassSurface";
+import { SurfacePressable } from "./SurfacePressable";
+import { SolidSurface } from "./SolidSurface";
 
-type SegmentedControlTone = "primary" | "success" | "danger";
 type SegmentedControlVariant = "grouped" | "detached";
 
 type SegmentedControlOption<TValue extends string> = {
@@ -20,8 +19,6 @@ type SegmentedControlProps<TValue extends string> = Omit<ViewProps, "children"> 
   readonly options: readonly SegmentedControlOption<TValue>[];
   readonly value: TValue | null;
   readonly onChange: (value: TValue) => void;
-  readonly tone?: SegmentedControlTone;
-  readonly getOptionTone?: (value: TValue) => SegmentedControlTone;
   readonly allowReselect?: boolean;
   readonly variant?: SegmentedControlVariant;
   readonly style?: StyleProp<ViewStyle>;
@@ -31,30 +28,20 @@ export function SegmentedControl<TValue extends string>({
   options,
   value,
   onChange,
-  tone = "primary",
-  getOptionTone,
   allowReselect = false,
   variant = "grouped",
   style,
   ...viewProps
 }: SegmentedControlProps<TValue>) {
-  const accentGreen = useThemeColor("accentGreen");
-  const success = useThemeColor("success");
-  const danger = useThemeColor("danger");
+  const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const toneColors: Record<SegmentedControlTone, string> = {
-    primary: accentGreen,
-    success,
-    danger,
-  };
 
   const optionNodes = options.map((option) => {
     const selected = option.value === value;
-    const activeTone = getOptionTone?.(option.value) ?? tone;
-    const activeColor = toneColors[activeTone];
+    const opacity = option.disabled ? 0.5 : value !== null && !selected ? 0.4 : 1;
 
     return (
-      <GlassPressable
+      <SurfacePressable
         key={option.value}
         accessibilityLabel={option.accessibilityLabel ?? option.label}
         accessibilityRole="button"
@@ -67,18 +54,18 @@ export function SegmentedControl<TValue extends string>({
         }}
         padded={false}
         radius={999}
-        style={[styles.optionShell, option.disabled ? styles.disabledOption : null]}
+        style={[styles.optionShell, { opacity }]}
         surfaceLayoutStyle={styles.optionSurface}
       >
         {option.leading}
         <Text
           className="font-poppins-semibold text-label"
           numberOfLines={1}
-          style={{ color: selected ? activeColor : secondary }}
+          style={{ color: selected ? primary : secondary }}
         >
           {option.label}
         </Text>
-      </GlassPressable>
+      </SurfacePressable>
     );
   });
 
@@ -91,23 +78,18 @@ export function SegmentedControl<TValue extends string>({
   }
 
   return (
-    <GlassSurface
+    <SolidSurface
       {...viewProps}
       padded={false}
       radius={999}
       style={[styles.groupedContainer, style]}
     >
       {optionNodes}
-    </GlassSurface>
+    </SolidSurface>
   );
 }
 
-export type {
-  SegmentedControlOption,
-  SegmentedControlProps,
-  SegmentedControlTone,
-  SegmentedControlVariant,
-};
+export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlVariant };
 
 const styles = StyleSheet.create({
   groupedContainer: {
@@ -132,8 +114,5 @@ const styles = StyleSheet.create({
     gap: 4,
     justifyContent: "center",
     paddingHorizontal: 12,
-  },
-  disabledOption: {
-    opacity: 0.5,
   },
 });

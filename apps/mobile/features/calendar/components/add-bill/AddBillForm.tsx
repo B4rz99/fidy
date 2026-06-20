@@ -1,3 +1,4 @@
+import { handleNumpadPress } from "@/features/transactions/display.public";
 import { Keyboard } from "@/shared/components/rn";
 import type { AddBillFormProps } from "./AddBillForm.types";
 import { AddBillFormContent } from "./AddBillFormContent";
@@ -18,10 +19,12 @@ export function AddBillForm(props: AddBillFormProps) {
   return (
     <AddBillFormContent
       amount={draftController.draft.amount}
-      amountRef={draftController.amountRef}
       canSubmit={props.canSubmit}
       category={draftController.draft.category}
       frequency={draftController.draft.frequency}
+      handleAmountKey={(key) => {
+        draftController.setAmount(handleNumpadPress(draftController.draft.amount, key));
+      }}
       handleCategoryPress={(category) => {
         Keyboard.dismiss();
         draftController.setCategory(category);
@@ -31,10 +34,10 @@ export function AddBillForm(props: AddBillFormProps) {
         draftController.setFrequency(frequency);
       }}
       handleSave={handleSave}
+      headerTitle={props.headerTitle}
       isEdit={draftController.isEdit}
       isSaving={isSaving}
       name={draftController.draft.name}
-      onAmountChange={(value) => draftController.setAmount(value.replace(/[^0-9]/g, ""))}
       onNameChange={draftController.setName}
       onStartDateChange={draftController.setStartDate}
       startDate={draftController.draft.startDate}

@@ -12,8 +12,8 @@ function readSource(path: string) {
   return readFileSync(resolve(__dirname, path), "utf-8");
 }
 
-describe("glass layout contracts", () => {
-  it("keeps core layout on shared glass primitives", () => {
+describe("surface layout contracts", () => {
+  it("keeps core layout on shared surface primitives", () => {
     const chipSource = readShared("Chip.tsx");
     const segmentedSource = readShared("SegmentedControl.tsx");
     const filterPillSource = readShared("FilterPill.tsx");
@@ -31,25 +31,24 @@ describe("glass layout contracts", () => {
     expect(segmentedSource).toMatch(/groupedContainer:\s*\{[\s\S]*flexDirection:\s*"row"/);
     expect(segmentedSource).toMatch(/groupedContainer:\s*\{[\s\S]*height:\s*40/);
     expect(segmentedSource).toMatch(/optionShell:\s*\{[\s\S]*flex:\s*1/);
-    expect(segmentedSource).not.toContain("nativeGlass={false}");
     expect(segmentedSource).not.toMatch(/className=\{`[^`]*(?:flex-row|h-\d|px-\d|gap-)/);
 
-    expect(filterPillSource).not.toContain("nativeGlass={false}");
+    expect(filterPillSource).toContain("<SurfacePressable");
   });
 
-  it("keeps glass visual overrides explicit instead of passing them through style", () => {
-    const glassSource = readShared("GlassSurface.tsx");
+  it("keeps surface visual overrides explicit instead of passing them through style", () => {
+    const surfaceSource = readShared("SolidSurface.tsx");
     const surfaceStyleSource = readShared("surface-style.ts");
     const buttonSource = readShared("Button.tsx");
     const fieldButtonSource = readShared("FieldButton.tsx");
-    const glassPressableSource = readShared("GlassPressable.tsx");
+    const surfacePressableSource = readShared("SurfacePressable.tsx");
     const listRowSurfaceSource = readShared("ListRowSurface.tsx");
 
-    expect(glassSource).toContain("getSurfaceLayoutStyle(style)");
+    expect(surfaceSource).toContain("getSurfaceLayoutStyle(style)");
     expect(surfaceStyleSource).toContain("function getSurfaceLayoutStyle");
     expect(surfaceStyleSource).toContain("type SurfaceLayoutViewStyle = Pick<");
     expect(surfaceStyleSource).toContain("export type SurfaceLayoutStyle");
-    expect(glassPressableSource).toContain("surfaceLayoutStyle?: SurfaceLayoutStyle");
+    expect(surfacePressableSource).toContain("surfaceLayoutStyle?: SurfaceLayoutStyle");
     expect(surfaceStyleSource).toContain("backgroundColor: _backgroundColor");
     expect(surfaceStyleSource).toContain("borderColor: _borderColor");
     expect(surfaceStyleSource).toContain("borderRadius: _borderRadius");
@@ -57,8 +56,8 @@ describe("glass layout contracts", () => {
     expect(surfaceStyleSource).toContain("borderWidth: _borderWidth");
 
     expect(buttonSource).not.toContain("borderColor=");
-    expect(glassSource).not.toContain("borderWidth");
-    expect(glassPressableSource).not.toContain("borderWidth");
+    expect(surfaceSource).toContain("borderWidth: StyleSheet.hairlineWidth");
+    expect(surfacePressableSource).not.toContain("borderWidth");
     expect(fieldButtonSource).not.toContain("borderColor={active");
     [buttonSource, fieldButtonSource].forEach((source) => {
       expect(source).not.toMatch(/style=\{\[[^\]]*\{\s*borderColor:/);
@@ -67,11 +66,13 @@ describe("glass layout contracts", () => {
     expect(listRowSurfaceSource).not.toMatch(/style=\{\[[^\]]*\{\s*borderColor:/);
   });
 
-  it("keeps light glass tint subtle enough to avoid reading as an opaque card", () => {
-    const cardTokensSource = readShared("card-tokens.ts");
+  it("keeps shared surface tokens solid instead of translucent", () => {
+    const cardTokensSource = readShared("surface-tokens.ts");
 
-    expect(cardTokensSource).toContain('tintColor: "rgba(255, 255, 255, 0.06)"');
-    expect(cardTokensSource).toContain('tintColor: "rgba(28, 28, 30, 0.18)"');
+    expect(cardTokensSource).toContain('backgroundColor: "#FFFFFF"');
+    expect(cardTokensSource).toContain('backgroundColor: "#1C1C1E"');
+    expect(cardTokensSource).not.toContain("tintColor");
+    expect(cardTokensSource).not.toContain("rgba(");
   });
 
   it("keeps migrated chip callsites on native chipStyle/style sizing", () => {
@@ -107,14 +108,13 @@ describe("glass layout contracts", () => {
     expect(transactionAccountSource).toContain("chipStyle");
   });
 
-  it("keeps field-heavy form sections on shared glass surfaces", () => {
+  it("keeps field-heavy form sections on shared surface surfaces", () => {
     const formSectionSource = readShared("FormSection.tsx");
 
-    expect(formSectionSource).toContain("<GlassSurface");
-    expect(formSectionSource).not.toContain("nativeGlass={false}");
+    expect(formSectionSource).toContain("<SolidSurface");
   });
 
-  it("keeps selected account kind state out of glass background and border props", () => {
+  it("keeps selected account kind state out of surface background and border props", () => {
     const accountKindSource = readSource(
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx"
     );
@@ -136,7 +136,7 @@ describe("glass layout contracts", () => {
     expect(toastSource).toContain("{ [LEGACY_ANDROID_SHADOW_PROPERTY]: 8 }");
   });
 
-  it("keeps shared transaction rows on glass surfaces", () => {
+  it("keeps shared transaction rows on surface surfaces", () => {
     const transactionRowSource = readShared("TransactionRow.tsx");
     const listRowSurfaceSource = readShared("ListRowSurface.tsx");
     const activityItemSource = readSource(
@@ -144,14 +144,15 @@ describe("glass layout contracts", () => {
     );
 
     expect(transactionRowSource).toContain("<ListRowSurface");
-    expect(listRowSurfaceSource).toContain("<GlassSurface");
+    expect(listRowSurfaceSource).toContain("<SolidSurface");
     expect(transactionRowSource).toContain("styles.rowSurface");
     expect(activityItemSource).not.toContain("activityCard");
     expect(activityItemSource).not.toMatch(/rgba\(28,\s*28,\s*30/);
   });
 
-  it("keeps compact form field sizing on the glass field container", () => {
+  it("keeps compact form field sizing on the surface field container", () => {
     const formTextFieldSource = readShared("FormTextField.tsx");
+    const textFieldStyleSource = readShared("text-field-style.ts");
     const budgetSuggestionRowSource = readSource(
       "../../features/budget/components/BudgetSuggestionRow.tsx"
     );
@@ -160,9 +161,11 @@ describe("glass layout contracts", () => {
       "../../features/onboarding/components/BudgetSetupStep.tsx"
     );
 
-    expect(formTextFieldSource).toMatch(/function getFieldContainerStyle/);
-    expect(formTextFieldSource).toContain("minWidth: flattened.minWidth");
-    expect(formTextFieldSource).toContain("width: flattened.width");
+    expect(formTextFieldSource).toContain('from "./text-field-style"');
+    expect(textFieldStyleSource).toMatch(/function getFieldContainerStyle/);
+    expect(textFieldStyleSource).toContain("minWidth: flattened.minWidth");
+    expect(textFieldStyleSource).toContain("width: flattened.width");
+    expect(textFieldStyleSource).toMatch(/paddingVertical: flattened.paddingVertical/);
     expect(budgetSuggestionRowSource).toContain("styles.amountInput");
     expect(budgetSuggestionRowSource).toContain("minWidth: 64");
     expect(budgetSuggestionRowSource).toContain("<FormTextField");

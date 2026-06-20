@@ -6,7 +6,7 @@ import {
   softDeleteContribution,
   softDeleteGoal,
   updateGoal,
-} from "@/features/goals/lib/repository";
+} from "@/infrastructure/local-ledger/goal-storage";
 import { assertIsoDateTime } from "@/shared/types/assertions";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
 import { completeCommand } from "./common";

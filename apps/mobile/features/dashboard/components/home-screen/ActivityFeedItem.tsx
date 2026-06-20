@@ -1,15 +1,14 @@
 import type { StoredActivityItem } from "@/features/activity/query.public";
+import { useAvailableCategoryMap } from "@/features/categories/hooks.public";
 import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import { getTransferActivityCopy } from "@/features/transfers/display.public";
-import { CATEGORY_MAP } from "@/shared/categories";
-import { TransactionRow } from "@/shared/components";
+import { ListDateHeader, TransactionRow } from "@/shared/components";
 import { View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, formatSignedMoney } from "@/shared/lib";
 import type { TransactionId } from "@/shared/types/branded";
-import { DateHeader } from "../DateHeader";
 
 type TransactionActivityItemProps = {
   readonly showDateHeader: boolean;
@@ -25,7 +24,8 @@ function TransactionActivityItem({
   onEditTransaction,
 }: TransactionActivityItemProps) {
   const { t, locale } = useTranslation();
-  const category = CATEGORY_MAP[tx.categoryId];
+  const categoryById = useAvailableCategoryMap();
+  const category = categoryById.get(tx.categoryId);
   const handleEdit = () => {
     onEditTransaction(tx.id);
   };
@@ -36,7 +36,7 @@ function TransactionActivityItem({
   return (
     <View>
       {showDateHeader ? (
-        <DateHeader
+        <ListDateHeader
           label={makeDateLabel({
             date: tx.date,
             todayLabel: t("dates.today"),
@@ -76,7 +76,7 @@ function TransferActivityItem({ accountNames, item, showDateHeader }: TransferAc
   return (
     <View>
       {showDateHeader ? (
-        <DateHeader
+        <ListDateHeader
           label={makeDateLabel({
             date: item.date,
             todayLabel: t("dates.today"),

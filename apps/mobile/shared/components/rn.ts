@@ -5,6 +5,7 @@ export type {
   OpaqueColorValue,
   StyleProp,
   TextStyle,
+  ViewProps,
   ViewStyle,
 } from "react-native";
 export {
@@ -14,6 +15,7 @@ export {
   Alert,
   Appearance,
   AppState,
+  Animated,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,

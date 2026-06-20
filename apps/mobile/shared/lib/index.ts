@@ -45,6 +45,8 @@ export {
   generateBillId,
   generateBillPaymentId,
   generateBudgetId,
+  generateCategoryColorOverrideId,
+  generateCategoryIconOverrideId,
   generateCaptureEvidenceId,
   generateChatMessageId,
   generateChatSessionId,
@@ -63,7 +65,6 @@ export {
 } from "./generate-id";
 export { runAfterNavigationTransition, waitForNavigationTransition } from "./navigation-transition";
 export { merchantsMatch, normalizeMerchant } from "./normalize-merchant";
-export { getFirstNonEmptyRouteParam, type RouteParamValue } from "./route-params";
 export {
   captureError,
   capturePipelineEvent,

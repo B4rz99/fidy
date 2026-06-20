@@ -178,6 +178,7 @@ export function PrivateBackupScreen() {
               </Text>
             </Card>
             <FormTextField
+              icon={KeyRound}
               label={t("privateBackup.confirmPlaceholder")}
               value={confirmation}
               onChangeText={setConfirmation}

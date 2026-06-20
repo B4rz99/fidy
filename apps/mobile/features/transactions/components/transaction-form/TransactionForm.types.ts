@@ -1,13 +1,16 @@
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
+import type { Category } from "@/shared/categories";
 import type { useBlinkingCursor } from "@/shared/hooks";
 import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
 import type { TransactionType } from "../../schema";
 
 export type DigitsInput = string | ((currentDigits: string) => string);
+export type TransactionFormMode = TransactionType | "transfer";
 
 export type TransactionFormProps = {
   readonly accountId: FinancialAccountId | null;
   readonly accounts: readonly FinancialAccountRow[];
+  readonly categories: readonly Category[];
   readonly categoryId: CategoryId | null;
   readonly date: Date;
   readonly description: string;
@@ -17,6 +20,7 @@ export type TransactionFormProps = {
   readonly onAccountChange: (id: FinancialAccountId) => void;
   readonly onCategoryChange: (id: CategoryId) => void;
   readonly onClose?: () => void;
+  readonly onDateChange: (date: Date) => void;
   readonly onDelete?: () => void;
   readonly onDescriptionChange: (text: string) => void;
   readonly onDigitsChange: (digits: DigitsInput) => void;

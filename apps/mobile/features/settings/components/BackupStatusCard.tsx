@@ -17,7 +17,8 @@ export function BackupStatusCard({
   tone = "green",
 }: BackupStatusCardProps) {
   const accentGreen = useThemeColor("accentGreen");
-  const iconColor = tone === "green" ? accentGreen : "#C46A2B";
+  const warning = useThemeColor("warning");
+  const iconColor = tone === "green" ? accentGreen : warning;
   return (
     <Card contentStyle={{ gap: 10 }}>
       <View className="flex-row items-start" style={{ gap: 12 }}>

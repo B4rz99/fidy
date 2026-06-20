@@ -13,6 +13,8 @@ import {
 import {
   accountSuggestionDismissals,
   budgets,
+  categoryColorOverrides,
+  categoryIconOverrides,
   captureEvidence,
   financialAccountIdentifiers,
   financialAccounts,
@@ -68,6 +70,14 @@ function seedAccounts() {
     insert into user_categories (
       id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
     ) values ('uc-food', 'user-1', 'Work lunches', 'utensils', '#2F80ED', '${NOW}', '${NOW}', null);
+
+    insert into category_icon_overrides (
+      id, user_id, category_id, emoji, created_at, updated_at, deleted_at
+    ) values ('cio-food', 'user-1', 'uc-food', '🥑', '${NOW}', '${NOW}', null);
+
+    insert into category_color_overrides (
+      id, user_id, category_id, color_hex, created_at, updated_at, deleted_at
+    ) values ('cco-food', 'user-1', 'uc-food', '#7CB243', '${NOW}', '${NOW}', null);
 
     insert into financial_accounts (
       id, user_id, name, kind, is_default, statement_closing_day, payment_due_day,
@@ -255,6 +265,12 @@ function expectRestoredAccountsAndActivity() {
   expect(targetDb.select().from(userCategories).all()).toEqual(
     sourceDb.select().from(userCategories).all()
   );
+  expect(targetDb.select().from(categoryIconOverrides).all()).toEqual(
+    sourceDb.select().from(categoryIconOverrides).all()
+  );
+  expect(targetDb.select().from(categoryColorOverrides).all()).toEqual(
+    sourceDb.select().from(categoryColorOverrides).all()
+  );
   expect(targetDb.select().from(financialAccounts).all()).toEqual(
     sourceDb.select().from(financialAccounts).all()
   );
@@ -299,6 +315,12 @@ function expectRestoredCaptureAndReviewState() {
 function expectRestoredRowsReplacedStaleState() {
   expect(targetDb.select().from(userCategories).all()).toEqual(
     sourceDb.select().from(userCategories).all()
+  );
+  expect(targetDb.select().from(categoryIconOverrides).all()).toEqual(
+    sourceDb.select().from(categoryIconOverrides).all()
+  );
+  expect(targetDb.select().from(categoryColorOverrides).all()).toEqual(
+    sourceDb.select().from(categoryColorOverrides).all()
   );
   expect(targetDb.select().from(financialAccounts).all()).toEqual(
     sourceDb.select().from(financialAccounts).all()
@@ -568,6 +590,8 @@ describe("local ledger backup snapshots", () => {
         transactions: expect.any(Array),
         transfers: expect.any(Array),
         userCategories: expect.any(Array),
+        categoryIconOverrides: expect.any(Array),
+        categoryColorOverrides: expect.any(Array),
         financialAccounts: expect.any(Array),
         openingBalances: expect.any(Array),
         budgets: expect.any(Array),
@@ -678,6 +702,8 @@ describe("local ledger backup snapshots", () => {
       "accountSuggestionDismissals",
       "budgets",
       "captureEvidence",
+      "categoryColorOverrides",
+      "categoryIconOverrides",
       "financialAccountIdentifiers",
       "financialAccounts",
       "goalContributions",

@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { CategoryPill } from "@/features/transactions/ui.public";
-import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { Button, ChoiceTray, MoneyEntryScreen } from "@/shared/components";
+import { useAvailableCategories } from "@/features/categories/hooks.public";
+import { CategoryStrip } from "@/features/transactions/ui.public";
+import type { CategoryId } from "@/shared/categories";
+import { Button, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatInputDisplay, formatMoney } from "@/shared/lib";
+import { formatMoney } from "@/shared/lib";
 import type { BudgetSuggestion } from "../../lib/derive";
 import { styles } from "./CreateBudget.styles";
 
@@ -18,6 +19,7 @@ type CreateBudgetFormContentProps = {
   readonly handleDelete: () => void;
   readonly handleKey: (key: string) => void;
   readonly handleSave: () => void;
+  readonly headerTitle: string;
   readonly isEdit: boolean;
   readonly isSaving: boolean;
   readonly setCategory: (category: CategoryId) => void;
@@ -32,6 +34,7 @@ export function CreateBudgetFormContent({
   handleDelete,
   handleKey,
   handleSave,
+  headerTitle,
   isEdit,
   isSaving,
   setCategory,
@@ -39,16 +42,20 @@ export function CreateBudgetFormContent({
   const { locale, t } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
+  const categories = useAvailableCategories();
 
   const availableCategories = useMemo(
-    () => CATEGORIES.filter((categoryOption) => !existingCategoryIds.has(categoryOption.id)),
-    [existingCategoryIds]
+    () =>
+      categories.filter(
+        (categoryOption) =>
+          category === categoryOption.id || !existingCategoryIds.has(categoryOption.id)
+      ),
+    [categories, category, existingCategoryIds]
   );
   const selectedSuggestion = autoSuggestions.find(
     (suggestion) => suggestion.categoryId === category
   );
-  const selectedCategory = CATEGORIES.find((categoryOption) => categoryOption.id === category);
-  const displayAmount = formatInputDisplay(digits);
+  const selectedCategory = categories.find((categoryOption) => categoryOption.id === category);
 
   return (
     <MoneyEntryScreen
@@ -73,27 +80,18 @@ export function CreateBudgetFormContent({
       }
       detailContent={
         <>
-          {!isEdit && (
-            <View style={styles.inputGroup}>
-              <ChoiceTray>
-                {availableCategories.map((categoryOption) => (
-                  <CategoryPill
-                    key={categoryOption.id}
-                    category={categoryOption}
-                    isSelected={category === categoryOption.id}
-                    onPress={() => setCategory(categoryOption.id)}
-                  />
-                ))}
-              </ChoiceTray>
-            </View>
-          )}
+          <View style={styles.categoryStrip}>
+            <CategoryStrip
+              categories={availableCategories}
+              categoryId={category}
+              onCategoryChange={setCategory}
+            />
+          </View>
         </>
       }
       amountContent={
         <View style={styles.amountPressTarget}>
-          <Text numberOfLines={1} style={[styles.amountText, { color: primaryColor }]}>
-            {displayAmount}
-          </Text>
+          <MoneyAmountDisplay color={primaryColor} digits={digits} textStyle={styles.amountText} />
           {selectedSuggestion && selectedCategory ? (
             <Text style={[styles.suggestionHint, { color: secondaryColor }]}>
               {t("budgets.create.lastMonthHint", {
@@ -104,6 +102,7 @@ export function CreateBudgetFormContent({
           ) : null}
         </View>
       }
+      headerTitle={headerTitle}
       onKeyPress={handleKey}
     />
   );

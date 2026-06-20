@@ -1,5 +1,5 @@
 import { formatMoney, formatSignedMoney, toIsoDate } from "@/shared/lib";
-import type { CategoryId, CopAmount, IsoDate } from "@/shared/types/branded";
+import type { CategoryId, CopAmount, IsoDate, TransactionId } from "@/shared/types/branded";
 
 export type AnalyticsPeriod = "W" | "M" | "Q" | "Y";
 export type DeltaTrend = "increased" | "decreased" | "unchanged";
@@ -20,6 +20,14 @@ export type CategoryBreakdownItem = {
   readonly categoryId: CategoryId;
   readonly total: CopAmount;
   readonly percent: number;
+};
+
+export type CategoryExpenseItem = {
+  readonly id: TransactionId;
+  readonly categoryId: CategoryId;
+  readonly amount: CopAmount;
+  readonly description: string | null;
+  readonly date: Date;
 };
 
 export type PeriodDelta = {

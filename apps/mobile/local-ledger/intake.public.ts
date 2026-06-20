@@ -5,8 +5,3 @@ export {
   type CreateReviewCandidateCommitPort,
   type CreateReviewCandidateInput,
 } from "./use-cases/intake.public";
-export type {
-  IntakeLocalLedgerCandidate,
-  IntakeLocalLedgerCandidateHandler,
-  IntakeLocalLedgerCandidateResult,
-} from "./use-cases/intake.public";

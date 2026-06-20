@@ -1,9 +1,8 @@
 import { memo, useCallback, useEffect } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { removeTransaction } from "@/features/transactions/store.public";
-import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
-import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
+import { ScreenLayout } from "@/shared/components";
+import { Keyboard, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useTranslation } from "@/shared/hooks";
 import { captureError, trackAiChatOpened } from "@/shared/lib";
@@ -42,7 +41,6 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   useMountEffect(() => trackAiChatOpened());
   useEffect(() => cancelActiveStream, []);
   const userId = useOptionalUserId();
-  const { top: safeTop } = useSafeAreaInsets();
   const db = userId ? tryGetDb(userId) : null;
 
   const messages = useChatStore((s) => s.messages);
@@ -118,33 +116,27 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   );
 
   return (
-    <ScreenLayout title={title} variant="sub" onBack={onBack} includesNativeHeader>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? safeTop + HEADER_HEIGHT : HEADER_HEIGHT}
-      >
-        <ChatConversationShell
-          messages={messages}
-          renderMessage={renderItem}
-          keyExtractor={keyExtractor}
-          isStreaming={isStreaming}
-          streamingBubble={<StreamingBubble content={streamingContent} />}
-          scrollToBottomLabel={t("aiChat.scrollToBottom")}
-          composer={<ChatInput onSend={handleSend} disabled={isStreaming} />}
-          emptyState={
-            <View
-              style={{ flex: 1 }}
-              onStartShouldSetResponder={() => {
-                Keyboard.dismiss();
-                return false;
-              }}
-            >
-              <StarterSuggestions onSelect={handleSuggestionSelect} />
-            </View>
-          }
-        />
-      </KeyboardAvoidingView>
+    <ScreenLayout title={title} variant="sub" onBack={onBack}>
+      <ChatConversationShell
+        messages={messages}
+        renderMessage={renderItem}
+        keyExtractor={keyExtractor}
+        isStreaming={isStreaming}
+        streamingBubble={<StreamingBubble content={streamingContent} />}
+        scrollToBottomLabel={t("aiChat.scrollToBottom")}
+        composer={<ChatInput onSend={handleSend} disabled={isStreaming} />}
+        emptyState={
+          <View
+            style={{ flex: 1 }}
+            onStartShouldSetResponder={() => {
+              Keyboard.dismiss();
+              return false;
+            }}
+          >
+            <StarterSuggestions onSelect={handleSuggestionSelect} />
+          </View>
+        }
+      />
     </ScreenLayout>
   );
 }

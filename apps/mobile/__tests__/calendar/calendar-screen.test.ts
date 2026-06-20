@@ -7,7 +7,6 @@ function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
 }
 
-const billsCalendarSource = readSource("../../app/bills-calendar.tsx");
 const financeTabSource = readSource("../../app/(tabs)/(finance)/index.tsx");
 const dayDetailSource = readSource("../../app/day-detail.tsx");
 const rootLayoutSource = readSource("../../app/_layout.tsx");
@@ -41,14 +40,6 @@ describe("calendar screen", () => {
     expect(analyticsScreenSource).toContain("gap: ANALYTICS_CARD_GAP");
   });
 
-  test("standalone bills calendar exposes the add-bill route", () => {
-    expect(billsCalendarSource).toContain("rightActions");
-    expect(billsCalendarSource).toContain('push("/add-bill")');
-    expect(billsCalendarSource).toContain('accessibilityLabel={t("bills.addBill")}');
-    expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", "bills-calendar");
-    expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.transparentHeader.map");
-  });
-
   test("calendar proposal keeps the calendar, legend, and upcoming pending list without summary card", () => {
     expect(monthBoardSource).toContain("buildCalendarMonthSummary");
     expect(monthBoardSource).toContain("monthSummary.monthOccurrences");
@@ -67,7 +58,6 @@ describe("calendar screen", () => {
     expect(monthBoardSource).not.toContain("payments={[...payments]}");
     expect(monthBoardSource).toContain('t("calendar.paid")');
     expect(monthBoardSource).toContain('t("calendar.pending")');
-    expect(billsCalendarSource).toContain("<CalendarMonthBoard");
     expect(financeTabSource).toContain("<CalendarMonthBoard");
   });
 
@@ -79,17 +69,15 @@ describe("calendar screen", () => {
     expect(billRowSource).toContain("<Check");
     expect(billRowSource).toContain("<Pencil");
     expect(billRowSource).toContain("<Trash2");
-    expect(billsCalendarSource).toContain("markBillPaid");
-    expect(billsCalendarSource).toContain("unmarkBillPaid");
-    expect(billsCalendarSource).toContain("deleteBill");
     expect(financeTabSource).toContain("markBillPaid");
     expect(financeTabSource).toContain("unmarkBillPaid");
     expect(financeTabSource).toContain("deleteBill");
   });
 
-  test("calendar grid uses payment dots instead of bill-name tags", () => {
-    expect(dayCellSource).toContain("styles.dots");
-    expect(dayCellSource).toContain("styles.dot");
+  test("calendar grid uses category markers instead of bill-name tags", () => {
+    expect(dayCellSource).toContain("styles.categoryMarkers");
+    expect(dayCellSource).toContain("styles.categoryMarker");
+    expect(dayCellSource).toContain("getCategoryBarBackgroundColor");
     expect(dayCellSource).not.toContain("tagText");
   });
 
@@ -99,26 +87,19 @@ describe("calendar screen", () => {
     expect(financeTabSource).toContain('accessibilityLabel={t("bills.addBill")}');
   });
 
-  test("finance calendar starts after the native header and leaves room for the tab bar", () => {
-    expect(financeTabSource).toContain("useNativeHeaderHeight");
+  test("finance calendar leaves tab bar clearance without duplicating header clearance", () => {
     expect(nativeHeaderHeightSource).toContain("HeaderHeightContext");
     expect(nativeHeaderHeightSource).toContain("use(HeaderHeightContext) ?? 0");
     expect(nativeHeaderHeightSource).not.toContain("useHeaderHeight");
     expect(financeTabSource).toContain("FINANCE_NATIVE_TAB_BAR_OFFSET = 72");
-    expect(financeTabSource).toContain("nativeHeaderHeight");
-    expect(financeTabSource).toContain(
-      'const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0'
-    );
-    expect(billsCalendarSource).toContain(
-      'const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0'
-    );
+    expect(financeTabSource).not.toContain("useNativeHeaderHeight");
+    expect(financeTabSource).not.toContain("nativeHeaderHeight");
+    expect(financeTabSource).not.toContain("paddingTop={headerClearance}");
     expect(financeTabSource).not.toContain("nativeHeaderHeight + insets.top");
-    expect(billsCalendarSource).not.toContain("nativeHeaderHeight + insets.top");
     expect(financeTabSource).toContain(
       'Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE'
     );
     expect(financeTabSource).toContain("paddingBottom={tabBarClearance}");
-    expect(financeTabSource).toContain("paddingTop={headerClearance}");
   });
 
   test("day detail is a full screen route so bill editing pushes normally", () => {
@@ -126,13 +107,12 @@ describe("calendar screen", () => {
     expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
     expect(rootLayoutSource).toContain("routeOptions.fullScreen");
     expect(dayDetailSource).not.toContain("DialogRouteFrame");
-    expect(dayDetailSource).toContain("<Stack.Screen");
+    expect(dayDetailSource).not.toContain("<Stack.Screen");
+    expect(dayDetailSource).toContain("SolidScreenHeader");
     expect(dayDetailSource).toContain('router.push({ pathname: "/add-bill"');
   });
 
   test("calendar day navigation and day detail use local ISO dates without UTC day shifts", () => {
-    expect(billsCalendarSource).toContain("toIsoDate(date)");
-    expect(billsCalendarSource).not.toContain("date.toISOString()");
     expect(financeTabSource).toContain("toIsoDate(date)");
     expect(financeTabSource).not.toContain("date.toISOString()");
     expect(dayDetailSource).toContain("parseDayDetailDateParam");
@@ -141,7 +121,6 @@ describe("calendar screen", () => {
   });
 
   test("add-bill header actions use visible plus icons", () => {
-    expect(billsCalendarSource).toContain("AddActionButton");
     expect(financeTabSource).toContain("AddActionButton");
     expect(financeTabSource).not.toContain("Colors.light.card");
   });

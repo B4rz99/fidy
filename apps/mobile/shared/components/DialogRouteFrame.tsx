@@ -4,7 +4,7 @@ import { ChevronLeft, X } from "@/shared/components/icons";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { AppAuroraBackground } from "./AppAuroraBackground";
-import { GlassSurface } from "./GlassSurface";
+import { SolidSurface } from "./SolidSurface";
 
 type DialogRouteFrameProps = {
   readonly children: ReactNode;
@@ -32,7 +32,7 @@ export function DialogRouteFrame({
         style={[styles.backdrop, { backgroundColor: `${modalBackdrop}66` }]}
         onPress={closeToOrigin}
       >
-        <GlassSurface
+        <SolidSurface
           padded={false}
           radius={24}
           style={styles.dialog}
@@ -64,7 +64,7 @@ export function DialogRouteFrame({
             </Pressable>
           </View>
           {children}
-        </GlassSurface>
+        </SolidSurface>
       </Pressable>
     </View>
   );

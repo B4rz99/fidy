@@ -53,6 +53,7 @@ type UpdateBudgetInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
   readonly id: BudgetId;
+  readonly categoryId: CategoryId;
   readonly amount: CopAmount;
 };
 
@@ -194,7 +195,14 @@ export async function createBudget(
 }
 
 export async function updateBudget(input: UpdateBudgetInput): Promise<boolean> {
-  const { db, userId, id, amount } = input;
+  const { db, userId, id, categoryId, amount } = input;
+  const validation = createBudgetSchema.safeParse({
+    categoryId,
+    amount,
+    month: useBudgetStore.getState().currentMonth,
+  });
+  if (!validation.success) return false;
+
   const sessionId = budgetSessionId;
   const now = toIsoDateTime(new Date());
 
@@ -202,6 +210,7 @@ export async function updateBudget(input: UpdateBudgetInput): Promise<boolean> {
     const result = await createWriteThroughMutationModule(db).commit({
       kind: "budget.update",
       budgetId: id,
+      categoryId,
       amount,
       now,
     });

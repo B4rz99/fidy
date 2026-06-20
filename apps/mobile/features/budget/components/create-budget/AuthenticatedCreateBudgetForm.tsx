@@ -7,6 +7,7 @@ export function AuthenticatedCreateBudgetForm({
   autoSuggestions,
   existingBudget,
   existingCategoryIds,
+  headerTitle,
   onDone,
   userId,
 }: Omit<CreateBudgetScreenProps, "userId"> & {
@@ -21,6 +22,7 @@ export function AuthenticatedCreateBudgetForm({
       canMutate={db != null}
       existingBudget={existingBudget}
       existingCategoryIds={existingCategoryIds}
+      headerTitle={headerTitle}
       onCreateBudget={(categoryId, amount) => {
         const activeDb = tryGetDb(userId);
         if (!activeDb) return Promise.resolve(false);
@@ -32,10 +34,10 @@ export function AuthenticatedCreateBudgetForm({
         return deleteBudget(activeDb, userId, id);
       }}
       onDone={onDone}
-      onUpdateBudget={(id, amount) => {
+      onUpdateBudget={(id, categoryId, amount) => {
         const activeDb = tryGetDb(userId);
         if (!activeDb) return Promise.resolve(false);
-        return updateBudget({ amount, db: activeDb, id, userId });
+        return updateBudget({ amount, categoryId, db: activeDb, id, userId });
       }}
     />
   );

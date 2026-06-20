@@ -17,6 +17,7 @@ import {
   useTransactionStore,
 } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db";
+import { toIsoDate } from "@/shared/lib";
 import type {
   CategoryId,
   CopAmount,
@@ -383,5 +384,29 @@ describe("transaction boundaries", () => {
       dataRevision: 2,
     });
     expect(useTransactionStore.getState().pages).toHaveLength(0);
+  });
+
+  it("addToCache updates current month aggregates immediately", () => {
+    const today = new Date();
+    const todayIso = toIsoDate(today);
+
+    useTransactionStore.setState({
+      balance: 2000,
+      categorySpending: [{ categoryId: "food" as CategoryId, total: 2000 as CopAmount }],
+      dailySpending: [{ date: todayIso, total: 2000 as CopAmount }],
+    });
+
+    useTransactionStore.getState().addToCache({
+      ...makeStoredTransaction({ id: "tx-today" as TransactionId }),
+      amount: 1000 as CopAmount,
+      date: today,
+    });
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 3000,
+      categorySpending: [{ categoryId: "food", total: 3000 }],
+      dailySpending: [{ date: todayIso, total: 3000 }],
+      dataRevision: 1,
+    });
   });
 });

@@ -9,9 +9,10 @@ import {
   Card,
   EmptyState,
   FormTextField,
-  GlassPressable,
+  SurfacePressable,
   ScreenLayout,
 } from "@/shared/components";
+import { Wallet } from "@/shared/components/icons";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -98,6 +99,7 @@ function ResolvedCreateSuggestedAccountForm({
         </Card>
 
         <FormTextField
+          icon={Wallet}
           label={t("accountSuggestions.create.nameLabel")}
           value={name}
           onChangeText={setName}
@@ -115,7 +117,7 @@ function ResolvedCreateSuggestedAccountForm({
               const isSelected = option === kind;
 
               return (
-                <GlassPressable
+                <SurfacePressable
                   key={option}
                   onPress={() => setKind(option)}
                   accessibilityRole="radio"
@@ -126,7 +128,7 @@ function ResolvedCreateSuggestedAccountForm({
                   <Text style={[styles.kindText, { color: primary }]}>
                     {t(`financialAccounts.kinds.${option}`)}
                   </Text>
-                </GlassPressable>
+                </SurfacePressable>
               );
             })}
           </View>

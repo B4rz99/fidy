@@ -10,6 +10,7 @@ import {
   MoneyEntryScreen,
   MoneyEntryTextField,
 } from "@/shared/components";
+import { Calendar, Pencil } from "@/shared/components/icons";
 import { Keyboard } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useTranslation } from "@/shared/hooks";
@@ -50,7 +51,7 @@ function addPaymentReducer(state: AddPaymentState, action: AddPaymentAction): Ad
       // Source contract: setShowDatePicker(true).
       return { ...state, numpadActive: false, showDatePicker: true };
     case "closeDatePicker":
-      return { ...state, showDatePicker: false };
+      return { ...state, numpadActive: true, showDatePicker: false };
     case "setDate":
       return { ...state, date: action.date };
   }
@@ -112,6 +113,8 @@ export function AddPaymentScreen() {
   return (
     <>
       <MoneyEntryScreen
+        headerTitle={t("goals.payment.title")}
+        onBack={back}
         actionContent={
           <Button
             label={t("goals.payment.addPaymentCta")}
@@ -125,15 +128,18 @@ export function AddPaymentScreen() {
         detailContent={
           <>
             <MoneyEntryTextField
+              icon={Pencil}
               label={t("goals.payment.noteOptional")}
               value={note}
               onChangeText={(nextNote) => dispatch({ type: "setNote", note: nextNote })}
               onFocus={() => dispatch({ type: "deactivateNumpad" })}
+              onBlur={() => dispatch({ type: "activateNumpad" })}
               maxLength={200}
               placeholder={t("goals.payment.notePlaceholder")}
             />
 
             <MoneyEntryDateButton
+              icon={Calendar}
               label={t("goals.payment.date")}
               value={dateLabel}
               onPress={() => {

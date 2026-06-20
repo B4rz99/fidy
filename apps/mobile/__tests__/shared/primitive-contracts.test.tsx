@@ -4,8 +4,8 @@ import { AddActionButton } from "@/shared/components/AddActionButton";
 import { Card } from "@/shared/components/Card";
 import { FieldButton } from "@/shared/components/FieldButton";
 import { FormTextField } from "@/shared/components/FormTextField";
-import { GlassPressable } from "@/shared/components/GlassPressable";
-import { GlassSurface } from "@/shared/components/GlassSurface";
+import { SurfacePressable } from "@/shared/components/SurfacePressable";
+import { SolidSurface } from "@/shared/components/SolidSurface";
 import { IconActionButton } from "@/shared/components/IconActionButton";
 import { ListRowSurface } from "@/shared/components/ListRowSurface";
 import { TextActionButton } from "@/shared/components/TextActionButton";
@@ -61,8 +61,18 @@ function findStyledView(
   });
 }
 
+function findStyledNode(
+  root: ContractNode,
+  predicate: (style: Record<string, unknown>) => boolean
+) {
+  return root.findAll((node) => {
+    const style = flattenStyle(node.props.style);
+    return style != null && predicate(style);
+  })[0];
+}
+
 describe("shared primitive contracts", () => {
-  it("keeps Card layout and content separate without solid fills", () => {
+  it("keeps Card layout and content separate with shared solid fills", () => {
     const screen = renderFidy(
       <Card contentStyle={{ gap: 6 }} radius={20} layoutStyle={{ marginTop: 4 }}>
         <Text>Card content</Text>
@@ -81,15 +91,15 @@ describe("shared primitive contracts", () => {
       borderRadius: 20,
       marginTop: 4,
     });
-    expect(surfaceStyle).toHaveProperty("backgroundColor", "transparent");
-    expect(surfaceStyle).not.toHaveProperty("borderColor");
-    expect(surfaceStyle).not.toHaveProperty("borderWidth");
+    expect(surfaceStyle).toHaveProperty("backgroundColor", "#FFFFFF");
+    expect(surfaceStyle).toHaveProperty("borderColor", "#00000030");
+    expect(surfaceStyle).toHaveProperty("borderWidth");
     expect(content).toBeTruthy();
   });
 
-  it("keeps layout props from overriding GlassSurface fill tokens", () => {
+  it("keeps layout props from overriding SolidSurface fill tokens", () => {
     const screen = renderFidy(
-      <GlassSurface
+      <SolidSurface
         backgroundColor="#111111"
         radius={20}
         style={{
@@ -100,29 +110,29 @@ describe("shared primitive contracts", () => {
           marginTop: 8,
         }}
       >
-        <Text>Glass content</Text>
-      </GlassSurface>
+        <Text>Surface content</Text>
+      </SolidSurface>
     );
     const root = asContractNode(screen.root);
     const surface = findStyledView(root, (style) => style.marginTop === 8);
 
     expect(flattenStyle(surface?.props.style)).toMatchObject({
       backgroundColor: "#111111",
+      borderColor: "#00000030",
       borderRadius: 20,
       marginTop: 8,
     });
-    expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderColor");
     expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderStyle");
-    expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderWidth");
+    expect(flattenStyle(surface?.props.style)).toHaveProperty("borderWidth");
   });
 
-  it("keeps GlassPressable as the sole interactive shell around a presentational surface", () => {
+  it("keeps SurfacePressable as the sole interactive shell around a presentational surface", () => {
     const screen = renderFidy(
-      <GlassPressable accessibilityLabel="Glass action" backgroundColor="#123456" radius={12}>
+      <SurfacePressable accessibilityLabel="Surface action" backgroundColor="#123456" radius={12}>
         <Text>Run</Text>
-      </GlassPressable>
+      </SurfacePressable>
     );
-    const button = asContractNode(screen.getByA11yLabel("Glass action"));
+    const button = asContractNode(screen.getByA11yLabel("Surface action"));
     const root = asContractNode(screen.root);
     const surface = findStyledView(root, (style) => style.backgroundColor === "#123456");
 
@@ -131,9 +141,9 @@ describe("shared primitive contracts", () => {
     expect(surface?.props.pointerEvents).toBe("none");
     expect(flattenStyle(surface?.props.style)).toMatchObject({
       backgroundColor: "#123456",
+      borderColor: "#00000030",
       borderRadius: 12,
     });
-    expect(flattenStyle(surface?.props.style)).not.toHaveProperty("borderColor");
   });
 
   it("uses native platform feedback for shared add actions", () => {
@@ -220,7 +230,7 @@ describe("shared primitive contracts", () => {
     expect(rowContent).toBeTruthy();
   });
 
-  it("keeps grouped ListRowSurface non-glass without dividers", () => {
+  it("keeps grouped ListRowSurface non-surface without dividers", () => {
     const screen = renderFidy(
       <ListRowSurface variant="grouped" divider accessibilityLabel="Grouped row">
         <Text>Grouped content</Text>
@@ -235,7 +245,7 @@ describe("shared primitive contracts", () => {
     expect(flattenStyle(groupedRow.props.style)).not.toHaveProperty("borderBottomWidth");
   });
 
-  it("keeps IconActionButton glass-backed for all tones", () => {
+  it("keeps IconActionButton solid-backed for surface tone", () => {
     const plain = renderFidy(
       <IconActionButton accessibilityLabel="Plain action" icon={<Text>Icon</Text>} />
     );
@@ -254,10 +264,7 @@ describe("shared primitive contracts", () => {
       findStyledView(asContractNode(plain.root), (style) => style.borderRadius === 999)
     ).toBeTruthy();
     expect(
-      findStyledView(
-        asContractNode(surface.root),
-        (style) => style.backgroundColor === "transparent"
-      )
+      findStyledView(asContractNode(surface.root), (style) => style.backgroundColor === "#FFFFFF")
     ).toBeTruthy();
   });
 
@@ -287,7 +294,13 @@ describe("shared primitive contracts", () => {
   it("keeps FormTextField TextInput styling transparent while field sizing stays on the surface", () => {
     const screen = renderFidy(
       <FormTextField
-        inputStyle={{ height: 52, minWidth: 96, width: 160 }}
+        inputStyle={{
+          height: 52,
+          minWidth: 96,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          width: 160,
+        }}
         label="Account"
         onChangeText={() => undefined}
         value="Cash"
@@ -296,15 +309,22 @@ describe("shared primitive contracts", () => {
     const root = asContractNode(screen.root);
     const input = findByType(root, "TextInput")[0];
     const shell = findStyledView(root, (style) => style.width === 160);
+    const content = findStyledView(root, (style) => style.paddingHorizontal === 10);
     const inputStyle = flattenStyle(input?.props.style);
 
     expect(shell).toBeTruthy();
     expect(flattenStyle(shell?.props.style)).toMatchObject({ minWidth: 96, width: 160 });
+    expect(flattenStyle(content?.props.style)).toMatchObject({
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    });
     expect(inputStyle).toMatchObject({
       backgroundColor: "transparent",
       borderWidth: 0,
       minHeight: 52,
     });
+    expect(inputStyle?.paddingHorizontal).toBe(0);
+    expect(inputStyle?.paddingVertical).toBeUndefined();
   });
 
   it("keeps TextActionButton pill and plain appearances explicit", () => {
@@ -312,16 +332,16 @@ describe("shared primitive contracts", () => {
     const plain = renderFidy(<TextActionButton appearance="plain" label="Delete account" />);
 
     expect(
-      findStyledView(asContractNode(pill.root), (style) => style.borderRadius === 999)
+      findStyledNode(asContractNode(pill.root), (style) => style.borderRadius === 999)
     ).toBeTruthy();
     expect(
-      findStyledView(asContractNode(pill.root), (style) => style.minHeight === 32)
+      findStyledNode(asContractNode(pill.root), (style) => style.minHeight === 32)
     ).toBeTruthy();
     expect(
-      findStyledView(asContractNode(plain.root), (style) => style.borderRadius === 10)
+      findStyledNode(asContractNode(plain.root), (style) => style.borderRadius === 10)
     ).toBeTruthy();
     expect(
-      findStyledView(asContractNode(plain.root), (style) => style.minHeight === 32)
+      findStyledNode(asContractNode(plain.root), (style) => style.minHeight === 32)
     ).toBeUndefined();
   });
 });

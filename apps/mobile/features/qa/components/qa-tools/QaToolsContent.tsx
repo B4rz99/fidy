@@ -17,6 +17,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
   const { bottom } = useSafeAreaInsets();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
+  const danger = useThemeColor("danger");
 
   return (
     <ScrollView
@@ -31,7 +32,7 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
             : t("qaTools.noActiveProfile")}
         </Text>
         {qaTools.errorKey ? (
-          <Text style={[styles.subtitleText, { color: "#C0392B" }]}>{t(qaTools.errorKey)}</Text>
+          <Text style={[styles.subtitleText, { color: danger }]}>{t(qaTools.errorKey)}</Text>
         ) : null}
       </View>
 

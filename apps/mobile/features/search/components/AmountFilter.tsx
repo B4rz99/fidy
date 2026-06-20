@@ -1,6 +1,6 @@
 import { FilterTextField } from "@/shared/components";
-import { View } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { StyleSheet, View } from "@/shared/components/rn";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type AmountFilterProps = {
   minDigits: string;
@@ -16,6 +16,8 @@ export const AmountFilter = ({
   onChangeMax,
 }: AmountFilterProps) => {
   const { t } = useTranslation();
+  const primary = useThemeColor("primary");
+  const surfaceRaised = useThemeColor("surfaceRaised");
 
   const handleMinChange = (text: string) => {
     const cleaned = text.replace(/\D/g, "");
@@ -28,23 +30,51 @@ export const AmountFilter = ({
   };
 
   return (
-    <View className="flex-row gap-3 p-4">
+    <View style={styles.container}>
       <FilterTextField
-        className="flex-1"
+        inputStyle={styles.input}
         label={t("search.min")}
-        value={minDigits}
-        onChangeText={handleMinChange}
+        labelStyle={[styles.label, { color: primary }]}
         keyboardType="number-pad"
+        onChangeText={handleMinChange}
         placeholder="0"
+        style={styles.field}
+        surfaceBackgroundColor={surfaceRaised}
+        value={minDigits}
       />
       <FilterTextField
-        className="flex-1"
+        inputStyle={styles.input}
         label={t("search.max")}
-        value={maxDigits}
-        onChangeText={handleMaxChange}
+        labelStyle={[styles.label, { color: primary }]}
         keyboardType="number-pad"
+        onChangeText={handleMaxChange}
         placeholder="0"
+        style={styles.field}
+        surfaceBackgroundColor={surfaceRaised}
+        value={maxDigits}
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    gap: 12,
+    padding: 16,
+  },
+  field: {
+    flex: 1,
+    gap: 6,
+  },
+  label: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+  },
+  input: {
+    flex: 1,
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+    padding: 0,
+  },
+});

@@ -1,9 +1,10 @@
 import * as Haptics from "expo-haptics";
-import { format } from "date-fns";
+import { endOfMonth, format, startOfMonth } from "date-fns";
 import { useState } from "react";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { FieldButton, FilterPill } from "@/shared/components";
-import { Text, View } from "@/shared/components/rn";
+import { Calendar } from "@/shared/components/icons";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
@@ -17,7 +18,11 @@ type DateFilterProps = {
 
 export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps) => {
   const { t, locale } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
+  const accentGreenLight = useThemeColor("accentGreenLight");
+  const primary = useThemeColor("primary");
+  const secondary = useThemeColor("secondary");
+  const surfaceMuted = useThemeColor("surfaceMuted");
+  const surfaceRaised = useThemeColor("surfaceRaised");
   const [activePicker, setActivePicker] = useState<"from" | "to" | null>(null);
 
   const activePresetKey =
@@ -41,6 +46,8 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
   const fromDate = parseOptionalIsoDate(dateFrom) ?? new Date();
   const toDate = parseOptionalIsoDate(dateTo) ?? parseOptionalIsoDate(dateFrom) ?? new Date();
   const dateFnsLocale = getDateFnsLocale(locale);
+  const currentMonthStartLabel = format(startOfMonth(new Date()), "PP", { locale: dateFnsLocale });
+  const currentMonthEndLabel = format(endOfMonth(new Date()), "PP", { locale: dateFnsLocale });
   const fromDateLabel = dateFrom ? format(fromDate, "PP", { locale: dateFnsLocale }) : "";
   const toDateLabel = dateTo ? format(toDate, "PP", { locale: dateFnsLocale }) : "";
 
@@ -54,46 +61,60 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
   };
 
   return (
-    <View className="gap-3 p-4">
-      <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
-        {t("search.customRange")}
-      </Text>
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FieldButton
-            label={t("search.from")}
-            value={fromDateLabel}
-            placeholder={t("search.chooseDate")}
-            onPress={() => setActivePicker("from")}
-            active={activePicker === "from"}
-          />
-        </View>
-        <View className="flex-1">
-          <FieldButton
-            label={t("search.to")}
-            value={toDateLabel}
-            placeholder={t("search.chooseDate")}
-            onPress={() => setActivePicker("to")}
-            active={activePicker === "to"}
-          />
-        </View>
+    <View style={styles.container}>
+      <Text style={[styles.sectionLabel, { color: secondary }]}>{t("search.customRange")}</Text>
+      <View style={styles.dateFields}>
+        <FieldButton
+          active={activePicker === "from"}
+          buttonStyle={styles.dateButton}
+          icon={Calendar}
+          label={t("search.from")}
+          onPress={() => setActivePicker("from")}
+          placeholder={currentMonthStartLabel}
+          placeholderColor={secondary}
+          labelStyle={[styles.fieldLabel, { color: primary }]}
+          surfaceBackgroundColor={surfaceRaised}
+          surfaceRadius={10}
+          style={styles.dateField}
+          valueStyle={styles.dateButtonValue}
+          value={fromDateLabel}
+        />
+        <FieldButton
+          active={activePicker === "to"}
+          buttonStyle={styles.dateButton}
+          icon={Calendar}
+          label={t("search.to")}
+          onPress={() => setActivePicker("to")}
+          placeholder={currentMonthEndLabel}
+          placeholderColor={secondary}
+          labelStyle={[styles.fieldLabel, { color: primary }]}
+          surfaceBackgroundColor={surfaceRaised}
+          surfaceRadius={10}
+          style={styles.dateField}
+          valueStyle={styles.dateButtonValue}
+          value={toDateLabel}
+        />
       </View>
-      <View className="flex-row gap-2">
+      <View style={styles.presets}>
         {DATE_PRESETS.map((preset) => {
           const isActive = activePresetKey === preset.key;
           return (
             <FilterPill
               key={preset.key}
+              dimmed={activePresetKey !== null && !isActive}
               label={t(preset.labelKey)}
-              selected={isActive}
-              selectedColor={accentGreen}
-              style={
-                preset.key === "lastMonth"
-                  ? { flex: 1.35, minHeight: 32, paddingHorizontal: 8 }
-                  : { flex: 1, minHeight: 32, paddingHorizontal: 8 }
-              }
+              labelStyle={styles.presetText}
               onPress={() => handlePreset(preset.key)}
-              labelClassName="text-[12px]"
+              selected={isActive}
+              selectedBackgroundColor={accentGreenLight}
+              selectedTextColor={primary}
+              surfaceBackgroundColor={surfaceMuted}
+              style={[
+                styles.presetButton,
+                preset.key === "thisWeek" ? styles.weekPreset : null,
+                preset.key === "thisMonth" ? styles.monthPreset : null,
+                preset.key === "lastMonth" ? styles.lastMonthPreset : null,
+              ]}
             />
           );
         })}
@@ -109,3 +130,56 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 14,
+    padding: 16,
+  },
+  sectionLabel: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+  },
+  dateFields: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  dateField: {
+    flex: 1,
+    gap: 6,
+  },
+  fieldLabel: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+  },
+  dateButton: {
+    minHeight: 42,
+    paddingHorizontal: 10,
+  },
+  dateButtonValue: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+  },
+  presets: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  presetButton: {
+    flex: 1,
+    minHeight: 40,
+    paddingHorizontal: 8,
+  },
+  weekPreset: {
+    flex: 1.2,
+  },
+  monthPreset: {
+    flex: 0.9,
+  },
+  lastMonthPreset: {
+    flex: 1.55,
+  },
+  presetText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+  },
+});

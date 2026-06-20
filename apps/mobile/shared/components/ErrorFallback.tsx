@@ -3,7 +3,8 @@ import * as Updates from "expo-updates";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { useTranslation } from "@/shared/hooks/use-translation";
-import { GlassPressable } from "./GlassPressable";
+import { LIGHT_SURFACE_RIPPLE_COLOR } from "./effect-tokens";
+import { SurfacePressable } from "./SurfacePressable";
 
 export function ErrorFallback() {
   const { t } = useTranslation();
@@ -18,11 +19,11 @@ export function ErrorFallback() {
       />
       <Text style={styles.title}>{t("errorFallback.title")}</Text>
       <Text style={styles.body}>{t("errorFallback.body")}</Text>
-      <GlassPressable
+      <SurfacePressable
         onPress={() => {
           void Updates.reloadAsync().catch(() => undefined);
         }}
-        android_ripple={{ color: "rgba(255, 255, 255, 0.28)", borderless: false }}
+        android_ripple={{ color: LIGHT_SURFACE_RIPPLE_COLOR, borderless: false }}
         padded={false}
         radius={12}
         style={styles.restartButton}
@@ -37,7 +38,7 @@ export function ErrorFallback() {
         >
           {t("errorFallback.restart")}
         </Text>
-      </GlassPressable>
+      </SurfacePressable>
     </View>
   );
 }

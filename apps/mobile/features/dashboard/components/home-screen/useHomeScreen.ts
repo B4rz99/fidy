@@ -3,10 +3,11 @@ import { formatBudgetMonth, useBudgetStore } from "@/features/budget/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { useTransactionStore } from "@/features/transactions/store.public";
 import { tryGetDb } from "@/shared/db";
+import type { CategoryId } from "@/shared/types/branded";
 import { type HomeActivityFeedModel, useHomeActivityFeed } from "./useHomeActivityFeed";
 
 export type CategorySpendingItem = {
-  readonly categoryId: string;
+  readonly categoryId: CategoryId;
   readonly total: number;
 };
 

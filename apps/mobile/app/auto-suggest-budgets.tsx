@@ -1,4 +1,4 @@
-import { Stack, useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
@@ -11,7 +11,12 @@ import {
   useSuggestionSelection,
 } from "@/features/budget/hooks.public";
 import { BudgetSuggestionRow } from "@/features/budget/ui.public";
-import { AppAuroraBackground, Button, TextActionButton } from "@/shared/components";
+import {
+  AppAuroraBackground,
+  Button,
+  SolidScreenHeader,
+  TextActionButton,
+} from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -95,15 +100,8 @@ export default function AutoSuggestBudgetsScreen() {
       style={styles.flex}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Stack.Screen
-        options={{
-          headerBackButtonDisplayMode: "minimal",
-          headerBackTitle: "",
-          headerTitle: t("budgets.autoSuggest.title"),
-          title: t("budgets.autoSuggest.title"),
-        }}
-      />
       <AppAuroraBackground isDark={isDark} />
+      <SolidScreenHeader title={t("budgets.autoSuggest.title")} onBack={back} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}

@@ -4,6 +4,8 @@ import type {
   BillId,
   BillPaymentId,
   BudgetId,
+  CategoryColorOverrideId,
+  CategoryIconOverrideId,
   CaptureEvidenceId,
   ChatMessageId,
   ChatSessionId,
@@ -122,6 +124,14 @@ export function generateDetectedSmsEventId(): DetectedSmsEventId {
 
 export function generateUserCategoryId(): UserCategoryId {
   return generateId("ucat") as UserCategoryId;
+}
+
+export function generateCategoryIconOverrideId(): CategoryIconOverrideId {
+  return generateId("cio") as CategoryIconOverrideId;
+}
+
+export function generateCategoryColorOverrideId(): CategoryColorOverrideId {
+  return generateId("cco") as CategoryColorOverrideId;
 }
 
 export function generateNotificationId(): NotificationId {

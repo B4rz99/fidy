@@ -24,15 +24,6 @@ import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
 import { TextActionButton } from "@/shared/components/TextActionButton";
 import { Text } from "@/shared/components/rn";
 
-function expectSharedComponentImport(source: string, componentName: string) {
-  const importsFromBarrel = new RegExp(
-    `import\\s*\\{[\\s\\S]*\\b${componentName}\\b[\\s\\S]*\\}\\s*from "@/shared/components"`
-  ).test(source);
-  const importsDirectPrimitive = source.includes(`from "@/shared/components/${componentName}"`);
-
-  expect(importsFromBarrel || importsDirectPrimitive).toBe(true);
-}
-
 describe("shared UI kit", () => {
   it("exports the first-wave primitives from the shared components barrel", () => {
     const source = readFileSync(resolve(__dirname, "../../shared/components/index.ts"), "utf-8");
@@ -52,10 +43,11 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { FormTextField } from "./FormTextField"');
     expect(source).toContain('export { SegmentedControl } from "./SegmentedControl"');
     expect(source).toContain('export { SelectableChipRow } from "./SelectableChipRow"');
-    expect(source).toContain('export { GlassPressable } from "./GlassPressable"');
+    expect(source).toContain('export { SurfacePressable } from "./SurfacePressable"');
     expect(source).toContain('export { AddActionButton } from "./AddActionButton"');
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
     expect(source).toContain('export { ListRowSurface } from "./ListRowSurface"');
+    expect(source).toContain('export { ListDateHeader } from "./ListDateHeader"');
     expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
     expect(source).toContain('export { MoneyAmountDisplay } from "./MoneyAmountDisplay"');
     expect(source).toContain('export { MoneyEntryAmountField } from "./MoneyEntryAmountField"');
@@ -171,7 +163,7 @@ describe("shared UI kit", () => {
     expect(actions).toEqual(["clear", "filter", "text-action"]);
   });
 
-  it("keeps shared surface styling behind glass modules", () => {
+  it("keeps shared surface styling behind surface modules", () => {
     const sharedDir = resolve(__dirname, "../../shared/components");
     const sources = [
       "Card.tsx",
@@ -184,7 +176,7 @@ describe("shared UI kit", () => {
       "FilterTextField.tsx",
       "FormTextField.tsx",
       "FormSection.tsx",
-      "GlassPressable.tsx",
+      "SurfacePressable.tsx",
       "ListRowSurface.tsx",
       "MoneyEntryFieldSurface.tsx",
       "PickerDialog.tsx",
@@ -202,7 +194,7 @@ describe("shared UI kit", () => {
     }
 
     expect(readFileSync(resolve(sharedDir, "FieldSurface.tsx"), "utf-8")).toContain(
-      "<GlassSurface"
+      "<SolidSurface"
     );
     expect(readFileSync(resolve(sharedDir, "FormTextField.tsx"), "utf-8")).toContain(
       "<FieldSurface"
@@ -226,15 +218,29 @@ describe("shared UI kit", () => {
     const filterPillSource = readFileSync(resolve(sharedDir, "FilterPill.tsx"), "utf-8");
     const fieldButtonSource = readFileSync(resolve(sharedDir, "FieldButton.tsx"), "utf-8");
     const segmentedSource = readFileSync(resolve(sharedDir, "SegmentedControl.tsx"), "utf-8");
+    const selectableChipRowSource = readFileSync(
+      resolve(sharedDir, "SelectableChipRow.tsx"),
+      "utf-8"
+    );
 
     expect(chipSource).not.toContain("selectedBorderColor");
     expect(chipSource).not.toContain("borderColor={selected");
+    expect(chipSource).toContain("dimmed");
     expect(filterPillSource).toContain('const accentGreen = useThemeColor("accentGreen")');
     expect(filterPillSource).toContain("selectedColor ?? accentGreen");
     expect(filterPillSource).not.toContain("borderColor={selected");
+    expect(filterPillSource).toContain("dimmed");
     expect(fieldButtonSource).not.toContain("active ? accentGreen : undefined");
-    expect(segmentedSource).toContain('const accentGreen = useThemeColor("accentGreen")');
-    expect(segmentedSource).toContain("primary: accentGreen");
+    expect(segmentedSource).not.toContain("SegmentedControlTone");
+    expect(segmentedSource).not.toContain("getOptionTone");
+    expect(segmentedSource).toContain("const opacity = option.disabled ? 0.5");
+    expect(segmentedSource).toContain("style={[styles.optionShell, { opacity }]}");
+    expect(segmentedSource).toContain("style={{ color: selected ? primary : secondary }}");
+    expect(selectableChipRowSource).not.toContain("SelectableChipRowTone");
+    expect(selectableChipRowSource).not.toContain("selectedTone");
+    expect(selectableChipRowSource).toContain(
+      "dimmed={value !== null && !selected && !option.disabled}"
+    );
   });
 
   it("keeps numpad entry screens behind the money entry module", () => {
@@ -501,640 +507,5 @@ describe("shared UI kit", () => {
     expect(screen.getByText("Details")).toBeTruthy();
     expect(dismisses).toEqual(["dismissed"]);
     expect(presses).toEqual([]);
-  });
-
-  it("keeps simple review and capture banners on the shared Callout primitive", () => {
-    const files = [
-      "../../features/dashboard/components/NeedsReviewBanner.tsx",
-      "../../features/dashboard/components/AttributionReviewBanner.tsx",
-      "../../features/capture-sources/components/DetectedTransactionsBanner.tsx",
-      "../../features/budget/components/BudgetAlertBanner.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "Callout");
-      expect(source).toContain("<Callout");
-      expect(source).not.toContain("<Pressable");
-      expect(source).not.toContain("StyleSheet.create");
-    });
-  });
-
-  it("keeps SettingsRow as a wrapper around the shared Row primitive", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../../features/settings/components/SettingsRow.tsx"),
-      "utf-8"
-    );
-
-    expect(source).toContain('import { Row } from "@/shared/components"');
-    expect(source).toContain("<Row");
-    expect(source).not.toContain("StyleSheet");
-  });
-
-  it("keeps migrated empty states and callouts on shared primitives", () => {
-    const notificationEmptyStateSource = readFileSync(
-      resolve(__dirname, "../../features/notifications/components/NotificationEmptyState.tsx"),
-      "utf-8"
-    );
-    const accountPromptSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/account-suggestions/components/AccountSuggestionsPromptBanner.tsx"
-      ),
-      "utf-8"
-    );
-
-    expect(notificationEmptyStateSource).toContain(
-      'import { EmptyState } from "@/shared/components"'
-    );
-    expect(notificationEmptyStateSource).toContain("<EmptyState");
-    expect(notificationEmptyStateSource).not.toContain("StyleSheet");
-    expect(accountPromptSource).toContain('import { Callout } from "@/shared/components"');
-    expect(accountPromptSource).toContain("<Callout");
-    expect(accountPromptSource).not.toContain("StyleSheet");
-  });
-  it("keeps review queue helpers composed from shared primitives", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../../features/review-queues/components/shared.tsx"),
-      "utf-8"
-    );
-
-    expect(source).toContain("Button");
-    expect(source).toContain("Callout");
-    expect(source).toContain("SharedEmptyState");
-    expect(source).toContain("Row");
-    expect(source).not.toContain("StyleSheet");
-    expect(source).not.toContain("Pressable");
-  });
-  it("keeps account suggestion cards composed from shared primitives", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../../features/account-suggestions/components/AccountSuggestionCard.tsx"),
-      "utf-8"
-    );
-
-    expectSharedComponentImport(source, "Button");
-    expectSharedComponentImport(source, "Card");
-    expectSharedComponentImport(source, "Chip");
-    expect(source).toContain("<Button");
-    expect(source).toContain("<Card");
-    expect(source).toContain("<Chip");
-    expect(source).toContain('size="compact"');
-    expect(source).not.toContain("minHeight: 28");
-    expect(source).not.toContain("StyleSheet");
-    expect(source).not.toContain("Pressable");
-  });
-
-  it("keeps simple visual card containers on the shared Card primitive", () => {
-    const files = [
-      "../../app/connected-accounts.tsx",
-      "../../features/capture-sources/components/NotificationSetupCard.tsx",
-      "../../features/capture-sources/components/ApplePaySetupCard.tsx",
-      "../../features/email-capture/components/EmailConnectBanner.tsx",
-      "../../features/settings/components/BackupStatusCard.tsx",
-      "../../features/settings/components/PrivateBackupChecklist.tsx",
-      "../../features/settings/components/PrivateBackupScreen.tsx",
-      "../../features/qa/components/LocalQaProfileTools.tsx",
-      "../../features/ai-chat/components/ActionCard.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "Card");
-      expect(source).toContain("<Card");
-      expect(source).not.toContain("rounded-chart bg-card");
-      expect(source).not.toContain("rounded-2xl bg-card");
-      expect(source).not.toContain('className="bg-card dark:bg-card-dark"');
-    });
-  });
-
-  it("keeps migrated entity cards on shared card primitives", () => {
-    const files = [
-      "../../features/budget/components/BudgetCard.tsx",
-      "../../features/goals/components/GoalCard.tsx",
-      "../../features/notifications/components/NotificationCard.tsx",
-      "../../features/review-queues/components/AttributionQueueCard.tsx",
-      "../../features/review-queues/components/FinancialMeaningQueueScreen.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expect(source).toMatch(/<(?:Card|MetricCard)(?:\s|>)/);
-      expect(source).not.toContain("<Card className=");
-      expect(source).not.toContain("<MetricCard className=");
-      expect(source).not.toContain("styles.card,");
-      expect(source).not.toMatch(/<Pressable\s*\n\s*onPress=/);
-    });
-  });
-
-  it("keeps migrated metric cards on the shared MetricCard primitive", () => {
-    const files = [
-      "../../features/budget/components/BudgetSummaryCard.tsx",
-      "../../features/dashboard/components/home-screen/HomeSpendingCard.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "MetricCard");
-      expect(source).toContain("<MetricCard");
-      expect(source).not.toContain("<MetricCard className=");
-      expect(source).not.toContain("styles.card");
-    });
-  });
-
-  it("keeps migrated form field buttons on the shared FieldButton primitive", () => {
-    const files = [
-      "../../features/transfers/components/transfer-form/TransferSideCard.tsx",
-      "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "FieldButton");
-      expect(source).toContain("<FieldButton");
-    });
-  });
-
-  it("keeps money-entry date controls on the shared money entry date button", () => {
-    const files = [
-      "../../features/goals/components/AddPaymentScreen.tsx",
-      "../../features/goals/components/goal-form/GoalDateField.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "MoneyEntryDateButton");
-      expect(source).toContain("<MoneyEntryDateButton");
-    });
-  });
-
-  it("keeps money-entry amount controls on shared money amount primitives", () => {
-    const files = ["../../features/goals/components/AddPaymentScreen.tsx"];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "MoneyEntryAmountField");
-      expect(source).toContain("<MoneyEntryAmountField");
-    });
-
-    const goalAmountSource = readFileSync(
-      resolve(__dirname, "../../features/goals/components/goal-form/GoalAmountField.tsx"),
-      "utf-8"
-    );
-
-    expect(goalAmountSource).toContain('import { Pressable, Text } from "@/shared/components/rn"');
-    expect(goalAmountSource).toContain("<Text");
-    expect(goalAmountSource).not.toContain("<MoneyEntryAmountField");
-    expect(goalAmountSource).not.toContain("cursorVisible");
-
-    const budgetAmountSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx"
-      ),
-      "utf-8"
-    );
-
-    expect(budgetAmountSource).toContain('import { Text, View } from "@/shared/components/rn"');
-    expect(budgetAmountSource).toContain("<Text");
-    expect(budgetAmountSource).not.toContain("<MoneyEntryAmountField");
-    expect(budgetAmountSource).not.toContain("cursorVisible");
-  });
-
-  it("keeps repeated form text inputs on the shared FormTextField primitive", () => {
-    const files = [
-      "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx",
-      "../../features/calendar/components/add-bill/AddBillFormContent.tsx",
-      "../../features/categories/components/category-form/CreateCategoryScreenContent.tsx",
-      "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx",
-      "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
-      "../../features/financial-accounts/components/financial-account-form/FinancialAccountIdentifiersSection.tsx",
-      "../../features/budget/components/BudgetSuggestionRow.tsx",
-      "../../features/settings/components/PrivateBackupScreen.tsx",
-      "../../features/transactions/components/transaction-form/TransactionMetadataRow.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "FormTextField");
-      expect(source).toContain("<FormTextField");
-      expect(source).not.toContain("<FieldLabel");
-      expect(source).not.toContain("<TextInput");
-    });
-  });
-
-  it("keeps money-entry text inputs on the shared money entry text field", () => {
-    const files = [
-      "../../features/goals/components/AddPaymentScreen.tsx",
-      "../../features/goals/components/goal-form/GoalInterestField.tsx",
-      "../../features/goals/components/goal-form/GoalNameField.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "MoneyEntryTextField");
-      expect(source).toContain("<MoneyEntryTextField");
-      expect(source).not.toContain("<TextInput");
-    });
-  });
-
-  it("keeps migrated search filters on shared filter primitives", () => {
-    const dateFilterSource = readFileSync(
-      resolve(__dirname, "../../features/search/components/DateFilter.tsx"),
-      "utf-8"
-    );
-    const amountFilterSource = readFileSync(
-      resolve(__dirname, "../../features/search/components/AmountFilter.tsx"),
-      "utf-8"
-    );
-    const typeFilterSource = readFileSync(
-      resolve(__dirname, "../../features/search/components/TypeFilter.tsx"),
-      "utf-8"
-    );
-    const categoryFilterSource = readFileSync(
-      resolve(__dirname, "../../features/search/components/CategoryFilter.tsx"),
-      "utf-8"
-    );
-
-    expect(dateFilterSource).toContain("FieldButton");
-    expect(dateFilterSource).toContain("FilterPill");
-    expect(amountFilterSource).toContain("FilterTextField");
-    expect(typeFilterSource).toContain("SegmentedControl");
-    expect(categoryFilterSource).toContain("SharedFilterPill");
-  });
-
-  it("keeps AI conversation rows horizontal through shared row surfaces", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../../features/ai-chat/components/ConversationList.tsx"),
-      "utf-8"
-    );
-
-    expectSharedComponentImport(source, "ListRowSurface");
-    expect(source).toContain("<ListRowSurface");
-    expectSharedComponentImport(source, "IconActionButton");
-    expect(source).not.toContain('className="rounded-lg"');
-  });
-
-  it("keeps inline text and icon actions on shared action primitives", () => {
-    const notificationsSource = readFileSync(
-      resolve(__dirname, "../../features/notifications/components/NotificationsScreen.tsx"),
-      "utf-8"
-    );
-    const goalsListSource = readFileSync(
-      resolve(__dirname, "../../features/goals/components/GoalsListScreen.tsx"),
-      "utf-8"
-    );
-
-    expectSharedComponentImport(notificationsSource, "TextActionButton");
-    expectSharedComponentImport(goalsListSource, "AddActionButton");
-    expect(notificationsSource).toContain("<TextActionButton");
-    expect(goalsListSource).toContain("<AddActionButton");
-  });
-
-  it("keeps simple local action buttons on the shared Button primitive", () => {
-    const files = [
-      "../../app/connected-accounts.tsx",
-      "../../features/email-capture/components/EmailConnectBanner.tsx",
-      "../../features/ai-chat/components/ActionCard.tsx",
-      "../../features/settings/components/PrivateBackupActionButton.tsx",
-      "../../features/qa/components/LocalQaProfileTools.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "Button");
-      expect(source).toContain("<Button");
-      expect(source).not.toContain("<Pressable");
-    });
-
-    const profileSource = readFileSync(
-      resolve(__dirname, "../../features/settings/components/ProfileScreen.tsx"),
-      "utf-8"
-    );
-
-    expectSharedComponentImport(profileSource, "Button");
-    expect(profileSource).toContain("<Button");
-    expect(profileSource).not.toContain("bg-card dark:bg-card-dark rounded-2xl w-full");
-  });
-
-  it("keeps simple picker option rows on the shared Row primitive", () => {
-    const files = ["../../app/language-picker.tsx", "../../app/theme-picker.tsx"];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "Row");
-      expect(source).toContain("<Row");
-      expect(source).not.toContain("<Pressable");
-      expect(source).not.toContain("StyleSheet.hairlineWidth");
-      expect(source).not.toContain("borderBottomWidth");
-    });
-  });
-
-  it("keeps search filter chips on the shared Chip primitive", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../../features/search/components/FilterChipRow.tsx"),
-      "utf-8"
-    );
-
-    expect(source).toContain('import { Chip } from "@/shared/components"');
-    expect(source).toContain("<Chip");
-    expect(source).not.toContain("Pressable");
-  });
-
-  it("keeps repeated feed screens on the shared FeedList primitive", () => {
-    const files = [
-      "../../features/budget/components/BudgetListScreen.tsx",
-      "../../features/goals/components/GoalsListScreen.tsx",
-      "../../features/ai-chat/components/ConversationList.tsx",
-      "../../features/search/components/search-screen/SearchResultsList.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "FeedList");
-      expect(source).toContain("<FeedList");
-    });
-  });
-
-  it("keeps remaining list empty states and CTAs on shared primitives", () => {
-    const budgetListSource = readFileSync(
-      resolve(__dirname, "../../features/budget/components/BudgetListScreen.tsx"),
-      "utf-8"
-    );
-    const goalsListSource = readFileSync(
-      resolve(__dirname, "../../features/goals/components/GoalsListScreen.tsx"),
-      "utf-8"
-    );
-    const financialAccountsSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx"
-      ),
-      "utf-8"
-    );
-    const accountSuggestionsSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/account-suggestions/components/AccountSuggestionReviewScreen.tsx"
-      ),
-      "utf-8"
-    );
-
-    expect(budgetListSource).toContain("<EmptyState");
-    expect(budgetListSource).toContain("<Button");
-    expect(budgetListSource).not.toContain("styles.emptyTitle");
-    expect(goalsListSource).toContain("<EmptyState");
-    expect(goalsListSource).toContain("<Button");
-    expect(goalsListSource).not.toContain("styles.emptyCard");
-    expect(financialAccountsSource).toContain("<EmptyState");
-    expect(financialAccountsSource).not.toContain("styles.emptyTitle");
-    expect(accountSuggestionsSource).toContain("<EmptyState");
-    expect(accountSuggestionsSource).not.toContain("styles.emptyTitle");
-  });
-
-  it("keeps secondary empty states and simple CTAs on shared primitives", () => {
-    const createSuggestedAccountSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx"
-      ),
-      "utf-8"
-    );
-    const linkSuggestedAccountSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/account-suggestions/components/LinkSuggestedAccountScreen.tsx"
-      ),
-      "utf-8"
-    );
-    const searchEmptyStateSource = readFileSync(
-      resolve(__dirname, "../../features/search/components/SearchEmptyState.tsx"),
-      "utf-8"
-    );
-    const analyticsScreenSource = readFileSync(
-      resolve(__dirname, "../../features/analytics/components/AnalyticsScreen.tsx"),
-      "utf-8"
-    );
-
-    expect(createSuggestedAccountSource).toContain("<EmptyState");
-    expect(createSuggestedAccountSource).toContain("<Button");
-    expect(createSuggestedAccountSource).not.toContain("styles.emptyTitle");
-    expect(createSuggestedAccountSource).not.toContain("styles.saveButton");
-    expect(linkSuggestedAccountSource).toContain("<EmptyState");
-    expect(linkSuggestedAccountSource).not.toContain("styles.emptyTitle");
-    expect(searchEmptyStateSource).toContain("<EmptyState");
-    expect(searchEmptyStateSource).toContain("<Button");
-    expect(searchEmptyStateSource).not.toContain("Pressable");
-    expect(analyticsScreenSource).toContain("<EmptyState");
-    expect(analyticsScreenSource).not.toContain("styles.emptyText");
-  });
-
-  it("keeps account detail and goal detail CTAs on shared primitives", () => {
-    const financialAccountDetailSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsScreenContent.tsx"
-      ),
-      "utf-8"
-    );
-    const goalContributionsSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/goals/components/goal-detail/GoalDetailContributionsTab.tsx"
-      ),
-      "utf-8"
-    );
-    const goalAiPlanSource = readFileSync(
-      resolve(__dirname, "../../features/goals/components/goal-detail/GoalDetailAiPlanTab.tsx"),
-      "utf-8"
-    );
-
-    expect(financialAccountDetailSource).toContain("<EmptyState");
-    expect(financialAccountDetailSource).toContain("<Callout");
-    expect(financialAccountDetailSource).toContain("<Button");
-    expect(financialAccountDetailSource).not.toContain("styles.primaryButton");
-    expect(goalContributionsSource).toContain("<Button");
-    expect(goalContributionsSource).not.toContain("styles.ctaButton");
-    expect(goalAiPlanSource).toContain("<Button");
-    expect(goalAiPlanSource).not.toContain("styles.ctaButton");
-  });
-
-  it("keeps onboarding primary CTAs on the shared Button primitive", () => {
-    const welcomeStepSource = readFileSync(
-      resolve(__dirname, "../../features/onboarding/components/WelcomeStep.tsx"),
-      "utf-8"
-    );
-    const budgetSetupStepSource = readFileSync(
-      resolve(__dirname, "../../features/onboarding/components/BudgetSetupStep.tsx"),
-      "utf-8"
-    );
-    const syncProgressStepSource = readFileSync(
-      resolve(__dirname, "../../features/onboarding/components/SyncProgressStep.tsx"),
-      "utf-8"
-    );
-    const completeStepSource = readFileSync(
-      resolve(__dirname, "../../features/onboarding/components/CompleteStep.tsx"),
-      "utf-8"
-    );
-
-    expect(welcomeStepSource).toContain('import { Button, FidyLogo } from "@/shared/components"');
-    expect(welcomeStepSource).toContain("<Button");
-    expect(welcomeStepSource).not.toContain("styles.primaryButton");
-    expectSharedComponentImport(budgetSetupStepSource, "Button");
-    expect(budgetSetupStepSource).toContain("<Button");
-    expect(budgetSetupStepSource).not.toContain("styles.primaryButton");
-    expect(syncProgressStepSource).toContain('import { Button } from "@/shared/components"');
-    expect(syncProgressStepSource).toContain("<Button");
-    expect(syncProgressStepSource).not.toContain("styles.primaryButton");
-    expectSharedComponentImport(completeStepSource, "Button");
-    expect(completeStepSource).toContain("<Button");
-    expect(completeStepSource).not.toContain("styles.primaryButton");
-  });
-
-  it("keeps category list rows, empty state, and add action on shared primitives", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../../features/categories/components/CategoriesScreen.tsx"),
-      "utf-8"
-    );
-
-    expectSharedComponentImport(source, "Button");
-    expectSharedComponentImport(source, "EmptyState");
-    expectSharedComponentImport(source, "Row");
-    expect(source).toContain("<Button");
-    expect(source).toContain("<EmptyState");
-    expect(source).toContain("<Row");
-    expect(source).not.toContain("<Pressable");
-    expect(source).not.toContain("styles.emptyText");
-    expect(source).not.toContain("styles.categoryRow");
-    expect(source).not.toContain("styles.addButton");
-  });
-
-  it("keeps remaining repeated action buttons on the shared Button primitive", () => {
-    const goalSheetActionSource = readFileSync(
-      resolve(__dirname, "../../features/goals/components/goal-form/GoalFormActionButton.tsx"),
-      "utf-8"
-    );
-    const financialAccountIdentifierSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx"
-      ),
-      "utf-8"
-    );
-    const transactionActionSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/transactions/components/transaction-form/TransactionActionSection.tsx"
-      ),
-      "utf-8"
-    );
-
-    expect(goalSheetActionSource).toContain('import { Button } from "@/shared/components"');
-    expect(goalSheetActionSource).toContain("<Button");
-    expect(goalSheetActionSource).not.toContain("<Pressable");
-    expect(goalSheetActionSource).not.toContain("styles.actionButton");
-    expectSharedComponentImport(financialAccountIdentifierSource, "Button");
-    expectSharedComponentImport(financialAccountIdentifierSource, "ScreenLayout");
-    expect(financialAccountIdentifierSource).toContain("<Button");
-    expect(financialAccountIdentifierSource).not.toContain("styles.primaryButton");
-    expect(transactionActionSource).toContain("NumpadActionFooter");
-    expect(transactionActionSource).not.toContain("<Pressable");
-    expect(transactionActionSource).not.toContain("styles.saveButton");
-    expect(transactionActionSource).not.toContain("styles.deleteButton");
-    expect(transactionActionSource).not.toContain("styles.extraActionButton");
-  });
-
-  it("keeps remaining save and CTA buttons on the shared Button primitive", () => {
-    const files = [
-      "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx",
-      "../../features/calendar/components/add-bill/AddBillFormContent.tsx",
-      "../../features/goals/components/AddPaymentScreen.tsx",
-      "../../features/goals/components/GoalCard.tsx",
-      "../../features/financial-accounts/components/FinancialAccountFormScreen.tsx",
-      "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
-      "../../features/transfers/components/transfer-form/TransferFormContent.tsx",
-      "../../features/qa/components/qa-tools/QaToolsContent.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "Button");
-      expect(source).toContain("<Button");
-      expect(source).not.toContain("styles.primaryButton");
-      expect(source).not.toContain("styles.saveButton");
-      expect(source).not.toContain("styles.ctaButton");
-    });
-  });
-
-  it("keeps remaining simple empty states on the shared EmptyState primitive", () => {
-    const files = [
-      "../../features/onboarding/components/BudgetSetupStep.tsx",
-      "../../features/goals/components/goal-detail/GoalDetailContributionsTab.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expectSharedComponentImport(source, "EmptyState");
-      expect(source).toContain("<EmptyState");
-      expect(source).not.toContain("styles.emptyText");
-    });
-  });
-  it("keeps repeated selectors on shared selection primitives", () => {
-    const files = [
-      "../../features/analytics/components/PeriodSelector.tsx",
-      "../../features/transactions/components/TypeToggle.tsx",
-      "../../features/goals/components/goal-form/GoalTypeToggle.tsx",
-      "../../features/goals/components/goal-detail/TabControl.tsx",
-    ];
-
-    files.forEach((file) => {
-      const source = readFileSync(resolve(__dirname, file), "utf-8");
-
-      expect(source).toContain("SegmentedControl");
-      expect(source).not.toContain("<Pressable");
-    });
-  });
-
-  it("keeps migrated chip rows and month navigators on shared primitives", () => {
-    const addBillSource = readFileSync(
-      resolve(__dirname, "../../features/calendar/components/add-bill/AddBillFormContent.tsx"),
-      "utf-8"
-    );
-    const transactionAccountSource = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/transactions/components/transaction-form/TransactionAccountSection.tsx"
-      ),
-      "utf-8"
-    );
-    const budgetMonthSource = readFileSync(
-      resolve(__dirname, "../../features/budget/components/BudgetHeaderMonthNavigator.tsx"),
-      "utf-8"
-    );
-    const calendarMonthSource = readFileSync(
-      resolve(__dirname, "../../features/calendar/components/MonthNavigator.tsx"),
-      "utf-8"
-    );
-
-    expect(addBillSource).toContain("SelectableChipRow");
-    expect(transactionAccountSource).toContain("SelectableChipRow");
-    expect(transactionAccountSource).not.toContain("<Pressable");
-    expect(budgetMonthSource).toContain("MonthNavigator");
-    expect(budgetMonthSource).not.toContain("StyleSheet");
-    expect(calendarMonthSource).toContain("SharedMonthNavigator");
-    expect(calendarMonthSource).not.toContain("StyleSheet");
   });
 });

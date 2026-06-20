@@ -33,6 +33,8 @@ const SNAPSHOT = {
     transactions: [],
     transfers: [],
     userCategories: [],
+    categoryIconOverrides: [],
+    categoryColorOverrides: [],
     financialAccounts: [],
     openingBalances: [],
     budgets: [],

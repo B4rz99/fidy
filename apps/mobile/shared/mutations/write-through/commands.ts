@@ -3,6 +3,8 @@ import type {
   billPayments,
   bills,
   budgets,
+  categoryColorOverrides,
+  categoryIconOverrides,
   captureEvidence,
   goalContributions,
   goals,
@@ -48,6 +50,8 @@ type GoalContributionRow = typeof goalContributions.$inferInsert;
 type BudgetRow = typeof budgets.$inferInsert;
 type NotificationRow = typeof notifications.$inferInsert;
 type UserCategoryRow = typeof userCategories.$inferInsert;
+type CategoryIconOverrideRow = typeof categoryIconOverrides.$inferInsert;
+type CategoryColorOverrideRow = typeof categoryColorOverrides.$inferInsert;
 type BillRow = typeof bills.$inferInsert;
 type BillPaymentRow = typeof billPayments.$inferInsert;
 type ProcessedSourceEventRow = typeof processedSourceEvents.$inferInsert;
@@ -117,6 +121,7 @@ type BudgetSaveCommand = {
 type BudgetUpdateCommand = {
   kind: "budget.update";
   budgetId: BudgetId;
+  categoryId: CategoryId;
   amount: CopAmount;
   now: IsoDateTime;
   afterCommit?: readonly MutationEffect[];
@@ -154,6 +159,34 @@ type NotificationClearAllCommand = {
 type CategorySaveCommand = {
   kind: "category.save";
   row: UserCategoryRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CategoryIconOverrideSaveCommand = {
+  kind: "categoryIconOverride.save";
+  row: CategoryIconOverrideRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CategoryIconOverrideClearCommand = {
+  kind: "categoryIconOverride.clear";
+  userId: UserId;
+  categoryId: CategoryId;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CategoryColorOverrideSaveCommand = {
+  kind: "categoryColorOverride.save";
+  row: CategoryColorOverrideRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CategoryColorOverrideClearCommand = {
+  kind: "categoryColorOverride.clear";
+  userId: UserId;
+  categoryId: CategoryId;
+  now: IsoDateTime;
   afterCommit?: readonly MutationEffect[];
 };
 
@@ -238,6 +271,10 @@ export type MutationCommand =
   | NotificationInsertCommand
   | NotificationClearAllCommand
   | CategorySaveCommand
+  | CategoryIconOverrideSaveCommand
+  | CategoryIconOverrideClearCommand
+  | CategoryColorOverrideSaveCommand
+  | CategoryColorOverrideClearCommand
   | CalendarBillSaveCommand
   | CalendarBillUpdateCommand
   | CalendarBillDeleteCommand

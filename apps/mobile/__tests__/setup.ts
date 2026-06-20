@@ -129,14 +129,6 @@ vi.mock("lucide-react-native", () => lucideReactNativeMock);
 // Mock expo-image native component
 vi.mock("expo-image", () => ({ Image: "Image" }));
 
-// Mock expo-glass-effect native component
-vi.mock("expo-glass-effect", () => ({
-  GlassView: "GlassView",
-  GlassContainer: "GlassContainer",
-  isLiquidGlassAvailable: () => false,
-  isGlassEffectAPIAvailable: () => false,
-}));
-
 // Mock nativewind/preset (needed for tailwind config import)
 vi.mock("nativewind/preset", () => ({ default: {} }));
 

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { PressableProps } from "react-native";
 import { ActivityIndicator, StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassPressable } from "./GlassPressable";
+import { SurfacePressable } from "./SurfacePressable";
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "dangerSecondary" | "ghost";
 type ButtonSize = "default" | "compact";
@@ -66,7 +66,10 @@ export function Button({
     <>
       {loading ? <ActivityIndicator color={loadingIndicatorColor} /> : icon}
       <Text
+        adjustsFontSizeToFit
         className={`text-center font-poppins-semibold ${LABEL_SIZE_CLASS_NAMES[size]} ${LABEL_CLASS_NAMES[variant]}`}
+        minimumFontScale={0.72}
+        numberOfLines={1}
       >
         {label}
       </Text>
@@ -74,24 +77,24 @@ export function Button({
   );
 
   return (
-    <GlassPressable
+    <SurfacePressable
       {...pressableProps}
       accessibilityRole={pressableProps.accessibilityRole ?? "button"}
       disabled={isDisabled}
       style={style}
       radius={12}
-      surfaceLayoutStyle={styles.glassContent}
+      surfaceLayoutStyle={styles.surfaceContent}
       className={`${SIZE_CLASS_NAMES[size]} ${CONTAINER_CLASS_NAMES[variant]} ${
         isDisabled ? "opacity-60" : ""
       } ${className ?? ""}`}
     >
       {content}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 
 const styles = StyleSheet.create({
-  glassContent: {
+  surfaceContent: {
     alignItems: "center",
     flexDirection: "row",
     gap: 8,

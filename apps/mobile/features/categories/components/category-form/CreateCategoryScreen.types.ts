@@ -1,8 +1,10 @@
 export type CreateCategoryScreenViewModel = {
   readonly canSubmit: boolean;
   readonly handleCreate: () => void;
+  readonly handleCustomEmojiChange: (emoji: string) => void;
   readonly handleIconSelect: (iconName: string) => void;
   readonly handleColorSelect: (color: string) => void;
+  readonly customEmoji: string;
   readonly isBusy: boolean;
   readonly name: string;
   readonly previewIcon: string;
@@ -15,7 +17,9 @@ export type CreateCategoryScreenViewModel = {
 export type CreateCategoryDraft = Pick<
   CreateCategoryScreenViewModel,
   | "canSubmit"
+  | "customEmoji"
   | "handleColorSelect"
+  | "handleCustomEmojiChange"
   | "handleIconSelect"
   | "name"
   | "selectedColor"

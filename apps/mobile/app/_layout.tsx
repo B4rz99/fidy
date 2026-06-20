@@ -31,7 +31,7 @@ import {
   useOptionalUserId,
 } from "@/features/auth/hooks.public";
 import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa/hooks.public";
-import { QaStatusBanner } from "@/features/qa/ui.public";
+import { QaStatusBanner } from "@/features/qa/routes.public";
 import { useSettingsStore } from "@/features/settings/hooks.public";
 import { AppToastHost, ErrorFallback } from "@/shared/components";
 import { useColorScheme } from "@/shared/components/rn";

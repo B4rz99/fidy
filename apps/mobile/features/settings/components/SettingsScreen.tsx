@@ -4,8 +4,6 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthIdentity, useOptionalUserId } from "@/features/auth/public";
-import type { PrivateBackupHealthStatus } from "@/features/backup/public";
-import { useEmailCaptureStore } from "@/features/email-capture/public";
 import {
   Surface,
   Row,
@@ -29,7 +27,7 @@ import {
   Wallet,
   Wrench,
 } from "@/shared/components/icons";
-import { Linking, ScrollView, Text, View } from "@/shared/components/rn";
+import { Linking, ScrollView, Text } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
 import { buildPrivacyUrl, buildTermsUrl, buildWhatsAppUrl } from "../lib/settings-links";
@@ -42,19 +40,6 @@ const THEME_LABEL_KEYS: Record<string, string> = {
   light: "settings.themeLight",
   dark: "settings.themeDark",
 };
-
-function getPrivateBackupStatusLabelKey(status: PrivateBackupHealthStatus) {
-  switch (status) {
-    case "not_set_up":
-      return "settings.privateBackupStatus.notSetUp";
-    case "recovery_key_not_confirmed":
-      return "settings.privateBackupStatus.recoveryKeyNotConfirmed";
-    case "ready":
-      return "settings.privateBackupStatus.ready";
-    case "backup_failed":
-      return "settings.privateBackupStatus.backupFailed";
-  }
-}
 
 export function SettingsScreen() {
   const { push, replace, back, canGoBack } = useRouter();
@@ -70,11 +55,7 @@ export function SettingsScreen() {
     didImageFail: profileImageUrl === failedImageUrl,
   });
 
-  const connectedCount = useEmailCaptureStore((s) => s.accounts.length);
-
   const themePreference = useSettingsStore((s) => s.themePreference);
-  const areAllNotificationsOff = useSettingsStore((s) => s.areAllNotificationsOff);
-  const privateBackupHealth = useSettingsStore((s) => s.privateBackup.health.status);
   const shareAnonymizedParseSamples = useSettingsStore((s) => s.shareAnonymizedParseSamples);
   const setShareAnonymizedParseSamples = useSettingsStore((s) => s.setShareAnonymizedParseSamples);
 
@@ -184,9 +165,6 @@ export function SettingsScreen() {
           <SettingsRow
             icon={Mail}
             label={t("settings.connectedEmails")}
-            subtitle={t("settings.connectedEmailsCount", {
-              count: connectedCount,
-            })}
             onPress={() => push("/connected-accounts")}
           />
           <SettingsRow
@@ -197,7 +175,6 @@ export function SettingsScreen() {
           <SettingsRow
             icon={Bell}
             label={t("settings.notifications")}
-            subtitle={areAllNotificationsOff ? t("settings.off") : t("settings.on")}
             onPress={() => push("/notification-preferences")}
             isLast
           />
@@ -208,13 +185,11 @@ export function SettingsScreen() {
           <SettingsRow
             icon={KeyRound}
             label={t("settings.privateBackup")}
-            subtitle={t(getPrivateBackupStatusLabelKey(privateBackupHealth))}
             onPress={() => push("/private-backup")}
           />
           <SettingsRow
             icon={Sparkles}
             label={t("settings.parseImprovementSharing")}
-            subtitle={t("settings.parseImprovementSharingSubtitle")}
             accessory="switch"
             switchValue={shareAnonymizedParseSamples}
             onSwitchChange={handleParseImprovementSharingChange}

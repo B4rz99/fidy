@@ -1,4 +1,4 @@
-import { Surface } from "@/shared/components";
+import { SolidSurface } from "@/shared/components";
 import { StyleSheet } from "@/shared/components/rn";
 import { FilterChipRow } from "../FilterChipRow";
 import { ResultsSummary } from "../ResultsSummary";
@@ -53,13 +53,13 @@ export function SearchFilterControls({
       />
       {filterPanel && activePanel === "type" ? filterPanel : null}
       {filterPanel && activePanel !== "type" ? (
-        <Surface
+        <SolidSurface
           padded={false}
-          radius={8}
+          radius={12}
           style={[styles.filterDock, activePanel === "dateRange" ? styles.dateFilterDock : null]}
         >
           {filterPanel}
-        </Surface>
+        </SolidSurface>
       ) : null}
       {showSummary && summary ? <ResultsSummary summary={summary} /> : null}
     </>

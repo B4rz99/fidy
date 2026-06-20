@@ -15,6 +15,9 @@ export function useTransferFormPresentation(input: {
   const { t, locale } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
+  const borderStrong = useThemeColor("borderStrong");
+  const peachLight = useThemeColor("peachLight");
+  const surfaceMuted = useThemeColor("surfaceMuted");
   const formState = getTransferFormPresentationState({
     amount: parseDigitsToAmount(input.digits),
     fromSide: input.fromSide,
@@ -29,12 +32,12 @@ export function useTransferFormPresentation(input: {
   });
 
   return {
-    buttonBackground: formState.canSave ? accentGreen : "#DADADA",
+    buttonBackground: formState.canSave ? accentGreen : borderStrong,
     buttonLabel: t(formState.buttonLabelKey),
     canSave: formState.canSave,
     dateLabel,
     hint: t(formState.hintKey),
-    hintBackground: formState.sameAccountConflict ? "#FFF2F0" : "#F7F2EE",
+    hintBackground: formState.sameAccountConflict ? peachLight : surfaceMuted,
     hintTone: formState.sameAccountConflict || formState.bothExternal ? accentRed : accentGreen,
     sameAccountConflict: formState.sameAccountConflict,
     subtitle: t(formState.subtitleKey),

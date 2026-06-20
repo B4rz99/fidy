@@ -240,6 +240,25 @@ describe("activity query service", () => {
     ]);
   });
 
+  it("preserves custom transaction category IDs in activity items", () => {
+    const { service } = createActivityServiceHarness({
+      transactionRows: [
+        makeTransactionRow({
+          id: "tx-custom-category" as TransactionId,
+          categoryId: "ucat-desserts" as CategoryId,
+        }),
+      ],
+      transferRows: [],
+    });
+
+    const snapshot = loadActivitySnapshot(service, 30, 0);
+    const item = snapshot.pages[0];
+
+    expect(item?.kind).toBe("transaction");
+    if (item?.kind !== "transaction") return;
+    expect(item.transaction.categoryId).toBe("ucat-desserts");
+  });
+
   it("keeps large merged offsets stack-safe", () => {
     const totalItems = 6000;
     const buildTimestamp = (dayOffset: number): IsoDateTime =>

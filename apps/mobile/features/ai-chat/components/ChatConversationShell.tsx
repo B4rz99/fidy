@@ -1,9 +1,10 @@
 import type { FlashListRef } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import type { ReactElement, ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, type ElementRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconActionButton } from "@/shared/components";
+import { SCROLL_TO_BOTTOM_ICON_COLOR } from "@/shared/components/effect-tokens";
 import { ChevronLeft } from "@/shared/components/icons";
 import {
   Keyboard,
@@ -16,6 +17,7 @@ import {
 } from "@/shared/components/rn";
 import {
   getChatComposerBottomOffset,
+  getChatKeyboardOverlap,
   getChatShellBottomInset,
   getScrollButtonBottomOffset,
   shouldRenderScrollToBottom,
@@ -37,11 +39,64 @@ type ChatConversationShellProps = {
   readonly scrollToBottomLabel: string;
 };
 
-function subscribeKeyboardVisibility(setKeyboardVisible: (visible: boolean) => void) {
+type ChatShellState = {
+  readonly composerHeight: number;
+  readonly keyboardVisible: boolean;
+  readonly keyboardTopY: number | null;
+  readonly shellBottomY: number | null;
+  readonly showScrollToBottom: boolean;
+};
+
+type ChatShellAction =
+  | { readonly type: "setComposerHeight"; readonly composerHeight: number }
+  | { readonly type: "setKeyboardVisible"; readonly keyboardVisible: boolean }
+  | { readonly type: "setKeyboardTopY"; readonly keyboardTopY: number | null }
+  | { readonly type: "setShellBottomY"; readonly shellBottomY: number | null }
+  | { readonly type: "setShowScrollToBottom"; readonly showScrollToBottom: boolean };
+
+const initialChatShellState: ChatShellState = {
+  composerHeight: 64,
+  keyboardVisible: false,
+  keyboardTopY: null,
+  shellBottomY: null,
+  showScrollToBottom: false,
+};
+
+function chatShellReducer(state: ChatShellState, action: ChatShellAction): ChatShellState {
+  switch (action.type) {
+    case "setComposerHeight":
+      return { ...state, composerHeight: action.composerHeight };
+    case "setKeyboardVisible":
+      return { ...state, keyboardVisible: action.keyboardVisible };
+    case "setKeyboardTopY":
+      return { ...state, keyboardTopY: action.keyboardTopY };
+    case "setShellBottomY":
+      return { ...state, shellBottomY: action.shellBottomY };
+    case "setShowScrollToBottom":
+      return { ...state, showScrollToBottom: action.showScrollToBottom };
+  }
+}
+
+function subscribeKeyboardVisibility({
+  measureShellBottom,
+  setKeyboardTopY,
+  setKeyboardVisible,
+}: {
+  readonly measureShellBottom: () => void;
+  readonly setKeyboardTopY: (topY: number | null) => void;
+  readonly setKeyboardVisible: (visible: boolean) => void;
+}) {
   const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
   const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-  const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-  const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+  const showSub = Keyboard.addListener(showEvent, (event) => {
+    measureShellBottom();
+    setKeyboardTopY(event.endCoordinates.screenY);
+    setKeyboardVisible(true);
+  });
+  const hideSub = Keyboard.addListener(hideEvent, () => {
+    setKeyboardTopY(null);
+    setKeyboardVisible(false);
+  });
 
   return () => {
     showSub.remove();
@@ -60,12 +115,22 @@ export function ChatConversationShell({
   scrollToBottomLabel,
 }: ChatConversationShellProps) {
   const listRef = useRef<FlashListRef<ChatMessage>>(null);
+  const shellRef = useRef<ElementRef<typeof View>>(null);
   const { bottom: safeBottom } = useSafeAreaInsets();
-  const [composerHeight, setComposerHeight] = useState(64);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const bottomInset = getChatShellBottomInset({ composerHeight, safeBottom });
-  const scrollButtonBottom = getScrollButtonBottomOffset({ composerHeight, safeBottom });
+  const [shellState, dispatchShell] = useReducer(chatShellReducer, initialChatShellState);
+  const { composerHeight, keyboardVisible, keyboardTopY, shellBottomY, showScrollToBottom } =
+    shellState;
+  const keyboardOverlap = getChatKeyboardOverlap({ keyboardTopY, shellBottomY });
+  const composerBottomOffset = getChatComposerBottomOffset({
+    keyboardOverlap,
+    keyboardVisible,
+    safeBottom,
+  });
+  const bottomInset = getChatShellBottomInset({ composerHeight, composerBottomOffset });
+  const scrollButtonBottom = getScrollButtonBottomOffset({
+    composerHeight,
+    composerBottomOffset,
+  });
   const scrollMetricsRef = useRef({
     contentHeight: 0,
     viewportHeight: 0,
@@ -73,80 +138,85 @@ export function ChatConversationShell({
     bottomInset,
   });
 
-  const scrollToBottom = useCallback((animated = true) => {
+  const measureShellBottom = () => {
+    shellRef.current?.measureInWindow((_x, y, _width, height) => {
+      dispatchShell({ type: "setShellBottomY", shellBottomY: y + height });
+    });
+  };
+
+  const scrollToBottom = (animated = true) => {
     listRef.current?.scrollToEnd({ animated });
-  }, []);
+  };
 
-  const updateScrollButton = useCallback(() => {
-    setShowScrollToBottom(shouldShowScrollToBottom(scrollMetricsRef.current));
-  }, []);
+  const updateScrollButton = () => {
+    dispatchShell({
+      type: "setShowScrollToBottom",
+      showScrollToBottom: shouldShowScrollToBottom(scrollMetricsRef.current),
+    });
+  };
 
-  const handleComposerLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      const nextHeight = event.nativeEvent.layout.height;
-      const nextBottomInset = getChatShellBottomInset({
-        composerHeight: nextHeight,
-        safeBottom,
-      });
-      setComposerHeight(nextHeight);
-      scrollMetricsRef.current = {
-        ...scrollMetricsRef.current,
-        bottomInset: nextBottomInset,
-      };
-    },
-    [safeBottom]
-  );
+  const handleComposerLayout = (event: LayoutChangeEvent) => {
+    const nextHeight = event.nativeEvent.layout.height;
+    const nextBottomInset = getChatShellBottomInset({
+      composerBottomOffset,
+      composerHeight: nextHeight,
+    });
+    dispatchShell({ type: "setComposerHeight", composerHeight: nextHeight });
+    scrollMetricsRef.current = {
+      ...scrollMetricsRef.current,
+      bottomInset: nextBottomInset,
+    };
+  };
 
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      scrollMetricsRef.current = {
-        ...scrollMetricsRef.current,
-        scrollOffsetY: event.nativeEvent.contentOffset.y,
-        viewportHeight: event.nativeEvent.layoutMeasurement.height,
-        bottomInset,
-      };
-      updateScrollButton();
-    },
-    [bottomInset, updateScrollButton]
-  );
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollMetricsRef.current = {
+      ...scrollMetricsRef.current,
+      scrollOffsetY: event.nativeEvent.contentOffset.y,
+      viewportHeight: event.nativeEvent.layoutMeasurement.height,
+      bottomInset,
+    };
+    updateScrollButton();
+  };
 
-  const handleListLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      scrollMetricsRef.current = {
-        ...scrollMetricsRef.current,
-        viewportHeight: event.nativeEvent.layout.height,
-        bottomInset,
-      };
-      updateScrollButton();
-    },
-    [bottomInset, updateScrollButton]
-  );
+  const handleListLayout = (event: LayoutChangeEvent) => {
+    scrollMetricsRef.current = {
+      ...scrollMetricsRef.current,
+      viewportHeight: event.nativeEvent.layout.height,
+      bottomInset,
+    };
+    updateScrollButton();
+  };
 
-  const handleContentSizeChange = useCallback(
-    (_width: number, height: number) => {
-      const metrics = { ...scrollMetricsRef.current, bottomInset };
-      const shouldScroll = shouldAutoScrollForContentChange({
-        previousContentHeight: metrics.contentHeight,
-        nextContentHeight: height,
-        viewportHeight: metrics.viewportHeight,
-        scrollOffsetY: metrics.scrollOffsetY,
-        bottomInset,
-      });
-      scrollMetricsRef.current = { ...metrics, contentHeight: height };
-      updateScrollButton();
-      if (shouldScroll) {
-        requestAnimationFrame(() => scrollToBottom(false));
-      }
-    },
-    [bottomInset, scrollToBottom, updateScrollButton]
-  );
+  const handleContentSizeChange = (_width: number, height: number) => {
+    const metrics = { ...scrollMetricsRef.current, bottomInset };
+    const shouldScroll = shouldAutoScrollForContentChange({
+      previousContentHeight: metrics.contentHeight,
+      nextContentHeight: height,
+      viewportHeight: metrics.viewportHeight,
+      scrollOffsetY: metrics.scrollOffsetY,
+      bottomInset,
+    });
+    scrollMetricsRef.current = { ...metrics, contentHeight: height };
+    updateScrollButton();
+    if (shouldScroll) {
+      requestAnimationFrame(() => scrollToBottom(false));
+    }
+  };
 
   useEffect(() => {
-    return subscribeKeyboardVisibility(setKeyboardVisible);
+    return subscribeKeyboardVisibility({
+      measureShellBottom,
+      setKeyboardTopY: (keyboardTopY) => {
+        dispatchShell({ type: "setKeyboardTopY", keyboardTopY });
+      },
+      setKeyboardVisible: (keyboardVisible) => {
+        dispatchShell({ type: "setKeyboardVisible", keyboardVisible });
+      },
+    });
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View ref={shellRef} onLayout={measureShellBottom} style={{ flex: 1 }}>
       {messages.length === 0 && !isStreaming ? (
         emptyState
       ) : (
@@ -184,7 +254,7 @@ export function ChatConversationShell({
           icon={
             <ChevronLeft
               size={20}
-              color="rgba(255,255,255,0.84)"
+              color={SCROLL_TO_BOTTOM_ICON_COLOR}
               style={{ transform: [{ rotate: "-90deg" }] }}
             />
           }
@@ -199,7 +269,7 @@ export function ChatConversationShell({
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: getChatComposerBottomOffset({ keyboardVisible, safeBottom }),
+          bottom: composerBottomOffset,
         }}
       >
         {composer}

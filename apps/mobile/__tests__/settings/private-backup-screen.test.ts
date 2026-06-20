@@ -37,7 +37,8 @@ describe("Private Backup settings surface", () => {
   });
 
   it("keeps Private Backup status colors and backup date honest", () => {
-    expect(statusPillSource).toContain('tone === "green" ? accentGreen : "#C46A2B"');
+    expect(statusPillSource).toContain('const warning = useThemeColor("warning")');
+    expect(statusPillSource).toContain('tone === "green" ? accentGreen : warning');
     expect(screenSource).toContain("health.latestBackup.createdAt");
     expect(screenSource).toContain('t("privateBackup.encryptedBackupBody",');
   });

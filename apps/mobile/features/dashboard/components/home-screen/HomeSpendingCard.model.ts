@@ -1,5 +1,5 @@
 import { format, getDaysInMonth } from "date-fns";
-import { CATEGORY_MAP } from "@/shared/categories";
+import type { Category } from "@/shared/categories";
 import { Colors } from "@/shared/constants/theme";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
@@ -9,6 +9,7 @@ type Translate = (key: string, params?: Record<string, unknown>) => string;
 
 type HomeSpendingCardModelInput = {
   readonly balance: number;
+  readonly categories: readonly Category[];
   readonly categorySpending: readonly CategorySpendingItem[];
   readonly locale: string;
   readonly monthlyBudget: number;
@@ -34,7 +35,6 @@ type HomeSpendingCardModel = {
   readonly averageLabel: string;
 };
 
-const MAX_CATEGORY_BARS = 7;
 const MIN_BAR_PERCENTAGE = 34;
 const MAX_BAR_PERCENTAGE = 100;
 
@@ -55,6 +55,7 @@ const deriveAverageSpend = (spent: number, now: Date): number =>
 
 export function deriveHomeSpendingCardModel({
   balance,
+  categories,
   categorySpending,
   locale,
   monthlyBudget,
@@ -65,16 +66,16 @@ export function deriveHomeSpendingCardModel({
   const averageSpend = deriveAverageSpend(balance, now);
   const hasBudget = monthlyBudget > 0;
   const dailyPace = hasBudget ? deriveDailyAllowance(balance, monthlyBudget, now) : averageSpend;
-  const visibleCategorySpending = categorySpending.filter(
-    (item) => CATEGORY_MAP[item.categoryId] != null
+  const categoryById = new Map(categories.map((category) => [category.id, category]));
+  const visibleCategorySpending = categorySpending.filter((item) =>
+    categoryById.has(item.categoryId)
   );
   const largestCategoryTotal = Math.max(...visibleCategorySpending.map((item) => item.total), 0);
   const bars = visibleCategorySpending
     .slice()
     .sort((a, b) => b.total - a.total)
-    .slice(0, MAX_CATEGORY_BARS)
     .map((item) => {
-      const category = CATEGORY_MAP[item.categoryId];
+      const category = categoryById.get(item.categoryId);
       return {
         amountLabel: formatMoney(item.total),
         categoryId: item.categoryId,

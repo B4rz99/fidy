@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  getExpenseTransactionsForPeriod,
   getIncomeExpenseForPeriod,
   getSpendingByCategoryForPeriod,
 } from "@/features/analytics/lib/repository";
@@ -141,14 +142,55 @@ describe("analytics repository", () => {
     softDeleteTransaction(db as any, "income-deleted" as TransactionId, DELETED_AT);
     softDeleteTransaction(db as any, "expense-deleted" as TransactionId, DELETED_AT);
 
-    expect(getIncomeExpenseForPeriod(db as any, USER_ID, PERIOD_START, PERIOD_END)).toEqual({
+    const periodQuery = {
+      db: db as any,
+      userId: USER_ID,
+      startDate: PERIOD_START,
+      endDate: PERIOD_END,
+    };
+
+    expect(getIncomeExpenseForPeriod(periodQuery)).toEqual({
       income: 500000 as CopAmount,
       expenses: 240000 as CopAmount,
     });
 
-    expect(getSpendingByCategoryForPeriod(db as any, USER_ID, PERIOD_START, PERIOD_END)).toEqual([
+    expect(getSpendingByCategoryForPeriod(periodQuery)).toEqual([
       { categoryId: "food" as CategoryId, total: 160000 as CopAmount },
       { categoryId: "transport" as CategoryId, total: 80000 as CopAmount },
+    ]);
+
+    expect(
+      getExpenseTransactionsForPeriod(periodQuery).map(
+        ({ id, categoryId, amount, description, date }) => ({
+          id,
+          categoryId,
+          amount,
+          description,
+          date,
+        })
+      )
+    ).toEqual([
+      {
+        id: "expense-food-2" as TransactionId,
+        categoryId: "food" as CategoryId,
+        amount: 40000 as CopAmount,
+        description: "Snacks",
+        date: new Date(2026, 2, 15),
+      },
+      {
+        id: "expense-transport" as TransactionId,
+        categoryId: "transport" as CategoryId,
+        amount: 80000 as CopAmount,
+        description: "Taxi",
+        date: new Date(2026, 2, 10),
+      },
+      {
+        id: "expense-food-1" as TransactionId,
+        categoryId: "food" as CategoryId,
+        amount: 120000 as CopAmount,
+        description: "Groceries",
+        date: new Date(2026, 2, 5),
+      },
     ]);
   });
 });

@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
-import { GlassPressable } from "./GlassPressable";
-import { GlassSurface } from "./GlassSurface";
+import { SurfacePressable } from "./SurfacePressable";
+import { SolidSurface } from "./SolidSurface";
 import type { SurfaceLayoutStyle } from "./surface-style";
 
 type ListRowSurfaceVariant = "grouped" | "standalone";
@@ -17,7 +17,6 @@ type ListRowSurfaceProps = Omit<ViewProps, "children" | "style"> & {
   readonly isLast?: boolean;
   readonly layoutStyle?: SurfaceLayoutStyle;
   readonly minHeight?: number;
-  readonly nativeGlass?: boolean;
   readonly onPress?: PressableProps["onPress"];
   readonly radius?: number;
   readonly selected?: boolean;
@@ -104,7 +103,6 @@ export function ListRowSurface({
   importantForAccessibility,
   isLast: _isLast = false,
   minHeight = 56,
-  nativeGlass = true,
   onPress,
   radius = 18,
   selected = false,
@@ -149,15 +147,14 @@ export function ListRowSurface({
         {...viewProps}
         {...surfaceA11yProps}
         className={className}
-        style={[contentStyleValue, layoutStyle]}
+        style={[contentStyleValue, outerLayoutStyle, rowLayoutStyle]}
       >
         {children}
       </View>
     ) : (
-      <GlassSurface
+      <SolidSurface
         {...viewProps}
         {...surfaceA11yProps}
-        nativeGlass={nativeGlass}
         padded={false}
         radius={radius}
         className={className}
@@ -176,14 +173,14 @@ export function ListRowSurface({
         >
           {children}
         </View>
-      </GlassSurface>
+      </SolidSurface>
     );
 
   if (onPress == null) return content;
 
   if (variant === "standalone") {
     return (
-      <GlassPressable
+      <SurfacePressable
         {...viewProps}
         testID={testID}
         onPress={onPress}
@@ -195,7 +192,6 @@ export function ListRowSurface({
         accessibilityRole={accessibilityRole ?? "button"}
         accessibilityState={{ ...accessibilityState, disabled, selected }}
         importantForAccessibility={importantForAccessibility}
-        nativeGlass={nativeGlass}
         radius={radius}
         surfaceClassName={className}
         surfaceLayoutStyle={surfaceLayoutStyle}
@@ -213,7 +209,7 @@ export function ListRowSurface({
         >
           {children}
         </View>
-      </GlassPressable>
+      </SurfacePressable>
     );
   }
 

@@ -15,11 +15,11 @@ import {
   type ViewStyle,
 } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
-import { getEntryTabTextStyle } from "./entry-tab-text-style";
 import { styles } from "./EntryScaffold.styles";
-import { GlassPressable } from "./GlassPressable";
-import { GlassSurface } from "./GlassSurface";
-import { useNumpadGlassStyles } from "./use-numpad-glass-styles";
+import { NUMPAD_SURFACE_RIPPLE_COLOR } from "./effect-tokens";
+import { SurfacePressable } from "./SurfacePressable";
+import { SegmentedControl } from "./SegmentedControl";
+import { useNumpadSurfaceStyles } from "./use-numpad-surface-styles";
 export { EntryField, EntryTextInputField } from "./EntryField";
 export type { EntryFieldProps } from "./EntryField";
 
@@ -46,23 +46,13 @@ const ENTRY_ROWS = [
 
 const ANDROID_TAB_BAR_HEIGHT = 64;
 const SWIPE_TAB_THRESHOLD = 56;
-const NUMPAD_RIPPLE_COLOR = "rgba(255, 255, 255, 0.42)";
-
-function getTabIndicatorColor(input: {
-  readonly accentGreen: string;
-  readonly accentRed: string;
-  readonly tab: EntryTab;
-  readonly tertiary: string;
-}) {
-  if (input.tab === "expense") return input.accentRed;
-  if (input.tab === "income") return input.accentGreen;
-  return input.tertiary;
-}
 
 type EntryNumpadButtonProps = {
   readonly accessibilityLabel?: string;
+  readonly backgroundColor?: string;
   readonly children: ReactNode;
   readonly disabled?: boolean;
+  readonly disabledOpacity?: number;
   readonly onPress?: () => void;
   readonly style: StyleProp<ViewStyle>;
   readonly testID?: string;
@@ -70,8 +60,10 @@ type EntryNumpadButtonProps = {
 
 function EntryNumpadButton({
   accessibilityLabel,
+  backgroundColor,
   children,
   disabled = false,
+  disabledOpacity = 0.45,
   onPress,
   style,
   testID,
@@ -94,22 +86,23 @@ function EntryNumpadButton({
   ];
 
   return (
-    <GlassPressable
+    <SurfacePressable
       testID={testID}
+      backgroundColor={backgroundColor}
       style={layoutStyle}
       surfaceLayoutStyle={surfaceLayoutStyle}
       radius={radius}
       padded={false}
       isInteractive
-      disabledOpacity={0.45}
-      android_ripple={{ color: NUMPAD_RIPPLE_COLOR, borderless: false }}
+      disabledOpacity={disabledOpacity}
+      android_ripple={{ color: NUMPAD_SURFACE_RIPPLE_COLOR, borderless: false }}
       disabled={disabled}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
       {children}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 
@@ -129,11 +122,8 @@ export function EntryScaffold({
   const primary = useThemeColor("primary");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
-  const accentRed = useThemeColor("accentRed");
-  const activeColor = getTabIndicatorColor({ accentGreen, accentRed, tab: activeTab, tertiary });
   const onAccent = useThemeColor("onAccent");
-  const { confirmKeySurfaceStyle, keySurfaceStyle, specialKeySurfaceStyle } =
-    useNumpadGlassStyles();
+  const { keySurfaceStyle, specialKeySurfaceStyle } = useNumpadSurfaceStyles();
   const { bottom, top } = useSafeAreaInsets();
   const tabBarHeight = Platform.OS === "ios" ? ANDROID_TAB_BAR_HEIGHT / 8 : ANDROID_TAB_BAR_HEIGHT;
   const tabBarClearance = tabBarHeight + Math.max(bottom, 16);
@@ -174,39 +164,35 @@ export function EntryScaffold({
       ]}
     >
       <AppAuroraBackground isDark={isDark} />
-      <GlassSurface padded={false} radius={999} style={styles.tabs}>
-        {tabs.map((tab) => {
-          const isActive = tab.key === activeTab;
-          return (
-            <Pressable
-              key={tab.key}
-              style={styles.tab}
-              onPress={() => onTabPress(tab.key)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
-            >
-              <Text
-                numberOfLines={1}
-                style={[styles.tabText, getEntryTabTextStyle({ activeColor, isActive, tertiary })]}
-              >
-                {tab.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </GlassSurface>
+      <SegmentedControl
+        options={tabs.map((tab) => ({ value: tab.key, label: tab.label }))}
+        value={activeTab}
+        onChange={onTabPress}
+        variant="detached"
+        style={styles.tabs}
+      />
 
       <GestureDetector gesture={tabSwipe}>
         <View style={styles.swipeArea}>
           <Pressable style={styles.amountArea} onPress={Keyboard.dismiss}>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.35}
-              style={[styles.amount, { color: primary }]}
+            <View
+              style={[
+                styles.amountBanner,
+                {
+                  backgroundColor: "transparent",
+                  borderColor: "transparent",
+                },
+              ]}
             >
-              {amount || "$0"}
-            </Text>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.35}
+                style={[styles.amount, { color: primary }]}
+              >
+                {amount || "$0"}
+              </Text>
+            </View>
           </Pressable>
 
           <View style={styles.fields}>{fields}</View>
@@ -227,17 +213,14 @@ export function EntryScaffold({
                         </EntryNumpadButton>
                         <EntryNumpadButton
                           testID="keyConfirm"
-                          style={[
-                            styles.key,
-                            confirmKeySurfaceStyle,
-                            {
-                              opacity: isConfirmDisabled ? 0.45 : 1,
-                            },
-                          ]}
+                          style={[styles.key, specialKeySurfaceStyle]}
+                          backgroundColor={isConfirmDisabled ? undefined : accentGreen}
                           disabled={isConfirmDisabled}
+                          disabledOpacity={1}
                           onPress={isConfirmDisabled ? undefined : handleConfirmPress}
+                          accessibilityLabel={t("common.confirm")}
                         >
-                          <Check size={22} color={onAccent} />
+                          <Check size={22} color={isConfirmDisabled ? tertiary : onAccent} />
                         </EntryNumpadButton>
                       </View>
                     );

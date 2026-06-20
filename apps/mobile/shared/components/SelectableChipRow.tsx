@@ -3,8 +3,6 @@ import type { AccessibilityRole, StyleProp, ViewProps, ViewStyle } from "react-n
 import { View } from "@/shared/components/rn";
 import { Chip } from "./Chip";
 
-type SelectableChipRowTone = "neutral" | "primary" | "success" | "danger" | "warning";
-
 type SelectableChipOption<TValue extends string> = {
   readonly value: TValue;
   readonly label: string;
@@ -17,8 +15,6 @@ type SelectableChipRowProps<TValue extends string> = Omit<ViewProps, "children">
   readonly options: readonly SelectableChipOption<TValue>[];
   readonly value: TValue | null;
   readonly onChange: (value: TValue) => void;
-  readonly selectedTone?: SelectableChipRowTone;
-  readonly unselectedTone?: SelectableChipRowTone;
   readonly optionAccessibilityRole?: AccessibilityRole;
   readonly className?: string;
   readonly chipClassName?: string;
@@ -30,8 +26,6 @@ export function SelectableChipRow<TValue extends string>({
   options,
   value,
   onChange,
-  selectedTone = "success",
-  unselectedTone = "neutral",
   optionAccessibilityRole,
   className,
   chipClassName,
@@ -51,7 +45,7 @@ export function SelectableChipRow<TValue extends string>({
             label={option.label}
             leading={option.leading}
             selected={selected}
-            tone={selected ? selectedTone : unselectedTone}
+            dimmed={value !== null && !selected && !option.disabled}
             onPress={() => {
               if (!option.disabled && option.value !== value) {
                 onChange(option.value);
@@ -70,4 +64,4 @@ export function SelectableChipRow<TValue extends string>({
   );
 }
 
-export type { SelectableChipOption, SelectableChipRowProps, SelectableChipRowTone };
+export type { SelectableChipOption, SelectableChipRowProps };

@@ -49,11 +49,12 @@ describe("Tab layout", () => {
     expect(financeSource).not.toContain("ProfileAvatarButton");
   });
 
-  test("removes native header shadows from visible tab headers", () => {
+  test("keeps primary tab stack headers hidden", () => {
     const [homeSource, , , , financeSource] = primaryStackLayoutSources;
 
     expect(homeSource).toContain("headerShown: false");
-    expect(financeSource).toContain('headerTransparent: Platform.OS === "ios"');
+    expect(financeSource).toContain("headerShown: false");
+    expect(financeSource).not.toContain("headerTransparent");
     expect(financeSource).toContain("headerShadowVisible: false");
   });
 

@@ -53,7 +53,7 @@ export const EmailConnectBanner = ({
           label={t("emailCapture.connectProviders.outlook")}
           onPress={() => onConnect("outlook")}
           variant="secondary"
-          icon={<Mail size={18} color="#4A90D9" />}
+          icon={<Mail size={18} color={iconColor} />}
           className="h-11 flex-1 rounded-icon"
         />
       </View>

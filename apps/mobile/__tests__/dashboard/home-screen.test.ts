@@ -22,6 +22,10 @@ const homeModelSource = readSource(
 const activityItemSource = readSource(
   "../../features/dashboard/components/home-screen/ActivityFeedItem.tsx"
 );
+const homeSpendingCardSource = readSource(
+  "../../features/dashboard/components/home-screen/HomeSpendingCard.tsx"
+);
+const categoryBarColorsSource = readSource("../../shared/categories/bar-colors.ts");
 const auroraBackgroundSource = readSource("../../shared/components/AppAuroraBackground.tsx");
 
 test("keeps HomeScreen routed through the extracted dashboard modules", () => {
@@ -36,7 +40,6 @@ test("keeps home header actions wired through ScreenLayout", () => {
 
   expect(contentSource).toContain("HomeScreenActions");
   expect(contentSource).toContain("ProfileAvatarButton");
-  expect(contentSource).toContain("includesNativeHeader={false}");
   expect(contentSource).toContain("rightActions={headerActions}");
   expect(layoutSource).not.toContain("HomeScreenActions");
   expect(layoutSource).not.toContain("headerRight");
@@ -64,21 +67,39 @@ test("keeps activity item rendering memo-safe for edit and delete handlers", () 
 });
 
 test("keeps the home feed aurora background visible behind section headers and row cards", () => {
-  const dateHeaderSource = readSource("../../features/dashboard/components/DateHeader.tsx");
+  const dateHeaderSource = readSource("../../shared/components/ListDateHeader.tsx");
   const transactionRowSource = readSource("../../shared/components/TransactionRow.tsx");
   const listRowSurfaceSource = readSource("../../shared/components/ListRowSurface.tsx");
 
   expect(dateHeaderSource).not.toContain("bg-page");
   expect(dateHeaderSource).not.toContain("dark:bg-page-dark");
+  expect(activityItemSource).toContain("<ListDateHeader");
   expect(activityItemSource).not.toContain("activityCard");
   expect(transactionRowSource).toContain("<ListRowSurface");
-  expect(listRowSurfaceSource).toContain("<GlassSurface");
+  expect(listRowSurfaceSource).toContain("<SolidSurface");
   expect(transactionRowSource).toContain("styles.rowSurface");
 });
 
 test("keeps category emoji icons unbacked in transaction activity rows", () => {
+  expect(activityItemSource).toContain("useAvailableCategoryMap");
+  expect(activityItemSource).toContain("categoryById.get(tx.categoryId)");
+  expect(activityItemSource).not.toContain("CATEGORY_MAP");
   expect(activityItemSource).toContain('iconBgColor="transparent"');
   expect(activityItemSource).toContain("iconBgColor={accentGreenLight}");
+});
+
+test("keeps monthly spending category bars on local light solid backgrounds", () => {
+  expect(homeSpendingCardSource).toContain("<FlatList");
+  expect(homeSpendingCardSource).toContain("horizontal");
+  expect(homeSpendingCardSource).toContain("showsHorizontalScrollIndicator={false}");
+  expect(homeSpendingCardSource).toContain("getCategoryBarBackgroundColor");
+  expect(categoryBarColorsSource).toContain("CATEGORY_BAR_BACKGROUND_COLORS");
+  expect(categoryBarColorsSource).toContain('clothing: "#D8E2EF"');
+  expect(categoryBarColorsSource).toContain('entertainment: "#CBB7E8"');
+  expect(categoryBarColorsSource).toContain('food: "#C4D6A4"');
+  expect(categoryBarColorsSource).toContain('health: "#BFEAD8"');
+  expect(homeSpendingCardSource).toContain("function CategoryBar");
+  expect(homeSpendingCardSource).not.toContain("<Surface");
 });
 
 test("keeps the aurora blur mobile-friendly", () => {

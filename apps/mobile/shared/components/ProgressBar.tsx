@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { StyleSheet, useWindowDimensions, View, type ViewStyle } from "@/shared/components/rn";
 import { useAnimatedProgress, useThemeColor } from "@/shared/hooks";
+import { NUMPAD_SURFACE_RIPPLE_COLOR } from "./effect-tokens";
 
 type Props = {
   readonly percent: number;
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
   track: { borderRadius: 4, overflow: "hidden", position: "relative" },
   fill: { borderRadius: 4, transformOrigin: "left center", width: "100%" },
   shimmer: {
-    backgroundColor: "rgba(255, 255, 255, 0.42)",
+    backgroundColor: NUMPAD_SURFACE_RIPPLE_COLOR,
     borderRadius: 4,
     position: "absolute",
     top: 0,

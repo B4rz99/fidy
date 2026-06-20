@@ -9,7 +9,8 @@ type StatusPillProps = {
 
 export function StatusPill({ label, tone }: StatusPillProps) {
   const accentGreen = useThemeColor("accentGreen");
-  const textColor = tone === "green" ? accentGreen : "#C46A2B";
+  const warning = useThemeColor("warning");
+  const textColor = tone === "green" ? accentGreen : warning;
   return (
     <Surface
       radius={12}

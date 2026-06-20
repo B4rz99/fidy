@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
+import { useAvailableCategoryMap } from "@/features/categories/hooks.public";
 import {
   deleteBill,
   markBillPaid,
@@ -28,7 +29,6 @@ import { Alert, Platform, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
 import { captureError, toIsoDate } from "@/shared/lib";
-import { useNativeHeaderHeight } from "@/shared/navigation/use-native-header-height";
 import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
 
 type FinanceTab = "calendar" | "goals" | "analytics";
@@ -55,7 +55,6 @@ function SegmentControl({
       options={tabs}
       value={active}
       onChange={onSwitch}
-      tone="success"
       variant="detached"
       style={styles.headerSegment}
     />
@@ -68,10 +67,9 @@ function FinanceCalendarPanel() {
   const currentMonth = useCalendarStore((s) => s.currentMonth);
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
+  const categoryById = useAvailableCategoryMap();
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
-  const nativeHeaderHeight = useNativeHeaderHeight();
-  const headerClearance = Platform.OS === "ios" ? nativeHeaderHeight : 0;
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 
@@ -132,10 +130,10 @@ function FinanceCalendarPanel() {
       <CalendarMonthBoard
         currentMonth={currentMonth}
         bills={bills}
+        categoryById={categoryById}
         payments={payments}
         cellMinHeight={54}
         paddingBottom={tabBarClearance}
-        paddingTop={headerClearance}
         onBillDelete={handleDeleteBill}
         onBillEdit={handleEditBill}
         onBillPaymentToggle={handleToggleBillPaid}
@@ -176,7 +174,6 @@ export default function FinanceScreen() {
 
   return (
     <ScreenLayout
-      includesNativeHeader={false}
       centerAction={<SegmentControl active={activeTab} onSwitch={setActiveTab} />}
       rightActions={rightAction}
     >

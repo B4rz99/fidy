@@ -1,5 +1,7 @@
-import { Surface, MetricCard } from "@/shared/components";
-import { StyleSheet, Text, View } from "@/shared/components/rn";
+import { useAvailableCategories } from "@/features/categories/hooks.public";
+import { getCategoryBarBackgroundColor } from "@/shared/categories";
+import { MetricCard } from "@/shared/components";
+import { FlatList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import type { CategorySpendingItem } from "./useHomeScreen";
 import { deriveHomeSpendingCardModel } from "./HomeSpendingCard.model";
@@ -21,8 +23,10 @@ export function HomeSpendingCard({
   onPress,
 }: HomeSpendingCardProps) {
   const { t, locale } = useTranslation();
+  const categories = useAvailableCategories();
   const model = deriveHomeSpendingCardModel({
     balance,
+    categories,
     categorySpending,
     locale,
     monthlyBudget,
@@ -55,31 +59,34 @@ export function HomeSpendingCard({
             {model.guidance}
           </Text>
         </View>
-        <View style={styles.categoryRibbon} accessibilityLabel={t("dashboard.categoryBars")}>
-          {model.bars.map((bar) => {
+        <FlatList
+          horizontal
+          accessibilityLabel={t("dashboard.categoryBars")}
+          data={model.bars}
+          keyExtractor={homeCategoryBarKeyExtractor}
+          renderItem={({ item: bar }) => {
             const height =
               CATEGORY_BAR_MIN_HEIGHT +
               (bar.percentage / 100) * (CATEGORY_BAR_MAX_HEIGHT - CATEGORY_BAR_MIN_HEIGHT);
 
             return (
               <View
-                key={bar.categoryId}
                 style={styles.categoryBarContainer}
                 accessible
                 accessibilityLabel={`${bar.label}, ${bar.amountLabel}`}
               >
-                <Surface
-                  backgroundColor={bar.color}
-                  radius={8}
-                  padded={false}
-                  style={[styles.categoryBar, { height }]}
-                >
-                  <Text style={styles.categoryBarIcon}>{bar.icon}</Text>
-                </Surface>
+                <CategoryBar
+                  backgroundColor={getCategoryBarBackgroundColor(bar.categoryId, bar.color)}
+                  height={height}
+                  icon={bar.icon}
+                />
               </View>
             );
-          })}
-        </View>
+          }}
+          contentContainerStyle={styles.categoryRibbonContent}
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryRibbon}
+        />
         <View className="flex-row gap-4">
           <View className="flex-1 flex-row items-baseline gap-2">
             <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark">
@@ -103,23 +110,40 @@ export function HomeSpendingCard({
   );
 }
 
+const homeCategoryBarKeyExtractor = (bar: { readonly categoryId: string }) => bar.categoryId;
+
+type CategoryBarProps = {
+  readonly backgroundColor: string;
+  readonly height: number;
+  readonly icon: string;
+};
+
+function CategoryBar({ backgroundColor, height, icon }: CategoryBarProps) {
+  return (
+    <View style={[styles.categoryBar, { backgroundColor, height }]}>
+      <Text style={styles.categoryBarIcon}>{icon}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   categoryRibbon: {
     height: CATEGORY_BAR_MAX_HEIGHT + 6,
+  },
+  categoryRibbonContent: {
     flexDirection: "row",
     alignItems: "flex-end",
-    justifyContent: "space-between",
     gap: 7,
     paddingTop: 6,
+    paddingRight: 2,
   },
   categoryBarContainer: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "flex-end",
+    width: 44,
   },
   categoryBar: {
     width: "100%",
-    maxWidth: 44,
     minHeight: CATEGORY_BAR_MIN_HEIGHT,
     alignItems: "center",
     justifyContent: "flex-start",

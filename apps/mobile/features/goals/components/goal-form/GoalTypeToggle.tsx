@@ -18,7 +18,6 @@ export function GoalTypeToggle({ goalType, onChange }: GoalTypeToggleProps) {
       ]}
       value={goalType}
       onChange={onChange}
-      getOptionTone={(type) => (type === "debt" ? "danger" : "success")}
       variant="detached"
     />
   );

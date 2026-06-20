@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
-import { GlassSurface } from "./GlassSurface";
+import { SolidSurface } from "./SolidSurface";
 import { Pressable, View } from "./rn";
 import type { SurfaceLayoutStyle } from "./surface-style";
 
@@ -49,7 +49,7 @@ export function Card({
   const innerClassName = `${resolvedContentClassName} ${disabled ? "opacity-60" : ""}`;
   const surfaceViewProps = onPress == null ? viewProps : surfaceProps;
   const surface = (
-    <GlassSurface
+    <SolidSurface
       {...surfaceViewProps}
       isInteractive={onPress != null && !disabled}
       padded={false}
@@ -59,7 +59,7 @@ export function Card({
       <View className={innerClassName} style={contentStyle}>
         {children}
       </View>
-    </GlassSurface>
+    </SolidSurface>
   );
 
   if (onPress == null) {

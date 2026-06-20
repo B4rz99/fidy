@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { Category, CategoryId } from "@/shared/categories";
 import { Surface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -10,12 +11,20 @@ import { CalendarDayCell } from "./CalendarDayCell";
 type Props = {
   currentMonth: Date;
   bills: readonly Bill[];
+  categoryById: ReadonlyMap<CategoryId, Category>;
   payments: readonly BillPayment[];
   cellMinHeight?: number;
   onDayPress: (date: Date) => void;
 };
 
-export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onDayPress }: Props) {
+export function CalendarGrid({
+  currentMonth,
+  bills,
+  categoryById,
+  payments,
+  cellMinHeight,
+  onDayPress,
+}: Props) {
   const { t } = useTranslation();
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -93,6 +102,7 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
               day={cell.day}
               date={cell.date}
               bills={cell.date ? (billsByDate.get(cell.date.toISOString()) ?? []) : []}
+              categoryById={categoryById}
               paidBillIds={
                 cell.date
                   ? (paidBillIdsByDate.get(cell.date.toISOString()) ?? new Set())

@@ -3,8 +3,8 @@ import type { PressableProps, StyleProp, ViewStyle } from "react-native";
 import { Modal, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { Button } from "./Button";
-import { GlassPressable } from "./GlassPressable";
-import { GlassSurface } from "./GlassSurface";
+import { SurfacePressable } from "./SurfacePressable";
+import { SolidSurface } from "./SolidSurface";
 
 type DialogFrameProps = {
   readonly children: ReactNode;
@@ -70,14 +70,14 @@ export function DialogPanel({ children, maxHeight, showHandle = false, style }: 
   );
 
   return (
-    <GlassSurface
+    <SolidSurface
       padded={false}
       radius={24}
       style={panelStyle}
       onStartShouldSetResponder={() => true}
     >
       {content}
-    </GlassSurface>
+    </SolidSurface>
   );
 }
 
@@ -103,9 +103,9 @@ export function DialogCancelButton({ onPress }: { readonly onPress: () => void }
   );
 
   return (
-    <GlassPressable onPress={onPress} radius={16} surfaceLayoutStyle={buttonStyle}>
+    <SurfacePressable onPress={onPress} radius={16} surfaceLayoutStyle={buttonStyle}>
       {label}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 

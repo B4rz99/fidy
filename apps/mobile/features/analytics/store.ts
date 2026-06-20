@@ -5,6 +5,7 @@ import type { UserId } from "@/shared/types/branded";
 import type {
   AnalyticsPeriod,
   CategoryBreakdownItem,
+  CategoryExpenseItem,
   IncomeExpenseResult,
   PeriodDelta,
 } from "./lib/derive";
@@ -20,6 +21,7 @@ type AnalyticsState = {
   readonly period: AnalyticsPeriod;
   readonly incomeExpense: IncomeExpenseResult | null;
   readonly categoryBreakdown: readonly CategoryBreakdownItem[];
+  readonly categoryExpenses: readonly CategoryExpenseItem[];
   readonly periodDelta: PeriodDelta | null;
   readonly isLoading: boolean;
 };
@@ -36,6 +38,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set)
   period: "M",
   incomeExpense: null,
   categoryBreakdown: [],
+  categoryExpenses: [],
   periodDelta: null,
   isLoading: false,
 
@@ -44,6 +47,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set)
       activeUserId: userId,
       incomeExpense: null,
       categoryBreakdown: [],
+      categoryExpenses: [],
       periodDelta: null,
       isLoading: false,
     }),
@@ -54,6 +58,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set)
     set({
       incomeExpense: snapshot.incomeExpense,
       categoryBreakdown: snapshot.categoryBreakdown,
+      categoryExpenses: snapshot.categoryExpenses,
       periodDelta: snapshot.periodDelta,
       isLoading: false,
     }),

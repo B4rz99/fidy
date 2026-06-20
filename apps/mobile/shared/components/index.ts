@@ -5,7 +5,9 @@ export type { AddActionButtonProps } from "./AddActionButton";
 export { Button } from "./Button";
 export { Callout } from "./Callout";
 export { Card } from "./Card";
-export type { GlassCardTokens } from "./card-tokens";
+export { CategoryIconButton } from "./CategoryIconButton";
+export type { CategoryIconButtonProps, CategoryIconButtonVariant } from "./CategoryIconButton";
+export type { SurfaceTokens } from "./surface-tokens";
 export { Chip } from "./Chip";
 export { ChoiceTray } from "./ChoiceTray";
 export { DatePickerControl } from "./DatePickerControl";
@@ -38,13 +40,17 @@ export { FormTextField } from "./FormTextField";
 export type { FormTextFieldProps } from "./FormTextField";
 export { FormScreen } from "./FormScreen";
 export { FormSection } from "./FormSection";
-export { GlassSurface } from "./GlassSurface";
-export { GlassPressable } from "./GlassPressable";
-export type { GlassPressableProps } from "./GlassPressable";
+export { SolidSurface } from "./SolidSurface";
+export { SolidScreenHeader } from "./SolidScreenHeader";
+export type { SolidScreenHeaderProps } from "./SolidScreenHeader";
+export { SurfacePressable } from "./SurfacePressable";
+export type { SurfacePressableProps } from "./SurfacePressable";
 export { IconActionButton } from "./IconActionButton";
 export type { IconActionButtonProps, IconActionButtonTone } from "./IconActionButton";
 export { ListRowSurface } from "./ListRowSurface";
 export type { ListRowSurfaceProps, ListRowSurfaceVariant } from "./ListRowSurface";
+export { ListDateHeader } from "./ListDateHeader";
+export type { ListDateHeaderProps } from "./ListDateHeader";
 export { MonthNavigator } from "./MonthNavigator";
 export type { MonthNavigatorProps } from "./MonthNavigator";
 export { MoneyAmountDisplay } from "./MoneyAmountDisplay";
@@ -72,20 +78,17 @@ export { PinnedFormStack } from "./PinnedFormStack";
 export { CustomTabBar } from "./navigation/CustomTabBar";
 export { DialogRouteFrame } from "./DialogRouteFrame";
 export { ProgressBar } from "./ProgressBar";
+export { RaisedPressable, RaisedSurface } from "./RaisedSurface";
+export type { RaisedPressableProps, RaisedSurfaceProps } from "./RaisedSurface";
 export { Row } from "./Row";
 export { SegmentedControl } from "./SegmentedControl";
 export type {
   SegmentedControlOption,
   SegmentedControlProps,
-  SegmentedControlTone,
   SegmentedControlVariant,
 } from "./SegmentedControl";
 export { SelectableChipRow } from "./SelectableChipRow";
-export type {
-  SelectableChipOption,
-  SelectableChipRowProps,
-  SelectableChipRowTone,
-} from "./SelectableChipRow";
+export type { SelectableChipOption, SelectableChipRowProps } from "./SelectableChipRow";
 export { HEADER_HEIGHT, ScreenLayout, TAB_BAR_CLEARANCE } from "./ScreenLayout";
 export { ScreenShell } from "./ScreenShell";
 export type { ScreenShellProps } from "./ScreenShell";

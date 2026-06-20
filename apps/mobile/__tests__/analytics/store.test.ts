@@ -33,6 +33,7 @@ function makeAnalyticsSnapshot() {
       net: 300000 as CopAmount,
       netIsPositive: true,
     },
+    categoryExpenses: [],
     categoryBreakdown: [
       { categoryId: "food" as CategoryId, total: 200000 as CopAmount, percent: 100 },
     ],
@@ -53,6 +54,7 @@ describe("analytics store boundary", () => {
       period: "M",
       incomeExpense: null,
       categoryBreakdown: [],
+      categoryExpenses: [],
       periodDelta: null,
       isLoading: false,
     });
@@ -74,6 +76,7 @@ describe("analytics store boundary", () => {
       activeUserId: "user-2",
       incomeExpense: null,
       categoryBreakdown: [],
+      categoryExpenses: [],
       periodDelta: null,
       isLoading: false,
     });
@@ -88,6 +91,7 @@ describe("analytics store boundary", () => {
         netIsPositive: true,
       },
       categoryBreakdown: [],
+      categoryExpenses: [],
       periodDelta: {
         totalDelta: 0 as CopAmount,
         totalDeltaPercent: 0,

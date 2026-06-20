@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Button, Surface } from "@/shared/components";
-import { Modal, Pressable, Text, View } from "@/shared/components/rn";
+import { Modal, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 
@@ -44,6 +44,7 @@ export const CelebrationModal = memo(function CelebrationModal({
 }: CelebrationModalProps) {
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
+  const modalBackdrop = useThemeColor("modalBackdrop");
   const textPrimary = useThemeColor("primary");
   const textSecondary = useThemeColor("secondary");
 
@@ -58,7 +59,7 @@ export const CelebrationModal = memo(function CelebrationModal({
       <View
         style={{
           flex: 1,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: `${modalBackdrop}80`,
           justifyContent: "center",
           alignItems: "center",
           padding: 32,

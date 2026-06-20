@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useTranslation } from "@/shared/hooks";
 import { parseOptionalIsoDate } from "@/shared/lib";
 import type { Goal } from "../../schema";
@@ -12,6 +13,7 @@ type GoalEditScreenLoadedProps = {
 };
 
 export function GoalEditScreenLoaded({ goal, goalId }: GoalEditScreenLoadedProps) {
+  const { back } = useRouter();
   const { t } = useTranslation();
   const form = useGoalForm({
     initialDigits: String(goal.targetAmount),
@@ -23,7 +25,7 @@ export function GoalEditScreenLoaded({ goal, goalId }: GoalEditScreenLoadedProps
   const editActions = useGoalEditActions(goal, goalId, form);
 
   return (
-    <GoalForm form={form}>
+    <GoalForm form={form} headerTitle={t("goals.edit.title")} onBack={back}>
       <GoalFormActionButton
         label={t("goals.edit.saveChanges")}
         busy={editActions.isSaving}

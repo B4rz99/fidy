@@ -52,11 +52,11 @@ vi.mock("@/features/calendar/lib/repository", () => ({
   updateBill: mocks.updateBill,
 }));
 
-vi.mock("@/features/categories/lib/repository", () => ({
+vi.mock("@/infrastructure/local-ledger/category-storage", () => ({
   insertUserCategory: mocks.insertUserCategory,
 }));
 
-vi.mock("@/features/goals/lib/repository", () => ({
+vi.mock("@/infrastructure/local-ledger/goal-storage", () => ({
   insertGoal: mocks.insertGoal,
   insertContribution: mocks.insertContribution,
   softDeleteGoal: mocks.softDeleteGoal,
@@ -64,7 +64,7 @@ vi.mock("@/features/goals/lib/repository", () => ({
   updateGoal: mocks.updateGoal,
 }));
 
-vi.mock("@/features/budget/lib/repository", () => ({
+vi.mock("@/infrastructure/local-ledger/budget-storage", () => ({
   insertBudget: mocks.insertBudget,
   updateBudgetAmount: mocks.updateBudgetAmount,
   softDeleteBudget: mocks.softDeleteBudget,

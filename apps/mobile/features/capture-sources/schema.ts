@@ -38,15 +38,6 @@ export const KNOWN_BANK_PACKAGES: readonly {
   { packageName: "com.rappi.card", label: "RappiCard" },
 ];
 
-const KNOWN_BANK_SMS_SENDERS = [
-  "Bancolombia",
-  "BBVA",
-  "Davivienda",
-  "Nequi",
-  "Daviplata",
-  "RappiCard",
-] as const;
-
 /**
  * Resolves the transaction source based on Android package name.
  * Google Wallet gets its own source; everything else is notification_android.

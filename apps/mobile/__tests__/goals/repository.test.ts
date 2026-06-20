@@ -8,12 +8,14 @@ import {
   getContributionsForGoal,
   getGoalCurrentAmount,
   getGoalsForUser,
+} from "@/features/goals/public";
+import {
   insertContribution,
   insertGoal,
   softDeleteContribution,
   softDeleteGoal,
   updateGoal,
-} from "@/features/goals/public";
+} from "@/infrastructure/local-ledger/goal-storage";
 import type { AnyDb } from "@/shared/db";
 
 let sqlite: InstanceType<typeof Database>;

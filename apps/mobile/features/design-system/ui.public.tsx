@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import {
   Button,
@@ -21,7 +21,6 @@ export function DesignSystemScreen() {
 
   return (
     <ScreenLayout variant="sub" title={t("designSystem.title")} onBack={back}>
-      <Stack.Screen options={{ title: t("designSystem.title") }} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 48 }}
@@ -58,7 +57,7 @@ export function DesignSystemScreen() {
           <View className="p-4" style={{ gap: 12 }}>
             <View className="flex-row" style={{ gap: 12 }}>
               <ColorSwatch label="accent" className="bg-accent-green dark:bg-accent-green-dark" />
-              <GlassSwatch label="glass" />
+              <SurfaceSwatch label="surface" />
               <ColorSwatch label="peach" className="bg-peach-light dark:bg-peach-light-dark" />
             </View>
             <View className="flex-row" style={{ gap: 12 }}>
@@ -156,7 +155,7 @@ function ColorSwatch({
   );
 }
 
-function GlassSwatch({ label }: { label: string }) {
+function SurfaceSwatch({ label }: { label: string }) {
   return (
     <View className="flex-1" style={{ gap: 6 }}>
       <Surface padded={false} radius={12} style={{ height: 48 }}>

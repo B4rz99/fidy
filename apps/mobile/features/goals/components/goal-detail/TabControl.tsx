@@ -16,9 +16,9 @@ export function TabControl(props: {
         value: tab,
         label: t(`goals.detail.${tab}`),
       }))}
+      variant="detached"
       value={props.activeTab}
       onChange={props.onTabChange}
-      tone="success"
     />
   );
 }

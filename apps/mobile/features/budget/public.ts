@@ -18,14 +18,7 @@ export { createBudgetMonitoringModule } from "./lib/monitoring";
 export type { ScheduleResult } from "./lib/notifications";
 export { scheduleBudgetAlert } from "./lib/notifications";
 export type { BudgetRow } from "./lib/repository";
-export {
-  copyBudgetsToMonth,
-  getBudgetById,
-  getBudgetsForMonth,
-  insertBudget,
-  softDeleteBudget,
-  updateBudgetAmount,
-} from "./lib/repository";
+export { getBudgetById, getBudgetsForMonth } from "./lib/repository";
 export type { Budget, CreateBudgetInput } from "./schema";
 export { createBudgetSchema } from "./schema";
 export { subscribeBudgetToTransactions } from "./services/subscribe-budget-to-transactions";

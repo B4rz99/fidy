@@ -53,7 +53,6 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
       title="fidy"
       leftAction={<ProfileAvatarButton size={36} />}
       rightActions={headerActions}
-      includesNativeHeader={false}
     >
       <View className="flex-1 overflow-hidden">
         <FlashList

@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   percentText: {
-    color: "#0D0D0D",
     fontFamily: "Poppins_700Bold",
     fontSize: 12,
   },

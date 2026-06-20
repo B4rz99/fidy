@@ -21,6 +21,7 @@ export function QaLauncherScreen() {
   const localQaAvailable = isLocalQaAvailable();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
+  const danger = useThemeColor("danger");
   const [errorKey, dispatchQaError] = useReducer(qaLauncherErrorReducer, null);
   const lastLaunchRequest = useRef<string | null>(null);
   const { profile: rawProfile, targetKey: rawTargetKey } = useLocalSearchParams<{
@@ -83,7 +84,7 @@ export function QaLauncherScreen() {
           </Text>
         ) : null}
         {errorKey ? (
-          <Text style={{ fontFamily: "Poppins_500Medium", fontSize: 13, color: "#C0392B" }}>
+          <Text style={{ fontFamily: "Poppins_500Medium", fontSize: 13, color: danger }}>
             {t(errorKey)}
           </Text>
         ) : null}

@@ -1,10 +1,6 @@
 import { migrate } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
-import {
-  initializeBudgetSession,
-  insertBudget,
-  loadBudgetsForUser,
-} from "@/features/budget/public";
+import { initializeBudgetSession, loadBudgetsForUser } from "@/features/budget/public";
 import { useCaptureSourcesStore } from "@/features/capture-sources/store.public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { upsertFinancialAccount } from "@/features/financial-accounts/write.public";
@@ -76,10 +72,8 @@ export async function startLocalQaSession(profile: LocalQaProfile = "default") {
   seed.financialAccounts.forEach((account) => {
     upsertFinancialAccount(db, account);
   });
-  seed.budgets.forEach((budget) => {
-    insertBudget(db, budget);
-  });
   seedLocalLedgerRowsForQa(db, {
+    budgets: seed.budgets,
     transactions: seed.transactions,
     transfers: seed.transfers,
   });

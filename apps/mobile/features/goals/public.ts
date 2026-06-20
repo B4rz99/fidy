@@ -22,11 +22,6 @@ export {
   getContributionsForGoal,
   getGoalCurrentAmount,
   getGoalsForUser,
-  insertContribution,
-  insertGoal,
-  softDeleteContribution,
-  softDeleteGoal,
-  updateGoal,
 } from "./lib/repository";
 export type {
   AddContributionInput,

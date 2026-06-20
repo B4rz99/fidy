@@ -1,11 +1,17 @@
 type ChatShellInsetInput = {
   readonly composerHeight: number;
-  readonly safeBottom: number;
+  readonly composerBottomOffset: number;
 };
 
 type ChatComposerBottomOffsetInput = {
   readonly keyboardVisible: boolean;
+  readonly keyboardOverlap: number;
   readonly safeBottom: number;
+};
+
+type ChatKeyboardOverlapInput = {
+  readonly keyboardTopY: number | null;
+  readonly shellBottomY: number | null;
 };
 
 type ScrollToBottomVisibilityInput = {
@@ -20,20 +26,27 @@ const SCROLL_BUTTON_GAP = 12;
 
 export const getChatShellBottomInset = ({
   composerHeight,
-  safeBottom,
+  composerBottomOffset,
 }: ChatShellInsetInput): number =>
-  Math.max(composerHeight, MIN_COMPOSER_HEIGHT) + safeBottom + LIST_COMPOSER_GAP;
+  Math.max(composerHeight, MIN_COMPOSER_HEIGHT) + composerBottomOffset + LIST_COMPOSER_GAP;
 
 export const getScrollButtonBottomOffset = ({
   composerHeight,
-  safeBottom,
+  composerBottomOffset,
 }: ChatShellInsetInput): number =>
-  getChatShellBottomInset({ composerHeight, safeBottom }) + SCROLL_BUTTON_GAP;
+  getChatShellBottomInset({ composerHeight, composerBottomOffset }) + SCROLL_BUTTON_GAP;
+
+export const getChatKeyboardOverlap = ({
+  keyboardTopY,
+  shellBottomY,
+}: ChatKeyboardOverlapInput): number =>
+  keyboardTopY == null || shellBottomY == null ? 0 : Math.max(0, shellBottomY - keyboardTopY);
 
 export const getChatComposerBottomOffset = ({
   keyboardVisible,
+  keyboardOverlap,
   safeBottom,
-}: ChatComposerBottomOffsetInput): number => (keyboardVisible ? 0 : safeBottom);
+}: ChatComposerBottomOffsetInput): number => (keyboardVisible ? keyboardOverlap : safeBottom);
 
 export const shouldRenderScrollToBottom = ({
   hasListContent,

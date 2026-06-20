@@ -35,6 +35,7 @@ type CreateTransactionMutationServiceDeps = {
     readonly now: Date;
   }) => Promise<{ readonly success: true } | { readonly success: false; readonly error: string }>;
   refresh: () => Promise<void>;
+  cacheCommittedTransaction?: (transaction: StoredTransaction) => void;
   resetForm: () => void;
   trackDeleted: () => void;
   trackEdited: (input: { category: string }) => void;
@@ -126,6 +127,7 @@ export function createTransactionMutationService(
         return result;
       }
 
+      deps.cacheCommittedTransaction?.(result.transaction);
       await deps.refresh();
       return result;
     },

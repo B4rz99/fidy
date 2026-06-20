@@ -1,4 +1,52 @@
-import type { TransactionActions, TransactionSetState } from "./state";
+import { toIsoDate, toMonth } from "@/shared/lib";
+import type { CopAmount } from "@/shared/types/branded";
+import type { StoredTransaction } from "../schema";
+import type { TransactionActions, TransactionSetState, TransactionState } from "./state";
+
+const addCopAmount = (left: number, right: number): CopAmount => (left + right) as CopAmount;
+
+function isCurrentMonthExpense(transaction: StoredTransaction, now: Date): boolean {
+  return transaction.type === "expense" && toMonth(transaction.date) === toMonth(now);
+}
+
+function isRecentDailyExpense(transaction: StoredTransaction, now: Date): boolean {
+  if (transaction.type !== "expense") return false;
+  const inclusiveThirtyDayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+  const transactionDate = toIsoDate(transaction.date);
+
+  return transactionDate >= toIsoDate(inclusiveThirtyDayStart) && transactionDate <= toIsoDate(now);
+}
+
+function upsertCategorySpending(
+  items: TransactionState["categorySpending"],
+  transaction: StoredTransaction
+): TransactionState["categorySpending"] {
+  const didUpdate = items.some((item) => item.categoryId === transaction.categoryId);
+  const nextItems = didUpdate
+    ? items.map((item) =>
+        item.categoryId === transaction.categoryId
+          ? { ...item, total: addCopAmount(item.total, transaction.amount) }
+          : item
+      )
+    : [...items, { categoryId: transaction.categoryId, total: transaction.amount }];
+
+  return nextItems.slice().sort((left, right) => right.total - left.total);
+}
+
+function upsertDailySpending(
+  items: TransactionState["dailySpending"],
+  transaction: StoredTransaction
+): TransactionState["dailySpending"] {
+  const date = toIsoDate(transaction.date);
+  const didUpdate = items.some((item) => item.date === date);
+  const nextItems = didUpdate
+    ? items.map((item) =>
+        item.date === date ? { ...item, total: addCopAmount(item.total, transaction.amount) } : item
+      )
+    : [...items, { date, total: transaction.amount }];
+
+  return nextItems.slice().sort((left, right) => left.date.localeCompare(right.date));
+}
 
 export function setTransactionPageSnapshot(
   set: TransactionSetState
@@ -54,11 +102,24 @@ export function createHydrateEditingTransaction(
 
 export function addTransactionToCache(set: TransactionSetState): TransactionActions["addToCache"] {
   return function addToCache(transaction) {
-    set((state) => ({
-      pages: [transaction, ...state.pages],
-      offset: state.offset + 1,
-      dataRevision: state.dataRevision + 1,
-    }));
+    const now = new Date();
+    set((state) => {
+      const isMonthlyExpense = isCurrentMonthExpense(transaction, now);
+      const isDailyExpense = isRecentDailyExpense(transaction, now);
+
+      return {
+        pages: [transaction, ...state.pages],
+        offset: state.offset + 1,
+        balance: isMonthlyExpense ? state.balance + transaction.amount : state.balance,
+        categorySpending: isMonthlyExpense
+          ? upsertCategorySpending(state.categorySpending, transaction)
+          : state.categorySpending,
+        dailySpending: isDailyExpense
+          ? upsertDailySpending(state.dailySpending, transaction)
+          : state.dailySpending,
+        dataRevision: state.dataRevision + 1,
+      };
+    });
   };
 }
 

@@ -1,5 +1,6 @@
 import { FormSection } from "@/shared/components/FormSection";
 import { FormTextField } from "@/shared/components/FormTextField";
+import { Tag } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountForm.styles";
@@ -52,6 +53,7 @@ export function FinancialAccountIdentifiersSection({
   return (
     <FormSection title={t("financialAccounts.detail.identifiersTitle")}>
       <FormTextField
+        icon={Tag}
         label={t("financialAccounts.identifierScreen.label")}
         value={manualIdentifierValue}
         onChangeText={setManualIdentifierValue}

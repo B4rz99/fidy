@@ -1,17 +1,21 @@
 import type { ReactNode } from "react";
-import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
+import type { PressableProps, StyleProp, TextStyle, ViewProps, ViewStyle } from "react-native";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassPressable } from "./GlassPressable";
+import { SurfacePressable } from "./SurfacePressable";
 
 type FilterPillProps = Omit<ViewProps, "children"> & {
   readonly label?: string;
   readonly leading?: ReactNode;
   readonly selected?: boolean;
+  readonly dimmed?: boolean;
   readonly onPress: PressableProps["onPress"];
   readonly selectedColor?: string;
+  readonly surfaceBackgroundColor?: string;
+  readonly selectedBackgroundColor?: string;
   readonly selectedTextColor?: string;
   readonly className?: string;
+  readonly labelStyle?: StyleProp<TextStyle>;
   readonly labelClassName?: string;
 };
 
@@ -40,6 +44,10 @@ function getSurfaceStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
   if (!flattened) return null;
 
   return {
+    flex: flattened.flex,
+    flexBasis: flattened.flexBasis,
+    flexGrow: flattened.flexGrow,
+    flexShrink: flattened.flexShrink,
     height: flattened.height,
     minHeight: flattened.minHeight,
     padding: flattened.padding,
@@ -57,10 +65,14 @@ export function FilterPill({
   label,
   leading,
   selected = false,
+  dimmed = false,
   onPress,
   selectedColor,
+  surfaceBackgroundColor,
+  selectedBackgroundColor,
   selectedTextColor,
   className,
+  labelStyle,
   labelClassName,
   style,
   ...viewProps
@@ -68,6 +80,9 @@ export function FilterPill({
   const accentGreen = useThemeColor("accentGreen");
   const primary = useThemeColor("primary");
   const selectedText = selectedColor ?? accentGreen;
+  const backgroundColor = selected
+    ? (selectedBackgroundColor ?? surfaceBackgroundColor)
+    : surfaceBackgroundColor;
   const pressableStyle = getPressableLayoutStyle(style);
   const surfaceStyle = getSurfaceStyle(style);
   const content = (
@@ -77,9 +92,8 @@ export function FilterPill({
         <Text
           className={`text-center font-poppins-medium text-caption ${labelClassName ?? ""}`}
           numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.82}
-          style={{ color: selected ? (selectedTextColor ?? selectedText) : primary }}
+          ellipsizeMode="tail"
+          style={[{ color: selected ? (selectedTextColor ?? selectedText) : primary }, labelStyle]}
         >
           {label}
         </Text>
@@ -88,17 +102,18 @@ export function FilterPill({
   );
 
   return (
-    <GlassPressable
+    <SurfacePressable
       {...viewProps}
       onPress={onPress}
       accessibilityState={{ ...viewProps.accessibilityState, selected }}
-      style={pressableStyle}
+      backgroundColor={backgroundColor}
+      style={[pressableStyle, dimmed ? styles.dimmed : null]}
       radius={999}
       surfaceClassName={className}
       surfaceLayoutStyle={[styles.surface, surfaceStyle]}
     >
       {content}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 
@@ -110,5 +125,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 32,
     paddingHorizontal: 12,
+    width: "100%",
+  },
+  dimmed: {
+    opacity: 0.4,
   },
 });

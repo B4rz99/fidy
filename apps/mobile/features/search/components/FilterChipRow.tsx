@@ -50,6 +50,7 @@ export const FilterChipRow = ({ filters, activePanel, onTogglePanel }: FilterChi
       <FilterChipItem
         id={chip.key}
         isActive={chip.isActive?.(filters) ?? false}
+        hasActiveFilters={CHIPS.some((item) => item.isActive?.(filters) ?? false)}
         isOpen={activePanel === chip.key}
         label={t(chip.labelKey)}
         onTogglePanel={onTogglePanel}

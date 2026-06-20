@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FidyNumpad } from "@/shared/components/FidyNumpad";
 import { Keyboard, Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { ScreenShell } from "./ScreenShell";
+import { SolidScreenHeader } from "./SolidScreenHeader";
 
 type NumpadFormScreenProps = {
   readonly children?: ReactNode;
@@ -12,7 +13,9 @@ type NumpadFormScreenProps = {
   readonly middleStyle?: StyleProp<ViewStyle>;
   readonly footer?: ReactNode;
   readonly footerStyle?: StyleProp<ViewStyle>;
+  readonly headerTitle?: string;
   readonly numpadVisible?: boolean;
+  readonly onBack?: () => void;
   readonly onKeyPress: (key: string) => void;
 };
 
@@ -23,23 +26,41 @@ export function NumpadFormScreen({
   middleStyle,
   footer,
   footerStyle,
+  headerTitle,
   numpadVisible = true,
+  onBack,
   onKeyPress,
 }: NumpadFormScreenProps) {
   const { bottom, top } = useSafeAreaInsets();
+  const hasHeader = headerTitle != null || onBack != null;
 
   return (
     <ScreenShell>
-      <Pressable accessible={false} style={styles.shell} onPress={Keyboard.dismiss}>
-        <View style={[styles.contentShell, { paddingTop: top + 72 }, contentStyle]}>
-          {children}
-        </View>
-        {middle ? <View style={[styles.middleShell, middleStyle]}>{middle}</View> : null}
-        <View style={[styles.bottomShell, { paddingBottom: Math.max(bottom, 16) }, footerStyle]}>
-          {footer}
-          {numpadVisible ? <FidyNumpad onKeyPress={onKeyPress} /> : null}
-        </View>
-      </Pressable>
+      <View style={styles.shell}>
+        {hasHeader ? <SolidScreenHeader title={headerTitle} onBack={onBack} /> : null}
+        <Pressable accessible={false} style={styles.shell} onPress={Keyboard.dismiss}>
+          <View
+            style={[styles.contentShell, { paddingTop: hasHeader ? 16 : top + 72 }, contentStyle]}
+          >
+            {children}
+          </View>
+          {middle ? <View style={[styles.middleShell, middleStyle]}>{middle}</View> : null}
+          <View style={[styles.bottomShell, { paddingBottom: Math.max(bottom, 16) }, footerStyle]}>
+            {footer}
+            {numpadVisible ? (
+              <FidyNumpad onKeyPress={onKeyPress} />
+            ) : (
+              <View
+                pointerEvents="none"
+                importantForAccessibility="no-hide-descendants"
+                style={styles.hiddenNumpad}
+              >
+                <FidyNumpad onKeyPress={onKeyPress} />
+              </View>
+            )}
+          </View>
+        </Pressable>
+      </View>
     </ScreenShell>
   );
 }
@@ -63,5 +84,8 @@ const styles = StyleSheet.create({
     overflow: "visible",
     paddingHorizontal: 16,
     paddingTop: 8,
+  },
+  hiddenNumpad: {
+    opacity: 0,
   },
 });

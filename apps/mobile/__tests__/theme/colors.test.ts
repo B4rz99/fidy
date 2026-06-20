@@ -51,6 +51,12 @@ describe("Colors", () => {
     expect(Colors.dark.accentGreen).toBe("#8BC34A");
   });
 
+  test("chart clothing stays visible over dark surfaces", () => {
+    expect(Colors.chart.clothing).toBe("#6D6D6D");
+    expect(Colors.chart.clothing).not.toBe(Colors.dark.card);
+    expect(Colors.chart.clothing).not.toBe(Colors.dark.nav);
+  });
+
   test("neutral text tokens use maximum contrast over aurora backgrounds", () => {
     expect(Colors.light.primary).toBe("#000000");
     expect(Colors.light.textPrimary).toBe("#000000");

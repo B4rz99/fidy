@@ -313,24 +313,6 @@ function seedDistinctTypedLlmHintEvidence() {
   });
 }
 
-function seedMerchantLikeTypedLlmHintEvidence() {
-  saveEvidenceRow("ce-merchant-hint-1", {
-    sourceFamily: "davibank",
-    evidenceType: "card_product_hint",
-    scope: "email:davibank:card_product_hint",
-    value: "rappi colombia",
-    processedSourceEventId: "pse-merchant-1" as ProcessedSourceEventId,
-  });
-  saveEvidenceRow("ce-merchant-hint-2", {
-    sourceFamily: "davibank",
-    evidenceType: "card_product_hint",
-    scope: "email:davibank:card_product_hint",
-    value: "rappi colombia",
-    processedSourceEventId: "pse-merchant-2" as ProcessedSourceEventId,
-    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
-  });
-}
-
 function seedCardProductHintEvidence() {
   saveEvidenceRow("ce-product-1", {
     sourceFamily: "davibank",

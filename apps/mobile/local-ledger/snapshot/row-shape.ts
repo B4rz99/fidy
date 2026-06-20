@@ -31,6 +31,8 @@ export const BACKUP_DATA_KEYS = [
   "transactions",
   "transfers",
   "userCategories",
+  "categoryIconOverrides",
+  "categoryColorOverrides",
   "financialAccounts",
   "openingBalances",
   "budgets",
@@ -110,6 +112,34 @@ const ROW_SPECS: readonly RowSpec[] = [
           userId: (value) => assertString(value, "userId"),
           name: (value) => assertString(value, "name"),
           iconName: (value) => assertString(value, "iconName"),
+          colorHex: (value) => assertString(value, "colorHex"),
+        })
+      ),
+  },
+  {
+    key: "categoryIconOverrides",
+    validate: (row) =>
+      assertRecordShape(
+        row,
+        "categoryIconOverrides",
+        validateBaseLedgerFields({
+          id: (value) => assertString(value, "id"),
+          userId: (value) => assertString(value, "userId"),
+          categoryId: (value) => assertString(value, "categoryId"),
+          emoji: (value) => assertString(value, "emoji"),
+        })
+      ),
+  },
+  {
+    key: "categoryColorOverrides",
+    validate: (row) =>
+      assertRecordShape(
+        row,
+        "categoryColorOverrides",
+        validateBaseLedgerFields({
+          id: (value) => assertString(value, "id"),
+          userId: (value) => assertString(value, "userId"),
+          categoryId: (value) => assertString(value, "categoryId"),
           colorHex: (value) => assertString(value, "colorHex"),
         })
       ),
