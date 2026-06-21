@@ -71,9 +71,9 @@ test("keeps content and results rendering wired to the extracted list modules", 
 
 test("keeps the transaction search redesign surfaces wired into the screen", () => {
   expect(contentSource).toContain('variant="sub"');
-  expect(contentSource).not.toContain("rightActions={clearFiltersAction}");
-  expect(contentSource).not.toContain("<TextActionButton");
-  expect(contentSource).not.toContain('label={t("common.clear")}');
+  expect(contentSource).toContain("rightActions={clearFiltersAction}");
+  expect(contentSource).toContain("<TextActionButton");
+  expect(contentSource).toContain('label={t("common.clear")}');
   expect(contentSource).not.toContain("<SearchInputBar");
   expect(inputBarSource).toContain("<FieldSurface");
   expect(inputBarSource).toContain("placeholder={placeholder}");
