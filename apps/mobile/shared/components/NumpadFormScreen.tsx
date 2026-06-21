@@ -17,6 +17,7 @@ type NumpadFormScreenProps = {
   readonly numpadVisible?: boolean;
   readonly onBack?: () => void;
   readonly onKeyPress: (key: string) => void;
+  readonly reserveHiddenNumpadSpace?: boolean;
 };
 
 export function NumpadFormScreen({
@@ -30,6 +31,7 @@ export function NumpadFormScreen({
   numpadVisible = true,
   onBack,
   onKeyPress,
+  reserveHiddenNumpadSpace = true,
 }: NumpadFormScreenProps) {
   const { bottom, top } = useSafeAreaInsets();
   const hasHeader = headerTitle != null || onBack != null;
@@ -49,7 +51,7 @@ export function NumpadFormScreen({
             {footer}
             {numpadVisible ? (
               <FidyNumpad onKeyPress={onKeyPress} />
-            ) : (
+            ) : reserveHiddenNumpadSpace ? (
               <View
                 pointerEvents="none"
                 importantForAccessibility="no-hide-descendants"
@@ -57,7 +59,7 @@ export function NumpadFormScreen({
               >
                 <FidyNumpad onKeyPress={onKeyPress} />
               </View>
-            )}
+            ) : null}
           </View>
         </Pressable>
       </View>

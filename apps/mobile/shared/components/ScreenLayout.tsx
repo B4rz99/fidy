@@ -1,4 +1,3 @@
-import { Stack } from "expo-router";
 import type { ReactNode } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform, Text, View } from "@/shared/components/rn";
@@ -35,43 +34,20 @@ export function ScreenLayout({
 }: ScreenLayoutProps) {
   const insets = useSafeAreaInsets();
   const isTab = variant === "tab";
-  const usesNativeHeader = includesNativeHeader ?? (Platform.OS === "ios" && !isTab);
+  void includesNativeHeader;
   const customHeaderTopInset = process.env.EXPO_OS === "web" ? 0 : insets.top;
   const shouldRenderRightSlot = rightActions != null || (isTab && leftAction != null);
   const rightSlotClassName = isTab ? "flex-1 flex-row justify-end" : "flex-row justify-end";
   const shouldRenderCenterAction = centerAction != null;
   const shouldRenderCustomHeader =
     Platform.OS !== "ios" ||
-    (!usesNativeHeader &&
-      (!isTab || centerAction != null || leftAction != null || rightActions != null));
-  const shouldShowIosNativeHeader = !isTab || centerAction != null || rightActions != null;
-  const iosHeaderOptions = {
-    contentStyle: { backgroundColor: "transparent" },
-    headerShadowVisible: false,
-    headerShown: shouldShowIosNativeHeader,
-    headerStyle: { backgroundColor: "transparent" },
-    headerTransparent: true,
-    headerBackVisible: false,
-    headerBackButtonDisplayMode: "minimal" as const,
-    headerBackTitle: "",
-    title: isTab ? "" : title,
-    ...(centerAction != null && {
-      headerTitle: () => centerAction,
-    }),
-    ...(rightActions != null && {
-      headerRight: () => rightActions,
-    }),
-    ...(!isTab && {
-      headerLeft: () => <HeaderBackButton onPress={onBack} />,
-    }),
-  };
+    !isTab ||
+    centerAction != null ||
+    leftAction != null ||
+    rightActions != null;
 
   return (
     <ScreenShell backgroundColor={backgroundColor} backgroundLayer={backgroundLayer}>
-      {Platform.OS === "ios" && usesNativeHeader && <Stack.Screen options={iosHeaderOptions} />}
-      {Platform.OS === "ios" && !usesNativeHeader && (
-        <Stack.Screen options={{ headerShown: false }} />
-      )}
       {shouldRenderCustomHeader && (
         <View style={{ paddingTop: customHeaderTopInset }}>
           <View className="px-4 flex-row items-center justify-between h-12">
@@ -120,10 +96,7 @@ export function ScreenLayout({
       <View
         className="flex-1"
         style={{
-          paddingTop:
-            Platform.OS === "ios" && !usesNativeHeader && !shouldRenderCustomHeader
-              ? insets.top
-              : 0,
+          paddingTop: Platform.OS === "ios" && !shouldRenderCustomHeader ? insets.top : 0,
         }}
       >
         {children}

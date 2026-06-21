@@ -66,10 +66,9 @@ export function Button({
     <>
       {loading ? <ActivityIndicator color={loadingIndicatorColor} /> : icon}
       <Text
-        adjustsFontSizeToFit
         className={`text-center font-poppins-semibold ${LABEL_SIZE_CLASS_NAMES[size]} ${LABEL_CLASS_NAMES[variant]}`}
-        minimumFontScale={0.72}
         numberOfLines={1}
+        style={styles.label}
       >
         {label}
       </Text>
@@ -102,5 +101,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 16,
     width: "100%",
+  },
+  label: {
+    flexShrink: 1,
   },
 });

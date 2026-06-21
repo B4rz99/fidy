@@ -10,8 +10,8 @@
 // GOOD: immutable setup, tests one observable behavior
 const emptyCart: Cart = { items: [], total: 0 };
 
-test("checkout confirms a valid cart", async () => {
-  const cart = addItem(emptyCart, product);          // returns new Cart
+test("user can checkout with valid cart", async () => {
+  const cart = addItem(emptyCart, product);
   const result = await checkout(cart, paymentMethod);
   expect(result.status).toBe("confirmed");
 });
@@ -31,7 +31,7 @@ Characteristics:
 **Implementation-detail tests**: Coupled to internal structure.
 
 ```typescript
-// BAD: tests implementation details
+// BAD: Tests implementation details
 test("checkout calls paymentService.process", async () => {
   const mockPayment = jest.mock(paymentService);
   await checkout(cart, payment);
@@ -55,12 +55,12 @@ Red flags:
 const cart = new MutableCart();
 
 test("adds item to cart", () => {
-  cart.add(product);                   // mutates shared cart
+  cart.add(product);
   expect(cart.items).toHaveLength(1);
 });
 
 test("calculates total", () => {
-  expect(cart.total).toBe(0);          // may fail if previous test ran first
+  expect(cart.total).toBe(0);
 });
 
 // GOOD: immutable, each test is self-contained
@@ -75,17 +75,15 @@ test("calculates total after adding item", () => {
 });
 ```
 
-**Bypassing the interface to verify**:
-
 ```typescript
-// BAD: bypasses interface to verify
+// BAD: Bypasses interface to verify
 test("createUser saves to database", async () => {
   await createUser({ name: "Alice" });
   const row = await db.query("SELECT * FROM users WHERE name = ?", ["Alice"]);
   expect(row).toBeDefined();
 });
 
-// GOOD: verifies through the public interface
+// GOOD: Verifies through interface
 test("createUser makes user retrievable", async () => {
   const user = await createUser({ name: "Alice" });
   const retrieved = await getUser(user.id);

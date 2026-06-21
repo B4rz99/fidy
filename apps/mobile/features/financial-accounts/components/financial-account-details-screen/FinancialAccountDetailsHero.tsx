@@ -15,7 +15,7 @@ export function FinancialAccountDetailsHero({
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const nav = useThemeColor("nav");
+  const accentGreenLight = useThemeColor("accentGreenLight");
 
   return (
     <Surface padded={false} radius={22} style={styles.heroCard}>
@@ -26,11 +26,11 @@ export function FinancialAccountDetailsHero({
         </View>
 
         {isDefault ? (
-          <Surface padded={false} radius={999} style={styles.badge}>
-            <Text style={[styles.badgeText, { color: nav }]}>
+          <View style={[styles.badge, { backgroundColor: primary }]}>
+            <Text style={[styles.badgeText, { color: accentGreenLight }]}>
               {t("financialAccounts.labels.default")}
             </Text>
-          </Surface>
+          </View>
         ) : null}
       </View>
     </Surface>

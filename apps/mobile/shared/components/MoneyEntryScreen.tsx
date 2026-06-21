@@ -16,6 +16,7 @@ type MoneyEntryScreenProps = {
   readonly numpadVisible?: boolean;
   readonly onBack?: () => void;
   readonly onKeyPress: (key: string) => void;
+  readonly reserveHiddenNumpadSpace?: boolean;
   readonly stackStyle?: StyleProp<ViewStyle>;
   readonly topContent?: ReactNode;
 };
@@ -33,6 +34,7 @@ export function MoneyEntryScreen({
   numpadVisible = true,
   onBack,
   onKeyPress,
+  reserveHiddenNumpadSpace,
   stackStyle,
   topContent,
 }: MoneyEntryScreenProps) {
@@ -56,6 +58,7 @@ export function MoneyEntryScreen({
       numpadVisible={numpadVisible}
       onBack={onBack}
       onKeyPress={onKeyPress}
+      reserveHiddenNumpadSpace={reserveHiddenNumpadSpace}
     >
       {topContent}
       {children}

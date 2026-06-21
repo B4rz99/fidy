@@ -18,9 +18,9 @@ export const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     maxWidth: "100%",
-    paddingHorizontal: 18,
+    paddingHorizontal: 0,
     paddingVertical: 10,
-    width: "82%",
+    width: "100%",
   },
   container: {
     flex: 1,

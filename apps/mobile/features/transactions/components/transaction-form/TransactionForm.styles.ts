@@ -54,13 +54,12 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
   typeTabs: {
-    width: 380,
-    maxWidth: "100%",
+    width: "100%",
   },
   headerZone: {
     gap: 12,
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
   },
   label: {
     fontFamily: "Poppins_500Medium",

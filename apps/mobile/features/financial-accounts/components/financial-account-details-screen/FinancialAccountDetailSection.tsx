@@ -24,23 +24,19 @@ export function FinancialAccountDetailSection({
 }
 
 export function FinancialAccountFieldRow({
+  isLast = false,
   label,
   value,
 }: {
+  readonly isLast?: boolean;
   readonly label: string;
   readonly value: string;
 }) {
   const secondary = useThemeColor("secondary");
   const primary = useThemeColor("primary");
-  const borderSubtle = useThemeColor("borderSubtle");
 
   return (
-    <ListRowSurface
-      variant="grouped"
-      divider
-      dividerColor={borderSubtle}
-      contentStyle={styles.fieldRow}
-    >
+    <ListRowSurface variant="grouped" divider isLast={isLast} contentStyle={styles.fieldRow}>
       <View style={styles.fieldText}>
         <Text style={[styles.fieldLabel, { color: secondary }]}>{label}</Text>
         <Text style={[styles.fieldValue, { color: primary }]}>{value}</Text>

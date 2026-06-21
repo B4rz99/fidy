@@ -20,7 +20,7 @@ import {
   Utensils,
   Wrench,
 } from "@/shared/components/icons";
-import { Card } from "@/shared/components";
+import { Card, SolidSurface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { trackNotificationTapped } from "@/shared/lib";
@@ -71,7 +71,6 @@ export const NotificationCard = React.memo(function NotificationCard({
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
-  const surfaceMuted = useThemeColor("surfaceMuted");
 
   const IconComponent = ICON_MAP[notification.iconName] ?? TriangleAlert;
 
@@ -94,9 +93,14 @@ export const NotificationCard = React.memo(function NotificationCard({
       contentStyle={styles.card}
       padded={false}
     >
-      <View style={[styles.iconCircle, { backgroundColor: surfaceMuted }]}>
+      <SolidSurface
+        radius={12}
+        padded={false}
+        style={styles.iconCircle}
+        className="size-10 items-center justify-center rounded-icon"
+      >
         <IconComponent size={16} color={notification.iconColor} />
-      </View>
+      </SolidSurface>
 
       <View style={styles.textColumn}>
         <Text style={[styles.title, { color: primaryColor }]} numberOfLines={1}>
@@ -126,7 +130,6 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 40,
     height: 40,
-    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },

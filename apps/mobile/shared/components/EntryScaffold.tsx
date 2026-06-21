@@ -214,7 +214,7 @@ export function EntryScaffold({
                         <EntryNumpadButton
                           testID="keyConfirm"
                           style={[styles.key, specialKeySurfaceStyle]}
-                          backgroundColor={isConfirmDisabled ? undefined : accentGreen}
+                          backgroundColor={accentGreen}
                           disabled={isConfirmDisabled}
                           disabledOpacity={1}
                           onPress={isConfirmDisabled ? undefined : handleConfirmPress}

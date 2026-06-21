@@ -1,13 +1,15 @@
 import { useRouter } from "expo-router";
-import { AppAuroraBackground, SolidScreenHeader, TextActionButton } from "@/shared/components";
+import { AppAuroraBackground, IconActionButton, SolidScreenHeader } from "@/shared/components";
+import { Pencil } from "@/shared/components/icons";
 import { View } from "@/shared/components/rn";
-import { useColorScheme, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { GoalDetailContent } from "./goal-detail/GoalDetailContent";
 import { useGoalDetail } from "./goal-detail/useGoalDetail";
 
 export function GoalDetailScreen() {
   const { back } = useRouter();
   const isDark = useColorScheme() === "dark";
+  const primary = useThemeColor("primary");
   const { t } = useTranslation();
   const detail = useGoalDetail();
 
@@ -24,11 +26,12 @@ export function GoalDetailScreen() {
         title={goal.name}
         onBack={back}
         rightAction={
-          <TextActionButton
-            label={t("common.edit")}
+          <IconActionButton
+            accessibilityLabel={t("common.edit")}
+            icon={<Pencil size={20} color={primary} />}
             onPress={detail.onEditGoal}
-            hitSlop={8}
-            appearance="plain"
+            size="size-11"
+            tone="surface"
           />
         }
       />

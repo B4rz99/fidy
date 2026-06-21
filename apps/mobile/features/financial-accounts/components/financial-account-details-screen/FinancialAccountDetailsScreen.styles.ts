@@ -29,6 +29,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
   },
   badge: {
+    borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
@@ -67,6 +68,10 @@ export const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingTop: 16,
+    paddingBottom: 16,
+  },
+  identifierContentDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   identifierChip: {
     borderRadius: 999,
@@ -82,6 +87,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     paddingHorizontal: 16,
     paddingTop: 16,
+    paddingBottom: 16,
   },
   manageButton: {
     minHeight: 46,

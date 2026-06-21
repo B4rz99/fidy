@@ -80,6 +80,7 @@ export function FinancialAccountDetailsScreenContent({
                 ? t("financialAccounts.labels.default")
                 : t("financialAccounts.labels.notDefault")
             }
+            isLast
           />
         </FinancialAccountDetailSection>
 
@@ -95,6 +96,7 @@ export function FinancialAccountDetailsScreenContent({
           <FinancialAccountFieldRow
             label={t("financialAccounts.detail.effectiveDateLabel")}
             value={formattedEffectiveDate}
+            isLast
           />
         </FinancialAccountDetailSection>
 
@@ -113,6 +115,7 @@ export function FinancialAccountDetailsScreenContent({
                 details.account.paymentDueDay?.toString() ??
                 t("financialAccounts.labels.noBillingDay")
               }
+              isLast
             />
           </FinancialAccountDetailSection>
         ) : null}

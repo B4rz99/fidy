@@ -146,8 +146,13 @@ function useTransferFormDerivedState(
 
 export function useTransferForm(props: TransferFormScreenProps) {
   const state = useTransferFormState();
+  const activeState = {
+    ...state,
+    digits: props.digits ?? state.digits,
+    setDigits: props.setDigits ?? state.setDigits,
+  };
   const route = useTransferFormRouteContext();
-  const derived = useTransferFormDerivedState(route, props, state);
+  const derived = useTransferFormDerivedState(route, props, activeState);
 
   useHydrateTransferForm({
     db: route.db,
@@ -155,12 +160,12 @@ export function useTransferForm(props: TransferFormScreenProps) {
     initialDraftResolver: props.initialDraftResolver,
     onMissingTransaction: route.onMissingTransaction,
     reclassificationTransactionId: route.reclassificationTransactionId,
-    state,
+    state: activeState,
     userId: route.userId,
   });
 
   return {
-    ...state,
+    ...activeState,
     ...derived.presentation,
     ...derived.actions,
     isIos: route.isIos,

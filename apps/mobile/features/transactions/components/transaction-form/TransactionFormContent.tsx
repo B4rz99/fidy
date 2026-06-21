@@ -122,6 +122,7 @@ export function TransactionFormContent({
         }
         numpadVisible={false}
         onKeyPress={isTransfer ? transferEntry.onKeyPress : handleKey}
+        reserveHiddenNumpadSpace={false}
         topContent={
           <TransactionFormHeader
             closeLabel={t("common.close")}

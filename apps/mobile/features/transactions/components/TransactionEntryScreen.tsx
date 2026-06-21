@@ -98,7 +98,7 @@ export function TransactionEntryScreen({
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
   const selectedAccount = uiState.accounts.find((account) => account.id === accountId);
   const isTransfer = uiState.entryMode === "transfer";
-  const transferEntry = useTransferEntry({ enabled: isTransfer });
+  const transferEntry = useTransferEntry({ digits, enabled: isTransfer, setDigits });
   const dateLabel = getDateLabel({
     date,
     now: new Date(),

@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-.codegraph/
 
 # Expo
 .expo/
@@ -54,7 +53,6 @@ snyk-results.json
 .turbo/
 .metro-cache/
 .cache/
-.codegraph/
 
 # Test coverage
 coverage/

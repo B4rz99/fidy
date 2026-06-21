@@ -206,7 +206,7 @@ function CategoryBarRibbon({
             }
             backgroundColor={color}
             category={category ?? null}
-            dimmed={!isSelected}
+            dimmed={selectedCategoryId !== null && !isSelected}
             haptics={false}
             onPress={handlePress}
             selected={isSelected}

@@ -159,6 +159,7 @@ export function AddPaymentScreen() {
             cursorStyle={cursorStyle}
             cursorVisible={numpadActive}
             digits={digits}
+            pressableSurface={false}
           />
         }
         numpadVisible={numpadActive}
