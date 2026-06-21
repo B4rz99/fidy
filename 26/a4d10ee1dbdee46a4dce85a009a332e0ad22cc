@@ -1,0 +1,260 @@
+apps/mobile/features/transactions/components/TransactionEntryScreen.tsx
+  s_3e09cb3e252c24::t_8477f487b7da73 101
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsHero.tsx
+  s_b759c0819f3be1::t_71ec274dcfc630 18,29-30,33
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailSection.tsx
+  s_12c7da6dd834ca::t_ad8b8965dbaab6 39
+  s_55daba061857f4::t_e2a9300520c0c5 27,31
+.agents/skills/tdd/mocking.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-59
+.agents/skills/domain-modeling/CONTEXT-FORMAT.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-60
+apps/mobile/features/categories/components/category-form/CreateCategoryScreen.styles.ts
+  s_7ad06cea2ed1d9::t_642dc60fc74f8e 42-43,45-47
+apps/mobile/shared/navigation/root-stack-routes.ts
+  s_71416f8785b4e8::t_51f09f85972dee 16,18
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_44cc47875621e3::t_fa441b0d558a43 209
+apps/mobile/shared/components/ListRowSurface.tsx
+  s_55daba061857f4::t_0bcf075d8ed20f 4,116-117,132,157-162,252-257
+  s_adca9cd76a71c4::t_18854d743cc037 102-103,105
+.agents/skills/tdd/SKILL.md
+  s_adca9cd76a71c4::t_1f7f15b08c378a 106
+  s_adca9cd76a71c4::t_18854d743cc037 3,16,47-48,53,90
+apps/mobile/shared/components/MoneyAmountDisplay.tsx
+  s_a89bcc9c1de2d3::t_c27fbf188301a2 3-10,25,52,103-114
+apps/mobile/shared/components/NumpadFormScreen.tsx
+  s_418028d383a7ad::t_2a35eb9bdb6f84 20,34,54,62
+.agents/skills/improve-codebase-architecture/HTML-REPORT.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-123
+apps/mobile/__tests__/shared/screen-layout.test.tsx
+  s_e3d974889059ec::t_b0ca9531387691 18,25
+apps/mobile/shared/components/Button.tsx
+  s_a5c6967bafd2d0::t_c8d4aa000a7dc4 71,105-106
+.agents/skills/to-issues/SKILL.md
+  s_adca9cd76a71c4::t_18854d743cc037 3-4,9-11,17,21-23,29-37,47,53,55,57,62,68-69,74,78,81
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountIdentifiersSection.tsx
+  s_55daba061857f4::t_ec992dfa92c61c 28,33-39,45-51
+.agents/skills/improve-codebase-architecture/SKILL.md
+  s_adca9cd76a71c4::t_18854d743cc037 3-4,11,13-14,20,32,34-38,43-49,51,53,55,59,61,63,65-66
+apps/mobile/__tests__/shared/surface-layout-contracts.test.ts
+  s_d320ec8bd0187a::t_2268bd65d4db78 78-86
+apps/mobile/features/transfers/components/transfer-form/TransferForm.types.ts
+  s_3e09cb3e252c24::t_8477f487b7da73 7,17,24
+apps/mobile/__tests__/analytics/period-shift-content.test.ts
+  s_44cc47875621e3::t_7f4eeec929fa2b 1-15
+apps/mobile/shared/components/MoneyEntryTextField.tsx
+  s_a89bcc9c1de2d3::t_c27fbf188301a2 3,54
+apps/mobile/features/review-queues/components/AttributionQueueCard.tsx
+  s_1b8060393e158c::t_d84787d2feb105 36,75,83
+apps/mobile/features/goals/components/AddPaymentScreen.tsx
+  s_a89bcc9c1de2d3::t_c27fbf188301a2 162
+apps/mobile/features/goals/components/GoalDetail.tsx
+  s_a89bcc9c1de2d3::t_c27fbf188301a2 2-3,5,12,29-31,33-34
+.agents/skills/tdd/refactoring.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-10
+apps/mobile/features/notifications/components/NotificationCard.tsx
+  s_e204e5a21d7eab::t_aa7addff3da3db 23,96-101,103
+apps/mobile/features/transfers/components/TransferEntryContent.tsx
+  s_3e09cb3e252c24::t_8477f487b7da73 19-22,35-41,44,47
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsScreen.styles.ts
+  s_55daba061857f4::t_bf6d462a090ce9 71-74,90
+  s_b759c0819f3be1::t_84c767e33466db 32
+.agents/skills/codebase-design/SKILL.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-114
+.agents/skills/domain-modeling/SKILL.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-74
+apps/mobile/shared/components/EntryScaffold.styles.ts
+  s_71416f8785b4e8::t_65f60a2aa4136e 21,23
+apps/mobile/features/transactions/components/transaction-form/TransactionFormContent.tsx
+  s_418028d383a7ad::t_2a35eb9bdb6f84 125
+apps/mobile/shared/components/EntryScaffold.tsx
+  s_64bb0e7f12db0d::t_401c318134eb7d 217
+apps/mobile/shared/components/HeaderBackButton.tsx
+  s_e3d974889059ec::t_680af4174fa860 5,14,16,18-20
+apps/mobile/shared/components/MoneyEntryScreen.tsx
+  s_418028d383a7ad::t_2a35eb9bdb6f84 19,37,61
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsScreenContent.tsx
+  s_55daba061857f4::t_602e3e4ae23835 83,99,118
+.agents/skills/tdd/tests.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-5,8-9,13,15-26,28-49,77-92
+  s_adca9cd76a71c4::t_1f7f15b08c378a 6-7,10-12,14,27,50-76
+.agents/skills/to-prd/SKILL.md
+  s_adca9cd76a71c4::t_18854d743cc037 3-4,7,9,11,13,15,17,19,23-27,29,31,33,35,37-39,41,43,45,47-53,55,57,59,61,63-65,67,69,71,73
+apps/mobile/__tests__/shared/primitive-contracts.test.tsx
+  s_e3d974889059ec::t_b5c8958540c7ad 344-348
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_e3d974889059ec::t_270edaa7d4f872 37,44-47,99
+apps/mobile/features/transactions/components/transaction-form/TransactionForm.tsx
+  s_3e09cb3e252c24::t_8477f487b7da73 15-19
+.agents/skills/codebase-design/DESIGN-IT-TWICE.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-44
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_418028d383a7ad::t_2a35eb9bdb6f84 273-274
+apps/mobile/features/transactions/components/transaction-form/TransactionForm.styles.ts
+  s_4a75235a49be39::t_a30269e57fa46a 57,62
+.agents/skills/prototype/SKILL.md
+  s_adca9cd76a71c4::t_18854d743cc037 3-4
+apps/mobile/shared/components/TextActionButton.tsx
+  s_e3d974889059ec::t_ab7acd80684346 74-76
+apps/mobile/features/transfers/components/transfer-form/useTransferForm.ts
+  s_3e09cb3e252c24::t_8477f487b7da73 149-153,155,163,168
+.agents/skills/domain-modeling/ADR-FORMAT.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-47
+.agents/skills/codebase-design/DEEPENING.md
+  s_adca9cd76a71c4::t_18854d743cc037 1-37
+apps/mobile/features/search/components/DateFilter.tsx
+  s_dca52149af1320::t_38aa0dd64f941f 110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "26a4d10ee1dbdee46a4dce85a009a332e0ad22cc",
+  "prompts": {},
+  "sessions": {
+    "s_12c7da6dd834ca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebed-7f23-7d42-be7f-9be3fcf2d7f4",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_1b8060393e158c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebd4-503d-7511-b719-65365b948437",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_3e09cb3e252c24": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebd6-15b1-7c62-9003-a3e00e384746",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_418028d383a7ad": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebdb-72ea-7d23-8026-a36a02fdcc06",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_44cc47875621e3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebd8-58a9-76a2-9c15-8f79390b6f0c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_4a75235a49be39": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebe8-1adf-7482-992b-3de737e5c525",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_55daba061857f4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebb1-0dd0-7f20-bd03-5af802e06e07",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_64bb0e7f12db0d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebd5-69db-7603-bd86-12ea03162fed",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_71416f8785b4e8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebd6-cbb0-7602-ae8c-0e694ea7e15d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_7ad06cea2ed1d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebcc-b166-72c2-af96-0bf8ddec72f5",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_a5c6967bafd2d0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebcc-4c75-7612-81af-a53dd0fe2b82",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_a89bcc9c1de2d3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebe0-21b9-7fa3-828b-134319e758b9",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_adca9cd76a71c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebb4-927d-7de3-ba19-f3f666b1a7d7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_b759c0819f3be1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebb3-8721-7ad3-bbb4-0231e3a8c071",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_d320ec8bd0187a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ee6b7-b73d-7722-bcaa-7fc8e98ee764",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_dca52149af1320": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebcf-d631-72c1-82cb-bb73752e7dfa",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_e204e5a21d7eab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eebd2-2314-75f3-8711-8ed38ba2e8ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_e3d974889059ec": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ee672-81c4-7191-8a70-fc982b048600",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
