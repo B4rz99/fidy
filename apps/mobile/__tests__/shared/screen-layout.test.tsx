@@ -1,6 +1,6 @@
-import { Platform, Text } from "react-native";
 import { describe, expect, it } from "vitest";
 import { renderFidy } from "@/__tests__/helpers/render";
+import { Platform, Text } from "@/shared/components/rn";
 import { ScreenLayout, HEADER_HEIGHT, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 
 describe("ScreenLayout", () => {
@@ -15,20 +15,20 @@ describe("ScreenLayout", () => {
     expect(screen.getByText("Screen body")).toBeTruthy();
   });
 
-  it("renders a custom solid header for default sub screens", () => {
+  it("uses the native iOS header for default sub screens", () => {
     const screen = renderFidy(
       <ScreenLayout title="Search" variant="sub">
         <Text>Search body</Text>
       </ScreenLayout>
     );
 
-    expect(screen.getByText("Search")).toBeTruthy();
+    expect(screen.queryByText("Search")).toBeNull();
     expect(screen.getByText("Search body")).toBeTruthy();
   });
 
   it("renders an explicit title for custom sub screen headers", () => {
     const screen = renderFidy(
-      <ScreenLayout title="Account details" variant="sub">
+      <ScreenLayout title="Account details" variant="sub" includesNativeHeader={false}>
         <Text>Account body</Text>
       </ScreenLayout>
     );
@@ -41,6 +41,7 @@ describe("ScreenLayout", () => {
     const screen = renderFidy(
       <ScreenLayout
         title="Financial accounts"
+        includesNativeHeader={false}
         leftAction={<Text>Add</Text>}
         centerAction={<Text>Month picker</Text>}
       >

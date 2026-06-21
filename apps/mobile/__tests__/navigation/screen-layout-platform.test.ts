@@ -26,11 +26,14 @@ describe("ScreenLayout platform awareness", () => {
     expect(source).toContain("Platform");
   });
 
-  test("uses custom solid headers without native header options", () => {
+  test("uses iOS native headers for default sub screens and opted-in tab center actions", () => {
+    expect(source).toContain(
+      'const usesNativeHeader = includesNativeHeader ?? (Platform.OS === "ios" && !isTab)'
+    );
     expect(source).toContain('Platform.OS !== "ios"');
-    expect(source).not.toContain("headerTransparent");
-    expect(source).not.toContain("headerTitle: () => centerAction");
-    expect(source).not.toContain("<Stack.Screen");
+    expect(source).toContain("shouldShowIosNativeHeader");
+    expect(source).toContain("headerShown: shouldShowIosNativeHeader");
+    expect(source).toContain("headerTitle: () => centerAction");
   });
 
   test("exports platform-aware TAB_BAR_CLEARANCE", () => {
@@ -39,17 +42,20 @@ describe("ScreenLayout platform awareness", () => {
     expect(source).toContain("Platform");
   });
 
-  test("renders back targets with the shared solid action button", () => {
-    expect(headerBackButtonSource).toContain("IconActionButton");
-    expect(headerBackButtonSource).toContain('tone="surface"');
-    expect(headerBackButtonSource).toContain('size="size-11"');
-    expect(headerBackButtonSource).not.toContain('backgroundColor: "transparent"');
+  test("renders back targets without a visible button border", () => {
+    expect(headerBackButtonSource).toContain("backButton");
+    expect(headerBackButtonSource).toContain("<Pressable");
+    expect(headerBackButtonSource).toContain('backgroundColor: "transparent"');
+    expect(headerBackButtonSource).toContain("borderWidth: 0");
+    expect(headerBackButtonSource).toContain("backButtonPressed");
+    expect(headerBackButtonSource).not.toContain("GlassPressable");
+    expect(headerBackButtonSource).not.toContain("borderColor");
     expect(headerBackButtonSource).not.toContain("shadowColor");
     expect(headerBackButtonSource).not.toContain("shadowOpacity");
     expect(headerBackButtonSource).not.toContain("shadowRadius");
   });
 
-  test("custom ScreenLayout screens do not configure native header back controls", () => {
+  test("custom ScreenLayout screens do not re-enable native header back controls", () => {
     const appFiles = findTsxFiles(resolve(__dirname, "../../app"));
     const featureFiles = findTsxFiles(resolve(__dirname, "../../features"));
     const screenLayoutFiles = [...appFiles, ...featureFiles].filter((file) => {
@@ -57,6 +63,11 @@ describe("ScreenLayout platform awareness", () => {
       return source.includes("<ScreenLayout") && source.includes("<Stack.Screen");
     });
 
-    expect(screenLayoutFiles).toEqual([]);
+    const unsafeFiles = screenLayoutFiles.filter((file) => {
+      const source = readFileSync(file, "utf-8");
+      return !source.includes("headerShown: false") && !source.includes("includesNativeHeader");
+    });
+
+    expect(unsafeFiles).toEqual([]);
   });
 });
