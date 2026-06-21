@@ -1,6 +1,13 @@
 import type { ComponentProps } from "react";
 import Animated from "react-native-reanimated";
-import { type StyleProp, Text, type TextStyle, View, type ViewStyle } from "@/shared/components/rn";
+import {
+  Pressable,
+  type StyleProp,
+  Text,
+  type TextStyle,
+  View,
+  type ViewStyle,
+} from "@/shared/components/rn";
 import { formatInputDisplay } from "@/shared/lib";
 import { SurfacePressable } from "./SurfacePressable";
 
@@ -15,6 +22,7 @@ export type MoneyAmountDisplayProps = {
   readonly digits: string;
   readonly emptyDisplay?: string;
   readonly onPress?: () => void;
+  readonly pressableSurface?: boolean;
   readonly rowStyle?: StyleProp<ViewStyle>;
   readonly size?: MoneyAmountDisplaySize;
   readonly textStyle?: StyleProp<TextStyle>;
@@ -41,6 +49,7 @@ export function MoneyAmountDisplay({
   digits,
   emptyDisplay = "$",
   onPress,
+  pressableSurface = true,
   rowStyle,
   size = "large",
   textStyle,
@@ -90,6 +99,19 @@ export function MoneyAmountDisplay({
   );
 
   if (!onPress) return content;
+
+  if (!pressableSurface) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        hitSlop={12}
+      >
+        {content}
+      </Pressable>
+    );
+  }
 
   return (
     <SurfacePressable

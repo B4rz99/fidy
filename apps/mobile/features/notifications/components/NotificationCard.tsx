@@ -70,8 +70,9 @@ export const NotificationCard = React.memo(function NotificationCard({
 }: NotificationCardProps) {
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
+  const surfaceMutedColor = useThemeColor("surfaceMuted");
+  const borderStrongColor = useThemeColor("borderStrong");
   const tertiaryColor = useThemeColor("tertiary");
-  const surfaceMuted = useThemeColor("surfaceMuted");
 
   const IconComponent = ICON_MAP[notification.iconName] ?? TriangleAlert;
 
@@ -94,7 +95,12 @@ export const NotificationCard = React.memo(function NotificationCard({
       contentStyle={styles.card}
       padded={false}
     >
-      <View style={[styles.iconCircle, { backgroundColor: surfaceMuted }]}>
+      <View
+        style={[
+          styles.iconCircle,
+          { backgroundColor: surfaceMutedColor, borderColor: borderStrongColor },
+        ]}
+      >
         <IconComponent size={16} color={notification.iconColor} />
       </View>
 
@@ -126,8 +132,10 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 40,
     height: 40,
-    borderRadius: 8,
     alignItems: "center",
+    borderCurve: "continuous",
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: "center",
   },
   textColumn: {

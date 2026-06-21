@@ -270,6 +270,8 @@ describe("shared UI kit", () => {
     );
 
     expect(moneyEntrySource).toContain("<NumpadFormScreen");
+    expect(moneyEntrySource).toContain("reserveHiddenNumpadSpace={reserveHiddenNumpadSpace}");
+    expect(transactionFormSource).toContain("reserveHiddenNumpadSpace={false}");
     for (const source of [
       createBudgetSource,
       addPaymentSource,

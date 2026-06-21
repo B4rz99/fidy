@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import { SurfacePressable } from "./SurfacePressable";
 import { SolidSurface } from "./SolidSurface";
 import type { SurfaceLayoutStyle } from "./surface-style";
@@ -98,10 +99,10 @@ export function ListRowSurface({
   className,
   contentStyle,
   disabled = false,
-  divider: _divider = false,
-  dividerColor: _dividerColorOverride,
+  divider = false,
+  dividerColor: dividerColorOverride,
   importantForAccessibility,
-  isLast: _isLast = false,
+  isLast = false,
   minHeight = 56,
   onPress,
   radius = 18,
@@ -112,6 +113,8 @@ export function ListRowSurface({
   variant = "standalone",
   ...viewProps
 }: ListRowSurfaceProps) {
+  const dividerBaseColor = useThemeColor("borderStrong");
+  const dividerColor = dividerColorOverride ?? dividerBaseColor;
   const surfaceA11yProps =
     onPress == null
       ? {
@@ -126,6 +129,7 @@ export function ListRowSurface({
       : null;
   const outerLayoutStyle = getSurfaceLayoutStyle(layoutStyle);
   const rowLayoutStyle = getRowContentLayoutStyle(layoutStyle);
+  const shouldShowDivider = divider && !isLast;
   const contentStyleValue = [
     styles.content,
     {
@@ -150,6 +154,12 @@ export function ListRowSurface({
         style={[contentStyleValue, outerLayoutStyle, rowLayoutStyle]}
       >
         {children}
+        {shouldShowDivider ? (
+          <View
+            pointerEvents="none"
+            style={[styles.groupedDivider, { backgroundColor: dividerColor }]}
+          />
+        ) : null}
       </View>
     ) : (
       <SolidSurface
@@ -238,6 +248,13 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  groupedDivider: {
+    bottom: 0,
+    height: StyleSheet.hairlineWidth,
+    left: 14,
+    position: "absolute",
+    right: 14,
   },
 });
 

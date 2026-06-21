@@ -21,7 +21,6 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
   const accentGreenLight = useThemeColor("accentGreenLight");
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const surfaceMuted = useThemeColor("surfaceMuted");
   const surfaceRaised = useThemeColor("surfaceRaised");
   const [activePicker, setActivePicker] = useState<"from" | "to" | null>(null);
 
@@ -108,7 +107,7 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
               selected={isActive}
               selectedBackgroundColor={accentGreenLight}
               selectedTextColor={primary}
-              surfaceBackgroundColor={surfaceMuted}
+              surfaceBackgroundColor={surfaceRaised}
               style={[
                 styles.presetButton,
                 preset.key === "thisWeek" ? styles.weekPreset : null,

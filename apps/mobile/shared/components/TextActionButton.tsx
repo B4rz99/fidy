@@ -71,7 +71,9 @@ const styles = StyleSheet.create({
   },
   plain: {
     borderRadius: 10,
-    paddingHorizontal: 10,
+    minHeight: 44,
+    minWidth: 72,
+    paddingHorizontal: 14,
   },
   disabled: {
     opacity: 0.6,

@@ -25,17 +25,30 @@ export function FinancialAccountIdentifiersSection({
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
+  const borderStrong = useThemeColor("borderStrong");
 
   return (
     <FinancialAccountDetailSection title={t("financialAccounts.detail.identifiersTitle")}>
       {identifiers.length > 0 ? (
-        <View style={styles.identifierWrap}>
+        <View
+          style={[
+            styles.identifierWrap,
+            styles.identifierContentDivider,
+            { borderBottomColor: borderStrong },
+          ]}
+        >
           {identifiers.map((identifier) => (
             <IdentifierChip key={identifier.id} value={identifier.value} />
           ))}
         </View>
       ) : (
-        <Text style={[styles.emptyIdentifiers, { color: secondary }]}>
+        <Text
+          style={[
+            styles.emptyIdentifiers,
+            styles.identifierContentDivider,
+            { borderBottomColor: borderStrong, color: secondary },
+          ]}
+        >
           {t("financialAccounts.detail.identifiersEmpty")}
         </Text>
       )}

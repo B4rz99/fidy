@@ -15,14 +15,14 @@ describe("ScreenLayout", () => {
     expect(screen.getByText("Screen body")).toBeTruthy();
   });
 
-  it("uses the native iOS header for default sub screens", () => {
+  it("renders a custom solid header for default sub screens", () => {
     const screen = renderFidy(
       <ScreenLayout title="Search" variant="sub">
         <Text>Search body</Text>
       </ScreenLayout>
     );
 
-    expect(screen.queryByText("Search")).toBeNull();
+    expect(screen.getByText("Search")).toBeTruthy();
     expect(screen.getByText("Search body")).toBeTruthy();
   });
 

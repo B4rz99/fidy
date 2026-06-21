@@ -16,7 +16,10 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, showSuccessToast } from "@/shared/lib";
 import type { TransferSide } from "../lib/build-transfer";
 import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
-import { TRANSFER_FORM_TEST_IDS } from "./transfer-form/TransferForm.types";
+import {
+  TRANSFER_FORM_TEST_IDS,
+  type TransferDigitsInput,
+} from "./transfer-form/TransferForm.types";
 import { useTransferForm } from "./transfer-form/useTransferForm";
 
 function getTransferSideTitle(
@@ -29,11 +32,19 @@ function getTransferSideTitle(
   return accounts.find((account) => account.id === side.accountId)?.name ?? t("common.unknown");
 }
 
-export function useTransferEntry(props: { readonly enabled?: boolean } = {}) {
+export function useTransferEntry(
+  props: {
+    readonly digits?: string;
+    readonly enabled?: boolean;
+    readonly setDigits?: (digits: TransferDigitsInput) => void;
+  } = {}
+) {
   const { t } = useTranslation();
   const form = useTransferForm({
+    digits: props.digits,
     enabled: props.enabled ?? true,
     onSuccessfulSave: () => showSuccessToast(t("transfers.saved"), 1.6),
+    setDigits: props.setDigits,
   });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const secondary = useThemeColor("secondary");

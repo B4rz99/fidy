@@ -341,7 +341,10 @@ describe("shared primitive contracts", () => {
       findStyledNode(asContractNode(plain.root), (style) => style.borderRadius === 10)
     ).toBeTruthy();
     expect(
-      findStyledNode(asContractNode(plain.root), (style) => style.minHeight === 32)
-    ).toBeUndefined();
+      findStyledNode(
+        asContractNode(plain.root),
+        (style) => style.minHeight === 44 && style.minWidth === 72
+      )
+    ).toBeTruthy();
   });
 });

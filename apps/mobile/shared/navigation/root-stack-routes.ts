@@ -13,8 +13,9 @@ type Translate = (key: string) => string;
 export const ROOT_STACK_ROUTES = {
   devOnlyTransparentHeader: ["design-system"],
   dialog: ["theme-picker", "language-picker", "delete-account", "enable-notifications"],
-  entry: ["add-transaction", "add-transfer", "edit-transaction"],
+  entry: ["add-transfer", "edit-transaction"],
   fullScreen: [
+    "add-transaction",
     "add-bill",
     "day-detail",
     "goal-detail",

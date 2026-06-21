@@ -4,6 +4,7 @@ import type { TransferSide } from "@/features/transfers/build.public";
 export type PickerTarget = "from" | "to";
 
 export type AccountBalanceMap = Readonly<Record<string, number>>;
+export type TransferDigitsInput = string | ((currentDigits: string) => string);
 
 export type TransferFormInitialDraft = {
   readonly digits: string;
@@ -13,12 +14,14 @@ export type TransferFormInitialDraft = {
 };
 
 export type TransferFormScreenProps = {
+  readonly digits?: string;
   readonly enabled?: boolean;
   readonly initialDraftResolver?: (
     accounts: readonly FinancialAccountRow[]
   ) => TransferFormInitialDraft | null;
   readonly onSuccessfulSave?: (destination: "needs-review" | "tabs") => Promise<void> | void;
   readonly presentation?: "dialog" | "screen";
+  readonly setDigits?: (digits: TransferDigitsInput) => void;
 };
 
 export const TRANSFER_FORM_TEST_IDS = {

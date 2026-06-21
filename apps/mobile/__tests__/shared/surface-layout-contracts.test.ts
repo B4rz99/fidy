@@ -75,6 +75,15 @@ describe("surface layout contracts", () => {
     expect(cardTokensSource).not.toContain("rgba(");
   });
 
+  it("keeps aurora as the screen background while settings sections remain solid", () => {
+    const screenShellSource = readShared("ScreenShell.tsx");
+    const settingsSectionSource = readShared("SettingsSection.tsx");
+
+    expect(screenShellSource).toContain("<AppAuroraBackground");
+    expect(settingsSectionSource).toContain("<SolidSurface padded={false}>");
+    expect(settingsSectionSource).not.toMatch(/GlassSurface|GlassPressable|BlurView/);
+  });
+
   it("keeps migrated chip callsites on native chipStyle/style sizing", () => {
     const selectableChipRowSource = readShared("SelectableChipRow.tsx");
     const filterChipItemSource = readSource("../../features/search/components/FilterChipItem.tsx");
