@@ -1,0 +1,21 @@
+.agents/skills/grilling/SKILL.md
+  s_436851447cd87d::t_5955c0a9927ae3 1-10
+.agents/skills/grill-with-docs/SKILL.md
+  s_436851447cd87d::t_5955c0a9927ae3 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "55185fc859bf5cbff868e855d7e26bc2f0629f00",
+  "prompts": {},
+  "sessions": {
+    "s_436851447cd87d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eec02-1b2b-70f2-85df-9e9728ee4ba6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
