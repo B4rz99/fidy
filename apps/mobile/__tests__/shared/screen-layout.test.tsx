@@ -15,9 +15,20 @@ describe("ScreenLayout", () => {
     expect(screen.getByText("Screen body")).toBeTruthy();
   });
 
+  it("renders a custom solid header for default sub screens", () => {
+    const screen = renderFidy(
+      <ScreenLayout title="Search" variant="sub">
+        <Text>Search body</Text>
+      </ScreenLayout>
+    );
+
+    expect(screen.getByText("Search")).toBeTruthy();
+    expect(screen.getByText("Search body")).toBeTruthy();
+  });
+
   it("renders an explicit title for custom sub screen headers", () => {
     const screen = renderFidy(
-      <ScreenLayout title="Account details" variant="sub" includesNativeHeader={false}>
+      <ScreenLayout title="Account details" variant="sub">
         <Text>Account body</Text>
       </ScreenLayout>
     );
@@ -30,7 +41,6 @@ describe("ScreenLayout", () => {
     const screen = renderFidy(
       <ScreenLayout
         title="Financial accounts"
-        includesNativeHeader={false}
         leftAction={<Text>Add</Text>}
         centerAction={<Text>Month picker</Text>}
       >

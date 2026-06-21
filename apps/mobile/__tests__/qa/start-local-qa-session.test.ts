@@ -119,8 +119,11 @@ vi.mock("@/features/financial-accounts/lib/repository", () => ({
 
 vi.mock("@/features/budget/public", () => ({
   initializeBudgetSession: (userId: string) => mockInitializeBudgetSession(userId),
-  insertBudget: (db: unknown, row: unknown) => mockInsertBudget(db, row),
   loadBudgetsForUser: (db: unknown, userId: string) => mockLoadBudgetsForUser(db, userId),
+}));
+
+vi.mock("@/infrastructure/local-ledger/budget-storage", () => ({
+  insertBudget: (db: unknown, row: unknown) => mockInsertBudget(db, row),
 }));
 
 vi.mock("@/features/transactions/store.public", () => ({

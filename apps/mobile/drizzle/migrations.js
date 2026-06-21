@@ -31,6 +31,8 @@ import m0028 from "./0028_email_source_event_status.sql";
 import m0029 from "./0029_retire_legacy_processed_tables.sql";
 import m0030 from "./0030_email_parse_improvement_outbox.sql";
 import m0031 from "./0031_drop_user_memories.sql";
+import m0032 from "./0032_category_icon_overrides.sql";
+import m0033 from "./0033_category_color_overrides.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -68,5 +70,7 @@ export default {
     m0029,
     m0030,
     m0031,
+    m0032,
+    m0033,
   },
 };

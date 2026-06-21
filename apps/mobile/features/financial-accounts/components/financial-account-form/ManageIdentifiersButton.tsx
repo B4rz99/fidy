@@ -1,4 +1,4 @@
-import { GlassPressable } from "@/shared/components/GlassPressable";
+import { SurfacePressable } from "@/shared/components/SurfacePressable";
 import { ChevronRight } from "@/shared/components/icons";
 import { Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
@@ -15,9 +15,14 @@ export function ManageIdentifiersButton({
   const secondary = useThemeColor("secondary");
 
   return (
-    <GlassPressable onPress={onPress} radius={14} padded={false} layoutStyle={styles.manageButton}>
+    <SurfacePressable
+      onPress={onPress}
+      radius={14}
+      padded={false}
+      layoutStyle={styles.manageButton}
+    >
       <Text style={[styles.manageButtonText, { color: primary }]}>{label}</Text>
       <ChevronRight size={16} color={secondary} />
-    </GlassPressable>
+    </SurfacePressable>
   );
 }

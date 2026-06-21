@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Image } from "expo-image";
 import { type Href, useRouter } from "expo-router";
 import { useAuthIdentity } from "@/features/auth/hooks.public";
-import { GlassPressable } from "@/shared/components";
+import { SurfacePressable } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
@@ -25,7 +25,7 @@ export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
   });
 
   return (
-    <GlassPressable
+    <SurfacePressable
       accessibilityLabel={t("settings.openSettings")}
       accessibilityRole="button"
       onPress={() => push("/settings" as Href)}
@@ -57,6 +57,6 @@ export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
           </Text>
         </View>
       )}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }

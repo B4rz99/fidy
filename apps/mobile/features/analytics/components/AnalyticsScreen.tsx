@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
+import { useAvailableCategoryMap } from "@/features/categories/hooks.public";
 import { EmptyState, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { ScrollView, StyleSheet } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
@@ -20,8 +21,10 @@ export function AnalyticsScreen() {
   const period = useAnalyticsStore((s) => s.period);
   const incomeExpense = useAnalyticsStore((s) => s.incomeExpense);
   const categoryBreakdown = useAnalyticsStore((s) => s.categoryBreakdown);
+  const categoryExpenses = useAnalyticsStore((s) => s.categoryExpenses);
   const periodDelta = useAnalyticsStore((s) => s.periodDelta);
   const isLoading = useAnalyticsStore((s) => s.isLoading);
+  const categoryById = useAvailableCategoryMap();
   const userId = useOptionalUserId();
   const [selectedCategoryId, setSelectedCategoryId] = useState<CategoryId | null>(null);
 
@@ -69,9 +72,11 @@ export function AnalyticsScreen() {
         periodDelta && (
           <PeriodShiftContent
             incomeExpense={incomeExpense}
+            categoryExpenses={categoryExpenses}
             selectedCategoryId={selectedCategoryId}
             setSelectedCategoryId={setSelectedCategoryId}
             shiftView={shiftView}
+            categoryById={categoryById}
           />
         )
       )}

@@ -1,16 +1,16 @@
 import { FormTextField, Surface } from "@/shared/components";
-import { Calendar } from "@/shared/components/icons";
-import { Text, View } from "@/shared/components/rn";
+import { Calendar, Pencil } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { styles } from "./TransactionForm.styles";
 
 type TransactionMetadataRowProps = {
-  readonly borderSubtle: string;
   readonly dateLabel: string;
   readonly description: string;
   readonly descriptionPlaceholder: string;
   readonly onDescriptionBlur: () => void;
   readonly onDescriptionChange: (text: string) => void;
   readonly onDescriptionFocus: () => void;
+  readonly onDatePress?: () => void;
   readonly primaryColor: string;
   readonly secondaryColor: string;
 };
@@ -22,12 +22,14 @@ export function TransactionMetadataRow({
   onDescriptionBlur,
   onDescriptionChange,
   onDescriptionFocus,
+  onDatePress,
   primaryColor,
   secondaryColor,
 }: TransactionMetadataRowProps) {
   return (
     <View style={styles.metadataRow}>
       <FormTextField
+        icon={Pencil}
         testID="transaction-form.description"
         label={descriptionPlaceholder}
         labelStyle={{ display: "none" }}
@@ -40,18 +42,26 @@ export function TransactionMetadataRow({
         onBlur={onDescriptionBlur}
         maxLength={200}
       />
-      <Surface testID="transaction-form.date" padded={false} radius={10} style={styles.dateChip}>
-        <Calendar size={14} color={secondaryColor} />
-        <Text
-          style={{
-            color: primaryColor,
-            fontFamily: "Poppins_500Medium",
-            fontSize: 12,
-          }}
-        >
-          {dateLabel}
-        </Text>
-      </Surface>
+      <Pressable
+        accessibilityRole="button"
+        disabled={!onDatePress}
+        onPress={onDatePress}
+        style={styles.datePressable}
+        testID="transaction-form.date"
+      >
+        <Surface padded={false} radius={10} style={styles.dateChip}>
+          <Calendar size={14} color={secondaryColor} />
+          <Text
+            style={{
+              color: primaryColor,
+              fontFamily: "Poppins_500Medium",
+              fontSize: 12,
+            }}
+          >
+            {dateLabel}
+          </Text>
+        </Surface>
+      </Pressable>
     </View>
   );
 }

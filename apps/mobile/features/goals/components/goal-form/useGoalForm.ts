@@ -12,6 +12,7 @@ export type GoalFormModel = {
   readonly handleDateChange: (date: Date) => void;
   readonly handleDatePickerClose: () => void;
   readonly handleDateFieldPress: () => void;
+  readonly handleManualFieldBlur: () => void;
   readonly handleInterestRateFocus: () => void;
   readonly handleKey: (key: string) => void;
   readonly handleNameFocus: () => void;
@@ -43,6 +44,12 @@ function useGoalFormManualFocus(
     setNumpadTarget(null);
     setShowDatePicker(false);
   }, [setNumpadTarget, setShowDatePicker]);
+}
+
+function useGoalFormManualBlur(setNumpadTarget: (value: "amount" | null) => void) {
+  return useCallback(() => {
+    setNumpadTarget("amount");
+  }, [setNumpadTarget]);
 }
 
 function useGoalFormDates(initialTargetDate: Date | null) {
@@ -112,6 +119,11 @@ export function useGoalForm(options: GoalFormOptions): GoalFormModel {
     numpad.setNumpadTarget,
     dates.setShowDatePicker
   );
+  const handleManualFieldBlur = useGoalFormManualBlur(numpad.setNumpadTarget);
+  const handleDatePickerClose = useCallback(() => {
+    dates.handleDatePickerClose();
+    numpad.setNumpadTarget("amount");
+  }, [dates.handleDatePickerClose, numpad.setNumpadTarget]);
 
   return {
     amount: parseDigitsToAmount(numpad.digits),
@@ -119,11 +131,12 @@ export function useGoalForm(options: GoalFormOptions): GoalFormModel {
     goalType,
     handleAmountPress: numpad.handleAmountPress,
     handleDateChange: dates.handleDateChange,
-    handleDatePickerClose: dates.handleDatePickerClose,
+    handleDatePickerClose,
     handleDateFieldPress: useCallback(() => {
       handleManualFieldFocus();
       dates.handleDateFieldPress();
     }, [dates.handleDateFieldPress, handleManualFieldFocus]),
+    handleManualFieldBlur,
     handleInterestRateFocus: handleManualFieldFocus,
     handleKey: numpad.handleKey,
     handleNameFocus: handleManualFieldFocus,

@@ -28,7 +28,6 @@ export function OnboardingAccountReviewStep() {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
 
   const visibleSuggestions = suggestions.filter(
     (suggestion) => !deferredFingerprints.includes(suggestion.fingerprint)
@@ -180,10 +179,5 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-  },
-  continueButtonText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 16,
-    color: "#FFFFFF",
   },
 });

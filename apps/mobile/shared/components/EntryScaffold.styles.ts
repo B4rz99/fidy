@@ -2,10 +2,8 @@ import { StyleSheet } from "@/shared/components/rn";
 
 export const styles = StyleSheet.create({
   amount: {
-    fontFamily: "Poppins_300Light",
+    fontFamily: "Poppins_700Bold",
     fontSize: 78,
-    fontWeight: "300",
-    letterSpacing: -2,
     textAlign: "center",
     width: "100%",
   },
@@ -14,6 +12,15 @@ export const styles = StyleSheet.create({
     flex: 0.85,
     justifyContent: "center",
     minHeight: 80,
+  },
+  amountBanner: {
+    alignItems: "center",
+    borderRadius: 24,
+    borderWidth: 1,
+    maxWidth: "100%",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    width: "82%",
   },
   container: {
     flex: 1,
@@ -26,6 +33,17 @@ export const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 13,
     padding: 0,
+    textAlignVertical: "center",
+  },
+  fieldPlaceholder: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+    left: 0,
+    lineHeight: 20,
+    position: "absolute",
+    right: 0,
+    top: "50%",
+    transform: [{ translateY: -10 }],
   },
   fieldText: {
     flex: 1,
@@ -34,7 +52,13 @@ export const styles = StyleSheet.create({
   },
   fields: {
     gap: 9,
-    height: 168,
+    height: 188,
+  },
+  inputWrap: {
+    flex: 1,
+    height: "100%",
+    justifyContent: "center",
+    position: "relative",
   },
   key: {
     alignItems: "center",
@@ -64,21 +88,8 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
   },
-  tab: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "center",
-    zIndex: 1,
-  },
-  tabText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-  },
   tabs: {
-    flexDirection: "row",
-    gap: 8,
-    height: 34,
-    position: "relative",
+    width: "100%",
   },
   swipeArea: {
     flex: 1,

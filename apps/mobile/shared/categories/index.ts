@@ -12,3 +12,8 @@ export {
   isValidCategoryId,
 } from "./registry";
 export { categoryIdSchema, makeCategoryIdSchema } from "./schema";
+export {
+  CATEGORY_BAR_BACKGROUND_COLORS,
+  DARK_CATEGORY_BACKGROUND_COLOR,
+  getCategoryBarBackgroundColor,
+} from "./bar-colors";

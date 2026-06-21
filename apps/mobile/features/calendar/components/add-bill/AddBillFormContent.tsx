@@ -1,34 +1,34 @@
 import { useState } from "react";
-import type { TextInput as RNTextInput } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
-import { CATEGORIES, type CategoryId } from "@/shared/categories";
+import { useAvailableCategories } from "@/features/categories/hooks.public";
+import { CategoryStrip, TransactionDatePickerDialog } from "@/features/transactions/ui.public";
+import type { CategoryId } from "@/shared/categories";
 import {
-  AppAuroraBackground,
   Button,
-  FieldButton,
-  FormTextField,
+  MoneyAmountDisplay,
+  MoneyEntryDateButton,
+  MoneyEntryScreen,
+  MoneyEntryTextField,
   SelectableChipRow,
 } from "@/shared/components";
-import { KeyboardAvoidingView, ScrollView, Text, View } from "@/shared/components/rn";
-import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
-import { getCategoryLabel } from "@/shared/i18n";
+import { Calendar, Pencil } from "@/shared/components/icons";
+import { Keyboard, Pressable, Text, View } from "@/shared/components/rn";
+import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { type BillFrequency, FREQUENCIES } from "../../schema";
 import { styles } from "./AddBillForm.styles";
 
 type AddBillFormContentProps = {
   readonly amount: string;
-  readonly amountRef: React.RefObject<RNTextInput | null>;
   readonly canSubmit: boolean;
   readonly category: CategoryId;
   readonly frequency: BillFrequency;
+  readonly handleAmountKey: (key: string) => void;
   readonly handleCategoryPress: (id: CategoryId) => void;
   readonly handleFrequencyPress: (value: BillFrequency) => void;
   readonly handleSave: () => void;
+  readonly headerTitle: string;
   readonly isEdit: boolean;
   readonly isSaving: boolean;
   readonly name: string;
-  readonly onAmountChange: (value: string) => void;
   readonly onNameChange: (value: string) => void;
   readonly onStartDateChange: (date: Date) => void;
   readonly startDate: Date;
@@ -36,122 +36,141 @@ type AddBillFormContentProps = {
 
 export function AddBillFormContent({
   amount,
-  amountRef,
   canSubmit,
   category,
   frequency,
+  handleAmountKey,
   handleCategoryPress,
   handleFrequencyPress,
   handleSave,
+  headerTitle,
   isEdit,
   isSaving,
   name,
-  onAmountChange,
   onNameChange,
   onStartDateChange,
   startDate,
 }: AddBillFormContentProps) {
   const { t, locale } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  const isDark = useColorScheme() === "dark";
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
+  const { cursorStyle } = useBlinkingCursor();
+  const [numpadActive, setNumpadActive] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const categories = useAvailableCategories();
   const formattedStartDate = startDate.toLocaleDateString(locale, {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <AppAuroraBackground isDark={isDark} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="always"
-      >
-        <View style={styles.formGrid}>
-          <FormTextField
-            label={t("common.name")}
-            value={name}
-            onChangeText={onNameChange}
-            placeholder={t("bills.placeholder.name")}
-            returnKeyType="next"
-            onSubmitEditing={() => amountRef.current?.focus()}
-            style={styles.inputGroup}
-            labelStyle={[styles.inputLabel, { color: secondaryColor }]}
-            inputStyle={[styles.input, { color: primaryColor }]}
-          />
-
-          <FormTextField
-            ref={amountRef}
-            label={t("common.amount")}
-            value={amount}
-            onChangeText={onAmountChange}
-            placeholder={t("bills.placeholder.amount")}
-            keyboardType="number-pad"
-            returnKeyType="done"
-            style={styles.inputGroup}
-            labelStyle={[styles.inputLabel, { color: secondaryColor }]}
-            inputStyle={[styles.input, { color: primaryColor }]}
-          />
-
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>
-              {t("bills.frequency")}
-            </Text>
-            <SelectableChipRow
-              className="flex-wrap"
-              options={FREQUENCIES.map((item) => ({
-                value: item.value,
-                label: t(item.labelKey),
-              }))}
-              value={frequency}
-              onChange={handleFrequencyPress}
-              chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
+    <>
+      <MoneyEntryScreen
+        amountContent={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("common.amount")}
+            onPress={() => {
+              Keyboard.dismiss();
+              setShowDatePicker(false);
+              setNumpadActive(true);
+            }}
+            style={styles.amountPressTarget}
+          >
+            <MoneyAmountDisplay
+              color={primaryColor}
+              cursorStyle={cursorStyle}
+              cursorVisible={numpadActive}
+              digits={amount}
+              emptyDisplay="$0"
+              size="hero"
             />
-          </View>
-
-          <FieldButton
-            label={t("bills.startDate")}
-            value={formattedStartDate}
-            style={styles.inputGroup}
-            onPress={() => setShowDatePicker(true)}
+          </Pressable>
+        }
+        amountStyle={styles.amountZone}
+        actionContent={
+          <Button
+            label={isEdit ? t("bills.saveChanges") : t("bills.add")}
+            onPress={handleSave}
+            disabled={isSaving || !canSubmit}
+            loading={isSaving}
+            size="compact"
           />
+        }
+        detailContent={
+          <>
+            <View style={styles.firstDetailRow}>
+              <MoneyEntryTextField
+                icon={Pencil}
+                label={t("common.name")}
+                value={name}
+                onChangeText={onNameChange}
+                onFocus={() => setNumpadActive(false)}
+                onBlur={() => setNumpadActive(true)}
+                placeholder={t("bills.placeholder.name")}
+                style={[styles.inputGroup, styles.nameField]}
+                returnKeyType="done"
+              />
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>
-              {t("common.category")}
-            </Text>
-            <SelectableChipRow
-              className="flex-wrap"
-              options={CATEGORIES.map((item) => ({
-                value: item.id,
-                label: getCategoryLabel(item, locale),
-              }))}
-              value={category}
-              onChange={handleCategoryPress}
-              chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
-            />
-          </View>
-        </View>
+              <MoneyEntryDateButton
+                icon={Calendar}
+                label={t("bills.startDate")}
+                value={formattedStartDate}
+                style={[styles.inputGroup, styles.startDateField]}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setNumpadActive(true);
+                  setShowDatePicker(true);
+                }}
+              />
+            </View>
 
-        <Button
-          label={isEdit ? t("bills.saveChanges") : t("bills.add")}
-          onPress={handleSave}
-          disabled={isSaving || !canSubmit}
-          loading={isSaving}
-        />
-      </ScrollView>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: secondaryColor }]}>
+                {t("bills.frequency")}
+              </Text>
+              <SelectableChipRow
+                className="flex-wrap"
+                options={FREQUENCIES.map((item) => ({
+                  value: item.value,
+                  label: t(item.labelKey),
+                }))}
+                value={frequency}
+                onChange={handleFrequencyPress}
+                chipStyle={{ minHeight: 32, paddingHorizontal: 16, paddingVertical: 8 }}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: secondaryColor }]}>
+                {t("common.category")}
+              </Text>
+              <View style={styles.categoryStrip}>
+                <CategoryStrip
+                  categories={categories}
+                  categoryId={category}
+                  onCategoryChange={handleCategoryPress}
+                />
+              </View>
+            </View>
+          </>
+        }
+        headerTitle={headerTitle}
+        numpadVisible={numpadActive}
+        onKeyPress={handleAmountKey}
+        stackStyle={styles.formStack}
+      />
       <TransactionDatePickerDialog
         allowFuture
         date={startDate}
         onChange={onStartDateChange}
-        onClose={() => setShowDatePicker(false)}
+        onClose={() => {
+          setShowDatePicker(false);
+          setNumpadActive(true);
+        }}
         visible={showDatePicker}
       />
-    </KeyboardAvoidingView>
+    </>
   );
 }

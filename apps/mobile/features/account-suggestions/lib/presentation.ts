@@ -67,7 +67,7 @@ function isWalletAliasSuggestion(suggestion: AccountCreationSuggestion) {
 }
 
 const inferLlmSuggestionKind = (
-  suggestion: AccountCreationSuggestion
+  _suggestion: AccountCreationSuggestion
 ): FinancialAccountKind | undefined => undefined;
 
 const inferWalletSuggestionKind = (

@@ -24,6 +24,8 @@ export type ReviewCandidateId = Brand<string, "ReviewCandidateId">;
 export type ReviewCandidateCaptureEvidenceId = Brand<string, "ReviewCandidateCaptureEvidenceId">;
 export type DetectedSmsEventId = Brand<string, "DetectedSmsEventId">;
 export type UserCategoryId = Brand<string, "UserCategoryId">;
+export type CategoryIconOverrideId = Brand<string, "CategoryIconOverrideId">;
+export type CategoryColorOverrideId = Brand<string, "CategoryColorOverrideId">;
 export type NotificationId = Brand<string, "NotificationId">;
 export type BackupId = Brand<string, "BackupId">;
 

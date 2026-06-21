@@ -1,8 +1,8 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenLayout, SettingsSection } from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
-import { Platform, ScrollView, View } from "@/shared/components/rn";
+import { ScrollView, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { useNotificationPreferencesMutation } from "../hooks/use-notification-preferences";
 import type { NotificationPreferences } from "../store";
@@ -12,7 +12,6 @@ import { SettingsRow } from "./SettingsRow";
 type PreferenceToggle = {
   readonly key: keyof NotificationPreferences;
   readonly labelKey: string;
-  readonly descKey: string;
   readonly isLast: boolean;
 };
 
@@ -20,19 +19,16 @@ const PREFERENCE_TOGGLES: readonly PreferenceToggle[] = [
   {
     key: "budgetAlerts",
     labelKey: "notifications.preferences.budgetAlerts",
-    descKey: "notifications.preferences.budgetAlertsDesc",
     isLast: false,
   },
   {
     key: "goalMilestones",
     labelKey: "notifications.preferences.goalMilestones",
-    descKey: "notifications.preferences.goalMilestonesDesc",
     isLast: false,
   },
   {
     key: "spendingAnomalies",
     labelKey: "notifications.preferences.spendingAnomalies",
-    descKey: "notifications.preferences.spendingAnomaliesDesc",
     isLast: true,
   },
 ];
@@ -69,9 +65,6 @@ export function NotificationPreferencesScreen() {
 
   return (
     <ScreenLayout title={t("notifications.preferences.title")} variant="sub" onBack={() => back()}>
-      {Platform.OS === "ios" && (
-        <Stack.Screen options={{ title: t("notifications.preferences.title") }} />
-      )}
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -107,7 +100,6 @@ export function NotificationPreferencesScreen() {
               <SettingsRow
                 icon={Bell}
                 label={t(toggle.labelKey)}
-                subtitle={t(toggle.descKey)}
                 accessory="switch"
                 switchValue={prefs[toggle.key]}
                 onSwitchChange={(value) => handleSetPreference(toggle.key, value)}

@@ -1,15 +1,19 @@
 /* eslint-disable no-restricted-imports */
 
-import type { BudgetRow as RepoBudgetRow } from "@/features/budget/lib/repository";
 import type {
   BillPaymentRow as RepoBillPaymentRow,
   BillRow as RepoBillRow,
 } from "@/features/calendar/lib/repository";
-import type { UserCategoryRow as RepoUserCategoryRow } from "@/features/categories/lib/repository";
+import type { BudgetRow as RepoBudgetRow } from "@/infrastructure/local-ledger/budget-storage";
+import type {
+  CategoryColorOverrideRow as RepoCategoryColorOverrideRow,
+  CategoryIconOverrideRow as RepoCategoryIconOverrideRow,
+  UserCategoryRow as RepoUserCategoryRow,
+} from "@/infrastructure/local-ledger/category-storage";
 import type {
   GoalContributionRow as RepoGoalContributionRow,
   GoalRow as RepoGoalRow,
-} from "@/features/goals/lib/repository";
+} from "@/infrastructure/local-ledger/goal-storage";
 import type { NotificationRow as RepoNotificationRow } from "@/features/notifications/repository";
 import type { TransactionRow as RepoTransactionRow } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
@@ -66,6 +70,8 @@ export {
   type RepoNotificationRow as NotificationRow,
   type RepoTransactionRow as TransactionRow,
   type RepoUserCategoryRow as UserCategoryRow,
+  type RepoCategoryIconOverrideRow as CategoryIconOverrideRow,
+  type RepoCategoryColorOverrideRow as CategoryColorOverrideRow,
   type RepoBudgetRow as BudgetRow,
   type RepoBillRow as BillRow,
   type RepoBillPaymentRow as BillPaymentRow,

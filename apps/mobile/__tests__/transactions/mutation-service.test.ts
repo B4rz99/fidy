@@ -27,6 +27,7 @@ describe("transaction mutation service", () => {
   let resetForm: ServiceDeps["resetForm"];
   let trackDeleted: ServiceDeps["trackDeleted"];
   let trackEdited: ServiceDeps["trackEdited"];
+  let cacheCommittedTransaction: NonNullable<ServiceDeps["cacheCommittedTransaction"]>;
   let recordManualTransaction: ServiceDeps["recordManualTransaction"];
   let amendManualTransaction: ServiceDeps["amendManualTransaction"];
   let voidTransaction: ServiceDeps["voidTransaction"];
@@ -34,6 +35,7 @@ describe("transaction mutation service", () => {
   let resetFormMock: ReturnType<typeof vi.fn>;
   let trackDeletedMock: ReturnType<typeof vi.fn>;
   let trackEditedMock: ReturnType<typeof vi.fn>;
+  let cacheCommittedTransactionMock: ReturnType<typeof vi.fn>;
   let recordManualTransactionMock: ReturnType<typeof vi.fn>;
   let amendManualTransactionMock: ReturnType<typeof vi.fn>;
   let voidTransactionMock: ReturnType<typeof vi.fn>;
@@ -45,6 +47,7 @@ describe("transaction mutation service", () => {
       resetForm,
       trackDeleted,
       trackEdited,
+      cacheCommittedTransaction,
       recordManualTransaction,
       amendManualTransaction,
       voidTransaction,
@@ -59,6 +62,7 @@ describe("transaction mutation service", () => {
     resetFormMock = vi.fn<(...args: any[]) => any>();
     trackDeletedMock = vi.fn<(...args: any[]) => any>();
     trackEditedMock = vi.fn<(...args: any[]) => any>();
+    cacheCommittedTransactionMock = vi.fn<(...args: any[]) => any>();
     recordManualTransactionMock = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       success: true,
       transaction: {
@@ -106,6 +110,9 @@ describe("transaction mutation service", () => {
     resetForm = resetFormMock as ServiceDeps["resetForm"];
     trackDeleted = trackDeletedMock as ServiceDeps["trackDeleted"];
     trackEdited = trackEditedMock as ServiceDeps["trackEdited"];
+    cacheCommittedTransaction = cacheCommittedTransactionMock as NonNullable<
+      ServiceDeps["cacheCommittedTransaction"]
+    >;
     recordManualTransaction = recordManualTransactionMock as ServiceDeps["recordManualTransaction"];
     amendManualTransaction = amendManualTransactionMock as ServiceDeps["amendManualTransaction"];
     voidTransaction = voidTransactionMock as ServiceDeps["voidTransaction"];
@@ -154,9 +161,10 @@ describe("transaction mutation service", () => {
       error: "Failed to save transaction",
     });
     expect(refreshMock).not.toHaveBeenCalled();
+    expect(cacheCommittedTransactionMock).not.toHaveBeenCalled();
   });
 
-  it("saves valid transactions through the Local Ledger writer", async () => {
+  it("saves valid transactions, caches them, then refreshes read models", async () => {
     const service = createService();
 
     const result = await service.save(input);
@@ -177,7 +185,13 @@ describe("transaction mutation service", () => {
       input,
       now,
     });
+    expect(cacheCommittedTransactionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "txn-1", amount: 1200 })
+    );
     expect(refreshMock).toHaveBeenCalledOnce();
+    expect(cacheCommittedTransactionMock.mock.invocationCallOrder[0]).toBeLessThan(
+      refreshMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
+    );
   });
 
   it("treats throwing amend writers as update failures", async () => {

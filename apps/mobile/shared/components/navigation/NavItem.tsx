@@ -1,7 +1,7 @@
 import type { LucideIcon } from "@/shared/components/icons";
 import { StyleSheet, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassPressable } from "../GlassPressable";
+import { SurfacePressable } from "../SurfacePressable";
 
 type NavItemProps = {
   icon: LucideIcon;
@@ -15,7 +15,7 @@ export function NavItem({ icon: Icon, label, isActive, onPress }: NavItemProps) 
   const tertiaryColor = useThemeColor("tertiary");
 
   return (
-    <GlassPressable
+    <SurfacePressable
       onPress={onPress}
       padded={false}
       radius={999}
@@ -29,7 +29,7 @@ export function NavItem({ icon: Icon, label, isActive, onPress }: NavItemProps) 
       >
         {label}
       </Text>
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 

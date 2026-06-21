@@ -38,8 +38,8 @@ beforeAll(() => {
 test("add-bill is registered in root layout as a full screen route", () => {
   expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
   expect(routeSource).not.toContain("DialogRouteFrame");
-  expect(routeSource).toContain('headerBackTitle: ""');
-  expect(routeSource).toContain("headerTitle: title");
+  expect(routeSource).not.toContain("<Stack.Screen");
+  expect(routeSource).not.toContain("headerTitle");
   expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "add-bill");
   expect(layoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
   expect(layoutSource).toContain("routeOptions.fullScreen");
@@ -51,20 +51,31 @@ test("add-bill routes through the extracted screen module", () => {
   expect(routeSource).toContain("routes.public");
 });
 
-test("add-bill content uses KeyboardAvoidingView for keyboard handling", () => {
-  expect(formContentSource).toContain("KeyboardAvoidingView");
+test("add-bill content uses the shared money-entry screen structure", () => {
+  expect(formContentSource).toContain("MoneyEntryScreen");
+  expect(formContentSource).toContain("headerTitle={headerTitle}");
+  expect(formContentSource).toContain("amountContent={");
+  expect(formContentSource).toContain("detailContent={");
+  expect(formContentSource).toContain("actionContent={");
+  expect(formContentSource).toContain("numpadVisible={numpadActive}");
+  expect(formContentSource).toContain("onKeyPress={handleAmountKey}");
+  expect(formContentSource).not.toContain("KeyboardAvoidingView");
+  expect(formContentSource).not.toContain("<ScrollView");
 });
 
-test("add-bill screen keeps keyboard and scroll containers bounded over aurora", () => {
-  expect(formContentSource).toContain("style={styles.container}");
-  expect(formContentSource).toContain("<AppAuroraBackground");
+test("add-bill screen delegates aurora and layout bounds to the shared shell", () => {
+  expect(formContentSource).not.toContain("<AppAuroraBackground");
   expect(formContentSource).not.toContain("styles.title");
-  expect(formStylesSource).toContain("container: { flex: 1 }");
+  expect(formStylesSource).not.toContain("container: { flex: 1 }");
 });
 
-test("add-bill content has name and amount text inputs", () => {
-  expect(formContentSource).toContain("TextInput");
-  expect(formContentSource).toContain("onChangeText");
+test("add-bill content has a money-entry name field and amount display", () => {
+  expect(formContentSource).toContain("MoneyEntryTextField");
+  expect(formContentSource).toContain("MoneyAmountDisplay");
+  expect(formContentSource).toContain('emptyDisplay="$0"');
+  expect(formContentSource).toContain("setNumpadActive(true)");
+  expect(formContentSource).toContain("setNumpadActive(false)");
+  expect(formContentSource).not.toContain("<FormTextField");
 });
 
 test("add-bill content has frequency chips", () => {
@@ -73,7 +84,8 @@ test("add-bill content has frequency chips", () => {
 });
 
 test("add-bill content has category chips", () => {
-  expect(formContentSource).toContain("CATEGORIES");
+  expect(formContentSource).toContain("useAvailableCategories");
+  expect(formContentSource).toContain("CategoryStrip");
   expect(formContentSource).toContain("category");
 });
 
@@ -87,9 +99,9 @@ test("add-bill screen uses router.back() on successful save", () => {
 
 test("add-bill screen supports edit mode via billId param", () => {
   expect(screenSource).toContain("billId");
-  expect(routeSource).toContain("useLocalSearchParams");
-  expect(routeSource).toContain('t("bills.editBill")');
-  expect(routeSource).toContain('t("bills.addBill")');
+  expect(screenSource).toContain("useLocalSearchParams");
+  expect(screenSource).toContain('t("bills.editBill")');
+  expect(screenSource).toContain('t("bills.addBill")');
 });
 
 test("add-bill submit only closes edit mode after a successful update", () => {
@@ -106,6 +118,13 @@ test("authenticated add-bill form gates bill mutations on migration readiness", 
 
 test("add-bill form dismisses keyboard on chip press", () => {
   expect(formSource).toContain("Keyboard.dismiss");
+});
+
+test("add-bill form delegates amount digits through handleNumpadPress", () => {
+  expect(formSource).toContain("handleNumpadPress");
+  expect(formSource).toContain(
+    "draftController.setAmount(handleNumpadPress(draftController.draft.amount, key))"
+  );
 });
 
 test("add-bill content avoids TouchableOpacity per ui-pressable rule", () => {

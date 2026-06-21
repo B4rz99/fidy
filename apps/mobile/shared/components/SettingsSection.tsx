@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Text, View } from "@/shared/components/rn";
-import { GlassSurface } from "./GlassSurface";
+import { SolidSurface } from "./SolidSurface";
 
 type SettingsSectionProps = {
   label: string;
@@ -16,7 +16,7 @@ export function SettingsSection({ label, children }: SettingsSectionProps) {
       >
         {label}
       </Text>
-      <GlassSurface padded={false}>{children}</GlassSurface>
+      <SolidSurface padded={false}>{children}</SolidSurface>
     </View>
   );
 }

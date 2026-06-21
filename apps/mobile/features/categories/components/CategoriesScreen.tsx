@@ -1,5 +1,7 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useState } from "react";
+import { useOptionalUserId } from "@/features/auth/public";
+import type { Category } from "@/shared/categories";
 import {
   Button,
   EmptyState,
@@ -8,17 +10,18 @@ import {
   SettingsSection,
   TAB_BAR_CLEARANCE,
 } from "@/shared/components";
-import { Plus } from "@/shared/components/icons";
-import { ScrollView, StyleSheet, Text, useColorScheme } from "@/shared/components/rn";
+import { ChevronRight, Plus } from "@/shared/components/icons";
+import { ScrollView, StyleSheet, Text } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n/locale-helpers";
-import { useCategoriesStore } from "../store";
-
-const CLOTHING_DARK_COLOR = "#E0E0E0";
-
-/** Resolves icon color with dark-mode override for clothing (#1A1A1A -> #E0E0E0). */
-const resolveIconColor = (color: string, isDark: boolean): string =>
-  isDark && color === "#1A1A1A" ? CLOTHING_DARK_COLOR : color;
+import {
+  resetCategoryColor,
+  resetCategoryEmoji,
+  updateCategoryAppearance,
+  useCategoriesStore,
+} from "../store";
+import { CategoryEmojiDialog } from "./CategoryEmojiDialog";
 
 // ─── Category row with custom icon color ────────────────────────────
 
@@ -27,13 +30,16 @@ type CategoryRowProps = {
   label: string;
   color: string;
   isLast: boolean;
+  onPress?: () => void;
 };
 
-function CategoryRow({ icon, label, color, isLast }: CategoryRowProps) {
+function CategoryRow({ icon, label, color, isLast, onPress }: CategoryRowProps) {
   return (
     <Row
       title={label}
       leading={<Text style={[styles.categoryEmoji, { color }]}>{icon}</Text>}
+      trailing={<ChevronRight size={18} color={color} />}
+      onPress={onPress}
       isLast={isLast}
     />
   );
@@ -44,15 +50,71 @@ function CategoryRow({ icon, label, color, isLast }: CategoryRowProps) {
 export function CategoriesScreen() {
   const { back, push } = useRouter();
   const { t, locale } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const userId = useOptionalUserId();
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [emojiDraft, setEmojiDraft] = useState("");
+  const [colorDraft, setColorDraft] = useState<string | null>(null);
+  const [isSavingAppearance, setIsSavingAppearance] = useState(false);
 
   const builtInCategories = useCategoriesStore((s) => s.builtIn);
   const customCategories = useCategoriesStore((s) => s.custom);
 
-  const handleAddPress = useCallback(() => {
+  const handleAddPress = () => {
     push("/create-category");
-  }, [push]);
+  };
+
+  const handleCategoryPress = (category: Category) => {
+    setEditingCategory(category);
+    setEmojiDraft(category.icon);
+    setColorDraft(category.color);
+  };
+
+  const clearAppearanceDraft = () => {
+    setEditingCategory(null);
+    setEmojiDraft("");
+    setColorDraft(null);
+  };
+
+  const runAppearanceMutation = (mutation: () => Promise<boolean>) => {
+    setIsSavingAppearance(true);
+    void Promise.resolve()
+      .then(mutation)
+      .then((success) => {
+        if (success) clearAppearanceDraft();
+      })
+      .catch(() => {
+        // Leave the dialog open so the user can retry.
+      })
+      .then(() => {
+        setIsSavingAppearance(false);
+      });
+  };
+
+  const handleCloseEmojiDialog = () => {
+    if (isSavingAppearance) return;
+    clearAppearanceDraft();
+  };
+
+  const handleSaveAppearance = () => {
+    if (!editingCategory || !userId || colorDraft == null) return;
+    runAppearanceMutation(() =>
+      updateCategoryAppearance(getDb(userId), userId, {
+        categoryId: editingCategory.id,
+        emoji: emojiDraft,
+        colorHex: colorDraft,
+      })
+    );
+  };
+
+  const handleResetEmoji = () => {
+    if (!editingCategory || !userId) return;
+    runAppearanceMutation(() => resetCategoryEmoji(getDb(userId), userId, editingCategory.id));
+  };
+
+  const handleResetColor = () => {
+    if (!editingCategory || !userId) return;
+    runAppearanceMutation(() => resetCategoryColor(getDb(userId), userId, editingCategory.id));
+  };
 
   return (
     <ScreenLayout variant="sub" title={t("categories.title")} onBack={back}>
@@ -69,7 +131,8 @@ export function CategoriesScreen() {
               key={category.id}
               icon={category.icon}
               label={getCategoryLabel(category, locale)}
-              color={resolveIconColor(category.color, isDark)}
+              color={category.color}
+              onPress={() => handleCategoryPress(category)}
               isLast={index === builtInCategories.length - 1}
             />
           ))}
@@ -89,6 +152,7 @@ export function CategoriesScreen() {
                 icon={category.icon}
                 label={getCategoryLabel(category, locale)}
                 color={category.color}
+                onPress={() => handleCategoryPress(category)}
                 isLast={index === customCategories.length - 1}
               />
             ))
@@ -103,6 +167,18 @@ export function CategoriesScreen() {
           onPress={handleAddPress}
         />
       </ScrollView>
+      <CategoryEmojiDialog
+        category={editingCategory}
+        color={colorDraft}
+        emoji={emojiDraft}
+        isSaving={isSavingAppearance}
+        onClose={handleCloseEmojiDialog}
+        onColorChange={setColorDraft}
+        onEmojiChange={setEmojiDraft}
+        onResetColor={handleResetColor}
+        onResetEmoji={handleResetEmoji}
+        onSave={handleSaveAppearance}
+      />
     </ScreenLayout>
   );
 }

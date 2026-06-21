@@ -4,10 +4,12 @@ import {
 } from "@/features/email-capture/public";
 import { Callout } from "@/shared/components";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
-import { useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
+  const secondary = useThemeColor("secondary");
+  const warning = useThemeColor("warning");
   const count = useEmailCaptureStore(selectNeedsReviewBannerCount);
 
   if (count === 0) return null;
@@ -17,8 +19,8 @@ export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
       title={t("financialMeaningReview.bannerTitle", { count })}
       subtitle={t("financialMeaningReview.bannerSubtitle")}
       tone="warning"
-      icon={<TriangleAlert size={18} color="#E65100" />}
-      trailing={<ChevronRight size={16} color="#6D6D6D" />}
+      icon={<TriangleAlert size={18} color={warning} />}
+      trailing={<ChevronRight size={16} color={secondary} />}
       onPress={onPress}
     />
   );

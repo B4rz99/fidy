@@ -1,7 +1,8 @@
 import { memo, useCallback } from "react";
-import { GlassPressable } from "@/shared/components";
+import { SurfacePressable } from "@/shared/components";
 import { Check } from "@/shared/components/icons";
 import { View } from "@/shared/components/rn";
+import { getReadableSwatchCheckColor } from "../../lib/color-swatch";
 import { COLOR_SWATCHES } from "../../lib/constants";
 import { styles } from "./CreateCategoryScreen.styles";
 
@@ -20,15 +21,15 @@ const ColorSwatch = memo(function ColorSwatch({ color, isSelected, onPress }: Co
   const handlePress = useCallback(() => onPress(color), [color, onPress]);
 
   return (
-    <GlassPressable
+    <SurfacePressable
       onPress={handlePress}
       backgroundColor={color}
       radius={18}
       padded={false}
       layoutStyle={styles.swatch}
     >
-      {isSelected ? <Check size={16} color={color} /> : null}
-    </GlassPressable>
+      {isSelected ? <Check size={16} color={getReadableSwatchCheckColor(color)} /> : null}
+    </SurfacePressable>
   );
 });
 

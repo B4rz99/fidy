@@ -63,12 +63,16 @@ async function loadBudgetRepository() {
   return import("@/features/budget/lib/repository");
 }
 
+async function loadBudgetStorage() {
+  return import("@/infrastructure/local-ledger/budget-storage");
+}
+
 function mockCopySourceAndTarget(sourceRows: BudgetRow[], targetRows: BudgetRow[] = []) {
   mockAll.mockReturnValueOnce(sourceRows).mockReturnValueOnce(targetRows);
 }
 
 async function runCopyBudgets(generateId: () => BudgetId) {
-  const { copyBudgetsToMonth } = await loadBudgetRepository();
+  const { copyBudgetsToMonth } = await loadBudgetStorage();
   return copyBudgetsToMonth(mockDb, USER_ID, SOURCE_MONTH, TARGET_MONTH, COPY_NOW, generateId);
 }
 
@@ -90,7 +94,7 @@ describe("budget repository", () => {
 
   describe("insertBudget", () => {
     it("calls db.insert with the correct row", async () => {
-      const { insertBudget } = await loadBudgetRepository();
+      const { insertBudget } = await loadBudgetStorage();
       const row = makeBudgetRow();
 
       insertBudget(mockDb, row);
@@ -102,7 +106,7 @@ describe("budget repository", () => {
     });
 
     it("uses onConflictDoUpdate to un-delete a soft-deleted budget", async () => {
-      const { insertBudget } = await loadBudgetRepository();
+      const { insertBudget } = await loadBudgetStorage();
       const row = makeBudgetRow({
         id: "budget-new" as BudgetId,
         amount: 60000 as CopAmount,
@@ -174,17 +178,19 @@ describe("budget repository", () => {
 
   describe("updateBudgetAmount", () => {
     it("sets amount and updatedAt", async () => {
-      const { updateBudgetAmount } = await loadBudgetRepository();
+      const { updateBudgetAmount } = await loadBudgetStorage();
 
       updateBudgetAmount({
         db: mockDb,
         id: "budget-1" as BudgetId,
+        categoryId: "transport" as CategoryId,
         amount: 75000 as CopAmount,
         now: "2026-03-15T00:00:00.000Z" as IsoDateTime,
       });
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith({
+        categoryId: "transport",
         amount: 75000,
         updatedAt: "2026-03-15T00:00:00.000Z",
       });
@@ -194,7 +200,7 @@ describe("budget repository", () => {
 
   describe("softDeleteBudget", () => {
     it("sets deletedAt and updatedAt", async () => {
-      const { softDeleteBudget } = await loadBudgetRepository();
+      const { softDeleteBudget } = await loadBudgetStorage();
 
       softDeleteBudget(mockDb, "budget-1" as BudgetId, "2026-03-15T00:00:00.000Z" as IsoDateTime);
 

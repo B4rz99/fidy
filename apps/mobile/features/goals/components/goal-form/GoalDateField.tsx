@@ -1,5 +1,6 @@
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { MoneyEntryDateButton } from "@/shared/components";
+import { Calendar } from "@/shared/components/icons";
 import { useCurrentDate, useTranslation } from "@/shared/hooks";
 import { getMinimumGoalDate } from "./GoalDateField.helpers";
 
@@ -32,13 +33,19 @@ export function GoalDateField({
         day: "numeric",
       })
     : "";
+  const currentDateLabel = currentDate.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <>
       <MoneyEntryDateButton
+        icon={Calendar}
         label={t("goals.create.targetDate")}
         value={dateLabel}
-        placeholder={t("goals.create.targetDate")}
+        placeholder={currentDateLabel}
         onPress={onPress}
         onClear={targetDate != null ? onClear : undefined}
         clearAccessibilityLabel={t("common.clear")}

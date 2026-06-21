@@ -7,6 +7,7 @@ import type { AuthenticatedAddBillFormProps } from "./AddBillForm.types";
 
 export function AuthenticatedAddBillForm({
   existingBill,
+  headerTitle,
   onDone,
   userId,
 }: AuthenticatedAddBillFormProps) {
@@ -18,6 +19,7 @@ export function AuthenticatedAddBillForm({
       key={existingBill?.id ?? "new"}
       existingBill={existingBill}
       canSubmit={migrationsReady}
+      headerTitle={headerTitle}
       onAddBill={(draft) => {
         if (!migrationsReady) return Promise.resolve(false);
         return addBill({ db, userId, draft });

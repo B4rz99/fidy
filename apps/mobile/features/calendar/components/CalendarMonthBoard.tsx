@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { Category, CategoryId } from "@/shared/categories";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { buildCalendarMonthSummary, type CalendarBillOccurrence } from "../lib/calendar-utils";
@@ -9,6 +10,7 @@ import { MonthNavigator } from "./MonthNavigator";
 
 type CalendarMonthBoardProps = {
   readonly bills: readonly Bill[];
+  readonly categoryById: ReadonlyMap<CategoryId, Category>;
   readonly cellMinHeight?: number;
   readonly currentMonth: Date;
   readonly onBillDelete?: (bill: Bill) => void;
@@ -24,6 +26,7 @@ type CalendarMonthBoardProps = {
 
 export function CalendarMonthBoard({
   bills,
+  categoryById,
   cellMinHeight,
   currentMonth,
   onBillDelete,
@@ -59,6 +62,7 @@ export function CalendarMonthBoard({
           <CalendarGrid
             currentMonth={currentMonth}
             bills={bills}
+            categoryById={categoryById}
             payments={payments}
             cellMinHeight={cellMinHeight}
             onDayPress={onDayPress}
@@ -77,6 +81,7 @@ export function CalendarMonthBoard({
             {monthSummary.monthOccurrences.map((occurrence) => (
               <CalendarBillRow
                 key={`${occurrence.bill.id}-${occurrence.dueDate}`}
+                categoryById={categoryById}
                 occurrence={occurrence}
                 onDelete={onBillDelete}
                 onEdit={onBillEdit}

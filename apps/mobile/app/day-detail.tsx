@@ -1,7 +1,8 @@
 import { format } from "date-fns";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
+import { useAvailableCategoryMap } from "@/features/categories/hooks.public";
 import {
   deleteBill,
   getBillsForDate,
@@ -14,7 +15,7 @@ import {
   type BillPayment,
   type CalendarBillOccurrence,
 } from "@/features/calendar/ui.public";
-import { AppAuroraBackground } from "@/shared/components";
+import { AppAuroraBackground, SolidScreenHeader } from "@/shared/components";
 import { Alert, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -40,17 +41,19 @@ function parseDayDetailDateParam(value: string | undefined): Date {
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
-  const { push } = useRouter();
+  const { back, push } = useRouter();
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const isDark = useColorScheme() === "dark";
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
+  const categoryById = useAvailableCategoryMap();
   const userId = useOptionalUserId();
 
   const secondaryColor = useThemeColor("secondary");
 
   const dateObj = parseDayDetailDateParam(date);
+  const title = format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) });
   const dueDateStr = toIsoDate(dateObj);
   const billsForDate = getBillsForDate(bills, dateObj);
 
@@ -88,15 +91,8 @@ export default function DayDetailScreen() {
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerBackButtonDisplayMode: "minimal",
-          headerBackTitle: "",
-          headerTitle: format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) }),
-          title: format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) }),
-        }}
-      />
       <AppAuroraBackground isDark={isDark} />
+      <SolidScreenHeader title={title} onBack={back} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
@@ -122,6 +118,7 @@ export default function DayDetailScreen() {
               return (
                 <CalendarBillRow
                   key={billId}
+                  categoryById={categoryById}
                   occurrence={occurrence}
                   radius={12}
                   showDate={false}

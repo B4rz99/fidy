@@ -1,9 +1,9 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout, TextActionButton } from "@/shared/components";
-import { FlatList, Platform, StyleSheet, View } from "@/shared/components/rn";
+import { FlatList, StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useMountEffect, useSubscription, useTranslation } from "@/shared/hooks";
 import { trackNotificationCenterOpened } from "@/shared/lib";
@@ -75,19 +75,15 @@ export const NotificationsScreen = () => {
       onBack={() => back()}
       rightActions={
         hasNotifications ? (
-          <TextActionButton label={t("common.clear")} tone="danger" onPress={handleClearAll} />
+          <TextActionButton
+            appearance="plain"
+            label={t("common.clear")}
+            tone="danger"
+            onPress={handleClearAll}
+          />
         ) : undefined
       }
     >
-      {Platform.OS === "ios" && hasNotifications && (
-        <Stack.Screen
-          options={{
-            headerRight: () => (
-              <TextActionButton label={t("common.clear")} tone="danger" onPress={handleClearAll} />
-            ),
-          }}
-        />
-      )}
       {!isLoading && feedItems.length === 0 ? (
         <NotificationEmptyState />
       ) : (

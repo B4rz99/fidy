@@ -2,13 +2,14 @@ import { Tabs } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { CustomTabBar } from "@/shared/components";
 import { Platform } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 function IosTabs() {
   const { t } = useTranslation();
+  const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <NativeTabs tintColor="#7CB243">
+    <NativeTabs tintColor={accentGreen}>
       <NativeTabs.Trigger name="(index)">
         <NativeTabs.Trigger.Icon sf="house.fill" />
         <NativeTabs.Trigger.Label>{t("tabs.home")}</NativeTabs.Trigger.Label>

@@ -101,8 +101,20 @@ describe("ai chat callers", () => {
     expect(chatScreenSource).not.toContain("rightActions=");
   });
 
-  test("ChatScreen keyboard offset matches the custom header height", () => {
-    expect(chatScreenSource).toContain("safeTop + HEADER_HEIGHT");
-    expect(chatScreenSource).not.toContain("safeTop + 54");
+  test("ChatScreen uses the shared solid ScreenLayout header", () => {
+    expect(chatScreenSource).toContain(
+      '<ScreenLayout title={title} variant="sub" onBack={onBack}>'
+    );
+    expect(chatScreenSource).not.toContain("includesNativeHeader");
+  });
+
+  test("ChatScreen delegates keyboard positioning to the chat shell", () => {
+    expect(chatScreenSource).toContain("ChatConversationShell");
+    expect(chatScreenSource).not.toContain("KeyboardAvoidingView");
+    expect(chatScreenSource).not.toContain("keyboardVerticalOffset");
+  });
+
+  test("ChatScreen does not configure native tab triggers from a nested route", () => {
+    expect(chatScreenSource).not.toContain("NativeTabs.Trigger");
   });
 });

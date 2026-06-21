@@ -1,6 +1,6 @@
 import { FieldSurface } from "@/shared/components";
 import { Search } from "@/shared/components/icons";
-import { TextInput, View } from "@/shared/components/rn";
+import { StyleSheet, TextInput, View } from "@/shared/components/rn";
 import type { SearchInputRef } from "./SearchScreen.types";
 
 type SearchInputBarProps = {
@@ -22,7 +22,7 @@ export function SearchInputBar({
 }: SearchInputBarProps) {
   return (
     <View className="px-4 pb-2 pt-1">
-      <FieldSurface style={{ minHeight: 48 }} contentStyle={{ minHeight: 48 }}>
+      <FieldSurface radius={12} contentStyle={styles.inputSurface} size="compact">
         <Search size={18} color={secondary} />
         <TextInput
           ref={inputRef}
@@ -40,3 +40,10 @@ export function SearchInputBar({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  inputSurface: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+});

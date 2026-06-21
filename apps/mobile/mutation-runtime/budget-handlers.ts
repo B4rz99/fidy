@@ -5,7 +5,7 @@ import {
   insertBudget,
   softDeleteBudget,
   updateBudgetAmount,
-} from "@/features/budget/lib/repository";
+} from "@/infrastructure/local-ledger/budget-storage";
 import { createBudgetCopyId } from "@/shared/mutations";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
 import { completeCommand } from "./common";
@@ -30,6 +30,7 @@ const applyBudgetUpdate = (
   updateBudgetAmount({
     db,
     id: command.budgetId,
+    categoryId: command.categoryId,
     amount: command.amount,
     now: command.now,
   });

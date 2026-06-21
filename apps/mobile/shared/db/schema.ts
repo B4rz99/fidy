@@ -15,6 +15,8 @@ import type {
   BillPaymentId,
   BudgetId,
   CaptureEvidenceId,
+  CategoryColorOverrideId,
+  CategoryIconOverrideId,
   CategoryId,
   ChatMessageId,
   ChatSessionId,
@@ -522,6 +524,40 @@ export const userCategories = sqliteTable(
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [index("idx_user_categories_user").on(table.userId)]
+);
+
+export const categoryIconOverrides = sqliteTable(
+  "category_icon_overrides",
+  {
+    id: text("id").$type<CategoryIconOverrideId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    categoryId: text("category_id").$type<CategoryId>().notNull(),
+    emoji: text("emoji").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    index("idx_category_icon_overrides_user").on(table.userId),
+    uniqueIndex("uq_category_icon_overrides_user_category").on(table.userId, table.categoryId),
+  ]
+);
+
+export const categoryColorOverrides = sqliteTable(
+  "category_color_overrides",
+  {
+    id: text("id").$type<CategoryColorOverrideId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    categoryId: text("category_id").$type<CategoryId>().notNull(),
+    colorHex: text("color_hex").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    index("idx_category_color_overrides_user").on(table.userId),
+    uniqueIndex("uq_category_color_overrides_user_category").on(table.userId, table.categoryId),
+  ]
 );
 
 export const notifications = sqliteTable(

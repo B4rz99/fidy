@@ -1,6 +1,6 @@
-import { Keyboard } from "react-native";
 import { Button, FormScreen, FormSection, FormTextField } from "@/shared/components";
-import { Text, View } from "@/shared/components/rn";
+import { Pencil, Smile } from "@/shared/components/icons";
+import { Keyboard, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { MAX_NAME_LENGTH } from "../../lib/constants";
 import { CategoryColorSwatches } from "./CategoryColorSwatches";
@@ -8,10 +8,17 @@ import { CategoryIconGrid } from "./CategoryIconGrid";
 import { styles } from "./CreateCategoryScreen.styles";
 import type { CreateCategoryScreenViewModel } from "./CreateCategoryScreen.types";
 
+type CreateCategoryScreenContentProps = CreateCategoryScreenViewModel & {
+  readonly headerTitle: string;
+  readonly onBack: () => void;
+};
+
 export function CreateCategoryScreenContent({
   canSubmit,
+  customEmoji,
   handleCreate,
   handleColorSelect,
+  handleCustomEmojiChange,
   handleIconSelect,
   isBusy,
   name,
@@ -20,35 +27,40 @@ export function CreateCategoryScreenContent({
   selectedIcon,
   setName,
   trimmedName,
-}: CreateCategoryScreenViewModel) {
+  headerTitle,
+  onBack,
+}: CreateCategoryScreenContentProps) {
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
+  const surface = useThemeColor("surface");
 
   return (
     <FormScreen
       contentContainerStyle={styles.scrollContent}
+      headerTitle={headerTitle}
       horizontalPadding={24}
       keyboardDismissMode="interactive"
+      onBack={onBack}
       topPadding={12}
     >
       <View style={styles.previewRow}>
-        <View style={styles.previewPill}>
-          <Text>{previewIcon}</Text>
-          <Text style={styles.previewText}>
-            {trimmedName.length > 0 ? trimmedName : t("categories.create.namePlaceholder")}
-          </Text>
+        <View style={[styles.previewPill, { backgroundColor: surface }]}>
+          <Text style={styles.previewIcon}>{previewIcon}</Text>
+          {trimmedName.length > 0 ? (
+            <Text style={[styles.previewText, { color: primaryColor }]}>{trimmedName}</Text>
+          ) : null}
         </View>
       </View>
 
       <FormTextField
+        icon={Pencil}
         label={t("categories.create.nameLabel")}
         value={name}
         onChangeText={setName}
         maxLength={MAX_NAME_LENGTH}
         onSubmitEditing={Keyboard.dismiss}
-        placeholder={t("categories.create.namePlaceholder")}
         returnKeyType="done"
         style={styles.fieldGroup}
         labelStyle={[styles.fieldLabel, { color: secondaryColor }]}
@@ -56,6 +68,17 @@ export function CreateCategoryScreenContent({
       />
 
       <FormSection title={t("categories.create.iconLabel")}>
+        <FormTextField
+          icon={Smile}
+          label={t("categories.create.customEmojiLabel")}
+          value={customEmoji}
+          onChangeText={handleCustomEmojiChange}
+          maxLength={16}
+          returnKeyType="done"
+          style={styles.customEmojiField}
+          labelStyle={[styles.fieldLabel, { color: secondaryColor }]}
+          inputStyle={[styles.input, styles.customEmojiInput, { color: primaryColor }]}
+        />
         <CategoryIconGrid
           accentGreen={accentGreen}
           onSelect={handleIconSelect}

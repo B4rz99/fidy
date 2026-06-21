@@ -1,4 +1,3 @@
-import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddActionButton } from "@/shared/components/AddActionButton";
 import { EmptyState } from "@/shared/components/EmptyState";
@@ -44,56 +43,52 @@ export function FinancialAccountsScreenContent({
   const hasItems = regularAccounts.length + creditCardAccounts.length > 0;
 
   return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <ScreenLayout
-        variant="sub"
-        includesNativeHeader={false}
-        centerAction={
-          <Text style={[styles.headerTitle, { color: primary }]} numberOfLines={1}>
-            {title}
-          </Text>
-        }
-        backgroundLayer={<FinancialAccountsAuroraLayer />}
-        onBack={onBack}
-        rightActions={
-          <FinancialAccountAddButton
-            accessibilityLabel={t("financialAccounts.list.addLabel")}
-            onPress={onAddAccount}
-          />
-        }
+    <ScreenLayout
+      variant="sub"
+      centerAction={
+        <Text style={[styles.headerTitle, { color: primary }]} numberOfLines={1}>
+          {title}
+        </Text>
+      }
+      backgroundLayer={<FinancialAccountsAuroraLayer />}
+      onBack={onBack}
+      rightActions={
+        <FinancialAccountAddButton
+          accessibilityLabel={t("financialAccounts.list.addLabel")}
+          onPress={onAddAccount}
+        />
+      }
+    >
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={[styles.introCopy, { color: secondary }]}>
-            {t("financialAccounts.list.subtitle")}
-          </Text>
+        <Text style={[styles.introCopy, { color: secondary }]}>
+          {t("financialAccounts.list.subtitle")}
+        </Text>
 
-          {hasItems ? (
-            <>
-              <FinancialAccountsSection
-                label={t("financialAccounts.list.regularSection")}
-                items={regularAccounts}
-                onOpenAccount={onOpenAccount}
-              />
-              <FinancialAccountsSection
-                label={t("financialAccounts.list.creditSection")}
-                items={creditCardAccounts}
-                onOpenAccount={onOpenAccount}
-              />
-            </>
-          ) : (
-            <EmptyState
-              title={t("financialAccounts.list.emptyTitle")}
-              subtitle={t("financialAccounts.list.emptySubtitle")}
-              className="py-12"
+        {hasItems ? (
+          <>
+            <FinancialAccountsSection
+              label={t("financialAccounts.list.regularSection")}
+              items={regularAccounts}
+              onOpenAccount={onOpenAccount}
             />
-          )}
-        </ScrollView>
-      </ScreenLayout>
-    </>
+            <FinancialAccountsSection
+              label={t("financialAccounts.list.creditSection")}
+              items={creditCardAccounts}
+              onOpenAccount={onOpenAccount}
+            />
+          </>
+        ) : (
+          <EmptyState
+            title={t("financialAccounts.list.emptyTitle")}
+            subtitle={t("financialAccounts.list.emptySubtitle")}
+            className="py-12"
+          />
+        )}
+      </ScrollView>
+    </ScreenLayout>
   );
 }

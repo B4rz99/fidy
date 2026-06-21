@@ -26,6 +26,7 @@ const BUILT_IN_CATEGORY_IDS = [
 export function validateBackupSnapshot(snapshot: unknown): BackupSnapshot {
   assertSnapshotRecord(snapshot);
   assertSupportedSnapshotVersion(snapshot);
+  normalizeOptionalSnapshotTables(snapshot);
   assertVersionOneSnapshotShape(snapshot);
 
   const typedSnapshot = snapshot as BackupSnapshot;
@@ -35,6 +36,16 @@ export function validateBackupSnapshot(snapshot: unknown): BackupSnapshot {
   validateLocalLedgerInvariants(typedSnapshot.data);
 
   return typedSnapshot;
+}
+
+function normalizeOptionalSnapshotTables(snapshot: Record<string, unknown>) {
+  const data = snapshot.data;
+  if (isRecord(data) && data.categoryIconOverrides == null) {
+    data.categoryIconOverrides = [];
+  }
+  if (isRecord(data) && data.categoryColorOverrides == null) {
+    data.categoryColorOverrides = [];
+  }
 }
 
 function assertSnapshotRecord(snapshot: unknown): asserts snapshot is Record<string, unknown> {
@@ -83,6 +94,13 @@ function validateSnapshotReferences(data: LocalLedgerBackupSnapshotData) {
     ...BUILT_IN_CATEGORY_IDS,
     ...data.userCategories.map((category) => category.id),
   ]);
+
+  data.categoryIconOverrides.forEach((row) => {
+    assertKnownReference(categoryIds, row.categoryId, "categoryIconOverrides.categoryId");
+  });
+  data.categoryColorOverrides.forEach((row) => {
+    assertKnownReference(categoryIds, row.categoryId, "categoryColorOverrides.categoryId");
+  });
 
   data.transactions.forEach((row) => {
     assertKnownReference(accountIds, row.accountId, "transactions.accountId");
@@ -155,8 +173,28 @@ function validateLocalLedgerInvariants(data: LocalLedgerBackupSnapshotData) {
   assertUniqueDefaultAccountPerUser(data.financialAccounts);
   assertUniqueActiveAccountIdentifiers(data.financialAccountIdentifiers);
   assertUniqueBudgets(data.budgets);
+  assertUniqueCategoryIconOverrides(data.categoryIconOverrides);
+  assertUniqueCategoryColorOverrides(data.categoryColorOverrides);
   data.transfers.forEach(assertValidTransferEndpoints);
   data.captureEvidence.forEach(assertValidCaptureEvidenceLinks);
+}
+
+function assertUniqueCategoryIconOverrides(
+  rows: readonly { readonly userId: string; readonly categoryId: string }[]
+) {
+  assertUniqueValues(
+    rows.map((row) => [row.userId, row.categoryId].join("\u0000")),
+    "Local ledger backup has duplicate category icon overrides"
+  );
+}
+
+function assertUniqueCategoryColorOverrides(
+  rows: readonly { readonly userId: string; readonly categoryId: string }[]
+) {
+  assertUniqueValues(
+    rows.map((row) => [row.userId, row.categoryId].join("\u0000")),
+    "Local ledger backup has duplicate category color overrides"
+  );
 }
 
 function assertUniqueActiveOpeningBalancePerAccount(rows: readonly OpeningBalanceSnapshotRow[]) {

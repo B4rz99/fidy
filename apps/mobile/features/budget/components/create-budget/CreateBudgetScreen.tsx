@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
+import { useTranslation } from "@/shared/hooks";
 import { useBudgetStore } from "../../store";
 import { AuthenticatedCreateBudgetForm } from "./AuthenticatedCreateBudgetForm";
 import { CreateBudgetForm } from "./CreateBudgetForm";
@@ -13,12 +14,14 @@ import {
 
 export function CreateBudgetScreen() {
   const { back } = useRouter();
+  const { t } = useTranslation();
   const { budgetId } = useLocalSearchParams<{ budgetId?: string | string[] }>();
   const autoSuggestions = useBudgetStore((state) => state.autoSuggestions);
   const budgets = useBudgetStore((state) => state.budgets);
   const userId = useOptionalUserId();
   const resolvedBudgetId = resolveBudgetIdParam(budgetId);
   const existingBudget = resolveExistingBudget(budgets, resolvedBudgetId);
+  const headerTitle = existingBudget ? t("budgets.edit.title") : t("budgets.create.title");
   const existingCategoryIds = useMemo(
     () => resolveExistingCategoryIds(budgets, resolvedBudgetId),
     [budgets, resolvedBudgetId]
@@ -27,6 +30,7 @@ export function CreateBudgetScreen() {
     autoSuggestions,
     existingBudget,
     existingCategoryIds,
+    headerTitle,
     onDone: () => back(),
   };
 

@@ -15,14 +15,26 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
   amountText: {
-    fontFamily: "Poppins_300Light",
+    fontFamily: "Poppins_700Bold",
     fontSize: 78,
-    fontWeight: "300",
     textAlign: "center",
     width: "100%",
   },
   fullScreenBottomForm: {
     gap: 10,
+  },
+  goalNameRateRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 10,
+  },
+  goalNameColumn: {
+    flex: 1.35,
+    minWidth: 0,
+  },
+  goalRateColumn: {
+    flex: 0.85,
+    minWidth: 0,
   },
   fieldGroup: { gap: 4 },
   fieldLabel: { fontFamily: "Poppins_600SemiBold", fontSize: 12 },

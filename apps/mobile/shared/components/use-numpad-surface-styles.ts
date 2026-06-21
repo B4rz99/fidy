@@ -1,15 +1,13 @@
 import type { ViewStyle } from "@/shared/components/rn";
 
-type NumpadGlassStyles = {
+type NumpadSurfaceStyles = {
   readonly keySurfaceStyle: ViewStyle;
   readonly specialKeySurfaceStyle: ViewStyle;
-  readonly confirmKeySurfaceStyle: ViewStyle;
 };
 
-export function useNumpadGlassStyles(): NumpadGlassStyles {
+export function useNumpadSurfaceStyles(): NumpadSurfaceStyles {
   return {
     keySurfaceStyle: {},
     specialKeySurfaceStyle: {},
-    confirmKeySurfaceStyle: {},
   };
 }

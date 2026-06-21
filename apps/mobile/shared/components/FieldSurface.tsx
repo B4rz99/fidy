@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { StyleSheet, View } from "@/shared/components/rn";
-import { GlassSurface } from "./GlassSurface";
+import { SolidSurface } from "./SolidSurface";
 import type { SurfaceLayoutStyle } from "./surface-style";
 
 type FieldSurfaceSize = "regular" | "compact" | "button";
 
 type FieldSurfaceProps = {
+  readonly backgroundColor?: string;
   readonly children: ReactNode;
   readonly contentStyle?: StyleProp<ViewStyle>;
   readonly radius?: number;
@@ -27,6 +28,7 @@ const FIELD_SURFACE_DEFAULTS: Record<
 };
 
 export function FieldSurface({
+  backgroundColor,
   children,
   contentStyle,
   radius,
@@ -48,14 +50,15 @@ export function FieldSurface({
         style,
       ]}
     >
-      <GlassSurface
+      <SolidSurface
         pointerEvents="none"
+        backgroundColor={backgroundColor}
         padded={false}
         radius={radius ?? defaults.radius}
         style={[StyleSheet.absoluteFillObject, surfaceLayoutStyle]}
       >
         <View />
-      </GlassSurface>
+      </SolidSurface>
       <View
         style={[
           styles.content,

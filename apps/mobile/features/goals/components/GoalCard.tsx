@@ -141,15 +141,13 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
       <View style={styles.actionRow}>
         <Button
           label={t("goals.card.addPayment")}
-          size="compact"
-          className="h-10 flex-1 rounded-lg"
+          className="h-12 flex-1 rounded-lg"
           onPress={onAddPayment}
         />
         <Button
           label={t("goals.card.detail")}
           variant="secondary"
-          size="compact"
-          className="h-10 flex-1 rounded-lg"
+          className="h-12 flex-1 rounded-lg"
           onPress={onPress}
         />
       </View>

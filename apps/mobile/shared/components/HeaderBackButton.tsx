@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 import type { PressableProps } from "react-native";
 import { ChevronLeft } from "@/shared/components/icons";
-import { Pressable, StyleSheet } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { IconActionButton } from "./IconActionButton";
 
 type HeaderBackButtonProps = Partial<Pick<PressableProps, "onPress">>;
 
@@ -11,23 +11,12 @@ export function HeaderBackButton({ onPress }: HeaderBackButtonProps) {
   const primaryColor = useThemeColor("primary");
 
   return (
-    <Pressable
-      accessibilityRole="button"
+    <IconActionButton
       accessibilityLabel={t("common.back")}
-      hitSlop={12}
+      icon={<ChevronLeft size={24} color={primaryColor} />}
       onPress={onPress ?? router.back}
-      style={styles.backButton}
-    >
-      <ChevronLeft size={24} color={primaryColor} />
-    </Pressable>
+      size="size-11"
+      tone="surface"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  backButton: {
-    alignItems: "center",
-    height: 44,
-    justifyContent: "center",
-    width: 44,
-  },
-});

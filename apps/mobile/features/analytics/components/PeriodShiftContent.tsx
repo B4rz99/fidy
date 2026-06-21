@@ -1,12 +1,14 @@
 import type { Dispatch, SetStateAction } from "react";
-import { CATEGORY_MAP } from "@/shared/categories";
-import { Card, GlassPressable } from "@/shared/components";
+import type { GestureResponderEvent } from "react-native";
+import { format } from "date-fns";
+import { getCategoryBarBackgroundColor, type Category } from "@/shared/categories";
+import { Card, CategoryIconButton, RaisedSurface } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib";
+import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
+import { formatMoney, formatSignedMoney } from "@/shared/lib";
 import type { CategoryId } from "@/shared/types/branded";
-import type { IncomeExpenseResult, PeriodShiftView } from "../lib/derive";
+import type { CategoryExpenseItem, IncomeExpenseResult, PeriodShiftView } from "../lib/derive";
 import { IncomeExpenseStrip } from "./IncomeExpenseStrip";
 
 const CATEGORY_BAR_MAX_HEIGHT = 84;
@@ -14,12 +16,16 @@ const CATEGORY_BAR_MIN_HEIGHT = 24;
 
 type PeriodShiftContentProps = {
   readonly incomeExpense: IncomeExpenseResult;
+  readonly categoryExpenses: readonly CategoryExpenseItem[];
   readonly selectedCategoryId: CategoryId | null;
   readonly setSelectedCategoryId: Dispatch<SetStateAction<CategoryId | null>>;
   readonly shiftView: PeriodShiftView;
+  readonly categoryById: ReadonlyMap<CategoryId, Category>;
 };
 
 export function PeriodShiftContent({
+  categoryExpenses,
+  categoryById,
   incomeExpense,
   selectedCategoryId,
   setSelectedCategoryId,
@@ -30,13 +36,15 @@ export function PeriodShiftContent({
   const primaryColor = useThemeColor("primary");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const selectedBar =
-    shiftView.categoryBars.find((item) => item.categoryId === selectedCategoryId) ??
-    shiftView.categoryBars[0] ??
-    null;
-  const selectedCategory = selectedBar ? CATEGORY_MAP[selectedBar.categoryId] : null;
+  const selectedBar = selectedCategoryId
+    ? (shiftView.categoryBars.find((item) => item.categoryId === selectedCategoryId) ?? null)
+    : null;
+  const selectedCategory = selectedBar ? categoryById.get(selectedBar.categoryId) : null;
   const selectedCategoryLabel =
     selectedBar && selectedCategory ? getCategoryLabel(selectedCategory, locale) : null;
+  const selectedCategoryExpenses = selectedBar
+    ? categoryExpenses.filter((item) => item.categoryId === selectedBar.categoryId)
+    : [];
   const deltaCopyKey =
     shiftView.totalDeltaDirection === "unchanged"
       ? "analytics.periodDeltaSpentSame"
@@ -46,7 +54,11 @@ export function PeriodShiftContent({
 
   return (
     <>
-      <Card padded={false} contentStyle={styles.heroCard}>
+      <Card
+        padded={false}
+        contentStyle={styles.heroCard}
+        onPress={() => setSelectedCategoryId(null)}
+      >
         <Text style={[styles.eyebrow, { color: secondaryColor }]}>
           {t("analytics.vsPreviousPeriodLabel")}
         </Text>
@@ -71,8 +83,9 @@ export function PeriodShiftContent({
 
         <CategoryBarRibbon
           bars={shiftView.categoryBars}
+          categoryById={categoryById}
           selectedCategoryId={selectedBar?.categoryId ?? null}
-          onSelect={setSelectedCategoryId}
+          onSelect={(categoryId) => setSelectedCategoryId(categoryId)}
         />
 
         {selectedBar && (
@@ -89,39 +102,97 @@ export function PeriodShiftContent({
         )}
       </Card>
 
-      <CategoryChangesCard changes={shiftView.categoryChanges.slice(0, 4)} />
+      {selectedBar && selectedCategoryLabel && selectedCategoryExpenses.length > 0 ? (
+        <SelectedCategoryExpensesCard
+          expenses={selectedCategoryExpenses}
+          title={t("analytics.selectedCategoryExpenses", { category: selectedCategoryLabel })}
+        />
+      ) : null}
+
+      <CategoryChangesCard
+        categoryById={categoryById}
+        changes={shiftView.categoryChanges.slice(0, 4)}
+      />
       <IncomeExpenseStrip incomeExpense={incomeExpense} />
     </>
   );
 }
 
+type SelectedCategoryExpensesCardProps = {
+  readonly expenses: readonly CategoryExpenseItem[];
+  readonly title: string;
+};
+
+function SelectedCategoryExpensesCard({ expenses, title }: SelectedCategoryExpensesCardProps) {
+  const { t, locale } = useTranslation();
+  const primaryColor = useThemeColor("primary");
+  const secondaryColor = useThemeColor("secondary");
+  const accentRed = useThemeColor("accentRed");
+  const surfaceMuted = useThemeColor("surfaceMuted");
+  const dateLocale = getDateFnsLocale(locale);
+
+  return (
+    <Card padded={false} contentStyle={styles.selectedExpensesCard}>
+      <Text style={[styles.cardTitle, { color: primaryColor }]}>{title}</Text>
+      {expenses.map((item) => (
+        <RaisedSurface key={item.id} style={styles.expenseRow}>
+          <View style={styles.expenseTextGroup}>
+            <Text style={[styles.expenseDescription, { color: primaryColor }]} numberOfLines={1}>
+              {item.description ?? t("analytics.unnamedExpense")}
+            </Text>
+            <Text style={[styles.expenseDate, { color: secondaryColor }]}>
+              {format(item.date, "d MMM", { locale: dateLocale })}
+            </Text>
+          </View>
+          <View style={[styles.expenseAmountBadge, { backgroundColor: surfaceMuted }]}>
+            <Text style={[styles.expenseAmount, { color: accentRed }]}>
+              {formatSignedMoney(item.amount, "expense")}
+            </Text>
+          </View>
+        </RaisedSurface>
+      ))}
+    </Card>
+  );
+}
+
 type CategoryBarRibbonProps = {
   readonly bars: PeriodShiftView["categoryBars"];
+  readonly categoryById: ReadonlyMap<CategoryId, Category>;
   readonly onSelect: (categoryId: CategoryId) => void;
   readonly selectedCategoryId: CategoryId | null;
 };
 
-function CategoryBarRibbon({ bars, onSelect, selectedCategoryId }: CategoryBarRibbonProps) {
+function CategoryBarRibbon({
+  bars,
+  categoryById,
+  onSelect,
+  selectedCategoryId,
+}: CategoryBarRibbonProps) {
   const { t, locale } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
 
   return (
     <View style={styles.categoryRibbon}>
       {bars.map((item) => {
-        const category = CATEGORY_MAP[item.categoryId];
-        const color = category?.color ?? accentGreen;
+        const category = categoryById.get(item.categoryId);
+        const color = getCategoryBarBackgroundColor(
+          item.categoryId,
+          category?.color ?? accentGreen
+        );
         const isSelected = item.categoryId === selectedCategoryId;
         const amount = formatMoney(item.total);
         const categoryLabel = category ? getCategoryLabel(category, locale) : null;
         const height =
           CATEGORY_BAR_MIN_HEIGHT +
           (item.heightPercent / 100) * (CATEGORY_BAR_MAX_HEIGHT - CATEGORY_BAR_MIN_HEIGHT);
+        const handlePress = (event: GestureResponderEvent) => {
+          event.stopPropagation();
+          onSelect(item.categoryId);
+        };
 
         return (
-          <GlassPressable
+          <CategoryIconButton
             key={item.categoryId}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isSelected }}
             accessibilityLabel={
               categoryLabel
                 ? t(
@@ -133,15 +204,15 @@ function CategoryBarRibbon({ bars, onSelect, selectedCategoryId }: CategoryBarRi
                   )
                 : amount
             }
-            onPress={() => onSelect(item.categoryId)}
-            style={[styles.categoryBarTapTarget, { opacity: isSelected ? 1 : 0.72 }]}
             backgroundColor={color}
-            radius={8}
-            padded={false}
-            layoutStyle={[styles.categoryBar, { height }]}
-          >
-            <Text style={styles.categoryBarIcon}>{category?.icon ?? ""}</Text>
-          </GlassPressable>
+            category={category ?? null}
+            dimmed={!isSelected}
+            haptics={false}
+            onPress={handlePress}
+            selected={isSelected}
+            style={{ height }}
+            variant="bar"
+          />
         );
       })}
     </View>
@@ -149,10 +220,11 @@ function CategoryBarRibbon({ bars, onSelect, selectedCategoryId }: CategoryBarRi
 }
 
 type CategoryChangesCardProps = {
+  readonly categoryById: ReadonlyMap<CategoryId, Category>;
   readonly changes: PeriodShiftView["categoryChanges"];
 };
 
-function CategoryChangesCard({ changes }: CategoryChangesCardProps) {
+function CategoryChangesCard({ categoryById, changes }: CategoryChangesCardProps) {
   const { t, locale } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -163,7 +235,7 @@ function CategoryChangesCard({ changes }: CategoryChangesCardProps) {
     <Card padded={false} contentStyle={styles.card}>
       <Text style={[styles.cardTitle, { color: primaryColor }]}>{t("analytics.whatChanged")}</Text>
       {changes.map((item) => {
-        const category = CATEGORY_MAP[item.categoryId];
+        const category = categoryById.get(item.categoryId);
         return (
           <View key={item.categoryId} style={styles.deltaRow}>
             <Text style={[styles.deltaLabel, { color: secondaryColor }]} numberOfLines={1}>
@@ -220,24 +292,6 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingTop: 6,
   },
-  categoryBarTapTarget: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
-  categoryBar: {
-    width: "100%",
-    maxWidth: 44,
-    minHeight: CATEGORY_BAR_MIN_HEIGHT,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    borderRadius: 8,
-    borderCurve: "continuous",
-    paddingTop: 7,
-  },
-  categoryBarIcon: {
-    fontSize: 16,
-  },
   selectedAmount: {
     alignSelf: "flex-start",
   },
@@ -249,9 +303,49 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 7,
   },
+  selectedExpensesCard: {
+    padding: 14,
+    gap: 10,
+  },
   cardTitle: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 15,
+  },
+  expenseRow: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  expenseTextGroup: {
+    flex: 1,
+    gap: 2,
+  },
+  expenseDescription: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+  },
+  expenseDate: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 11,
+    textTransform: "capitalize",
+  },
+  expenseAmountBadge: {
+    minWidth: 84,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    borderCurve: "continuous",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  expenseAmount: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+    textAlign: "right",
   },
   deltaRow: {
     minHeight: 24,

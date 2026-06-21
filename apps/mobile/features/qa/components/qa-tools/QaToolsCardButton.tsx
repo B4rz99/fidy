@@ -1,4 +1,4 @@
-import { GlassPressable } from "@/shared/components";
+import { SurfacePressable } from "@/shared/components";
 import { Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./QaTools.styles";
@@ -26,7 +26,7 @@ export function QaToolsCardButton({
   const secondary = useThemeColor("secondary");
 
   return (
-    <GlassPressable
+    <SurfacePressable
       onPress={onPress}
       testID={testId}
       radius={scenario ? 18 : 16}
@@ -40,6 +40,6 @@ export function QaToolsCardButton({
       {statusLabel ? (
         <Text style={[styles.statusLabelText, { color: primary }]}>{statusLabel}</Text>
       ) : null}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }

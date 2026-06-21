@@ -50,7 +50,6 @@ export const PeriodSelector = memo(function PeriodSelector({
       }))}
       value={activePeriod}
       onChange={onSelect}
-      tone="success"
       variant="detached"
       style={{ height: 32 }}
     />

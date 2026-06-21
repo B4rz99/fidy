@@ -12,7 +12,9 @@ type MoneyEntryScreenProps = {
   readonly detailContent?: ReactNode;
   readonly footerContent?: ReactNode;
   readonly footerStyle?: StyleProp<ViewStyle>;
+  readonly headerTitle?: string;
   readonly numpadVisible?: boolean;
+  readonly onBack?: () => void;
   readonly onKeyPress: (key: string) => void;
   readonly stackStyle?: StyleProp<ViewStyle>;
   readonly topContent?: ReactNode;
@@ -27,7 +29,9 @@ export function MoneyEntryScreen({
   detailContent,
   footerContent,
   footerStyle,
+  headerTitle,
   numpadVisible = true,
+  onBack,
   onKeyPress,
   stackStyle,
   topContent,
@@ -46,9 +50,11 @@ export function MoneyEntryScreen({
       contentStyle={contentStyle}
       footer={footer}
       footerStyle={footerStyle}
+      headerTitle={headerTitle}
       middle={amountContent}
       middleStyle={amountStyle}
       numpadVisible={numpadVisible}
+      onBack={onBack}
       onKeyPress={onKeyPress}
     >
       {topContent}

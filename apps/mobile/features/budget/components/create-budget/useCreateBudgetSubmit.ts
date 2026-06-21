@@ -19,11 +19,13 @@ function resolveAmount(digits: string) {
 
 async function saveExistingBudget(
   existingBudget: Budget,
+  category: CreateBudgetDraftController["draft"]["category"],
   amount: ReturnType<typeof resolveAmount>,
   onDone: () => void,
   onUpdateBudget: CreateBudgetMutations["onUpdateBudget"]
 ) {
-  const success = await onUpdateBudget(existingBudget.id, amount);
+  if (!category) return;
+  const success = await onUpdateBudget(existingBudget.id, category, amount);
   if (success) onDone();
 }
 
@@ -69,7 +71,13 @@ async function runSave(input: {
   const amount = resolveAmount(input.draft.digits);
   if (amount <= 0) return;
   if (input.existingBudget) {
-    await saveExistingBudget(input.existingBudget, amount, input.onDone, input.onUpdateBudget);
+    await saveExistingBudget(
+      input.existingBudget,
+      input.draft.category,
+      amount,
+      input.onDone,
+      input.onUpdateBudget
+    );
     return;
   }
   if (!input.draft.category) return;

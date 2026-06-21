@@ -2,7 +2,7 @@ import type { PressableProps, StyleProp, ViewStyle } from "react-native";
 import { Plus } from "@/shared/components/icons";
 import { StyleSheet } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassPressable } from "./GlassPressable";
+import { SurfacePressable } from "./SurfacePressable";
 
 type AddActionButtonProps = Omit<PressableProps, "children"> & {
   readonly iconColor?: string;
@@ -23,7 +23,7 @@ export function AddActionButton({
   const defaultIconColor = useThemeColor("primary");
 
   return (
-    <GlassPressable
+    <SurfacePressable
       {...pressableProps}
       accessibilityRole={accessibilityRole ?? "button"}
       android_ripple={{ borderless: false }}
@@ -35,7 +35,7 @@ export function AddActionButton({
       surfaceLayoutStyle={[styles.surface, { height: size, width: size }]}
     >
       <Plus size={iconSize} color={iconColor ?? defaultIconColor} />
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 

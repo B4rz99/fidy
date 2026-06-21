@@ -34,6 +34,7 @@ export function CreateBudgetForm(props: CreateBudgetFormProps) {
       handleDelete={handleDelete}
       handleKey={handleKey}
       handleSave={handleSave}
+      headerTitle={props.headerTitle}
       isEdit={isEdit}
       isSaving={isSaving}
       setCategory={setCategory}

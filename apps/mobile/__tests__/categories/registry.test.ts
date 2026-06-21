@@ -24,7 +24,41 @@ describe("createCategoryRegistrySnapshot", () => {
     expect(snapshot.custom).toHaveLength(1);
     expect(snapshot.custom[0]).toMatchObject({
       label: { en: "Groceries", es: "Groceries" },
+      icon: "✨",
       color: "#FF5722",
     });
+  });
+
+  it("uses a keyboard emoji stored on a custom category", () => {
+    const customRow = {
+      id: "ucat-custom-1" as UserCategoryId,
+      name: "Desserts",
+      iconName: "🧁",
+      colorHex: "#FF5722",
+    };
+
+    const snapshot = createCategoryRegistrySnapshot([customRow]);
+
+    expect(snapshot.custom[0]?.icon).toBe("🧁");
+  });
+
+  it("applies emoji overrides to built-in and custom categories", () => {
+    const customRow = {
+      id: "ucat-custom-1" as UserCategoryId,
+      name: "Groceries",
+      iconName: "NonExistentIcon",
+      colorHex: "#FF5722",
+    };
+
+    const snapshot = createCategoryRegistrySnapshot(
+      [customRow],
+      [
+        { categoryId: "food", emoji: "🥑" },
+        { categoryId: "ucat-custom-1", emoji: "🧺" },
+      ]
+    );
+
+    expect(snapshot.builtIn.find((category) => category.id === "food")?.icon).toBe("🥑");
+    expect(snapshot.custom[0]?.icon).toBe("🧺");
   });
 });

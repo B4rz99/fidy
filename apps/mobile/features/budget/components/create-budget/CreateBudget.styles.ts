@@ -9,11 +9,14 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
   amountText: {
-    fontFamily: "Poppins_300Light",
+    fontFamily: "Poppins_700Bold",
     fontSize: 78,
-    fontWeight: "300",
     textAlign: "center",
     width: "100%",
+  },
+  categoryStrip: {
+    height: 64,
+    justifyContent: "center",
   },
   inputGroup: {
     gap: 4,

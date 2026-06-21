@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import type { PressableProps, ViewProps } from "react-native";
 import { StyleSheet, Text } from "@/shared/components/rn";
-import { GlassPressable } from "./GlassPressable";
-import { GlassSurface } from "./GlassSurface";
+import { SurfacePressable } from "./SurfacePressable";
+import { SolidSurface } from "./SolidSurface";
 import type { SurfaceLayoutStyle } from "./surface-style";
 
 type ChipTone = "neutral" | "primary" | "success" | "danger" | "warning";
@@ -12,6 +12,7 @@ type ChipProps = Omit<ViewProps, "children" | "style"> & {
   tone?: ChipTone;
   size?: "default" | "compact";
   selected?: boolean;
+  dimmed?: boolean;
   leading?: ReactNode;
   onPress?: PressableProps["onPress"];
   className?: string;
@@ -32,6 +33,7 @@ export function Chip({
   tone = "neutral",
   size = "default",
   selected = false,
+  dimmed = false,
   leading,
   onPress,
   className,
@@ -74,7 +76,7 @@ export function Chip({
     contentProps.style,
   ];
   const content = (
-    <GlassSurface
+    <SolidSurface
       {...contentProps}
       className={className}
       padded={false}
@@ -82,7 +84,7 @@ export function Chip({
       style={surfaceStyle}
     >
       {contentBody}
-    </GlassSurface>
+    </SolidSurface>
   );
 
   if (onPress == null) {
@@ -90,15 +92,16 @@ export function Chip({
   }
 
   return (
-    <GlassPressable
+    <SurfacePressable
       {...pressableProps}
       onPress={onPress}
       radius={999}
+      style={dimmed ? styles.dimmed : null}
       surfaceClassName={className}
       surfaceLayoutStyle={surfaceStyle}
     >
       {contentBody}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 
@@ -115,5 +118,8 @@ const styles = StyleSheet.create({
     minHeight: 28,
     paddingHorizontal: 10,
     paddingVertical: 6,
+  },
+  dimmed: {
+    opacity: 0.4,
   },
 });

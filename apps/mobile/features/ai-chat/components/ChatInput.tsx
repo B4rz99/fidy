@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { GlassPressable, Surface } from "@/shared/components";
-import { SendHorizonal } from "@/shared/components/icons";
+import { SurfacePressable, Surface } from "@/shared/components";
+import { DISABLED_ON_ACCENT_ICON_COLOR } from "@/shared/components/effect-tokens";
+import { MessageSquare, SendHorizonal } from "@/shared/components/icons";
 import { StyleSheet, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { resolveChatComposerSend } from "../lib/chat-composer";
@@ -25,11 +26,12 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   };
 
   const canSend = !disabled && text.trim().length > 0;
-  const sendIconColor = canSend ? accentGreen : "rgba(255, 255, 255, 0.72)";
+  const sendIconColor = canSend ? accentGreen : DISABLED_ON_ACCENT_ICON_COLOR;
 
   return (
     <Surface padded={false} radius={24} style={styles.composer}>
       <View style={styles.inputWrap}>
+        <MessageSquare size={18} color={supportTextColor} />
         <TextInput
           className="flex-1 text-primary dark:text-primary-dark"
           style={{ fontFamily: "poppins-medium", fontSize: 14, maxHeight: 100, padding: 0 }}
@@ -43,7 +45,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           blurOnSubmit={false}
         />
       </View>
-      <GlassPressable
+      <SurfacePressable
         accessibilityLabel={t("common.send")}
         accessibilityRole="button"
         onPress={handleSend}
@@ -53,7 +55,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
         layoutStyle={styles.sendButton}
       >
         <SendHorizonal size={18} color={sendIconColor} />
-      </GlassPressable>
+      </SurfacePressable>
     </Surface>
   );
 }
@@ -71,6 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     flex: 1,
     flexDirection: "row",
+    gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },

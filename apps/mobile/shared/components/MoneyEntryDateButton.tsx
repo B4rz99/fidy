@@ -1,4 +1,4 @@
-import { X } from "@/shared/components/icons";
+import { X, type LucideIcon } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { FieldButtonProps } from "./FieldButton";
@@ -6,6 +6,7 @@ import { IconActionButton } from "./IconActionButton";
 import { MoneyEntryFieldSurface } from "./MoneyEntryFieldSurface";
 
 type MoneyEntryDateButtonProps = Omit<FieldButtonProps, "value"> & {
+  readonly icon?: LucideIcon;
   readonly value: string;
 };
 
@@ -19,6 +20,7 @@ export function MoneyEntryDateButton({
   className,
   clearAccessibilityLabel,
   disabled = false,
+  icon: Icon,
   importantForAccessibility,
   label,
   leading: _leading,
@@ -58,6 +60,7 @@ export function MoneyEntryDateButton({
         className={disabled ? "opacity-60" : ""}
       >
         <MoneyEntryFieldSurface compact style={buttonStyle}>
+          {Icon ? <Icon size={18} color={secondary} /> : null}
           <Text
             className={`font-poppins-medium text-body ${valueClassName ?? ""}`}
             style={{ color: isPlaceholder ? tertiary : primary }}

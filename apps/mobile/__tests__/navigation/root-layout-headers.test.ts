@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { beforeAll, describe, expect, test } from "vitest";
 import { expectRouteInRootStackGroup } from "@/__tests__/helpers/root-stack-routes";
 
-describe("Root layout native headers", () => {
+describe("Root layout headers", () => {
   let source = "";
   let routeOptionsSource = "";
   let rootStackRoutesSource = "";
@@ -24,15 +24,14 @@ describe("Root layout native headers", () => {
     expect(source).toContain("screenOptions={{ headerShown: false }}");
   });
 
-  test("detail screens enable native headers on iOS with aurora-safe chrome", () => {
+  test("detail screens use hidden route headers with app-owned solid chrome", () => {
     for (const screen of ["search", "connected-accounts", "profile"]) {
       expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", screen);
     }
     expect(source).toContain("ROOT_STACK_ROUTES.transparentHeader.map");
     expect(source).toContain("routeOptions.transparentHeader");
-    expect(routeOptionsSource).toContain('headerShown: Platform.OS === "ios"');
-    expect(routeOptionsSource).toContain('headerStyle: { backgroundColor: "transparent" }');
-    expect(routeOptionsSource).toContain("headerTransparent: true");
+    expect(routeOptionsSource).toContain("headerShown: false");
+    expect(routeOptionsSource).not.toContain("headerTransparent");
     expect(rootStackRoutesSource).toContain("createTransparentHeaderRouteOptions(theme)");
   });
 
@@ -45,38 +44,28 @@ describe("Root layout native headers", () => {
     expect(routeOptionsSource).not.toContain("sheetAllowedDetents");
   });
 
-  test("promoted full-screen routes keep native headers on every platform", () => {
+  test("promoted full-screen routes keep native headers hidden on every platform", () => {
     expect(rootStackRoutesSource).toContain("createFullScreenRouteOptions(theme)");
-    expect(routeOptionsSource).toContain("headerShown: true");
-    expect(routeOptionsSource).toContain('headerTransparent: Platform.OS === "ios"');
-    expect(routeOptionsSource).toContain(
-      'headerStyle: { backgroundColor: Platform.OS === "ios" ? "transparent" : theme.page }'
-    );
+    expect(routeOptionsSource).toContain("headerShown: false");
+    expect(routeOptionsSource).toContain("headerStyle: { backgroundColor: theme.page }");
     expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "add-bill");
     expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "day-detail");
     expect(source).toContain("ROOT_STACK_ROUTES.fullScreen.map");
     expect(source).toContain("routeOptions.fullScreen");
   });
 
-  test("custom native headers suppress the default back affordance", () => {
-    expect(routeOptionsSource).toContain("const customBackHeaderOptions");
-    expect(routeOptionsSource).toContain("headerBackVisible: false");
-    expect(routeOptionsSource).toContain('headerBackButtonDisplayMode: "minimal"');
-    expect(routeOptionsSource).toContain('headerBackTitle: ""');
-    expect(routeOptionsSource).toContain("headerLeft: () => createElement(HeaderBackButton)");
-    expect(routeOptionsSource).toContain("...customBackHeaderOptions");
+  test("route options do not configure native back affordances", () => {
+    expect(routeOptionsSource).not.toContain("customBackHeaderOptions");
+    expect(routeOptionsSource).not.toContain("headerBackVisible");
+    expect(routeOptionsSource).not.toContain("headerBackButtonDisplayMode");
+    expect(routeOptionsSource).not.toContain("headerBackTitle");
+    expect(routeOptionsSource).not.toContain("headerLeft");
   });
 
-  test("bills-calendar uses iosHeaderOptions to enable iOS-only native header", () => {
-    expectRouteInRootStackGroup(rootStackRoutesSource, "transparentHeader", "bills-calendar");
-    expect(source).toContain("ROOT_STACK_ROUTES.transparentHeader.map");
-    expect(source).toContain("routeOptions.transparentHeader");
-  });
-
-  test("ScreenLayout full-screen routes avoid Android native header duplication", () => {
+  test("ScreenLayout full-screen routes use hidden route headers", () => {
     expect(rootStackRoutesSource).toContain("createScreenLayoutRouteOptions(theme)");
     expect(routeOptionsSource).toContain("createScreenLayoutRouteOptions");
-    expect(routeOptionsSource).toContain('headerShown: Platform.OS === "ios"');
+    expect(routeOptionsSource).toContain("headerShown: false");
 
     for (const screen of [
       "financial-account-identifier",

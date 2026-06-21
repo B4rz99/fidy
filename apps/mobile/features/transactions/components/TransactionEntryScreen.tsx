@@ -2,13 +2,14 @@ import * as Haptics from "expo-haptics";
 import { useReducer } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
+import { useAvailableCategories } from "@/features/categories/hooks.public";
 import {
   type FinancialAccountRow,
   getFinancialAccountsForUser,
   tryEnsureDefaultFinancialAccount,
 } from "@/features/financial-accounts/public";
 import { useTransferEntry } from "@/features/transfers/ui.public";
-import { Calendar, Pencil, Tag, Wallet } from "@/shared/components/icons";
+import { Calendar, Pencil, Wallet } from "@/shared/components/icons";
 import {
   EntryField,
   EntryScaffold,
@@ -18,24 +19,23 @@ import {
 import { View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useSubscription, useTranslation } from "@/shared/hooks";
-import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
+import { getDateFnsLocale } from "@/shared/i18n";
 import {
   captureError,
   formatInputDisplay,
   showSuccessToast,
   trackTransactionCreated,
 } from "@/shared/lib";
-import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
 import { handleNumpadPress } from "../lib/handle-numpad-press";
 import { saveCurrentTransaction, useTransactionStore } from "../store";
 import {
   TransactionAccountPickerDialog,
-  TransactionCategoryPickerDialog,
   TransactionDatePickerDialog,
 } from "./TransactionEntryPickers";
+import { CategoryStrip } from "./CategoryStrip";
 
-type TransactionPicker = "account" | "category" | "date" | null;
+type TransactionPicker = "account" | "date" | null;
 type AddEntryUiState = {
   readonly accounts: readonly FinancialAccountRow[];
   readonly entryMode: EntryTab;
@@ -61,6 +61,7 @@ export function TransactionEntryScreen({
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
+  const categories = useAvailableCategories();
   const {
     accountId,
     categoryId,
@@ -96,7 +97,6 @@ export function TransactionEntryScreen({
   );
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
   const selectedAccount = uiState.accounts.find((account) => account.id === accountId);
-  const selectedCategory = CATEGORIES.find((category) => category.id === categoryId);
   const isTransfer = uiState.entryMode === "transfer";
   const transferEntry = useTransferEntry({ enabled: isTransfer });
   const dateLabel = getDateLabel({
@@ -141,31 +141,29 @@ export function TransactionEntryScreen({
     <>
       <EntryTextInputField
         icon={Pencil}
-        label={t("common.description")}
+        label={t("transactions.descriptionExample")}
         value={description}
         onChangeText={setDescription}
       />
-      <EntryField
-        icon={Wallet}
-        label=""
-        value={selectedAccount?.name ?? t("common.account")}
-        onPress={() => setUiState({ picker: "account" })}
-      />
       <View style={{ flexDirection: "row", gap: 12, height: 50 }}>
+        <EntryField
+          icon={Wallet}
+          label=""
+          value={selectedAccount?.name ?? t("common.account")}
+          onPress={() => setUiState({ picker: "account" })}
+        />
         <EntryField
           icon={Calendar}
           label={dateLabel}
           valueTone="primary"
           onPress={() => setUiState({ picker: "date" })}
         />
-        <EntryField
-          icon={Tag}
-          label={`${t("common.category")}:`}
-          value={selectedCategory ? getCategoryLabel(selectedCategory, locale) : undefined}
-          valueTone={selectedCategory ? "primary" : "tertiary"}
-          onPress={() => setUiState({ picker: "category" })}
-        />
       </View>
+      <CategoryStrip
+        categories={categories}
+        categoryId={categoryId}
+        onCategoryChange={setCategoryId}
+      />
     </>
   );
 
@@ -210,16 +208,6 @@ export function TransactionEntryScreen({
         visible={uiState.picker === "date"}
         onClose={() => setUiState({ picker: null })}
         onChange={setDate}
-      />
-      <TransactionCategoryPickerDialog
-        categoryId={categoryId}
-        locale={locale}
-        visible={uiState.picker === "category"}
-        onClose={() => setUiState({ picker: null })}
-        onSelect={(nextCategoryId) => {
-          setCategoryId(nextCategoryId);
-          setUiState({ picker: null });
-        }}
       />
     </>
   );

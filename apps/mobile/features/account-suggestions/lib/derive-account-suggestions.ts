@@ -87,7 +87,7 @@ function getHintCanonicalValue(row: SuggestionRow) {
   return tokens.length > 0 ? tokens.join(" ") : normalizeLlmHintToken(row.value);
 }
 
-function isAccountLikeSuggestionRow(row: SuggestionRow) {
+function isAccountLikeSuggestionRow(_row: SuggestionRow) {
   return true;
 }
 

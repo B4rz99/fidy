@@ -1,17 +1,16 @@
 import type { ReactNode } from "react";
 import type { PressableProps, PressableStateCallbackType } from "react-native";
 import { Pressable } from "@/shared/components/rn";
-import { GlassSurface } from "./GlassSurface";
+import { SolidSurface } from "./SolidSurface";
 import type { SurfaceLayoutStyle } from "./surface-style";
 
-type GlassPressableProps = Omit<PressableProps, "children"> & {
+type SurfacePressableProps = Omit<PressableProps, "children"> & {
   readonly backgroundColor?: string;
   readonly children: ReactNode;
   readonly className?: string;
   readonly disabledOpacity?: number;
   readonly isInteractive?: boolean;
   readonly layoutStyle?: SurfaceLayoutStyle;
-  readonly nativeGlass?: boolean;
   readonly padded?: boolean;
   readonly radius?: number;
   readonly surfaceClassName?: string;
@@ -30,7 +29,7 @@ function getPressableStyle(
   return [disabledStyle, style];
 }
 
-export function GlassPressable({
+export function SurfacePressable({
   accessibilityRole,
   backgroundColor,
   children,
@@ -39,14 +38,13 @@ export function GlassPressable({
   disabledOpacity = 0.6,
   isInteractive = false,
   layoutStyle,
-  nativeGlass = true,
   padded = false,
   radius,
   style,
   surfaceClassName,
   surfaceLayoutStyle,
   ...pressableProps
-}: GlassPressableProps) {
+}: SurfacePressableProps) {
   return (
     <Pressable
       {...pressableProps}
@@ -55,20 +53,19 @@ export function GlassPressable({
       className={className}
       style={getPressableStyle(disabled, disabledOpacity, style)}
     >
-      <GlassSurface
+      <SolidSurface
         pointerEvents={isInteractive ? "auto" : "none"}
         backgroundColor={backgroundColor}
         isInteractive={isInteractive}
-        nativeGlass={nativeGlass}
         padded={padded}
         radius={radius}
         className={surfaceClassName}
         style={layoutStyle ?? surfaceLayoutStyle}
       >
         {children}
-      </GlassSurface>
+      </SolidSurface>
     </Pressable>
   );
 }
 
-export type { GlassPressableProps };
+export type { SurfacePressableProps };

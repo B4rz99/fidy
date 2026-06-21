@@ -3,7 +3,7 @@ import type { PressableProps, ViewProps } from "react-native";
 import { X } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassSurface } from "./GlassSurface";
+import { SolidSurface } from "./SolidSurface";
 import { IconActionButton } from "./IconActionButton";
 
 type CalloutTone = "neutral" | "success" | "danger" | "warning";
@@ -57,16 +57,6 @@ export function Callout({
   ...viewProps
 }: CalloutProps) {
   const secondaryColor = useThemeColor("secondary");
-  const neutralBorderColor = useThemeColor("borderSubtle");
-  const successBorderColor = useThemeColor("success");
-  const dangerBorderColor = useThemeColor("danger");
-  const warningBorderColor = useThemeColor("warning");
-  const toneBorderColor: Record<CalloutTone, string> = {
-    neutral: neutralBorderColor,
-    success: successBorderColor,
-    danger: dangerBorderColor,
-    warning: warningBorderColor,
-  };
   const {
     accessibilityHint,
     accessibilityLabel,
@@ -94,7 +84,7 @@ export function Callout({
     : undefined;
   const contentProps = onPress == null ? viewProps : containerProps;
   const content = (
-    <GlassSurface
+    <SolidSurface
       {...contentProps}
       className={className}
       padded={false}
@@ -123,7 +113,7 @@ export function Callout({
           size="size-8"
         />
       ) : null}
-    </GlassSurface>
+    </SolidSurface>
   );
 
   if (onPress == null) {

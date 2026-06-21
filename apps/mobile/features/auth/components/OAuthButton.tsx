@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { GlassPressable } from "@/shared/components/GlassPressable";
+import { SurfacePressable } from "@/shared/components/SurfacePressable";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
@@ -8,7 +8,6 @@ interface OAuthButtonProps {
   label: string;
   onPress: () => void;
   containerClassName?: string;
-  useGlassSurface?: boolean;
   textClassName: string;
   // biome-ignore lint/style/useNamingConvention: React Native prop name
   testID?: string;
@@ -20,7 +19,6 @@ export function OAuthButton({
   label,
   onPress,
   containerClassName,
-  useGlassSurface = false,
   textClassName,
   testID,
 }: OAuthButtonProps) {
@@ -34,21 +32,20 @@ export function OAuthButton({
   );
 
   return (
-    <GlassPressable
+    <SurfacePressable
       onPress={onPress}
       testID={testID}
       radius={12}
-      nativeGlass={useGlassSurface}
       className={`h-[52px] items-center justify-center ${containerClassName ?? ""}`}
-      layoutStyle={styles.glassContent}
+      layoutStyle={styles.surfaceContent}
     >
       {content}
-    </GlassPressable>
+    </SurfacePressable>
   );
 }
 
 const styles = StyleSheet.create({
-  glassContent: {
+  surfaceContent: {
     alignItems: "center",
     height: "100%",
     justifyContent: "center",

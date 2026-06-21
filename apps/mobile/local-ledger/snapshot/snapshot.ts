@@ -60,6 +60,16 @@ export type UserCategorySnapshotRow = SoftDeletedSnapshotRow & {
   readonly colorHex: string;
 };
 
+export type CategoryIconOverrideSnapshotRow = SoftDeletedSnapshotRow & {
+  readonly categoryId: string;
+  readonly emoji: string;
+};
+
+export type CategoryColorOverrideSnapshotRow = SoftDeletedSnapshotRow & {
+  readonly categoryId: string;
+  readonly colorHex: string;
+};
+
 export type FinancialAccountSnapshotRow = SoftDeletedSnapshotRow & {
   readonly name: string;
   readonly kind: string;
@@ -157,6 +167,8 @@ export type LocalLedgerBackupSnapshotData = {
   readonly transactions: readonly TransactionSnapshotRow[];
   readonly transfers: readonly TransferSnapshotRow[];
   readonly userCategories: readonly UserCategorySnapshotRow[];
+  readonly categoryIconOverrides: readonly CategoryIconOverrideSnapshotRow[];
+  readonly categoryColorOverrides: readonly CategoryColorOverrideSnapshotRow[];
   readonly financialAccounts: readonly FinancialAccountSnapshotRow[];
   readonly openingBalances: readonly OpeningBalanceSnapshotRow[];
   readonly budgets: readonly BudgetSnapshotRow[];

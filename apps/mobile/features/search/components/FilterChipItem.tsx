@@ -5,6 +5,7 @@ export type FilterChipItemKey = "category" | "dateRange" | "amount" | "type";
 
 type FilterChipItemProps = {
   readonly id: FilterChipItemKey;
+  readonly hasActiveFilters: boolean;
   readonly isActive: boolean;
   readonly isOpen: boolean;
   readonly label: string;
@@ -13,6 +14,7 @@ type FilterChipItemProps = {
 
 export function FilterChipItem({
   id,
+  hasActiveFilters,
   isActive,
   isOpen,
   label,
@@ -28,8 +30,9 @@ export function FilterChipItem({
   return (
     <Chip
       label={label}
-      tone={isHighlighted ? "primary" : "neutral"}
+      tone="neutral"
       selected={isHighlighted}
+      dimmed={hasActiveFilters && !isHighlighted}
       style={{ paddingHorizontal: 16 }}
       onPress={handlePress}
     />

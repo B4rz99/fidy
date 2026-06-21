@@ -1,0 +1,85 @@
+import { and, eq, isNull } from "drizzle-orm";
+import type { AnyDb } from "@/shared/db/client";
+import { budgets } from "@/shared/db/schema";
+import type {
+  BudgetId,
+  CategoryId,
+  CopAmount,
+  IsoDateTime,
+  Month,
+  UserId,
+} from "@/shared/types/branded";
+
+export type BudgetRow = typeof budgets.$inferInsert;
+
+type UpdateBudgetAmountInput = {
+  readonly db: AnyDb;
+  readonly id: BudgetId;
+  readonly categoryId: CategoryId;
+  readonly amount: CopAmount;
+  readonly now: IsoDateTime;
+};
+
+const getActiveBudgetsForMonth = (db: AnyDb, userId: UserId, month: Month) =>
+  db
+    .select()
+    .from(budgets)
+    .where(and(eq(budgets.userId, userId), eq(budgets.month, month), isNull(budgets.deletedAt)))
+    .all();
+
+export function insertBudget(db: AnyDb, row: BudgetRow) {
+  db.insert(budgets)
+    .values(row)
+    .onConflictDoUpdate({
+      target: [budgets.userId, budgets.categoryId, budgets.month],
+      set: {
+        id: row.id,
+        amount: row.amount,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        deletedAt: null,
+      },
+    })
+    .run();
+}
+
+export function updateBudgetAmount(input: UpdateBudgetAmountInput) {
+  input.db
+    .update(budgets)
+    .set({ categoryId: input.categoryId, amount: input.amount, updatedAt: input.now })
+    .where(eq(budgets.id, input.id))
+    .run();
+}
+
+export function softDeleteBudget(db: AnyDb, id: BudgetId, now: IsoDateTime) {
+  db.update(budgets).set({ deletedAt: now, updatedAt: now }).where(eq(budgets.id, id)).run();
+}
+
+export function copyBudgetsToMonth(
+  db: AnyDb,
+  userId: UserId,
+  sourceMonth: Month,
+  targetMonth: Month,
+  now: IsoDateTime,
+  generateId: () => BudgetId
+): BudgetId[] {
+  const sourceBudgets = getActiveBudgetsForMonth(db, userId, sourceMonth);
+  const existingTargetBudgets = getActiveBudgetsForMonth(db, userId, targetMonth);
+  const existingCategoryIds = new Set(existingTargetBudgets.map((b) => b.categoryId));
+
+  return sourceBudgets.flatMap((b) => {
+    if (existingCategoryIds.has(b.categoryId)) return [];
+    const newId = generateId();
+    insertBudget(db, {
+      id: newId,
+      userId: b.userId,
+      categoryId: b.categoryId,
+      amount: b.amount,
+      month: targetMonth,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    });
+    return [newId];
+  });
+}

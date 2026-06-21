@@ -71,6 +71,7 @@ export const NotificationCard = React.memo(function NotificationCard({
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
+  const surfaceMuted = useThemeColor("surfaceMuted");
 
   const IconComponent = ICON_MAP[notification.iconName] ?? TriangleAlert;
 
@@ -85,11 +86,15 @@ export const NotificationCard = React.memo(function NotificationCard({
 
   return (
     <Card
+      accessibilityRole={notification.route ? "button" : undefined}
+      accessibilityState={{ disabled: !notification.route }}
       onPress={notification.route ? handlePress : undefined}
       disabled={!notification.route}
-      contentClassName="flex-row items-center gap-3 p-3.5"
+      radius={12}
+      contentStyle={styles.card}
+      padded={false}
     >
-      <View style={styles.iconCircle}>
+      <View style={[styles.iconCircle, { backgroundColor: surfaceMuted }]}>
         <IconComponent size={16} color={notification.iconColor} />
       </View>
 
@@ -111,6 +116,13 @@ export const NotificationCard = React.memo(function NotificationCard({
 });
 
 const styles = StyleSheet.create({
+  card: {
+    minHeight: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+  },
   iconCircle: {
     width: 40,
     height: 40,

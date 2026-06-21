@@ -5,6 +5,8 @@ export {
   billPayments,
   bills,
   budgets,
+  categoryColorOverrides,
+  categoryIconOverrides,
   captureEvidence,
   chatMessages,
   chatSessions,

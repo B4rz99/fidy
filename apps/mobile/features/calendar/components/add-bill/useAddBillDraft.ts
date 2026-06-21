@@ -1,6 +1,5 @@
-import { useCallback, useRef, useState } from "react";
-import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
-import type { TextInput } from "@/shared/components/rn";
+import { useCallback, useState } from "react";
+import { getBuiltInCategoryId } from "@/shared/categories";
 import type { Bill } from "../../schema";
 import type { AddBillDraftController, AddBillDraftState } from "./AddBillForm.types";
 
@@ -13,7 +12,7 @@ function resolveInitialAmount(existingBill: Bill | undefined) {
 function resolveInitialCategory(existingBill: Bill | undefined) {
   const categoryId = existingBill?.categoryId;
   if (!categoryId) return DEFAULT_BILL_CATEGORY_ID;
-  return isValidCategoryId(categoryId) ? categoryId : DEFAULT_BILL_CATEGORY_ID;
+  return categoryId;
 }
 
 function resolveInitialFrequency(existingBill: Bill | undefined) {
@@ -39,11 +38,9 @@ function resolveInitialDraft(existingBill: Bill | undefined): AddBillDraftState 
 }
 
 export function useAddBillDraft(existingBill: Bill | undefined): AddBillDraftController {
-  const amountRef = useRef<TextInput>(null);
   const [draft, setDraft] = useState(() => resolveInitialDraft(existingBill));
 
   return {
-    amountRef,
     draft,
     isEdit: Boolean(existingBill),
     setAmount: useCallback((amount) => {

@@ -40,7 +40,7 @@ export function HomeScreenHeader({
   });
 
   return (
-    <View className="gap-4 px-4">
+    <View className="gap-4 px-4 pt-4">
       {showSetupBanners ? (
         <>
           <EmailConnectBanner

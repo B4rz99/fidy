@@ -19,22 +19,6 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-export type IntakeLocalLedgerCandidate = {
-  readonly commandId: LocalLedgerCommandId;
-  readonly sourceId: LocalLedgerSourceId;
-  readonly receivedAt: string;
-  readonly rawText: string;
-};
-
-export type IntakeLocalLedgerCandidateResult = {
-  readonly accepted: boolean;
-  readonly reason: string | null;
-};
-
-export type IntakeLocalLedgerCandidateHandler = (
-  candidate: IntakeLocalLedgerCandidate
-) => Promise<IntakeLocalLedgerCandidateResult>;
-
 export type CreateReviewCandidateCommand = {
   readonly kind: "localLedger.reviewCandidate.create";
   readonly sourceEvent: {

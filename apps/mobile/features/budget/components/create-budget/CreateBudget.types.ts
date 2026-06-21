@@ -9,19 +9,25 @@ export type CreateBudgetMutations = {
   readonly onCreateBudget: (categoryId: CategoryId, amount: CopAmount) => Promise<boolean>;
   readonly onDeleteBudget: (id: BudgetId) => Promise<boolean>;
   readonly onDone: () => void;
-  readonly onUpdateBudget: (id: BudgetId, amount: CopAmount) => Promise<boolean>;
+  readonly onUpdateBudget: (
+    id: BudgetId,
+    categoryId: CategoryId,
+    amount: CopAmount
+  ) => Promise<boolean>;
 };
 
 export type CreateBudgetFormProps = CreateBudgetMutations & {
   readonly autoSuggestions: readonly BudgetSuggestion[];
   readonly existingBudget: Budget | undefined;
   readonly existingCategoryIds: ReadonlySet<string>;
+  readonly headerTitle: string;
 };
 
 export type CreateBudgetScreenProps = {
   readonly autoSuggestions: readonly BudgetSuggestion[];
   readonly existingBudget: Budget | undefined;
   readonly existingCategoryIds: ReadonlySet<string>;
+  readonly headerTitle: string;
   readonly onDone: () => void;
   readonly userId: UserId | null | undefined;
 };

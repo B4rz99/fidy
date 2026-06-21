@@ -26,7 +26,6 @@ export const TypeToggle = ({ value, onChange }: TypeToggleProps) => {
       ]}
       value={value}
       onChange={handlePress}
-      getOptionTone={(type) => (type === "expense" ? "danger" : "success")}
       style={{ width: 224 }}
     />
   );

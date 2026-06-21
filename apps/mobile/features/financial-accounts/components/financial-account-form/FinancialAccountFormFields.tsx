@@ -4,7 +4,7 @@ import {
   financialAccountKindSchema,
 } from "@/features/financial-accounts/schema";
 import { getKindEmoji } from "@/features/financial-accounts/lib/kind-display";
-import { GlassPressable } from "@/shared/components/GlassPressable";
+import { SurfacePressable } from "@/shared/components/SurfacePressable";
 import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
 import { Text } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -43,7 +43,6 @@ export function FinancialAccountKindPicker({
       value={value}
       onChange={onChange}
       optionAccessibilityRole="radio"
-      selectedTone="primary"
       chipStyle={chipStyle}
       style={style}
     />
@@ -64,7 +63,7 @@ export function KindChip({
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <GlassPressable
+    <SurfacePressable
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityState={{ checked: isSelected }}
@@ -74,6 +73,6 @@ export function KindChip({
       <Text style={[styles.kindChipText, { color: isSelected ? accentGreen : primary }]}>
         {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
       </Text>
-    </GlassPressable>
+    </SurfacePressable>
   );
 }

@@ -1,10 +1,13 @@
-import { Stack } from "expo-router";
-import { TextActionButton } from "@/shared/components";
-import { useTranslation } from "@/shared/hooks";
+import { useRouter } from "expo-router";
+import { AppAuroraBackground, SolidScreenHeader, TextActionButton } from "@/shared/components";
+import { View } from "@/shared/components/rn";
+import { useColorScheme, useTranslation } from "@/shared/hooks";
 import { GoalDetailContent } from "./goal-detail/GoalDetailContent";
 import { useGoalDetail } from "./goal-detail/useGoalDetail";
 
 export function GoalDetailScreen() {
+  const { back } = useRouter();
+  const isDark = useColorScheme() === "dark";
   const { t } = useTranslation();
   const detail = useGoalDetail();
 
@@ -15,21 +18,19 @@ export function GoalDetailScreen() {
   const { goal, currentAmount, progress, projection } = detail.goalData;
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerBackButtonDisplayMode: "minimal",
-          headerBackTitle: "",
-          headerTitle: goal.name,
-          headerRight: () => (
-            <TextActionButton
-              label={t("common.edit")}
-              onPress={detail.onEditGoal}
-              hitSlop={8}
-              appearance="plain"
-            />
-          ),
-        }}
+    <View style={{ flex: 1 }}>
+      <AppAuroraBackground isDark={isDark} />
+      <SolidScreenHeader
+        title={goal.name}
+        onBack={back}
+        rightAction={
+          <TextActionButton
+            label={t("common.edit")}
+            onPress={detail.onEditGoal}
+            hitSlop={8}
+            appearance="plain"
+          />
+        }
       />
       <GoalDetailContent
         activeTab={detail.activeTab}
@@ -47,6 +48,6 @@ export function GoalDetailScreen() {
         milestones={detail.milestones}
         targetAmount={goal.targetAmount}
       />
-    </>
+    </View>
   );
 }

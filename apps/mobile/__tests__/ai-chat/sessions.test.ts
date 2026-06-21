@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { es } from "date-fns/locale";
+import { buildGroupedSessions } from "../../features/ai-chat/lib/session-list-items";
 import {
   deriveConversationTitle,
   findExpiredSessions,
@@ -15,6 +17,10 @@ const makeSession = (overrides: Partial<ChatSession>): ChatSession => ({
   expiresAt: "2026-03-03T00:00:00.000Z" as IsoDateTime,
   deletedAt: null,
   ...overrides,
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("deriveConversationTitle", () => {
@@ -111,5 +117,47 @@ describe("formatCleanupMessage", () => {
     const t = i18n.t.bind(i18n) as (key: string, options?: Record<string, unknown>) => string;
     expect(formatCleanupMessage(1, t)).toBe("1 conversación expirada fue eliminada");
     expect(formatCleanupMessage(3, t)).toBe("3 conversaciones expiradas fueron eliminadas");
+  });
+});
+
+describe("buildGroupedSessions", () => {
+  it("groups adjacent sessions by date with relative labels", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-21T12:00:00.000Z"));
+
+    const sessions = [
+      makeSession({
+        id: "today-1" as ChatSessionId,
+        title: "Today first",
+        createdAt: "2026-03-21T09:00:00.000Z" as IsoDateTime,
+      }),
+      makeSession({
+        id: "today-2" as ChatSessionId,
+        title: "Today second",
+        createdAt: "2026-03-21T08:00:00.000Z" as IsoDateTime,
+      }),
+      makeSession({
+        id: "yesterday-1" as ChatSessionId,
+        title: "Yesterday",
+        createdAt: "2026-03-20T10:00:00.000Z" as IsoDateTime,
+      }),
+      makeSession({
+        id: "older-1" as ChatSessionId,
+        title: "Older",
+        createdAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
+      }),
+    ];
+
+    const items = buildGroupedSessions(sessions, es, (key) => `t:${key}`);
+
+    expect(items).toEqual([
+      { type: "date", id: "date-2026-03-21", label: "t:dateGroups.today" },
+      { type: "session", session: sessions[0] },
+      { type: "session", session: sessions[1] },
+      { type: "date", id: "date-2026-03-20", label: "t:dateGroups.yesterday" },
+      { type: "session", session: sessions[2] },
+      { type: "date", id: "date-2026-03-01", label: "1 mar 2026" },
+      { type: "session", session: sessions[3] },
+    ]);
   });
 });

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { GlassSurface } from "./GlassSurface";
+import { SolidSurface } from "./SolidSurface";
 
 type FormSectionProps = {
   readonly children: ReactNode;
@@ -15,7 +15,7 @@ export function FormSection({ children, optionalLabel, style, title }: FormSecti
   const secondary = useThemeColor("secondary");
 
   return (
-    <GlassSurface
+    <SolidSurface
       radius={8}
       style={[
         {
@@ -56,6 +56,6 @@ export function FormSection({ children, optionalLabel, style, title }: FormSecti
         ) : null}
       </View>
       {children}
-    </GlassSurface>
+    </SolidSurface>
   );
 }

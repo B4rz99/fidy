@@ -193,10 +193,14 @@ test("keeps financial accounts content composed from sections and rows", () => {
   const rowFile = parseSource(rowSource);
 
   expect(hasJsxComponent(contentFile, "FinancialAccountsSection")).toBe(true);
+  expect(hasJsxComponent(contentFile, "ScreenLayout")).toBe(true);
   expect(contentSource).toContain("regularAccounts");
   expect(contentSource).toContain("creditCardAccounts");
   expect(contentSource).toContain("financialAccounts.list.addLabel");
+  expect(contentSource).toContain("rightActions={");
   expect(contentSource).toContain("EmptyState");
+  expect(contentSource).not.toContain("<Stack.Screen");
+  expect(contentSource).not.toContain("includesNativeHeader={false}");
 
   expect(hasJsxComponent(sectionFile, "FinancialAccountRow")).toBe(true);
   expect(sectionSource).toContain("items.length");
@@ -222,7 +226,6 @@ describe("financial account list extracted components", () => {
 
     expect(withItems.getByText("Cash")).toBeTruthy();
     expect(withItems.getByText("Visa gold")).toBeTruthy();
-    expect(withItems.getByA11yLabel("Add account")).toBeTruthy();
 
     const empty = renderFidy(
       <FinancialAccountsScreenContentComponent
@@ -255,7 +258,7 @@ describe("financial account list extracted components", () => {
     expect(onOpenAccount).toHaveBeenCalledWith("fa-regular");
   });
 
-  test("renders financial account row glass content and status labels", () => {
+  test("renders financial account row surface content and status labels", () => {
     const screen = renderFidy(
       <FinancialAccountRowComponent item={creditCardAccountItem} onPress={vi.fn()} />
     );

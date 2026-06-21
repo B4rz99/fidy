@@ -50,25 +50,26 @@ test("auto-suggest budgets keeps the scroll view bounded inside the full screen 
 test("create-budget route uses the budget public route surface", () => {
   expect(routeSource).toContain("routes.public");
   expect(routeSource).toContain("CreateBudgetScreen");
-  expect(routeSource).toContain('headerBackButtonDisplayMode: "minimal"');
-  expect(routeSource).toContain('headerBackTitle: ""');
-  expect(routeSource).toContain("headerBackVisible: false");
-  expect(routeSource).toContain(
-    'budgetId != null ? t("budgets.edit.title") : t("budgets.create.title")'
-  );
+  expect(routeSource).not.toContain("<Stack.Screen");
+  expect(routeSource).not.toContain("headerBackButtonDisplayMode");
+  expect(routeSource).not.toContain("headerBackVisible");
 });
 
 test("create-budget screen supports edit mode via budgetId params", () => {
   expect(screenSource).toContain("budgetId");
   expect(screenSource).toContain("resolveBudgetIdParam");
+  expect(screenSource).toContain('t("budgets.edit.title")');
+  expect(screenSource).toContain('t("budgets.create.title")');
 });
 
-test("create-budget content renders category pills and numpad entry", () => {
-  expect(contentSource).toContain("CategoryPill");
+test("create-budget content renders category pills in create and edit modes with numpad entry", () => {
+  expect(contentSource).toContain("useAvailableCategories");
+  expect(contentSource).toContain("CategoryStrip");
   expect(contentSource).toContain("MoneyEntryScreen");
-  expect(contentSource).toContain("ChoiceTray");
+  expect(contentSource).toContain("headerTitle={headerTitle}");
   expect(contentSource).toContain("actionContent={");
   expect(contentSource).toContain("amountContent={");
+  expect(contentSource).not.toContain("!isEdit &&");
   expect(contentSource).toContain('t("budgets.create.lastMonthHint"');
   expect(contentSource).not.toContain('t("budgets.create.enterAmount")');
   expect(contentSource).not.toContain('t("budgets.create.title")');

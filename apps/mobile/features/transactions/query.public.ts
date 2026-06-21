@@ -1,4 +1,4 @@
-export { toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
+export { toStoredTransaction } from "./lib/build-transaction";
 export {
   getActiveTransactionConditions,
   isActiveTransactionRow,

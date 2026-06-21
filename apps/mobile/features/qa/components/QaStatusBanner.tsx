@@ -1,12 +1,13 @@
 import { useAuthStore } from "@/features/auth/public";
 import { Surface } from "@/shared/components";
 import { StyleSheet, Text } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useQaDevtoolsStore } from "../devtools-store";
 import { isLocalQaAvailable } from "../local-session";
 
 export function QaStatusBanner() {
   const { t } = useTranslation();
+  const primary = useThemeColor("primary");
   const localQaSession = useAuthStore((state) => state.localQaSession);
   const flags = useQaDevtoolsStore((state) => state.flags);
 
@@ -16,7 +17,7 @@ export function QaStatusBanner() {
 
   return (
     <Surface pointerEvents="none" radius={14} padded={false} style={styles.banner}>
-      <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: "#161616" }}>
+      <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: primary }}>
         {t("qaTools.banner", {
           profile: localQaSession.profile,
           offline: flags.simulateOffline

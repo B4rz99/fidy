@@ -112,7 +112,9 @@ test("goal creation and payment sheets use the shared numpad form surface", () =
   expect(formSource).not.toContain('size={fullScreen ? "hero" : "medium"}');
   expect(frameSource).not.toContain("fullScreen ? styles.fullScreenForm : styles.formCard");
   expect(frameSource).toContain("<MoneyEntryScreen");
+  expect(frameSource).toContain("headerTitle={headerTitle}");
   expect(addPaymentSource).toContain("<MoneyEntryScreen");
+  expect(addPaymentSource).toContain('headerTitle={t("goals.payment.title")}');
   expect(addPaymentSource).toContain("actionContent={");
   expect(addPaymentSource).toContain("amountContent={");
   expect(addPaymentSource).not.toContain("<Card");
@@ -138,16 +140,16 @@ test("create-goal opens as a full screen route, not a dialog", () => {
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
   expect(rootLayoutSource).toContain("routeOptions.fullScreen");
   expect(rootLayoutSource).toContain('name="create-goal"');
-  expect(rootStackRoutesSource).toContain('title: t("goals.create.title")');
+  expect(createSheetSource).toContain('headerTitle={t("goals.create.title")}');
 });
 
 test("goal payment and edit open as full screen routes, not dialogs", () => {
   expect(addPaymentRouteSource).not.toContain("DialogRouteFrame");
-  expect(addPaymentRouteSource).toContain('headerBackTitle: ""');
-  expect(addPaymentRouteSource).toContain('headerTitle: t("goals.payment.title")');
+  expect(addPaymentRouteSource).not.toContain("<Stack.Screen");
+  expect(addPaymentSource).toContain('headerTitle={t("goals.payment.title")}');
   expect(editGoalRouteSource).not.toContain("DialogRouteFrame");
-  expect(editGoalRouteSource).toContain('headerBackTitle: ""');
-  expect(editGoalRouteSource).toContain('headerTitle: t("goals.edit.title")');
+  expect(editGoalRouteSource).not.toContain("<Stack.Screen");
+  expect(editLoadedSource).toContain('headerTitle={t("goals.edit.title")}');
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen");
   expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.fullScreen.map");
   expect(rootLayoutSource).toContain("routeOptions.fullScreen");
@@ -155,7 +157,7 @@ test("goal payment and edit open as full screen routes, not dialogs", () => {
   expectRouteInRootStackGroup(rootStackRoutesSource, "fullScreen", "edit-goal");
 });
 
-test("create-goal full screen avoids nested card and uses debt red state", () => {
+test("create-goal full screen avoids nested card and uses shared selection state", () => {
   expect(frameSource).not.toContain("formCard");
   expect(frameSource).not.toContain("<ScrollView");
   expect(frameSource).not.toContain("<FidyNumpad");
@@ -170,14 +172,14 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(numpadFormScreenSource).toContain("bottomShell");
   expect(stylesSource).toMatch(/fullScreenContainer:\s*\{\s*gap:\s*16,\s*paddingBottom:\s*12,/);
   expect(typeToggleSource).toContain("<SegmentedControl");
-  expect(typeToggleSource).toContain('type === "debt" ? "danger" : "success"');
+  expect(typeToggleSource).not.toContain("getOptionTone");
   expect(typeToggleSource).toContain('variant="detached"');
 });
 
-test("goal detail hides inherited tab title from the back button", () => {
-  expect(goalDetailSource).toContain('headerBackTitle: ""');
-  expect(goalDetailSource).toContain('headerBackButtonDisplayMode: "minimal"');
-  expect(goalDetailSource).toContain("headerTitle: goal.name");
-  expect(goalDetailSource).toContain("headerRight: () =>");
+test("goal detail uses the shared solid header", () => {
+  expect(goalDetailSource).toContain("SolidScreenHeader");
+  expect(goalDetailSource).toContain("title={goal.name}");
+  expect(goalDetailSource).toContain("rightAction=");
+  expect(goalDetailSource).not.toContain("<Stack.Screen");
   expect(goalDetailSource).not.toContain('Platform.OS === "ios"');
 });

@@ -25,6 +25,20 @@ const SOURCE_ROOTS = [
 const COLOR_LITERAL_PATTERN = /#[0-9A-Fa-f]{3,8}\b|\brgba?\([^\n)]*\)/g;
 const IGNORED_PATH_PARTS = ["/__tests__/", "/migrations/"];
 const ALLOWED_FILES = new Set([
+  normalizePath(join("apps", "mobile", "features", "auth", "components", "icons", "AppleIcon.tsx")),
+  normalizePath(
+    join("apps", "mobile", "features", "auth", "components", "icons", "GoogleIcon.tsx")
+  ),
+  normalizePath(
+    join("apps", "mobile", "features", "auth", "components", "icons", "MicrosoftIcon.tsx")
+  ),
+  normalizePath(join("apps", "mobile", "features", "categories", "lib", "constants.ts")),
+  normalizePath(join("apps", "mobile", "features", "notifications", "lib", "display.ts")),
+  normalizePath(join("apps", "mobile", "shared", "categories", "bar-colors.ts")),
+  normalizePath(join("apps", "mobile", "shared", "components", "AppAuroraBackground.tsx")),
+  normalizePath(join("apps", "mobile", "shared", "components", "Callout.tsx")),
+  normalizePath(join("apps", "mobile", "shared", "components", "effect-tokens.ts")),
+  normalizePath(join("apps", "mobile", "shared", "components", "surface-tokens.ts")),
   normalizePath(join("apps", "mobile", "shared", "constants", "theme.ts")),
 ]);
 

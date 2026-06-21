@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import { GlassPressable } from "@/shared/components";
+import { SurfacePressable } from "@/shared/components";
 import { FlatList, Text, View } from "@/shared/components/rn";
 import { SELECTABLE_ICONS } from "../../lib/icon-map";
 import { styles } from "./CreateCategoryScreen.styles";
@@ -39,14 +39,14 @@ const IconCell = memo(function IconCell({
 
   return (
     <View style={styles.iconCellWrapper}>
-      <GlassPressable
+      <SurfacePressable
         onPress={handlePress}
         radius={12}
         padded={false}
         layoutStyle={styles.iconCell}
       >
         <Text style={{ color: iconColor }}>{icon}</Text>
-      </GlassPressable>
+      </SurfacePressable>
     </View>
   );
 });

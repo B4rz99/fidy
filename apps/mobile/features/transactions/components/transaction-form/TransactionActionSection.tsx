@@ -35,6 +35,7 @@ export function TransactionActionSection({
           ? {
               testID: "transaction-form.delete",
               label: deleteLabel,
+              className: "flex-1",
               variant: "danger",
               onPress: onDelete,
             }
@@ -54,6 +55,7 @@ export function TransactionActionSection({
       primaryAction={{
         testID: "transaction-form.save",
         label: saveLabel,
+        className: "flex-1",
         onPress: canSave ? onSave : undefined,
         disabled: !canSave || isSaving,
         loading: isSaving,

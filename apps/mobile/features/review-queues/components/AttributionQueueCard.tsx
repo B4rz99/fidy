@@ -33,6 +33,7 @@ export function AttributionQueueCard({
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
   const accentRed = useThemeColor("accentRed");
+  const surfaceMuted = useThemeColor("surfaceMuted");
   const transactionId = item.transaction.id;
   const handleConfirmPress = useCallback(
     () => onConfirm(transactionId),
@@ -71,7 +72,7 @@ export function AttributionQueueCard({
         </View>
 
         <View style={styles.ownerColumn}>
-          <View style={styles.ownerRow}>
+          <View style={[styles.ownerRow, { backgroundColor: surfaceMuted }]}>
             <Text style={[styles.ownerLabel, { color: secondary }]}>
               {t("attributionReview.currentOwner")}
             </Text>
@@ -79,7 +80,7 @@ export function AttributionQueueCard({
               {item.currentAccount?.name ?? t("attributionReview.fallbackOwner")}
             </Text>
           </View>
-          <View style={styles.ownerRow}>
+          <View style={[styles.ownerRow, { backgroundColor: surfaceMuted }]}>
             <Text style={[styles.ownerLabel, { color: secondary }]}>
               {t("attributionReview.suggestedOwner")}
             </Text>
@@ -154,9 +155,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ownerRow: {
+    minHeight: 44,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: 16,
+    borderRadius: 12,
+    borderCurve: "continuous",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   ownerLabel: {
     fontFamily: "Poppins_500Medium",

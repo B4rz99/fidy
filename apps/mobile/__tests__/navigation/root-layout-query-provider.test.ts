@@ -34,7 +34,7 @@ describe("Root layout query provider", () => {
       expect(source).toContain(`"${screen}"`);
     }
 
-    for (const screen of ["add-bill", "delete-account", "analytics"]) {
+    for (const screen of ["add-bill", "delete-account"]) {
       expect(rootStackRoutesSource).toContain(`"${screen}"`);
     }
   });

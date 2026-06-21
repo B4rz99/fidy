@@ -132,11 +132,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
   );
 
   return (
-    <ScreenLayout
-      title={t("aiChat.title")}
-      includesNativeHeader={false}
-      rightActions={<NewChatButton onPress={onNewChat} />}
-    >
+    <ScreenLayout title={t("aiChat.title")} rightActions={<NewChatButton onPress={onNewChat} />}>
       <FeedList
         data={groupedSessions}
         renderItem={renderItem}

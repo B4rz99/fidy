@@ -1,9 +1,8 @@
-import * as Haptics from "expo-haptics";
-import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
-import { FilterPill as SharedFilterPill } from "@/shared/components";
-import { Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { getCategoryLabel } from "@/shared/i18n";
+import { useAvailableCategories } from "@/features/categories/hooks.public";
+import type { Category } from "@/shared/categories";
+import { CategoryIconButton } from "@/shared/components";
+import { FlatList, StyleSheet, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 type CategoryFilterProps = {
   selectedIds: readonly string[];
@@ -12,46 +11,83 @@ type CategoryFilterProps = {
 
 function CategoryFilterPill({
   category,
+  hasSelection,
+  idleColor,
   isSelected,
   onToggle,
 }: {
   category: Category;
+  hasSelection: boolean;
+  idleColor: string;
   isSelected: boolean;
   onToggle: (categoryId: string) => void;
 }) {
-  const { locale } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
-
-  const handlePress = () => {
-    void Haptics.selectionAsync();
-    onToggle(category.id);
-  };
-
   return (
-    <SharedFilterPill
-      onPress={handlePress}
+    <CategoryIconButton
+      category={category}
+      dimmed={hasSelection && !isSelected}
+      idleColor={idleColor}
+      onPress={() => onToggle(category.id)}
       selected={isSelected}
-      selectedColor={accentGreen}
-      accessibilityLabel={getCategoryLabel(category, locale)}
-      style={{ height: 44, paddingHorizontal: 0, width: 44 }}
-      leading={<Text>{category.icon}</Text>}
+      style={styles.categoryButton}
+      variant="filter"
     />
   );
 }
 
-export const CategoryFilter = ({ selectedIds, onToggle }: CategoryFilterProps) => (
-  <View className="gap-3 p-4">
-    {CATEGORY_ROWS.map((row, rowIdx) => (
-      <View key={CATEGORIES[rowIdx * 5]?.id ?? rowIdx} className="flex-row justify-around">
-        {row.map((cat) => (
-          <CategoryFilterPill
-            key={cat.id}
-            category={cat}
-            isSelected={selectedIds.includes(cat.id)}
-            onToggle={onToggle}
-          />
-        ))}
-      </View>
-    ))}
-  </View>
-);
+export const CategoryFilter = ({ selectedIds, onToggle }: CategoryFilterProps) => {
+  const hasSelection = selectedIds.length > 0;
+  const categories = useAvailableCategories();
+  const surfaceRaised = useThemeColor("surfaceRaised");
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={categories}
+        keyExtractor={categoryKeyExtractor}
+        renderItem={({ item: cat }) => (
+          <View style={styles.item}>
+            <CategoryFilterPill
+              category={cat}
+              hasSelection={hasSelection}
+              idleColor={surfaceRaised}
+              isSelected={selectedIds.includes(cat.id)}
+              onToggle={onToggle}
+            />
+          </View>
+        )}
+        contentContainerStyle={styles.content}
+        style={styles.scroll}
+      />
+    </View>
+  );
+};
+
+const categoryKeyExtractor = (category: Category) => category.id;
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  content: {
+    alignItems: "center",
+    paddingHorizontal: 2,
+  },
+  item: {
+    alignItems: "center",
+    height: 58,
+    justifyContent: "center",
+    width: 62,
+  },
+  categoryButton: {
+    width: 44,
+  },
+  scroll: {
+    flexGrow: 0,
+    height: 62,
+    maxHeight: 62,
+  },
+});

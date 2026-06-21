@@ -20,7 +20,6 @@ export function LocalQaLoginButton() {
           .catch(() => undefined);
       }}
       containerClassName=""
-      useGlassSurface
       textClassName="text-primary dark:text-primary-dark"
     />
   );

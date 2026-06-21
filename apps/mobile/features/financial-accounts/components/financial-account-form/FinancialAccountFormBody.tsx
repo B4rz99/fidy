@@ -7,6 +7,7 @@ import { FieldButton } from "@/shared/components/FieldButton";
 import { FormScreen } from "@/shared/components/FormScreen";
 import { FormSection } from "@/shared/components/FormSection";
 import { FormTextField } from "@/shared/components/FormTextField";
+import { Calendar, CreditCard, Tag, Wallet } from "@/shared/components/icons";
 import { Keyboard, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
@@ -28,8 +29,13 @@ export function FinancialAccountFormBody({
 }) {
   const { t, locale } = useTranslation();
   const [datePickerFallback] = useState(() => new Date());
+  const currentDatePlaceholder = format(datePickerFallback, "PPP", {
+    locale: getDateFnsLocale(locale),
+  });
+  const currentDayPlaceholder = format(datePickerFallback, "d", {
+    locale: getDateFnsLocale(locale),
+  });
   const secondary = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
   const {
     amountDigits,
     amountPreview,
@@ -66,6 +72,7 @@ export function FinancialAccountFormBody({
 
       <FormSection title={t("financialAccounts.form.basicInfoSection")}>
         <FormTextField
+          icon={Wallet}
           label={t("financialAccounts.form.nameLabel")}
           value={name}
           onChangeText={setName}
@@ -74,6 +81,7 @@ export function FinancialAccountFormBody({
 
         {canFinancialAccountHaveIdentifiers(kind) && !isEdit ? (
           <FormTextField
+            icon={Tag}
             label={t("financialAccounts.identifierScreen.label")}
             value={manualIdentifierValue}
             onChangeText={setManualIdentifierValue}
@@ -87,6 +95,7 @@ export function FinancialAccountFormBody({
         optionalLabel={t("financialAccounts.form.optionalLabel")}
       >
         <FormTextField
+          icon={Wallet}
           label={
             kind === "credit_card"
               ? t("financialAccounts.form.debtLabel")
@@ -101,13 +110,14 @@ export function FinancialAccountFormBody({
 
         <View style={styles.fieldBlock}>
           <FieldButton
+            icon={Calendar}
             label={t("financialAccounts.form.dateLabel")}
             value={
               effectiveDate
                 ? format(effectiveDate, "PPP", { locale: getDateFnsLocale(locale) })
                 : ""
             }
-            placeholder={t("financialAccounts.form.datePlaceholder")}
+            placeholder={currentDatePlaceholder}
             onPress={() => {
               Keyboard.dismiss();
               setShowDatePicker(true);
@@ -137,20 +147,22 @@ export function FinancialAccountFormBody({
       {kind === "credit_card" ? (
         <FormSection title={t("financialAccounts.detail.billingProfileTitle")}>
           <FormTextField
+            icon={CreditCard}
             label={t("financialAccounts.form.statementClosingDay")}
             value={statementClosingDayText}
             onChangeText={setStatementClosingDayText}
             keyboardType="number-pad"
-            placeholder={t("financialAccounts.form.dayPlaceholder")}
+            placeholder={currentDayPlaceholder}
             maxLength={2}
           />
 
           <FormTextField
+            icon={CreditCard}
             label={t("financialAccounts.form.paymentDueDay")}
             value={paymentDueDayText}
             onChangeText={setPaymentDueDayText}
             keyboardType="number-pad"
-            placeholder={t("financialAccounts.form.dayPlaceholder")}
+            placeholder={currentDayPlaceholder}
             maxLength={2}
           />
 

@@ -3,6 +3,8 @@ import { eq, inArray } from "drizzle-orm";
 import {
   accountSuggestionDismissals,
   budgets,
+  categoryColorOverrides,
+  categoryIconOverrides,
   captureEvidence,
   financialAccountIdentifiers,
   financialAccounts,
@@ -41,6 +43,8 @@ const USER_SCOPED_BACKUP_DATA_KEYS = [
   "transactions",
   "transfers",
   "userCategories",
+  "categoryIconOverrides",
+  "categoryColorOverrides",
   "financialAccounts",
   "openingBalances",
   "budgets",
@@ -68,6 +72,14 @@ export function exportLocalLedgerBackupSnapshot(
         db,
         userCategories
       ) as readonly (typeof userCategories.$inferSelect)[],
+      categoryIconOverrides: selectRows(
+        db,
+        categoryIconOverrides
+      ) as readonly (typeof categoryIconOverrides.$inferSelect)[],
+      categoryColorOverrides: selectRows(
+        db,
+        categoryColorOverrides
+      ) as readonly (typeof categoryColorOverrides.$inferSelect)[],
       financialAccounts: selectRows(
         db,
         financialAccounts
@@ -123,6 +135,8 @@ export function importLocalLedgerBackupSnapshot(
   db.transaction((tx) => {
     clearSnapshotTables(tx, userIds);
     insertRows(tx, userCategories, validatedSnapshot.data.userCategories);
+    insertRows(tx, categoryIconOverrides, validatedSnapshot.data.categoryIconOverrides);
+    insertRows(tx, categoryColorOverrides, validatedSnapshot.data.categoryColorOverrides);
     insertRows(tx, financialAccounts, validatedSnapshot.data.financialAccounts);
     insertRows(tx, financialAccountIdentifiers, validatedSnapshot.data.financialAccountIdentifiers);
     insertRows(tx, openingBalances, validatedSnapshot.data.openingBalances);
@@ -166,6 +180,8 @@ function clearSnapshotTables(db: BackupDeleteDb, userIds: readonly UserId[]) {
     openingBalances,
     financialAccountIdentifiers,
     financialAccounts,
+    categoryColorOverrides,
+    categoryIconOverrides,
     userCategories,
   ].forEach((table) => {
     db.delete(table).where(toUserIdCondition(table.userId, userIds)).run();
@@ -202,6 +218,8 @@ function selectRows(db: BackupSelectDb, table: BackupTable): readonly Record<str
 type BackupTable =
   | typeof accountSuggestionDismissals
   | typeof budgets
+  | typeof categoryColorOverrides
+  | typeof categoryIconOverrides
   | typeof captureEvidence
   | typeof financialAccountIdentifiers
   | typeof financialAccounts

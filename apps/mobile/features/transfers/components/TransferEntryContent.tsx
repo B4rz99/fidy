@@ -40,6 +40,7 @@ export function useTransferEntry(props: { readonly enabled?: boolean } = {}) {
 
   return {
     amount: formatInputDisplay(form.digits),
+    digits: form.digits,
     fields: (
       <>
         <EntryTextInputField

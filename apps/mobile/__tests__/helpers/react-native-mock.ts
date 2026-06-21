@@ -47,3 +47,19 @@ export const AccessibilityInfo = {
 export const AppState = {
   addEventListener: vi.fn(() => ({ remove: createNoop() })),
 };
+
+class AnimatedValue {
+  readonly value: number;
+
+  constructor(value: number) {
+    this.value = value;
+  }
+}
+
+export const Animated = {
+  Text,
+  Value: AnimatedValue,
+  timing: vi.fn(() => ({
+    start: vi.fn(createNoop()),
+  })),
+};
