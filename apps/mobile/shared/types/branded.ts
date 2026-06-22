@@ -28,6 +28,7 @@ export type CategoryIconOverrideId = Brand<string, "CategoryIconOverrideId">;
 export type CategoryColorOverrideId = Brand<string, "CategoryColorOverrideId">;
 export type NotificationId = Brand<string, "NotificationId">;
 export type BackupId = Brand<string, "BackupId">;
+export type LedgerCursor = Brand<string, "LedgerCursor">;
 
 // Temporal
 export type Month = Brand<string, "Month">; // "YYYY-MM"

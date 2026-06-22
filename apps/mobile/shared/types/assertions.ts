@@ -8,6 +8,7 @@ import type {
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
+  LedgerCursor,
   Month,
   ProcessedSourceEventId,
   ReviewCandidateId,
@@ -17,6 +18,7 @@ import type {
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
+const LEDGER_CURSOR_PATTERN = /^ledger:(0|[1-9]\d*)$/;
 const ISO_DATE_TIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|([+-])(\d{2}):(\d{2}))$/;
 const MAX_OFFSET_MINUTES = 23 * 60 + 59;
@@ -196,6 +198,12 @@ export function assertIsoDateTime(value: string): asserts value is IsoDateTime {
   }
 }
 
+export function assertLedgerCursor(value: string): asserts value is LedgerCursor {
+  if (!LEDGER_CURSOR_PATTERN.test(value)) {
+    throw new Error("ledgerCursor must be a valid Ledger Cursor");
+  }
+}
+
 export function requireUserId(value: string): UserId {
   return requireValue(value, assertUserId);
 }
@@ -246,4 +254,8 @@ export function requireIsoDate(value: string): IsoDate {
 
 export function requireIsoDateTime(value: string): IsoDateTime {
   return requireValue(value, assertIsoDateTime);
+}
+
+export function requireLedgerCursor(value: string): LedgerCursor {
+  return requireValue(value, assertLedgerCursor);
 }
