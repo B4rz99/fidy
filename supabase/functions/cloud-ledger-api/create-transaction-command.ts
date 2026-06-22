@@ -10,6 +10,7 @@ export type CreateTransactionCommandReadResult =
 
 const CLIENT_TRANSACTION_ID_PATTERN = /^txn-[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const MAX_TRANSACTION_DESCRIPTION_LENGTH = 200;
 const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
 export function readCreateTransactionCommand(body: unknown): CreateTransactionCommandReadResult {
@@ -30,7 +31,7 @@ export function readCreateTransactionCommand(body: unknown): CreateTransactionCo
     return { kind: "invalid_transaction_id" };
   }
   const categoryId = readNullableString(transactionRecord, "categoryId");
-  const description = readNullableString(transactionRecord, "description");
+  const description = readTransactionDescription(transactionRecord.description);
   const type = readTransactionType(transactionRecord.type);
   const amount = readCopAmount(transactionRecord.amount);
   const currency = readCopCurrency(transactionRecord.currency);
@@ -86,6 +87,15 @@ function readCopAmount(value: unknown): number | null {
     value <= POSTGRES_INTEGER_MAX
     ? value
     : null;
+}
+
+function readTransactionDescription(value: unknown): string | null | undefined {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  return typeof value === "string" && value.length <= MAX_TRANSACTION_DESCRIPTION_LENGTH
+    ? value
+    : undefined;
 }
 
 function readIsoDate(value: unknown): string | null {

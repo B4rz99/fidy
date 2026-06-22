@@ -120,6 +120,31 @@ describe("Cloud Ledger Postgres access boundary", () => {
     expect(readCreatedTransactionRowCount(postgres)).toBe("1");
   });
 
+  postgresIt("rebuilds monthly projections for valid totals above integer range", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-high-monthly-total-1",
+        amount: 1_500_000_000,
+      })
+    ).toMatchObject({ code: "accepted", cursor: "ledger:5" });
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-high-monthly-total-2",
+        amount: 1_500_000_000,
+      })
+    ).toMatchObject({ code: "accepted", cursor: "ledger:6" });
+
+    expect(readMonthlyProjection(postgres)).toEqual({
+      month: "2026-06",
+      incomeAmount: 0,
+      expenseAmount: 3_000_000_000,
+      transactionCount: 2,
+      cursorSequence: 6,
+    });
+  });
+
   postgresIt(
     "rejects invalid transaction creates without partial cursor or projection writes",
     () => {

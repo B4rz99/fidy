@@ -308,6 +308,38 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(api.store.createTransaction).not.toHaveBeenCalled();
   });
 
+  it("rejects overlong create transaction descriptions before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "x".repeat(201),
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
   it("rejects malformed create transaction dates with typed failures before ledger access", async () => {
     const api = createCloudLedgerApiDeps();
 

@@ -23,13 +23,18 @@ create unique index if not exists ledger_transactions_global_id_idx
 create table if not exists ledger.transaction_monthly_totals (
   user_id uuid not null references auth.users(id) on delete cascade,
   month text not null check (month ~ '^\d{4}-(0[1-9]|1[0-2])$'),
-  income_amount integer not null default 0 check (income_amount >= 0),
-  expense_amount integer not null default 0 check (expense_amount >= 0),
-  transaction_count integer not null default 0 check (transaction_count >= 0),
+  income_amount bigint not null default 0 check (income_amount >= 0),
+  expense_amount bigint not null default 0 check (expense_amount >= 0),
+  transaction_count bigint not null default 0 check (transaction_count >= 0),
   cursor_sequence bigint not null check (cursor_sequence >= 0),
   rebuilt_at timestamptz not null default now(),
   primary key (user_id, month)
 );
+
+alter table ledger.transaction_monthly_totals
+  alter column income_amount type bigint,
+  alter column expense_amount type bigint,
+  alter column transaction_count type bigint;
 
 alter table ledger.transaction_monthly_totals enable row level security;
 alter table ledger.transaction_monthly_totals force row level security;
@@ -69,11 +74,11 @@ begin
     p_month,
     coalesce(sum(ledger.transactions.amount) filter (
       where ledger.transactions.type = 'income'
-    ), 0)::integer,
+    ), 0::bigint),
     coalesce(sum(ledger.transactions.amount) filter (
       where ledger.transactions.type = 'expense'
-    ), 0)::integer,
-    count(*)::integer,
+    ), 0::bigint),
+    count(*),
     p_cursor_sequence,
     now()
   from ledger.transactions
