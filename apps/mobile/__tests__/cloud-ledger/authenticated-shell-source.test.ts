@@ -8,9 +8,9 @@ const authenticatedShellSource = readFileSync(
 ).replace(/\r\n/g, "\n");
 
 describe("Cloud Ledger authenticated shell wiring", () => {
-  it("runs Cloud Ledger outbox restore at bootstrap and subscribes reconnect flushes", () => {
+  it("restores Cloud Ledger state before transaction bootstrap and subscribes reconnect flushes", () => {
     expect(authenticatedShellSource).toContain(
-      "cloudLedgerBootstrapTask,\n  notificationsBootstrapTask"
+      "cloudLedgerBootstrapTask,\n  transactionBootstrapTask"
     );
     expect(authenticatedShellSource).toContain(
       "cloudLedgerReconnectFlushTask,\n  budgetTransactionSubscriptionTask"

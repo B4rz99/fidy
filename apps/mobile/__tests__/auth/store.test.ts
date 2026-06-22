@@ -461,6 +461,21 @@ describe("useAuthStore", () => {
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
   });
 
+  it("signOut does not complete when Cloud Ledger outbox discard fails", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    mockDiscardCloudLedgerOutbox.mockRejectedValueOnce(new Error("secure store delete failed"));
+
+    await expect(useAuthStore.getState().signOut()).rejects.toThrow("secure store delete failed");
+
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+  });
+
   it("signOut clears state even if supabase.signOut fails", async () => {
     useAuthStore.setState({
       session: { access_token: "token" } as never,

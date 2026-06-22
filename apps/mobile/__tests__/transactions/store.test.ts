@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
+  CloudLedgerOutboxFailure,
   createEmptyCloudLedgerCache,
   getCloudLedgerOutbox,
   resetCloudLedgerRuntimeCaches,
@@ -304,6 +305,63 @@ describe("transaction boundaries", () => {
     });
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("keeps visible transactions when encrypted outbox restore fails during refresh", async () => {
+    const visibleTransaction = makeStoredTransaction({
+      id: "tx-visible-before-outbox-failure" as TransactionId,
+    });
+    useTransactionStore.setState({
+      pages: [visibleTransaction],
+      offset: 1,
+      hasMore: false,
+      balance: visibleTransaction.amount,
+      categorySpending: [
+        { categoryId: visibleTransaction.categoryId, total: visibleTransaction.amount },
+      ],
+      dailySpending: [
+        { date: toIsoDate(visibleTransaction.date), total: visibleTransaction.amount },
+      ],
+    });
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(
+        vi
+          .fn<(...args: any[]) => any>()
+          .mockRejectedValue(
+            new CloudLedgerOutboxFailure("invalid_encrypted_outbox", "decrypt failed")
+          )
+      )
+    );
+
+    await refreshTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      pages: [visibleTransaction],
+      offset: 1,
+      balance: visibleTransaction.amount,
+      categorySpending: [
+        { categoryId: visibleTransaction.categoryId, total: visibleTransaction.amount },
+      ],
+      dailySpending: [
+        { date: toIsoDate(visibleTransaction.date), total: visibleTransaction.amount },
+      ],
+    });
+  });
+
+  it("rejects initial transaction load when encrypted outbox restore fails", async () => {
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(
+        vi
+          .fn<(...args: any[]) => any>()
+          .mockRejectedValue(
+            new CloudLedgerOutboxFailure("invalid_encrypted_outbox", "parse failed")
+          )
+      )
+    );
+
+    await expect(loadInitialTransactions(mockDb, mockUserId)).rejects.toThrow(
+      CloudLedgerOutboxFailure
+    );
   });
 
   it("rejects manual saves without a selected category", async () => {

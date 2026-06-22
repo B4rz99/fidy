@@ -195,10 +195,10 @@ async function discardCloudLedgerStateBeforeSignOut(): Promise<void> {
 
   try {
     await discardCloudLedgerOutbox(userId);
+    clearCloudLedgerRuntimeCache(userId);
   } catch (err) {
     captureAuthFailure("auth_signout_cloud_ledger_outbox_discard_failed", err);
-  } finally {
-    clearCloudLedgerRuntimeCache(userId);
+    throw err;
   }
 }
 

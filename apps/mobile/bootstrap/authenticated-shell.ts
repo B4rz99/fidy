@@ -37,13 +37,13 @@ import type {
 } from "@/shared/bootstrap/types";
 
 const AUTHENTICATED_BOOTSTRAP_TASKS = [
+  cloudLedgerBootstrapTask,
   transactionBootstrapTask,
   aiChatBootstrapTask,
   calendarBootstrapTask,
   budgetBootstrapTask,
   goalsBootstrapTask,
   analyticsBootstrapTask,
-  cloudLedgerBootstrapTask,
   notificationsBootstrapTask,
   categoriesBootstrapTask,
   captureSourcesBootstrapTask,

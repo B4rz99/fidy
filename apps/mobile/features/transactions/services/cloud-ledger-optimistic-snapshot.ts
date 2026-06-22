@@ -175,13 +175,9 @@ function loadRuntimeCloudLedgerTransactions(userId: UserId): readonly StoredTran
 async function loadRestoredCloudLedgerPendingTransactions(
   userId: UserId
 ): Promise<readonly StoredTransaction[]> {
-  try {
-    return (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
-      toPendingStoredTransaction(userId, change)
-    );
-  } catch {
-    return [];
-  }
+  return (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
+    toPendingStoredTransaction(userId, change)
+  );
 }
 
 function applyCloudLedgerTransactionsToSnapshot(

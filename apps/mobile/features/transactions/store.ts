@@ -255,20 +255,24 @@ export function initializeTransactionSession(userId: UserId): void {
 export async function loadInitialTransactions(db: AnyDb, userId: UserId): Promise<void> {
   const requestId = ++loadTransactionsRequestId;
   const sessionId = transactionsSessionId;
+  const queryService = createTransactionQueryService();
 
+  let snapshot: ReturnType<typeof queryService.loadInitialSnapshot>;
   try {
-    const snapshot = createTransactionQueryService().loadInitialSnapshot({
+    snapshot = queryService.loadInitialSnapshot({
       db,
       userId,
       pageSize: PAGE_SIZE,
     });
-    const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId);
-    if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
-    useTransactionStore.getState().setPageSnapshot(optimisticSnapshot);
-    useTransactionStore.getState().setAggregateSnapshot(optimisticSnapshot);
   } catch {
     // DB read failed — keep existing state
+    return;
   }
+  if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
+  const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId);
+  if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
+  useTransactionStore.getState().setPageSnapshot(optimisticSnapshot);
+  useTransactionStore.getState().setAggregateSnapshot(optimisticSnapshot);
 }
 
 export async function loadNextTransactions(db: AnyDb, userId: UserId): Promise<void> {
