@@ -1,0 +1,23 @@
+supabase/functions/cloud-ledger-api/handler.ts
+  s_49e406b1e385cc::t_fdd7e73eb78a04 15
+supabase/functions/cloud-ledger-api/create-transaction-command.ts
+  s_49e406b1e385cc::t_fdd7e73eb78a04 2
+supabase/functions/cloud-ledger-api/request-readers.ts
+  s_49e406b1e385cc::t_fdd7e73eb78a04 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "dbfa96fe231e6aaca81efc88800c95e029ebc640",
+  "prompts": {},
+  "sessions": {
+    "s_49e406b1e385cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eee02-ce3d-7941-adcf-3bcca22b1b15",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
