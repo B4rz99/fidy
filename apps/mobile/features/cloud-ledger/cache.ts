@@ -8,7 +8,7 @@ import type {
   LedgerCursor,
   TransactionId,
 } from "@/shared/types/branded";
-import { fetchCloudLedgerBootstrap } from "./api-client";
+import { createCloudLedgerTransaction, fetchCloudLedgerBootstrap } from "./api-client";
 
 export type CloudLedgerCategory = {
   readonly id: CategoryId;
@@ -54,6 +54,26 @@ export type CloudLedgerBootstrapPayload = {
   readonly tombstones: readonly CloudLedgerTombstone[];
 };
 
+export type CloudLedgerCreateTransactionCommand = {
+  readonly commandVersion: 1;
+  readonly transaction: {
+    readonly id: TransactionId;
+    readonly type: "income" | "expense";
+    readonly amount: CopAmount;
+    readonly currency: "COP";
+    readonly categoryId: CategoryId | null;
+    readonly accountId: FinancialAccountId;
+    readonly description: string | null;
+    readonly date: IsoDate;
+  };
+};
+
+export type CloudLedgerCreateTransactionAccepted = {
+  readonly code: "accepted";
+  readonly transaction: CloudLedgerTransaction;
+  readonly cursor: LedgerCursor;
+};
+
 export type CloudLedgerCache = {
   readonly cursor: LedgerCursor | null;
   readonly categories: readonly CloudLedgerCategory[];
@@ -75,6 +95,15 @@ export async function refreshCloudLedgerCache(
   cache: CloudLedgerCache
 ): Promise<CloudLedgerCache> {
   return applyCloudLedgerBootstrap(cache, await fetchCloudLedgerBootstrap(supabase, cache.cursor));
+}
+
+export async function createCloudLedgerTransactionAndRefresh(
+  supabase: SupabaseClient,
+  cache: CloudLedgerCache,
+  command: CloudLedgerCreateTransactionCommand
+): Promise<CloudLedgerCache> {
+  await createCloudLedgerTransaction(supabase, command);
+  return refreshCloudLedgerCache(supabase, cache);
 }
 
 export function applyCloudLedgerBootstrap(

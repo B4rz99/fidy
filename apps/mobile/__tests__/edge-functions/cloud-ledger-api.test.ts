@@ -5,6 +5,35 @@ import { handleCloudLedgerRequest } from "../../../../supabase/functions/cloud-l
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
 const CURSOR = "ledger:1";
+const CLIENT_TRANSACTION_ID = "txn-20260622-client";
+const CREATE_TRANSACTION_PAYLOAD = {
+  id: CLIENT_TRANSACTION_ID,
+  type: "expense",
+  amount: 15_000,
+  currency: "COP",
+  categoryId: "cat-groceries",
+  accountId: "acct-cash",
+  description: "Market",
+  date: "2026-06-01",
+} as const;
+const CREATE_TRANSACTION_COMMAND = {
+  commandVersion: 1,
+  transaction: CREATE_TRANSACTION_PAYLOAD,
+} as const;
+const CREATE_TRANSACTION_REQUEST_BODY = {
+  action: "createTransaction",
+  commandVersion: 1,
+  userId: OTHER_USER_ID,
+  transaction: CREATE_TRANSACTION_PAYLOAD,
+} as const;
+const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
+  code: "accepted",
+  transaction: {
+    ...CREATE_TRANSACTION_PAYLOAD,
+    updatedAt: "2026-06-01T10:02:00.000Z",
+  },
+  cursor: "ledger:2",
+} as const;
 
 type LedgerBootstrapPayload = {
   readonly cursor: string;
@@ -165,6 +194,272 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(api.store.bootstrapLedger).toHaveBeenCalledWith(USER_ID, CURSOR);
   });
 
+  it("creates a transaction for the authenticated user and preserves the client transaction id", async () => {
+    const api = createCloudLedgerApiDeps({
+      createTransactionResult: ACCEPTED_CREATE_TRANSACTION_OUTCOME,
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(CREATE_TRANSACTION_REQUEST_BODY, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: ACCEPTED_CREATE_TRANSACTION_OUTCOME,
+    });
+    expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, CREATE_TRANSACTION_COMMAND);
+  });
+
+  it("rejects invalid client transaction ids with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: "   ",
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction_id",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsupported create command versions with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 2,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsupported_command_version",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed create transaction fields with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "transfer",
+            amount: 15_000,
+            currency: "USD",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects overlong create transaction descriptions before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "x".repeat(201),
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed create transaction dates with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "not-a-date",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsafe create transaction amounts with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 2_147_483_648,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing create transaction payloads with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("maps unauthorized client transaction id outcomes to typed API failures", async () => {
+    const api = createCloudLedgerApiDeps({
+      createTransactionResult: { code: "unauthorized_transaction_id" },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unauthorized_transaction_id",
+    });
+    expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, CREATE_TRANSACTION_COMMAND);
+  });
+
   it("rejects refresh requests without a Ledger Cursor before ledger access", async () => {
     const api = createCloudLedgerApiDeps();
 
@@ -217,6 +512,7 @@ function createCloudLedgerApiDeps(
   options: {
     readonly authError?: { readonly message: string };
     readonly bootstrapByUserId?: ReadonlyMap<string, LedgerBootstrapPayload>;
+    readonly createTransactionResult?: unknown;
     readonly userId?: string;
   } = {}
 ) {
@@ -230,6 +526,25 @@ function createCloudLedgerApiDeps(
           financialAccounts: [],
           transactions: [],
           tombstones: [],
+        }
+      )
+    ),
+    createTransaction: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve(
+        options.createTransactionResult ?? {
+          code: "accepted",
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: null,
+            accountId: "acct-cash",
+            description: null,
+            date: "2026-06-01",
+            updatedAt: "2026-06-01T10:02:00.000Z",
+          },
+          cursor: "ledger:2",
         }
       )
     ),

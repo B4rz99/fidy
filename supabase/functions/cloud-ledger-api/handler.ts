@@ -1,6 +1,18 @@
-import type { CloudLedgerApiResponse, CloudLedgerBootstrapPayload, LedgerCursor } from "./model.ts";
+import type {
+  CloudLedgerApiResponse,
+  CloudLedgerBootstrapPayload,
+  CloudLedgerCreateTransactionCommand,
+  CloudLedgerCreateTransactionOutcome,
+  CloudLedgerCreateTransactionRejected,
+  LedgerCursor,
+} from "./model.ts";
 import type { SupabaseError } from "../_shared/supabase-error.ts";
+import {
+  readCreateTransactionCommand,
+  type CreateTransactionCommandReadResult,
+} from "./create-transaction-command.ts";
 import { isLedgerCursor } from "./model.ts";
+import { readRequiredString } from "./request-readers.ts";
 
 type AuthClient = {
   readonly auth: {
@@ -16,6 +28,10 @@ type LedgerStore = {
     userId: string,
     cursor: LedgerCursor | null
   ): Promise<CloudLedgerBootstrapPayload>;
+  createTransaction(
+    userId: string,
+    command: CloudLedgerCreateTransactionCommand
+  ): Promise<CloudLedgerCreateTransactionOutcome>;
 };
 
 export type CloudLedgerApiDeps = {
@@ -65,6 +81,9 @@ async function routeAuthenticatedRequest(store: LedgerStore, userId: string, bod
   if (action === "refresh") {
     return refreshResponse(store, userId, readOptionalCursor(body));
   }
+  if (action === "createTransaction") {
+    return createTransactionResponse(store, userId, readCreateTransactionCommand(body));
+  }
 
   return jsonResponse({ success: false, error: "unsupported_action" }, 400);
 }
@@ -81,6 +100,40 @@ async function bootstrapResponse(
     success: true,
     data: await store.bootstrapLedger(userId, cursor),
   });
+}
+
+async function createTransactionResponse(
+  store: LedgerStore,
+  userId: string,
+  commandResult: CreateTransactionCommandReadResult
+) {
+  if (commandResult.kind === "invalid_transaction_id") {
+    return jsonResponse({ success: false, error: "invalid_transaction_id" }, 400);
+  }
+  if (commandResult.kind === "invalid_ledger_reference") {
+    return jsonResponse({ success: false, error: "invalid_ledger_reference" }, 400);
+  }
+  if (commandResult.kind === "invalid_transaction") {
+    return jsonResponse({ success: false, error: "invalid_transaction" }, 400);
+  }
+  if (commandResult.kind === "unsupported_command_version") {
+    return jsonResponse({ success: false, error: "unsupported_command_version" }, 400);
+  }
+  const outcome = await store.createTransaction(userId, commandResult.command);
+  if (outcome.code !== "accepted") {
+    return jsonResponse(
+      { success: false, error: outcome.code },
+      createTransactionFailureStatus(outcome)
+    );
+  }
+  return jsonResponse({
+    success: true,
+    data: outcome,
+  });
+}
+
+function createTransactionFailureStatus(outcome: CloudLedgerCreateTransactionRejected) {
+  return outcome.code === "unauthorized_transaction_id" ? 403 : 400;
 }
 
 async function refreshResponse(
@@ -118,14 +171,6 @@ function readOptionalCursor(body: unknown): LedgerCursor | null | undefined {
     return null;
   }
   return typeof value === "string" && isLedgerCursor(value.trim()) ? value.trim() : undefined;
-}
-
-function readRequiredString(body: unknown, key: string): string | null {
-  if (body === null || typeof body !== "object" || !(key in body)) {
-    return null;
-  }
-  const value = (body as Record<string, unknown>)[key];
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
 function jsonResponse(body: CloudLedgerApiResponse, status = 200): Response {
