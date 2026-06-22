@@ -80,32 +80,47 @@ export function createEncryptedCloudLedgerOutbox(input: {
   readonly storage: EncryptedCloudLedgerOutboxStorage;
 }): EncryptedCloudLedgerOutbox {
   const encryptionKey = copyBytes(input.encryptionKey);
+  let mutationQueue: Promise<void> = Promise.resolve();
+
+  const serializeMutation = <Result>(mutation: () => Promise<Result>): Promise<Result> => {
+    const run = mutationQueue.catch(() => undefined).then(mutation);
+    mutationQueue = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  };
 
   return {
-    clear: () => input.storage.clear(),
-    enqueue: async (change) => {
-      const changes = [...(await loadOutboxSnapshot(input.storage, encryptionKey)).changes, change];
-      await writeOutboxSnapshot(input.storage, encryptionKey, {
-        version: CLOUD_LEDGER_OUTBOX_VERSION,
-        changes,
-      });
-      return changes;
-    },
+    clear: () => serializeMutation(() => input.storage.clear()),
+    enqueue: (change) =>
+      serializeMutation(async () => {
+        const changes = [
+          ...(await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
+          change,
+        ];
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes,
+        });
+        return changes;
+      }),
     load: async () => (await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
-    remove: async (changeIds) => {
-      const changeIdSet = new Set(changeIds);
-      const changes = (await loadOutboxSnapshot(input.storage, encryptionKey)).changes.filter(
-        (change) => !changeIdSet.has(change.id)
-      );
-      if (changes.length === 0) {
-        await input.storage.clear();
-        return;
-      }
-      await writeOutboxSnapshot(input.storage, encryptionKey, {
-        version: CLOUD_LEDGER_OUTBOX_VERSION,
-        changes,
-      });
-    },
+    remove: (changeIds) =>
+      serializeMutation(async () => {
+        const changeIdSet = new Set(changeIds);
+        const changes = (await loadOutboxSnapshot(input.storage, encryptionKey)).changes.filter(
+          (change) => !changeIdSet.has(change.id)
+        );
+        if (changes.length === 0) {
+          await input.storage.clear();
+          return;
+        }
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes,
+        });
+      }),
   };
 }
 
@@ -125,6 +140,16 @@ export function getCloudLedgerOutbox(userId: UserId): EncryptedCloudLedgerOutbox
 
 export function resetCloudLedgerOutboxInstances(): void {
   outboxesByUserId.clear();
+}
+
+export async function discardCloudLedgerOutbox(userId: UserId): Promise<void> {
+  await getCloudLedgerOutbox(userId).clear();
+  await SecureStore.deleteItemAsync(secureStoreOutboxEncryptionKey(userId));
+  outboxesByUserId.delete(userId);
+}
+
+export async function hasPendingCloudLedgerOutboxChanges(userId: UserId): Promise<boolean> {
+  return (await getCloudLedgerOutbox(userId).load()).length > 0;
 }
 
 export function createSecureStoreCloudLedgerOutboxStorage(

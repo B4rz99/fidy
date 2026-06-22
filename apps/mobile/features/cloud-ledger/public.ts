@@ -21,6 +21,7 @@ export {
   withTransactionProjection,
 } from "./cache";
 export {
+  clearCloudLedgerRuntimeCache,
   getCloudLedgerRuntimeCache,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
@@ -39,8 +40,10 @@ export {
   createEncryptedCloudLedgerOutbox,
   createSecureStoreCloudLedgerOutboxStorage,
   createOfflineCloudLedgerTransaction,
+  discardCloudLedgerOutbox,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
+  hasPendingCloudLedgerOutboxChanges,
   resetCloudLedgerOutboxInstances,
   restoreOptimisticCloudLedgerCache,
 } from "./outbox";

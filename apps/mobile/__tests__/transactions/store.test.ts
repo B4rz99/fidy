@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getCloudLedgerOutbox,
+  resetCloudLedgerRuntimeCaches,
+} from "@/features/cloud-ledger/public";
+import {
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
   getTransactionById,
@@ -135,6 +139,7 @@ describe("transaction boundaries", () => {
     insertedTransactionRows.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
+    resetCloudLedgerRuntimeCaches();
     initializeTransactionSession(mockUserId);
     useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
   });
@@ -262,6 +267,51 @@ describe("transaction boundaries", () => {
       dailySpending: [{ date: "2026-03-04", total: 1000 }],
     });
     expect(useTransactionStore.getState().pages[0]?.id).toBe("tx-1");
+  });
+
+  it("loads restored optimistic Cloud Ledger transactions into ordinary transaction state", async () => {
+    const restoredDate = toIsoDate(new Date());
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce({
+      clear: vi.fn<(...args: any[]) => any>(),
+      enqueue: vi.fn<(...args: any[]) => any>(),
+      load: vi.fn<(...args: any[]) => any>().mockResolvedValue([
+        {
+          id: "change-restored-offline",
+          kind: "createTransaction",
+          commandVersion: 1,
+          createdAt: "2026-06-02T10:03:00.000Z",
+          transaction: {
+            id: "txn-restored-offline",
+            type: "expense",
+            amount: 18000,
+            currency: "COP",
+            categoryId: "food",
+            accountId: "fa-default-user-1",
+            description: "Restored coffee",
+            date: restoredDate,
+          },
+        },
+      ]),
+      remove: vi.fn<(...args: any[]) => any>(),
+    });
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages).toEqual([
+      expect.objectContaining({
+        id: "txn-restored-offline",
+        amount: 18000,
+        categoryId: "food",
+        description: "Restored coffee",
+      }),
+    ]);
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 18000,
+      categorySpending: [{ categoryId: "food", total: 18000 }],
+      dailySpending: [{ date: restoredDate, total: 18000 }],
+    });
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
   });
 
   it("loads the next page when more rows are available", async () => {

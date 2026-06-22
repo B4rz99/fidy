@@ -2,7 +2,13 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
+import {
+  useAuthIdentity,
+  useAuthMode,
+  useAuthStore,
+  useOptionalUserId,
+} from "@/features/auth/public";
+import { hasPendingCloudLedgerOutboxChanges } from "@/features/cloud-ledger/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
 import { Button, Surface, ScreenLayout, TextActionButton } from "@/shared/components";
 import { LogOut } from "@/shared/components/icons";
@@ -16,6 +22,7 @@ export function ProfileScreen() {
   const { bottom } = useSafeAreaInsets();
 
   const { fullName, email, profileImageUrl } = useAuthIdentity();
+  const userId = useOptionalUserId();
   const authMode = useAuthMode();
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const avatar = deriveProfileAvatar({
@@ -29,7 +36,19 @@ export function ProfileScreen() {
   const secondaryColor = useThemeColor("secondary");
 
   const handleLogOut = () => {
-    Alert.alert(t("settings.logoutConfirmTitle"), t("settings.logoutConfirmMessage"), [
+    void showLogOutConfirmation();
+  };
+
+  const showLogOutConfirmation = async () => {
+    const hasPendingChanges =
+      authMode === "remote" && userId !== null
+        ? await hasPendingCloudLedgerOutboxChanges(userId).catch(() => true)
+        : false;
+    const messageKey = hasPendingChanges
+      ? "settings.logoutPendingChangesConfirmMessage"
+      : "settings.logoutConfirmMessage";
+
+    Alert.alert(t("settings.logoutConfirmTitle"), t(messageKey), [
       { text: t("settings.staySignedIn"), style: "cancel" },
       {
         text: t("settings.logout"),

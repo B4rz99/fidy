@@ -1,5 +1,9 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
+import {
+  clearCloudLedgerRuntimeCache,
+  discardCloudLedgerOutbox,
+} from "@/features/cloud-ledger/public";
 import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
 import { useLocalOnboardingState } from "@/features/onboarding/store.public";
 import {
@@ -10,6 +14,8 @@ import {
 } from "@/features/qa/session.public";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
+import { requireUserId } from "@/shared/types/assertions";
+import type { UserId } from "@/shared/types/branded";
 import { type OAuthProvider, signInWithProvider } from "./provider-sign-in";
 import { cleanupPushTokenBeforeSignOut, signOutRemoteSession } from "./sign-out";
 
@@ -176,6 +182,26 @@ async function signOutLocalQaSession(set: SetAuthState) {
   resetAnalyticsUser();
 }
 
+function getRemoteSessionUserId(): UserId | null {
+  const id = useAuthStore.getState().session?.user?.id;
+  return id === undefined ? null : requireUserId(id);
+}
+
+async function discardCloudLedgerStateBeforeSignOut(): Promise<void> {
+  const userId = getRemoteSessionUserId();
+  if (userId === null) {
+    return;
+  }
+
+  try {
+    await discardCloudLedgerOutbox(userId);
+  } catch (err) {
+    captureAuthFailure("auth_signout_cloud_ledger_outbox_discard_failed", err);
+  } finally {
+    clearCloudLedgerRuntimeCache(userId);
+  }
+}
+
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   session: null,
   localQaSession: null,
@@ -247,6 +273,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     // Clean up push token while session is still valid (RLS needs auth).
     // Capped at 2s so signout isn't blocked indefinitely by network issues.
     await cleanupPushTokenBeforeSignOut();
+    await discardCloudLedgerStateBeforeSignOut();
     await signOutRemoteSession();
     await clearOnboardingAndAuthState(set);
     resetAnalyticsUser();

@@ -17,6 +17,10 @@ export function setCloudLedgerRuntimeCache(userId: UserId, cache: CloudLedgerCac
   cachesByUserId.set(userId, cache);
 }
 
+export function clearCloudLedgerRuntimeCache(userId: UserId): void {
+  cachesByUserId.delete(userId);
+}
+
 export function resetCloudLedgerRuntimeCaches(): void {
   cachesByUserId.clear();
 }

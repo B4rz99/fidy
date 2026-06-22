@@ -768,6 +768,8 @@ const en = {
     logout: "Log out",
     logoutConfirmTitle: "Log out?",
     logoutConfirmMessage: "You will need to sign in again to sync or restore backups.",
+    logoutPendingChangesConfirmMessage:
+      "You have pending changes that have not reached the Cloud Ledger. Logging out will discard them from this device.",
     staySignedIn: "Stay signed in",
     localQaTitle: "Local QA",
     localQaDescription: "Reset or switch local-only QA scenarios without touching a real account.",

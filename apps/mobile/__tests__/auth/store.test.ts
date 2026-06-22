@@ -7,14 +7,18 @@ import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboard
 const mockUser = { id: "user-1", email: "test@example.com" };
 const mockSession = { user: mockUser, access_token: "token" };
 const {
+  mockClearCloudLedgerRuntimeCache,
   mockCleanupCurrentPushToken,
+  mockDiscardCloudLedgerOutbox,
   mockLoadLocalQaSession,
   mockStartLocalQaSession,
   mockClearLocalQaSession,
   mockGetOnboardingCompleteFromStore,
   mockClearOnboardingFromStore,
 } = vi.hoisted(() => {
+  const mockClearCloudLedgerRuntimeCache = vi.fn<(...args: any[]) => any>();
   const mockCleanupCurrentPushToken = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+  const mockDiscardCloudLedgerOutbox = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockLoadLocalQaSession = vi.fn<
     () => Promise<{
       userId: string;
@@ -39,7 +43,9 @@ const {
   const mockClearOnboardingFromStore = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 
   return {
+    mockClearCloudLedgerRuntimeCache,
     mockCleanupCurrentPushToken,
+    mockDiscardCloudLedgerOutbox,
     mockLoadLocalQaSession,
     mockStartLocalQaSession,
     mockClearLocalQaSession,
@@ -114,6 +120,11 @@ vi.mock("expo-web-browser", () => ({
 
 vi.mock("@/features/notifications/public", () => ({
   cleanupCurrentPushToken: mockCleanupCurrentPushToken,
+}));
+
+vi.mock("@/features/cloud-ledger/public", () => ({
+  clearCloudLedgerRuntimeCache: mockClearCloudLedgerRuntimeCache,
+  discardCloudLedgerOutbox: mockDiscardCloudLedgerOutbox,
 }));
 
 vi.mock("@/features/qa/local-session", () => ({
@@ -436,6 +447,18 @@ describe("useAuthStore", () => {
     expect(useLocalOnboardingState.getState().isComplete).toBe(false);
     expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
     expect(mockSignOut).toHaveBeenCalled();
+  });
+
+  it("signOut discards the current user's Cloud Ledger outbox and runtime state", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+
+    await useAuthStore.getState().signOut();
+
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
   });
 
   it("signOut clears state even if supabase.signOut fails", async () => {

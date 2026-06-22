@@ -4,10 +4,12 @@ import { beforeEach } from "vitest";
 import { describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
+  type CloudLedgerCreateTransactionCommand,
   CloudLedgerOutboxFailure,
   createEmptyCloudLedgerCache,
   createEncryptedCloudLedgerOutbox,
   createOfflineCloudLedgerTransaction,
+  discardCloudLedgerOutbox,
   getCloudLedgerOutbox,
   flushPendingCloudLedgerChanges,
   resetCloudLedgerOutboxInstances,
@@ -163,6 +165,49 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(JSON.stringify([...secureStore.entries()])).not.toContain("txn-20260622-client");
   });
 
+  it("discards persisted encrypted outbox state and keys on logout", async () => {
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+
+    expect([...secureStore.keys()]).toEqual(
+      expect.arrayContaining(["cloud-ledger-outbox:user-1", "cloud-ledger-outbox-key:user-1"])
+    );
+
+    await discardCloudLedgerOutbox(USER_ID);
+
+    expect([...secureStore.keys()]).toEqual([]);
+  });
+
+  it("preserves concurrent pending creates enqueued for the same encrypted outbox", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const coffeeChange = pendingCreateChange({
+      changeId: "change-offline-coffee",
+      command: offlineCoffeeCommand(),
+      createdAt: "2026-06-02T10:03:00.000Z",
+    });
+    const taxiChange = pendingCreateChange({
+      changeId: "change-offline-taxi",
+      command: offlineTaxiCommand(),
+      createdAt: "2026-06-02T10:04:00.000Z",
+    });
+
+    await Promise.all([outbox.enqueue(coffeeChange), outbox.enqueue(taxiChange)]);
+
+    expect((await outbox.load()).map((change) => change.id)).toEqual([
+      "change-offline-coffee",
+      "change-offline-taxi",
+    ]);
+  });
+
   it("flushes pending creates through the Remote API Boundary and reconciles accepted Ledger Cache state", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -309,6 +354,36 @@ function offlineCoffeeCommand() {
       description: "Coffee",
       date: requireIsoDate("2026-06-02"),
     },
+  } as const;
+}
+
+function offlineTaxiCommand() {
+  return {
+    commandVersion: 1,
+    transaction: {
+      id: requireTransactionId("txn-20260622-taxi"),
+      type: "expense",
+      amount: requireCopAmount(12_000),
+      currency: "COP",
+      categoryId: requireCategoryId("cat-groceries"),
+      accountId: requireFinancialAccountId("acct-cash"),
+      description: "Taxi",
+      date: requireIsoDate("2026-06-02"),
+    },
+  } as const;
+}
+
+function pendingCreateChange(input: {
+  readonly changeId: string;
+  readonly command: CloudLedgerCreateTransactionCommand;
+  readonly createdAt: string;
+}) {
+  return {
+    id: requireLedgerChangeId(input.changeId),
+    kind: "createTransaction",
+    commandVersion: input.command.commandVersion,
+    transaction: input.command.transaction,
+    createdAt: requireIsoDateTime(input.createdAt),
   } as const;
 }
 
