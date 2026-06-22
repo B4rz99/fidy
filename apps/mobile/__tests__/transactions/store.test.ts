@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  applyCloudLedgerBootstrap,
+  createEmptyCloudLedgerCache,
   getCloudLedgerOutbox,
   resetCloudLedgerRuntimeCaches,
+  setCloudLedgerRuntimeCache,
 } from "@/features/cloud-ledger/public";
 import {
   getDailySpendingAggregate,
@@ -20,6 +23,7 @@ import {
   saveCurrentTransaction,
   useTransactionStore,
 } from "@/features/transactions/store";
+import type { StoredTransaction } from "@/features/transactions/schema";
 import type { AnyDb } from "@/shared/db";
 import { toIsoDate } from "@/shared/lib";
 import type {
@@ -28,6 +32,7 @@ import type {
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
+  LedgerCursor,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -133,9 +138,40 @@ function makeRow(
   };
 }
 
+function pendingCreateFromStoredTransaction(transaction: StoredTransaction) {
+  return {
+    id: "change-refresh-pending",
+    kind: "createTransaction",
+    commandVersion: 1,
+    createdAt: transaction.updatedAt.toISOString(),
+    transaction: {
+      id: transaction.id,
+      type: transaction.type,
+      amount: transaction.amount,
+      currency: "COP",
+      categoryId: transaction.categoryId,
+      accountId: transaction.accountId,
+      description: transaction.description || null,
+      date: toIsoDate(transaction.date),
+    },
+  } as const;
+}
+
+function createMockCloudLedgerOutbox(
+  load = vi.fn<(...args: any[]) => any>().mockResolvedValue([])
+) {
+  return {
+    clear: vi.fn<(...args: any[]) => any>(),
+    enqueue: vi.fn<(...args: any[]) => any>(),
+    load,
+    remove: vi.fn<(...args: any[]) => any>(),
+  };
+}
+
 describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getCloudLedgerOutbox).mockImplementation(() => createMockCloudLedgerOutbox());
     insertedTransactionRows.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
@@ -239,6 +275,37 @@ describe("transaction boundaries", () => {
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });
 
+  it("keeps pending Cloud Ledger creates visible when transactions refresh before flush", async () => {
+    const loadOutbox = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+    vi.mocked(getCloudLedgerOutbox).mockReturnValue(createMockCloudLedgerOutbox(loadOutbox));
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    useTransactionStore.getState().setDescription("Groceries");
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    loadOutbox.mockResolvedValue([pendingCreateFromStoredTransaction(result.transaction)]);
+    await refreshTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages).toEqual([
+      expect.objectContaining({
+        id: result.transaction.id,
+        amount: 4520,
+        categoryId: "food",
+        description: "Groceries",
+      }),
+    ]);
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 4520,
+      categorySpending: [{ categoryId: "food", total: 4520 }],
+      dailySpending: [{ date: toIsoDate(result.transaction.date), total: 4520 }],
+    });
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
   it("rejects manual saves without a selected category", async () => {
     useTransactionStore.getState().setDigits("1000");
 
@@ -271,29 +338,28 @@ describe("transaction boundaries", () => {
 
   it("loads restored optimistic Cloud Ledger transactions into ordinary transaction state", async () => {
     const restoredDate = toIsoDate(new Date());
-    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce({
-      clear: vi.fn<(...args: any[]) => any>(),
-      enqueue: vi.fn<(...args: any[]) => any>(),
-      load: vi.fn<(...args: any[]) => any>().mockResolvedValue([
-        {
-          id: "change-restored-offline",
-          kind: "createTransaction",
-          commandVersion: 1,
-          createdAt: "2026-06-02T10:03:00.000Z",
-          transaction: {
-            id: "txn-restored-offline",
-            type: "expense",
-            amount: 18000,
-            currency: "COP",
-            categoryId: "food",
-            accountId: "fa-default-user-1",
-            description: "Restored coffee",
-            date: restoredDate,
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(
+        vi.fn<(...args: any[]) => any>().mockResolvedValue([
+          {
+            id: "change-restored-offline",
+            kind: "createTransaction",
+            commandVersion: 1,
+            createdAt: "2026-06-02T10:03:00.000Z",
+            transaction: {
+              id: "txn-restored-offline",
+              type: "expense",
+              amount: 18000,
+              currency: "COP",
+              categoryId: "food",
+              accountId: "fa-default-user-1",
+              description: "Restored coffee",
+              date: restoredDate,
+            },
           },
-        },
-      ]),
-      remove: vi.fn<(...args: any[]) => any>(),
-    });
+        ])
+      )
+    );
 
     await loadInitialTransactions(mockDb, mockUserId);
 
@@ -309,6 +375,50 @@ describe("transaction boundaries", () => {
       balance: 18000,
       categorySpending: [{ categoryId: "food", total: 18000 }],
       dailySpending: [{ date: restoredDate, total: 18000 }],
+    });
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("loads accepted reconciled Cloud Ledger transactions after pending outbox removal", async () => {
+    const acceptedDate = toIsoDate(new Date());
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:8" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            id: "txn-accepted-cloud" as TransactionId,
+            type: "expense",
+            amount: 18000 as CopAmount,
+            currency: "COP",
+            categoryId: "food" as CategoryId,
+            accountId: "fa-default-user-1" as FinancialAccountId,
+            description: "Accepted coffee",
+            date: acceptedDate,
+            updatedAt: "2026-06-02T10:04:00.000Z" as IsoDateTime,
+          },
+        ],
+        tombstones: [],
+      })
+    );
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages).toEqual([
+      expect.objectContaining({
+        id: "txn-accepted-cloud",
+        amount: 18000,
+        categoryId: "food",
+        description: "Accepted coffee",
+      }),
+    ]);
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 18000,
+      categorySpending: [{ categoryId: "food", total: 18000 }],
+      dailySpending: [{ date: acceptedDate, total: 18000 }],
     });
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
