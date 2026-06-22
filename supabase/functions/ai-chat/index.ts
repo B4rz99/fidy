@@ -6,6 +6,7 @@ import { checkRateLimit } from "../_shared/rate-limit.ts";
 import {
   type FinancialContextGoalSummary,
   type FinancialContextPacket,
+  inferFinancialContextPacketTaskFromMessages,
   readFinancialContextPacket,
 } from "./financial-context-packet.ts";
 
@@ -216,7 +217,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
-    const financialContextPacket = readFinancialContextPacket(body.financialContextPacket);
+    const financialContextPacketTask = inferFinancialContextPacketTaskFromMessages(messages);
+    const financialContextPacket = readFinancialContextPacket(
+      body.financialContextPacket,
+      financialContextPacketTask
+    );
     if (financialContextPacket === null) {
       structuredLog({
         request_id: requestId,

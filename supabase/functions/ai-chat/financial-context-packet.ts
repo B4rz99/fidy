@@ -87,7 +87,7 @@ const TASK_KINDS = new Set<FinancialContextPacketTaskKind>([
 ]);
 
 const ALLOWED_SECTIONS_BY_TASK: Record<FinancialContextPacketTaskKind, readonly PacketSection[]> = {
-  general_advisor: PACKET_SECTIONS,
+  general_advisor: [],
   spending_overview: ["recentTransactions", "budgets"],
   goal_progress: ["goals"],
   account_overview: ["accounts"],
@@ -131,11 +131,30 @@ function readArray<T>(
   return items.every(isPresent) ? items : null;
 }
 
-function readTask(value: unknown): FinancialContextPacketTask | null {
-  if (!isRecord(value) || !TASK_KINDS.has(value.kind as FinancialContextPacketTaskKind)) {
-    return null;
+const containsAny = (text: string, terms: readonly string[]): boolean =>
+  terms.some((term) => text.includes(term));
+
+function readMessageText(value: unknown): string | null {
+  if (!isRecord(value) || value.role !== "user") return null;
+  return readString(value.content);
+}
+
+export function inferFinancialContextPacketTaskFromMessages(
+  messages: readonly unknown[]
+): FinancialContextPacketTaskKind {
+  const userTexts = messages.map(readMessageText).filter(isPresent);
+  const normalized = (userTexts[userTexts.length - 1] ?? "").toLocaleLowerCase();
+
+  if (containsAny(normalized, ["goal", "goals", "meta", "metas", "ahorro", "savings"])) {
+    return "goal_progress";
   }
-  return { kind: value.kind as FinancialContextPacketTaskKind };
+  if (containsAny(normalized, ["account", "accounts", "cuenta", "cuentas", "card", "tarjeta"])) {
+    return "account_overview";
+  }
+  if (containsAny(normalized, ["capture", "email", "notification", "correo", "notificacion"])) {
+    return "capture_review";
+  }
+  return "spending_overview";
 }
 
 function readCategoryTotal(value: unknown): FinancialContextCategoryTotal | null {
@@ -279,11 +298,15 @@ function readOptionalArraySection<T>(
   return value === null ? { valid: false } : { valid: true, value };
 }
 
-export function readFinancialContextPacket(value: unknown): FinancialContextPacket | null {
+export function readFinancialContextPacket(
+  value: unknown,
+  taskKind: FinancialContextPacketTaskKind
+): FinancialContextPacket | null {
   if (!isRecord(value)) return null;
-  const task = readTask(value.task);
+  if (!TASK_KINDS.has(taskKind)) return null;
+  const task = { kind: taskKind };
   const summary = readSummary(value.summary);
-  if (task === null || summary === null || hasDisallowedPacketSection(value, task)) return null;
+  if (summary === null || hasDisallowedPacketSection(value, task)) return null;
 
   const recentTransactions = readOptionalArraySection(
     value,

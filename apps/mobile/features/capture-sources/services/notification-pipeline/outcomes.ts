@@ -17,6 +17,7 @@ import type {
   NotificationStageMetrics,
   ParsedNotificationContext,
   ResolvedNotificationContext,
+  ReviewableNotificationContext,
 } from "./types";
 
 async function cacheMerchantRuleIfEligible(context: ResolvedNotificationContext) {
@@ -190,6 +191,48 @@ export async function persistFailedNotification(
     parseImprovementRequest: buildParseImprovementRequest(context, {
       status: "failed",
       confidence: null,
+    }),
+  };
+}
+
+export async function persistReviewableNotification(
+  context: ReviewableNotificationContext
+): Promise<NotificationPipelineResult> {
+  const now = toIsoDateTime(new Date());
+  await recordReviewCandidateCaptureWithLocalLedger({
+    db: context.db,
+    userId: context.userId,
+    sourceFamily: context.source,
+    sourceId: context.source,
+    sourceEventId: buildFailedFingerprint(context.notification),
+    status: "needs_review",
+    failureReason: "parse_needs_review",
+    receivedAt: context.receivedAt,
+    processedAt: now,
+    candidate: {
+      candidateKind: "unknown",
+      occurredAt: null,
+      amount: null,
+      transactionType: null,
+      categoryId: null,
+      description: null,
+      confidence: context.review.confidence,
+    },
+    evidence: context.captureEvidence,
+  });
+  trackNotificationPipeline(context, {
+    saved: 0,
+    skippedDuplicate: 0,
+    parseFailed: 0,
+  });
+
+  return {
+    saved: false,
+    skippedDuplicate: false,
+    transactionId: null,
+    parseImprovementRequest: buildParseImprovementRequest(context, {
+      status: "needs_review",
+      confidence: context.review.confidence,
     }),
   };
 }

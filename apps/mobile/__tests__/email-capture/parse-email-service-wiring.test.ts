@@ -20,8 +20,8 @@ describe("parse-email service wiring", () => {
     mockCreateParseEmailService.mockClear();
   });
 
-  it("creates live and retryable services with the shared category allow-list", async () => {
-    const { liveParseEmailService, retryableParseEmailService } =
+  it("creates live, retryable, and reviewable services with the shared category allow-list", async () => {
+    const { liveParseEmailService, retryableParseEmailService, reviewableParseEmailService } =
       await import("@/features/email-capture/services/parse-email-service");
 
     expect(mockCreateParseEmailService).toHaveBeenNthCalledWith(1, {
@@ -31,11 +31,18 @@ describe("parse-email service wiring", () => {
       validCategoryIds: ["food", "transport"],
       throwOnApiFailure: true,
     });
+    expect(mockCreateParseEmailService).toHaveBeenNthCalledWith(3, {
+      validCategoryIds: ["food", "transport"],
+      throwOnNeedsReview: true,
+    });
     expect(liveParseEmailService).toEqual({
       config: { validCategoryIds: ["food", "transport"] },
     });
     expect(retryableParseEmailService).toEqual({
       config: { validCategoryIds: ["food", "transport"], throwOnApiFailure: true },
+    });
+    expect(reviewableParseEmailService).toEqual({
+      config: { validCategoryIds: ["food", "transport"], throwOnNeedsReview: true },
     });
   });
 });

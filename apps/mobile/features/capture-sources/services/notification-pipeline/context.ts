@@ -11,13 +11,26 @@ import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
 import { captureFingerprint } from "../../lib/dedup";
 import type { NotificationData } from "../../schema";
 import { resolveSource } from "../../schema";
-import { parseNotificationApi } from "../parse-notification-api";
+import { parseNotificationApi, type ParseNotificationApiResult } from "../parse-notification-api";
 import type {
   NotificationCommand,
   NotificationContext,
   ParsedNotification,
+  RawNotificationNeedsReview,
   RawParsedNotification,
 } from "./types";
+
+export function isRawNotificationNeedsReview(
+  parsed: RawParsedNotification | RawNotificationNeedsReview
+): parsed is RawNotificationNeedsReview {
+  return "kind" in parsed && parsed.kind === "needs_review";
+}
+
+function isNeedsReviewNotificationParse(
+  llm: ParseNotificationApiResult
+): llm is RawNotificationNeedsReview {
+  return llm !== null && "kind" in llm && llm.kind === "needs_review";
+}
 
 export function buildNotificationFingerprint(
   context: NotificationContext,
@@ -44,8 +57,12 @@ export function normalizeParsedNotification(parsed: RawParsedNotification): Pars
 
 export async function parseNotificationWithLlm(
   sanitizedText: string
-): Promise<RawParsedNotification | null> {
+): Promise<RawParsedNotification | RawNotificationNeedsReview | null> {
   const llm = await parseNotificationApi(sanitizedText);
+
+  if (isNeedsReviewNotificationParse(llm)) {
+    return llm;
+  }
 
   return llm
     ? {

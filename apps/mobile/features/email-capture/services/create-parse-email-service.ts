@@ -53,9 +53,11 @@ type CreateParseEmailServiceDeps = {
   readonly supabase?: AppSupabase;
   readonly telemetry?: AppTelemetry;
   readonly throwOnApiFailure?: boolean;
+  readonly throwOnNeedsReview?: boolean;
 };
 
 const AUTHORIZATION_HEADER = "Authorization";
+const CAPTURE_NEEDS_REVIEW_ERROR_MESSAGE = "capture_needs_review";
 
 export type ParseEmailService = {
   readonly classifyMerchant: (merchant: string) => Promise<string>;
@@ -65,6 +67,9 @@ export type ParseEmailService = {
   ) => Promise<LlmParsedTransaction | null>;
   readonly parseNotification: (sanitizedText: string) => Promise<LlmParsedTransaction | null>;
 };
+
+export const isCaptureNeedsReviewError = (error: unknown): error is Error =>
+  error instanceof Error && error.message === CAPTURE_NEEDS_REVIEW_ERROR_MESSAGE;
 
 function invokeParseEmailFunctionEffect<Response>(
   body: string,
@@ -113,7 +118,7 @@ function validateParsedTransactionEffect(
   warningPrefix: "parse_email" | "parse_notification",
   data: unknown,
   validCategoryIds: readonly string[],
-  throwOnApiFailure: boolean
+  shouldThrowOnNeedsReview: boolean
 ) {
   const interpreted = interpretCaptureCandidate(data);
   if (interpreted.kind === "invalid") {
@@ -137,8 +142,8 @@ function validateParsedTransactionEffect(
     captureWarningEffect(`${warningPrefix}_${validation.kind}`, {
       reason: validation.reason,
     }),
-    validation.kind === "needs_review" && throwOnApiFailure
-      ? Effect.fail(new Error("capture_needs_review"))
+    validation.kind === "needs_review" && shouldThrowOnNeedsReview
+      ? Effect.fail(new Error(CAPTURE_NEEDS_REVIEW_ERROR_MESSAGE))
       : Effect.succeed(null)
   );
 }
@@ -147,7 +152,8 @@ function handleParseTransactionResponseEffect(
   warningPrefix: "parse_email" | "parse_notification",
   response: ParseFunctionResult<ParseEmailResponse>,
   validCategoryIds: readonly string[],
-  throwOnApiFailure: boolean
+  throwOnApiFailure: boolean,
+  shouldThrowOnNeedsReview: boolean
 ) {
   if (response.error != null || !response.data?.success) {
     return logParseApiFailureEffect(warningPrefix, response, throwOnApiFailure);
@@ -157,7 +163,7 @@ function handleParseTransactionResponseEffect(
     warningPrefix,
     response.data.data,
     validCategoryIds,
-    throwOnApiFailure
+    shouldThrowOnNeedsReview
   );
 }
 
@@ -178,20 +184,24 @@ function parseApiResponseEffect(
     readonly warningPrefix: "parse_email" | "parse_notification";
     readonly validCategoryIds: readonly string[];
     readonly throwOnApiFailure: boolean;
+    readonly throwOnNeedsReview: boolean;
   },
   response: ParseFunctionResult<ParseEmailResponse>
 ) {
+  const shouldThrowOnNeedsReview = input.throwOnApiFailure || input.throwOnNeedsReview;
   return handleParseTransactionResponseEffect(
     input.warningPrefix,
     response,
     input.validCategoryIds,
-    input.throwOnApiFailure
+    input.throwOnApiFailure,
+    shouldThrowOnNeedsReview
   );
 }
 
 function parseTransactionEffect(
   input: ParseTransactionInput & {
     readonly throwOnApiFailure: boolean;
+    readonly throwOnNeedsReview: boolean;
     readonly options?: ParseEmailOptions;
   }
 ) {
@@ -247,6 +257,7 @@ export function createParseEmailService({
   supabase,
   telemetry,
   throwOnApiFailure = false,
+  throwOnNeedsReview = false,
 }: CreateParseEmailServiceDeps): ParseEmailService {
   const supabaseRuntime = bindAppSupabase(supabase);
   const telemetryRuntime = bindAppTelemetry(telemetry);
@@ -264,6 +275,7 @@ export function createParseEmailService({
           warningPrefix: "parse_email",
           validCategoryIds,
           throwOnApiFailure,
+          throwOnNeedsReview,
           options,
         })
       ),
@@ -275,6 +287,7 @@ export function createParseEmailService({
           warningPrefix: "parse_notification",
           validCategoryIds,
           throwOnApiFailure,
+          throwOnNeedsReview,
         })
       ),
   };

@@ -12,6 +12,7 @@ import { parseNotificationWithRegex } from "./notification-regex-parser";
 import {
   appendParsedNotificationEvidence,
   buildNotificationFingerprint,
+  isRawNotificationNeedsReview,
   normalizeNotificationCommand,
   normalizeParsedNotification,
   parseNotificationWithLlm,
@@ -21,6 +22,7 @@ import {
 import {
   persistDuplicateNotification,
   persistFailedNotification,
+  persistReviewableNotification,
   persistSuccessfulNotification,
   reportSkippedDuplicate,
 } from "./notification-pipeline/outcomes";
@@ -51,6 +53,10 @@ export async function processNotification(
 
     if (parseStage.kind === "failed") {
       return persistFailedNotification(parseStage.context);
+    }
+
+    if (parseStage.kind === "needs_review") {
+      return persistReviewableNotification(parseStage.context);
     }
 
     return withFingerprintLock(parseStage.context, handleParsedNotification);
@@ -93,6 +99,21 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
         ...(regexParse.kind === "failed"
           ? { regexParseImprovementTemplate: regexParse.parserTemplate }
           : {}),
+      },
+    };
+  }
+  if (isRawNotificationNeedsReview(rawParsed)) {
+    return {
+      kind: "needs_review",
+      context: {
+        ...context,
+        parseMethod: "llm",
+        ...(regexParse.kind === "failed"
+          ? { regexParseImprovementTemplate: regexParse.parserTemplate }
+          : {}),
+        review: {
+          confidence: rawParsed.confidence ?? null,
+        },
       },
     };
   }

@@ -9,3 +9,8 @@ export const retryableParseEmailService = createParseEmailService({
   validCategoryIds: CATEGORY_IDS,
   throwOnApiFailure: true,
 });
+
+export const reviewableParseEmailService = createParseEmailService({
+  validCategoryIds: CATEGORY_IDS,
+  throwOnNeedsReview: true,
+});

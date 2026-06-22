@@ -29,7 +29,9 @@ describe("ai-chat Edge Function privacy boundary", () => {
   });
 
   it("validates packet collections before building chat prompts", () => {
-    expect(source).toContain("readFinancialContextPacket(body.financialContextPacket)");
+    expect(source).toContain("inferFinancialContextPacketTaskFromMessages(messages)");
+    expect(source).toContain("readFinancialContextPacket(");
+    expect(source).toContain("financialContextPacketTask");
     expect(source).not.toContain("isUnknownItem");
     expect(source).toContain("invalid_context_packet");
   });

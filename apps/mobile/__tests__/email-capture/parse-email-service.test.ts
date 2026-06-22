@@ -219,6 +219,44 @@ describe("createParseEmailService", () => {
     });
   });
 
+  it("throws only on ambiguous needs-review candidates when configured for reviewable parsing", async () => {
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          kind: "needs_review",
+          reason: "amount and merchant conflict",
+          confidence: 0.4,
+        },
+      },
+      error: null,
+    });
+
+    const service = createParseEmailService({
+      validCategoryIds: ["food"],
+      throwOnNeedsReview: true,
+      supabase: {
+        getSupabase: () =>
+          ({
+            functions: { invoke: mockInvoke },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning,
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+      },
+    });
+
+    await expect(service.parseNotification("ambiguous notification")).rejects.toThrow(
+      "capture_needs_review"
+    );
+    expect(captureWarning).toHaveBeenCalledWith("parse_notification_needs_review", {
+      reason: "amount and merchant conflict",
+    });
+  });
+
   it("surfaces sanitized parse-email function data errors for diagnostics", async () => {
     const captureWarning = vi.fn<(...args: any[]) => any>();
     const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
