@@ -190,6 +190,7 @@ export function SettingsScreen() {
           <SettingsRow
             icon={Sparkles}
             label={t("settings.parseImprovementSharing")}
+            subtitle={t("settings.parseImprovementSharingSubtitle")}
             accessory="switch"
             switchValue={shareAnonymizedParseSamples}
             onSwitchChange={handleParseImprovementSharingChange}

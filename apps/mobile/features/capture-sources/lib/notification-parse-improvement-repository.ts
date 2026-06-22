@@ -1,4 +1,3 @@
-import { CryptoDigestAlgorithm, digest } from "expo-crypto";
 import { getSupabase } from "@/shared/db";
 
 export type PersistedNotificationParseImprovementSample = {
@@ -37,10 +36,58 @@ type InsertNotificationParseImprovementSampleInput = {
   readonly sample: PersistedNotificationParseImprovementSample;
 };
 
-async function sha256Hex(value: string): Promise<string> {
-  const hash = await digest(CryptoDigestAlgorithm.SHA256, new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
+type CaptureImprovementSourceChannel = "email" | "notification" | "wallet";
+type CaptureImprovementSourceFamily = "email" | "android_notification" | "wallet_notification";
+type CaptureImprovementProviderCategory = "bank" | "payment_app" | "wallet" | "unknown";
+
+type CaptureImprovementSamplePayload = {
+  readonly sourceChannel: CaptureImprovementSourceChannel;
+  readonly sourceFamily: CaptureImprovementSourceFamily;
+  readonly providerCategory: CaptureImprovementProviderCategory;
+  readonly templateShape: string;
+  readonly parseOutcome: "failed" | "needs_review";
+  readonly confidenceBucket: "none" | "low" | "medium" | "high";
+  readonly extractor: {
+    readonly method: "regex" | "llm";
+    readonly version: 1;
+  };
+};
+
+type CaptureImprovementApiResponse =
+  | { readonly success: true; readonly data: { readonly code: "accepted" } }
+  | {
+      readonly success: false;
+      readonly error:
+        | "internal_error"
+        | "invalid_capture_improvement_sample"
+        | "unsafe_capture_improvement_sample";
+    };
+
+type RemoteErrorLike = {
+  readonly context?: unknown;
+  readonly message?: string;
+};
+
+const CLOUD_LEDGER_FUNCTION = "cloud-ledger-api";
+const SOURCE_CHANNEL_BY_SOURCE: Readonly<Record<string, CaptureImprovementSourceChannel>> = {
+  email_gmail: "email",
+  email_outlook: "email",
+  google_pay: "wallet",
+  notification_android: "notification",
+};
+const SOURCE_FAMILY_BY_SOURCE: Readonly<Record<string, CaptureImprovementSourceFamily>> = {
+  email_gmail: "email",
+  email_outlook: "email",
+  google_pay: "wallet_notification",
+  notification_android: "android_notification",
+};
+const PROVIDER_CATEGORY_BY_SOURCE: Readonly<
+  Partial<Record<string, CaptureImprovementProviderCategory>>
+> = {
+  google_pay: "wallet",
+  notification_android: "unknown",
+};
+const BANK_PROVIDER_DOMAIN_PATTERN = /(?:banco|bank|bbva|davibank|davivienda|nequi|bancolombia)/iu;
 
 const SENSITIVE_TEMPLATE_PATTERNS = [
   String.raw`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`,
@@ -112,24 +159,148 @@ export async function insertNotificationParseImprovementSample(
 ): Promise<void> {
   assertTemplateIsAnonymized(input.sample.template);
 
-  const { error } = await getSupabase()
-    .from("notification_parse_improvement_samples")
-    .insert({
-      user_id: input.userId,
-      source: input.sample.source,
-      sender_domain: input.sample.senderDomain ?? null,
-      status: input.sample.status,
-      confidence_bucket: input.sample.confidenceBucket,
-      parse_method: input.sample.parseMethod,
-      template: input.sample.template,
-      template_hash: await sha256Hex(input.sample.template),
-      review_status: "pending",
-    });
+  const { data, error } = await getSupabase().functions.invoke<CaptureImprovementApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "retainCaptureImprovementSample",
+        sample: toCaptureImprovementSamplePayload(input.sample),
+      },
+    }
+  );
 
+  await assertCaptureImprovementBoundarySuccess(data, error);
+}
+
+export async function deleteNotificationParseImprovementSamplesForUser(_input: {
+  readonly userId: string;
+}): Promise<void> {
+  const { data, error } = await getSupabase().functions.invoke<CaptureImprovementApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "deleteCaptureImprovementSamples",
+      },
+    }
+  );
+
+  await assertCaptureImprovementBoundarySuccess(data, error);
+}
+
+const assertCaptureImprovementBoundarySuccess = async (
+  data: CaptureImprovementApiResponse | null,
+  error: RemoteErrorLike | null
+): Promise<void> => {
+  throwIfUnsafeSampleResponse(data);
+  await throwIfRemoteBoundaryError(error);
+  throwIfMissingSuccess(data);
+};
+
+const throwIfUnsafeSampleResponse = (data: CaptureImprovementApiResponse | null): void => {
+  if (data?.success === false && data.error === "unsafe_capture_improvement_sample") {
+    throw new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
+  }
+};
+
+const throwIfRemoteBoundaryError = async (error: RemoteErrorLike | null): Promise<void> => {
   if (error != null) {
+    const remoteFailure = await readRemoteError(error);
+    if (remoteFailure === "unsafe_capture_improvement_sample") {
+      throw new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
+    }
     throw new ParseImprovementSampleInsertError({
-      code: error.code,
-      details: error.details,
+      details: error.message,
     });
   }
-}
+};
+
+const throwIfMissingSuccess = (data: CaptureImprovementApiResponse | null): void => {
+  if (data?.success !== true) {
+    throw new ParseImprovementSampleInsertError({});
+  }
+};
+
+const readRemoteError = async (
+  error: RemoteErrorLike
+): Promise<"invalid_capture_improvement_sample" | "unsafe_capture_improvement_sample" | null> => {
+  if (error.context === undefined) {
+    return null;
+  }
+  try {
+    const body = await readRemoteErrorContext(error.context);
+    return isCaptureImprovementApiFailure(body) && body.error !== "internal_error"
+      ? body.error
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const readRemoteErrorContext = async (context: unknown): Promise<unknown> =>
+  hasJsonReader(context) ? await context.json() : context;
+
+const hasJsonReader = (value: unknown): value is { readonly json: () => Promise<unknown> } =>
+  value !== null &&
+  typeof value === "object" &&
+  "json" in value &&
+  typeof (value as { readonly json?: unknown }).json === "function";
+
+const isCaptureImprovementApiFailure = (
+  value: unknown
+): value is Extract<CaptureImprovementApiResponse, { readonly success: false }> => {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    record.success === false &&
+    (record.error === "invalid_capture_improvement_sample" ||
+      record.error === "unsafe_capture_improvement_sample")
+  );
+};
+
+const toCaptureImprovementSamplePayload = (
+  sample: PersistedNotificationParseImprovementSample
+): CaptureImprovementSamplePayload => {
+  const extractor = captureImprovementExtractor(sample.parseMethod);
+  return {
+    sourceChannel: sourceChannel(sample.source),
+    sourceFamily: sourceFamily(sample.source),
+    providerCategory: providerCategory(sample),
+    templateShape: sample.template,
+    parseOutcome: sample.status,
+    confidenceBucket: sample.confidenceBucket,
+    extractor,
+  };
+};
+
+const captureImprovementExtractor = (parseMethod: "regex" | "llm") =>
+  ({
+    method: parseMethod,
+    version: 1 as const,
+  }) as const;
+
+const sourceChannel = (source: string): CaptureImprovementSourceChannel => {
+  const channel = SOURCE_CHANNEL_BY_SOURCE[source];
+  return channel === undefined ? "notification" : channel;
+};
+
+const sourceFamily = (source: string): CaptureImprovementSourceFamily => {
+  const family = SOURCE_FAMILY_BY_SOURCE[source];
+  return family === undefined ? "android_notification" : family;
+};
+
+const providerCategory = (
+  sample: PersistedNotificationParseImprovementSample
+): CaptureImprovementProviderCategory => {
+  const category = PROVIDER_CATEGORY_BY_SOURCE[sample.source];
+  return category === undefined ? providerCategoryFromSenderDomain(sample.senderDomain) : category;
+};
+
+const providerCategoryFromSenderDomain = (
+  senderDomain: string | null | undefined
+): CaptureImprovementProviderCategory =>
+  senderDomain == null ? "unknown" : providerCategoryFromDomain(senderDomain);
+
+const providerCategoryFromDomain = (senderDomain: string): CaptureImprovementProviderCategory =>
+  BANK_PROVIDER_DOMAIN_PATTERN.test(senderDomain) ? "bank" : "payment_app";

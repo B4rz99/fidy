@@ -1,13 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { insertNotificationParseImprovementSample } from "@/features/capture-sources/lib/notification-parse-improvement-repository";
+import {
+  deleteNotificationParseImprovementSamplesForUser,
+  insertNotificationParseImprovementSample,
+} from "@/features/capture-sources/lib/notification-parse-improvement-repository";
 
-const mockInsert = vi.fn<(...args: any[]) => any>();
+const mockFunctionsInvoke = vi.fn<(...args: any[]) => any>();
+const mockFrom = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/shared/db", () => ({
   getSupabase: () => ({
-    from: (tableName: string) => {
-      expect(tableName).toBe("notification_parse_improvement_samples");
-      return { insert: mockInsert };
+    from: mockFrom,
+    functions: {
+      invoke: mockFunctionsInvoke,
     },
   }),
 }));
@@ -17,8 +21,11 @@ describe("notification parse improvement repository", () => {
     vi.clearAllMocks();
   });
 
-  it("inserts anonymized parse samples into Supabase", async () => {
-    mockInsert.mockResolvedValueOnce({ error: null });
+  it("retains structural samples through the Remote API Boundary without direct table access", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: true, data: { code: "accepted" } },
+      error: null,
+    });
 
     await insertNotificationParseImprovementSample({
       userId: "user-1",
@@ -32,24 +39,64 @@ describe("notification parse improvement repository", () => {
       },
     });
 
-    expect(mockInsert).toHaveBeenCalled();
-    expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user_id: "user-1",
-        template: "Compra por [AMOUNT] en [MERCHANT].",
-        sender_domain: "davibank.com",
-        source: "notification_android",
-        status: "failed",
-        confidence_bucket: "none",
-        parse_method: "llm",
-        review_status: "pending",
-      })
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
+      body: {
+        action: "retainCaptureImprovementSample",
+        sample: {
+          sourceChannel: "notification",
+          sourceFamily: "android_notification",
+          providerCategory: "unknown",
+          templateShape: "Compra por [AMOUNT] en [MERCHANT].",
+          parseOutcome: "failed",
+          confidenceBucket: "none",
+          extractor: {
+            method: "llm",
+            version: 1,
+          },
+        },
+      },
+    });
+    expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toMatch(
+      /user-1|davibank\.com|sender_domain|rawText|parserTemplate/u
     );
-    expect(mockInsert.mock.calls[0]?.[0].template_hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("throws when Supabase rejects the insert", async () => {
-    mockInsert.mockResolvedValueOnce({ error: { message: "rls denied" } });
+  it("maps email sources to safe provider categories before upload", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: true, data: { code: "accepted" } },
+      error: null,
+    });
+
+    await insertNotificationParseImprovementSample({
+      userId: "user-1",
+      sample: {
+        template: "Compra por [AMOUNT] en [MERCHANT].",
+        senderDomain: "davibank.com",
+        source: "email_gmail",
+        status: "failed",
+        confidenceBucket: "none",
+        parseMethod: "llm",
+      },
+    });
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
+      body: expect.objectContaining({
+        sample: expect.objectContaining({
+          sourceChannel: "email",
+          sourceFamily: "email",
+          providerCategory: "bank",
+        }),
+      }),
+    });
+    expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("davibank.com");
+  });
+
+  it("throws a privacy failure when the Remote API Boundary rejects the sample as unsafe", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: false, error: "unsafe_capture_improvement_sample" },
+      error: null,
+    });
 
     await expect(
       insertNotificationParseImprovementSample({
@@ -62,7 +109,24 @@ describe("notification parse improvement repository", () => {
           parseMethod: "llm",
         },
       })
-    ).rejects.toThrow("Unable to store parse improvement sample");
+    ).rejects.toThrow("sensitive values");
+  });
+
+  it("deletes user-linked samples through the Remote API Boundary", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: true, data: { code: "accepted" } },
+      error: null,
+    });
+
+    await deleteNotificationParseImprovementSamplesForUser({ userId: "user-1" });
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
+      body: {
+        action: "deleteCaptureImprovementSamples",
+      },
+    });
+    expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("user-1");
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
   it("rejects templates that still contain sensitive values before inserting", async () => {
@@ -79,7 +143,7 @@ describe("notification parse improvement repository", () => {
       })
     ).rejects.toThrow("sensitive values");
 
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("rejects unlabeled account, phone, and NIT-like values", async () => {
@@ -96,7 +160,7 @@ describe("notification parse improvement repository", () => {
       })
     ).rejects.toThrow("sensitive values");
 
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("rejects residual bare amount values", async () => {
@@ -113,7 +177,7 @@ describe("notification parse improvement repository", () => {
       })
     ).rejects.toThrow("sensitive values");
 
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("rejects residual lowercase counterparty names before transfer verbs", async () => {
@@ -130,7 +194,7 @@ describe("notification parse improvement repository", () => {
       })
     ).rejects.toThrow("sensitive values");
 
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("rejects residual all-caps entity names", async () => {
@@ -147,7 +211,7 @@ describe("notification parse improvement repository", () => {
       })
     ).rejects.toThrow("sensitive values");
 
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("rejects residual title-case entity names", async () => {
@@ -164,6 +228,6 @@ describe("notification parse improvement repository", () => {
       })
     ).rejects.toThrow("sensitive values");
 
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 });

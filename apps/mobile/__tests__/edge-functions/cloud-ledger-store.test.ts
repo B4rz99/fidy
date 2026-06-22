@@ -52,6 +52,18 @@ const CREATE_TRANSACTION_RPC_DATA = {
   },
   cursor: "ledger:4",
 } as const;
+const CAPTURE_IMPROVEMENT_SAMPLE = {
+  sourceChannel: "email",
+  sourceFamily: "email",
+  providerCategory: "bank",
+  templateShape: "Compra por [AMOUNT] en [MERCHANT].",
+  parseOutcome: "failed",
+  confidenceBucket: "none",
+  extractor: {
+    method: "regex",
+    version: 1,
+  },
+} as const;
 
 describe("Cloud Ledger Edge store", () => {
   it("refreshes through the service-only Cloud Ledger RPC without exposing table APIs", async () => {
@@ -161,6 +173,42 @@ describe("Cloud Ledger Edge store", () => {
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.schema).not.toHaveBeenCalled();
   });
+
+  it("retains Capture Improvement Samples through a service-only account-linked RPC", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.retainCaptureImprovementSample(USER_ID, CAPTURE_IMPROVEMENT_SAMPLE);
+
+    expect(outcome).toEqual({ code: "accepted" });
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_retain_capture_improvement_sample", {
+      p_confidence_bucket: "none",
+      p_extractor_method: "regex",
+      p_extractor_version: 1,
+      p_parse_outcome: "failed",
+      p_provider_category: "bank",
+      p_source_channel: "email",
+      p_source_family: "email",
+      p_template_shape: "Compra por [AMOUNT] en [MERCHANT].",
+      p_user_id: USER_ID,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.schema).not.toHaveBeenCalled();
+  });
+
+  it("deletes Capture Improvement Samples through a service-only account-linked RPC", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.deleteCaptureImprovementSamples(USER_ID);
+
+    expect(outcome).toEqual({ code: "accepted" });
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_delete_capture_improvement_samples", {
+      p_user_id: USER_ID,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.schema).not.toHaveBeenCalled();
+  });
 });
 
 function createLedgerSupabase() {
@@ -187,7 +235,11 @@ function ledgerRpcResult(functionName: string) {
     data:
       functionName === "cloud_ledger_create_transaction"
         ? CREATE_TRANSACTION_RPC_DATA
-        : BOOTSTRAP_RPC_DATA,
+        : functionName === "cloud_ledger_retain_capture_improvement_sample"
+          ? { code: "accepted" }
+          : functionName === "cloud_ledger_delete_capture_improvement_samples"
+            ? { code: "accepted" }
+            : BOOTSTRAP_RPC_DATA,
     error: null,
   };
 }

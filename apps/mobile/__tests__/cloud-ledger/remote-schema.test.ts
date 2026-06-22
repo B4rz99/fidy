@@ -10,6 +10,10 @@ const CREATE_TRANSACTION_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622100000_cloud_ledger_transaction_create.sql"
 );
+const CAPTURE_IMPROVEMENT_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql"
+);
 
 describe("Cloud Ledger remote schema", () => {
   it("creates bootstrap financial tables in a non-exposed ledger schema", () => {
@@ -73,6 +77,35 @@ describe("Cloud Ledger remote schema", () => {
     );
     expect(sql).toMatch(
       /grant execute on function public\.cloud_ledger_create_transaction\([\s\S]*?date\s*\) to service_role/
+    );
+  });
+
+  it("exposes Capture Improvement Sample retention and deletion only through service-role commands", () => {
+    const sql = readFileSync(CAPTURE_IMPROVEMENT_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain(
+      'drop policy if exists "users can insert own notification parse improvement samples"'
+    );
+    expect(sql).toContain(
+      "revoke insert, update, delete on public.notification_parse_improvement_samples from anon, authenticated"
+    );
+    expect(sql).toContain(
+      "create or replace function public.cloud_ledger_retain_capture_improvement_sample"
+    );
+    expect(sql).toContain(
+      "create or replace function public.cloud_ledger_delete_capture_improvement_samples"
+    );
+    expect(sql).toMatch(
+      /revoke execute on function public\.cloud_ledger_retain_capture_improvement_sample\([\s\S]*?integer\s*\) from public, anon, authenticated/
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_retain_capture_improvement_sample\([\s\S]*?integer\s*\) to service_role/
+    );
+    expect(sql).toMatch(
+      /revoke execute on function public\.cloud_ledger_delete_capture_improvement_samples\(uuid\) from public, anon, authenticated/
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_delete_capture_improvement_samples\(uuid\) to service_role/
     );
   });
 });

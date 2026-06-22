@@ -1,4 +1,6 @@
 import type {
+  CaptureImprovementSample,
+  CaptureImprovementSampleAccepted,
   CloudLedgerApiResponse,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
@@ -7,6 +9,7 @@ import type {
   LedgerCursor,
 } from "./model.ts";
 import type { SupabaseError } from "../_shared/supabase-error.ts";
+import { readCaptureImprovementSample } from "./capture-improvement-sample.ts";
 import {
   readCreateTransactionCommand,
   type CreateTransactionCommandReadResult,
@@ -32,6 +35,11 @@ type LedgerStore = {
     userId: string,
     command: CloudLedgerCreateTransactionCommand
   ): Promise<CloudLedgerCreateTransactionOutcome>;
+  retainCaptureImprovementSample(
+    userId: string,
+    sample: CaptureImprovementSample
+  ): Promise<CaptureImprovementSampleAccepted>;
+  deleteCaptureImprovementSamples(userId: string): Promise<CaptureImprovementSampleAccepted>;
 };
 
 export type CloudLedgerApiDeps = {
@@ -84,6 +92,16 @@ async function routeAuthenticatedRequest(store: LedgerStore, userId: string, bod
   if (action === "createTransaction") {
     return createTransactionResponse(store, userId, readCreateTransactionCommand(body));
   }
+  if (action === "retainCaptureImprovementSample") {
+    return retainCaptureImprovementSampleResponse(
+      store,
+      userId,
+      readCaptureImprovementSample(body)
+    );
+  }
+  if (action === "deleteCaptureImprovementSamples") {
+    return deleteCaptureImprovementSamplesResponse(store, userId);
+  }
 
   return jsonResponse({ success: false, error: "unsupported_action" }, 400);
 }
@@ -134,6 +152,30 @@ async function createTransactionResponse(
 
 function createTransactionFailureStatus(outcome: CloudLedgerCreateTransactionRejected) {
   return outcome.code === "unauthorized_transaction_id" ? 403 : 400;
+}
+
+async function retainCaptureImprovementSampleResponse(
+  store: LedgerStore,
+  userId: string,
+  sampleResult: ReturnType<typeof readCaptureImprovementSample>
+) {
+  if (sampleResult.kind === "invalid") {
+    return jsonResponse({ success: false, error: "invalid_capture_improvement_sample" }, 400);
+  }
+  if (sampleResult.kind === "unsafe") {
+    return jsonResponse({ success: false, error: "unsafe_capture_improvement_sample" }, 400);
+  }
+  return jsonResponse({
+    success: true,
+    data: await store.retainCaptureImprovementSample(userId, sampleResult.sample),
+  });
+}
+
+async function deleteCaptureImprovementSamplesResponse(store: LedgerStore, userId: string) {
+  return jsonResponse({
+    success: true,
+    data: await store.deleteCaptureImprovementSamples(userId),
+  });
 }
 
 async function refreshResponse(

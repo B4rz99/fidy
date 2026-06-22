@@ -29,7 +29,7 @@ describe("useSettingsStore", () => {
       goalMilestones: true,
       spendingAnomalies: true,
     });
-    expect(initial.shareAnonymizedParseSamples).toBe(false);
+    expect(initial.shareAnonymizedParseSamples).toBe(true);
   });
 
   beforeEach(() => {
@@ -62,11 +62,27 @@ describe("useSettingsStore", () => {
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith("share_anonymized_parse_samples", "true");
   });
 
-  test("hydrates anonymized parse sample sharing preference", async () => {
+  test("hydrates explicit anonymized parse sample sharing opt-in", async () => {
     vi.mocked(SecureStore.getItemAsync).mockImplementation((key) =>
       Promise.resolve(key === "share_anonymized_parse_samples" ? "true" : null)
     );
 
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+  });
+
+  test("hydrates explicit anonymized parse sample sharing opt-out", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation((key) =>
+      Promise.resolve(key === "share_anonymized_parse_samples" ? "false" : null)
+    );
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(false);
+  });
+
+  test("hydrates missing anonymized parse sample sharing preference as enabled", async () => {
     await useSettingsStore.getState().hydrate();
 
     expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);

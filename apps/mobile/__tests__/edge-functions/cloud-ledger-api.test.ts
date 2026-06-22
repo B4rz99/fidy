@@ -34,6 +34,18 @@ const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
   },
   cursor: "ledger:2",
 } as const;
+const CAPTURE_IMPROVEMENT_SAMPLE = {
+  sourceChannel: "email",
+  sourceFamily: "email",
+  providerCategory: "bank",
+  templateShape: "Compra por [AMOUNT] en [MERCHANT] con tarjeta [CARD].",
+  parseOutcome: "failed",
+  confidenceBucket: "none",
+  extractor: {
+    method: "regex",
+    version: 1,
+  },
+} as const;
 
 type LedgerBootstrapPayload = {
   readonly cursor: string;
@@ -210,6 +222,131 @@ describe("cloud-ledger-api Edge Function", () => {
       data: ACCEPTED_CREATE_TRANSACTION_OUTCOME,
     });
     expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, CREATE_TRANSACTION_COMMAND);
+  });
+
+  it("retains Capture Improvement Samples for the authenticated account only", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          userId: OTHER_USER_ID,
+          sample: CAPTURE_IMPROVEMENT_SAMPLE,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(
+      USER_ID,
+      CAPTURE_IMPROVEMENT_SAMPLE
+    );
+  });
+
+  it("rejects unsafe Capture Improvement Samples before remote retention", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape:
+              "Compra por 50000 en EXITO con tarjeta *1234. Ref 12345678901 user@example.com",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects lowercase merchant and location residue in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "compra en exito cerca de bogota por [AMOUNT]",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects Capture Improvement Samples with disallowed raw fields", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            rawText: "Compra por $50,000 en EXITO",
+            senderDomain: "davibank.com",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("deletes user-linked Capture Improvement Samples for the authenticated account", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "deleteCaptureImprovementSamples",
+          userId: OTHER_USER_ID,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.deleteCaptureImprovementSamples).toHaveBeenCalledWith(USER_ID);
   });
 
   it("rejects invalid client transaction ids with typed failures before ledger access", async () => {
@@ -547,6 +684,12 @@ function createCloudLedgerApiDeps(
           cursor: "ledger:2",
         }
       )
+    ),
+    retainCaptureImprovementSample: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve({ code: "accepted" })
+    ),
+    deleteCaptureImprovementSamples: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve({ code: "accepted" })
     ),
   };
 

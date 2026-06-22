@@ -6,6 +6,7 @@ const {
   mockCaptureError,
   mockCaptureWarning,
   mockCountPendingEmailParseImprovementSamples,
+  mockDeleteEmailParseImprovementSamplesForUser,
   mockFlushPendingEmailParseImprovementSamples,
   mockGetDb,
   mockIsEmailCaptureDebugEnabled,
@@ -14,6 +15,9 @@ const {
   mockCaptureError: vi.fn<(error: unknown) => void>(),
   mockCaptureWarning: vi.fn<(message: string, context?: unknown) => void>(),
   mockCountPendingEmailParseImprovementSamples: vi.fn<(...args: unknown[]) => number>(() => 1),
+  mockDeleteEmailParseImprovementSamplesForUser: vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    () => Promise.resolve({ deleted: 1 })
+  ),
   mockFlushPendingEmailParseImprovementSamples: vi.fn<(...args: unknown[]) => Promise<unknown>>(
     () => Promise.resolve({ shared: 0, failed: 0 })
   ),
@@ -25,6 +29,8 @@ const {
 vi.mock("@/features/email-capture/parse-improvement.public", () => ({
   countPendingEmailParseImprovementSamples: (...args: unknown[]) =>
     mockCountPendingEmailParseImprovementSamples(...args),
+  deleteEmailParseImprovementSamplesForUser: (...args: unknown[]) =>
+    mockDeleteEmailParseImprovementSamplesForUser(...args),
   flushPendingEmailParseImprovementSamples: (...args: unknown[]) =>
     mockFlushPendingEmailParseImprovementSamples(...args),
   isEmailCaptureDebugEnabled: () => mockIsEmailCaptureDebugEnabled(),
@@ -58,6 +64,7 @@ describe("applyParseImprovementSharingToggle", () => {
     vi.clearAllMocks();
     mockIsEmailCaptureDebugEnabled.mockReturnValue(false);
     mockSettingsState.shareAnonymizedParseSamples = true;
+    mockDeleteEmailParseImprovementSamplesForUser.mockResolvedValue({ deleted: 1 });
   });
 
   it("only counts pending samples for debug logging", async () => {
@@ -132,6 +139,23 @@ describe("applyParseImprovementSharingToggle", () => {
     expect(mockCaptureWarning).toHaveBeenCalledWith("email_parse_improvement_sample_share_failed", {
       errorType: "Error",
     });
+  });
+
+  it("deletes existing user-linked samples when sharing is disabled", async () => {
+    const userId = "user-1" as UserId;
+
+    applyParseImprovementSharingToggle({
+      enabled: false,
+      userId,
+      setShareAnonymizedParseSamples: vi.fn(),
+    });
+    await flushPromises();
+
+    expect(mockDeleteEmailParseImprovementSamplesForUser).toHaveBeenCalledWith({
+      db: {},
+      userId,
+    });
+    expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
   });
 
   it("queues a re-enabled flush behind an in-flight toggle flush", async () => {

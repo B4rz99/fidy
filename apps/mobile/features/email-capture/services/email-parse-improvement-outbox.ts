@@ -1,6 +1,7 @@
 import { and, asc, count, eq, gt, isNull, or } from "drizzle-orm";
 import {
   buildNotificationParseImprovementSample,
+  deleteCaptureParseImprovementSamplesForUser,
   shareCaptureParseImprovementSample,
 } from "@/features/capture-sources/diagnostics.public";
 import type { AnyDb } from "@/shared/db";
@@ -74,6 +75,28 @@ export function countPendingEmailParseImprovementSamples(input: {
       )
       .get()?.count ?? 0
   );
+}
+
+export async function deleteEmailParseImprovementSamplesForUser(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly now?: Date;
+}): Promise<{ readonly deleted: number }> {
+  const deletedAt = toIsoDateTime(input.now ?? new Date());
+  const deleted = input.db
+    .update(emailParseImprovementSamples)
+    .set({ deletedAt })
+    .where(
+      and(
+        eq(emailParseImprovementSamples.userId, input.userId),
+        isNull(emailParseImprovementSamples.deletedAt)
+      )
+    )
+    .run().changes;
+
+  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
+  logParseImprovementOutboxForDebug("delete", { deleted });
+  return { deleted };
 }
 
 export function enqueueEmailParseImprovementRequests(input: {

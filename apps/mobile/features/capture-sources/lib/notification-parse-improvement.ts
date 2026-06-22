@@ -1,6 +1,7 @@
 import { stripPii } from "@/features/email-capture/parsing.public";
 import { capturePipelineEvent } from "@/shared/lib";
 import { insertNotificationParseImprovementSample } from "./notification-parse-improvement-repository";
+export { deleteNotificationParseImprovementSamplesForUser } from "./notification-parse-improvement-repository";
 
 export type ParseImprovementStatus = "failed" | "needs_review";
 export type ParseMethod = "regex" | "llm";

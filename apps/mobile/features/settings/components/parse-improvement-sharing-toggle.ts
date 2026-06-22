@@ -1,5 +1,6 @@
 import {
   countPendingEmailParseImprovementSamples,
+  deleteEmailParseImprovementSamplesForUser,
   flushPendingEmailParseImprovementSamples,
   isEmailCaptureDebugEnabled,
 } from "@/features/email-capture/parse-improvement.public";
@@ -24,6 +25,12 @@ const getErrorName = (error: unknown): string => (error instanceof Error ? error
 const captureFlushFailureWarning = (failureTypes?: readonly string[]): void => {
   captureWarning("email_parse_improvement_sample_share_failed", {
     errorType: failureTypes && failureTypes.length > 0 ? failureTypes.join(",") : "unknown",
+  });
+};
+
+const captureDeleteFailureWarning = (error: unknown): void => {
+  captureWarning("email_parse_improvement_sample_delete_failed", {
+    errorType: getErrorName(error),
   });
 };
 
@@ -58,9 +65,33 @@ export function applyParseImprovementSharingToggle(input: {
   }
 
   logParseImprovementToggleForDebug({ enabled: input.enabled, hasUserId: true, pending });
-  if (!input.enabled) return;
 
   const previousFlush = toggleFlushesByUserId.get(userId) ?? Promise.resolve();
+  if (!input.enabled) {
+    const deletion = previousFlush
+      .catch(() => undefined)
+      .then(async () => {
+        const result = await deleteEmailParseImprovementSamplesForUser({ db, userId });
+        logParseImprovementToggleForDebug({
+          enabled: input.enabled,
+          hasUserId: true,
+          pending,
+          deleted: result.deleted,
+        });
+      })
+      .catch((error) => {
+        captureError(error);
+        captureDeleteFailureWarning(error);
+      })
+      .finally(() => {
+        if (toggleFlushesByUserId.get(userId) === deletion) {
+          toggleFlushesByUserId.delete(userId);
+        }
+      });
+    toggleFlushesByUserId.set(userId, deletion);
+    return;
+  }
+
   const flush = previousFlush
     .catch(() => undefined)
     .then(async () => {

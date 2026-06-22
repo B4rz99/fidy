@@ -146,13 +146,16 @@ const applyStoredNotificationPreferences = (set: SetSettingsState, storedPrefs: 
   });
 };
 
+const resolveStoredShareAnonymizedParseSamples = (value: string | null): boolean =>
+  value === "false" ? false : true;
+
 export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
   themePreference: "system",
   isHydrated: false,
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   areAllNotificationsOff: false,
   privateBackup: DEFAULT_PRIVATE_BACKUP_STATE,
-  shareAnonymizedParseSamples: false,
+  shareAnonymizedParseSamples: true,
 
   setThemePreference: (pref) => {
     set({ themePreference: pref });
@@ -242,7 +245,11 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       applyStoredThemePreference(set, stored.storedTheme);
       applyStoredPrivateBackup(set, stored.privateBackup);
       applyStoredNotificationPreferences(set, stored.storedPrefs);
-      set({ shareAnonymizedParseSamples: stored.storedShareAnonymizedParseSamples === "true" });
+      set({
+        shareAnonymizedParseSamples: resolveStoredShareAnonymizedParseSamples(
+          stored.storedShareAnonymizedParseSamples
+        ),
+      });
     } catch {
       // SecureStore unavailable (e.g., in tests)
       Appearance.setColorScheme(toColorScheme("system"));
