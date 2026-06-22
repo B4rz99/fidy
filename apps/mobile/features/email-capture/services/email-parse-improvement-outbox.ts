@@ -6,13 +6,16 @@ import {
   shareCaptureParseImprovementSample,
 } from "@/features/capture-sources/diagnostics.public";
 import type { AnyDb } from "@/shared/db";
-import {
-  captureImprovementDeletionRequests,
-  emailParseImprovementSamples,
-} from "@/shared/db/schema";
+import { emailParseImprovementSamples } from "@/shared/db/schema";
 import { generateEmailParseImprovementSampleId } from "@/shared/lib/generate-id";
 import { toIsoDateTime } from "@/shared/lib";
 import type { EmailParseImprovementSampleId, IsoDateTime, UserId } from "@/shared/types/branded";
+import {
+  clearCaptureImprovementDeletionRequest,
+  enqueueCaptureImprovementDeletionRequest,
+  getCaptureImprovementDeletionRequest,
+  markCaptureImprovementDeletionAttempt,
+} from "./capture-improvement-deletion-request-queue";
 import { isEmailCaptureDebugEnabled } from "./email-capture-debug";
 import {
   getEmailParseImprovementSampleDedupeKey,
@@ -106,12 +109,8 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
   readonly userId: UserId;
   readonly now?: Date;
 }): Promise<{ readonly deleted: number; readonly retried: boolean }> {
-  const pendingRequest = input.db
-    .select()
-    .from(captureImprovementDeletionRequests)
-    .where(eq(captureImprovementDeletionRequests.userId, input.userId))
-    .get();
-  if (pendingRequest === undefined) {
+  const pendingRequest = getCaptureImprovementDeletionRequest(input);
+  if (pendingRequest === null) {
     return { deleted: 0, retried: false };
   }
 
@@ -137,44 +136,6 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
   clearCaptureImprovementDeletionRequest({ db: input.db, userId: input.userId });
   logParseImprovementOutboxForDebug("delete", { deleted });
   return { deleted, retried: true };
-}
-
-function enqueueCaptureImprovementDeletionRequest(input: {
-  readonly db: AnyDb;
-  readonly userId: UserId;
-  readonly requestedAt: IsoDateTime;
-}): void {
-  input.db
-    .insert(captureImprovementDeletionRequests)
-    .values({
-      userId: input.userId,
-      requestedAt: input.requestedAt,
-      lastAttemptAt: null,
-    })
-    .onConflictDoNothing()
-    .run();
-}
-
-function markCaptureImprovementDeletionAttempt(input: {
-  readonly db: AnyDb;
-  readonly userId: UserId;
-  readonly lastAttemptAt: IsoDateTime;
-}): void {
-  input.db
-    .update(captureImprovementDeletionRequests)
-    .set({ lastAttemptAt: input.lastAttemptAt })
-    .where(eq(captureImprovementDeletionRequests.userId, input.userId))
-    .run();
-}
-
-function clearCaptureImprovementDeletionRequest(input: {
-  readonly db: AnyDb;
-  readonly userId: UserId;
-}): void {
-  input.db
-    .delete(captureImprovementDeletionRequests)
-    .where(eq(captureImprovementDeletionRequests.userId, input.userId))
-    .run();
 }
 
 export async function setEmailParseImprovementSharingPreference(input: {
