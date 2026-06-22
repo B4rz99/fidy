@@ -1,0 +1,23 @@
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_49e406b1e385cc::t_24503d8564a75b 35-48,51-80,107-109,118-119,121-192,205-210,215-216,484
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_49e406b1e385cc::t_815d7b9938737e 7-54,168,184-191
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_49e406b1e385cc::t_832f3cc7c7808e 9-36,199,203,210,212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "50a0920eebbdab123ec6cc28b316346a8cf3e51e",
+  "prompts": {},
+  "sessions": {
+    "s_49e406b1e385cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eee02-ce3d-7941-adcf-3bcca22b1b15",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
