@@ -1,0 +1,23 @@
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_49e406b1e385cc::t_7c510c9b6b9fd5 372-403
+  s_49e406b1e385cc::t_b12ea504ccd48e 340-371
+supabase/functions/cloud-ledger-api/handler.ts
+  s_49e406b1e385cc::t_877fcf0b6c01fb 47,195,204,219,242-248
+  s_49e406b1e385cc::t_e5e972fe04c705 46,198,249-268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "4c6522cd370ba97fe82d9a7b3859eed1847cb9d6",
+  "prompts": {},
+  "sessions": {
+    "s_49e406b1e385cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eee02-ce3d-7941-adcf-3bcca22b1b15",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
