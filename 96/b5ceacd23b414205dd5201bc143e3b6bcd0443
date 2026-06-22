@@ -1,0 +1,26 @@
+apps/mobile/__tests__/cloud-ledger/mobile-bootstrap.test.ts
+  s_49e406b1e385cc::t_d50246f84a2173 326-351,367,377-381,407-453
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_49e406b1e385cc::t_6166c5e0f16106 100,105-118,156-159,189-192,316-355
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_49e406b1e385cc::t_5eed367fc94a2a 120,229
+  s_49e406b1e385cc::t_ef9b08ea36cef0 113-119,121-122,230-238
+apps/mobile/supabase/migrations/20260622100000_cloud_ledger_transaction_create.sql
+  s_49e406b1e385cc::t_064a0940381c38 111-112,134-180
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "96b5ceacd23b414205dd5201bc143e3b6bcd0443",
+  "prompts": {},
+  "sessions": {
+    "s_49e406b1e385cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eee02-ce3d-7941-adcf-3bcca22b1b15",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
