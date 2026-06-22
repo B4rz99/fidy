@@ -1,6 +1,7 @@
 import type {
   CaptureImprovementSample,
   CaptureImprovementSampleAccepted,
+  CaptureImprovementSampleOutcome,
   CloudLedgerApiResponse,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
@@ -38,8 +39,12 @@ type LedgerStore = {
   retainCaptureImprovementSample(
     userId: string,
     sample: CaptureImprovementSample
-  ): Promise<CaptureImprovementSampleAccepted>;
+  ): Promise<CaptureImprovementSampleOutcome>;
   deleteCaptureImprovementSamples(userId: string): Promise<CaptureImprovementSampleAccepted>;
+  setCaptureImprovementPreference(
+    userId: string,
+    enabled: boolean
+  ): Promise<CaptureImprovementSampleAccepted>;
 };
 
 export type CloudLedgerApiDeps = {
@@ -101,6 +106,9 @@ async function routeAuthenticatedRequest(store: LedgerStore, userId: string, bod
   }
   if (action === "deleteCaptureImprovementSamples") {
     return deleteCaptureImprovementSamplesResponse(store, userId);
+  }
+  if (action === "setCaptureImprovementPreference") {
+    return setCaptureImprovementPreferenceResponse(store, userId, readBoolean(body, "enabled"));
   }
 
   return jsonResponse({ success: false, error: "unsupported_action" }, 400);
@@ -165,9 +173,13 @@ async function retainCaptureImprovementSampleResponse(
   if (sampleResult.kind === "unsafe") {
     return jsonResponse({ success: false, error: "unsafe_capture_improvement_sample" }, 400);
   }
+  const outcome = await store.retainCaptureImprovementSample(userId, sampleResult.sample);
+  if (outcome.code === "capture_improvement_opted_out") {
+    return jsonResponse({ success: false, error: "capture_improvement_opted_out" }, 403);
+  }
   return jsonResponse({
     success: true,
-    data: await store.retainCaptureImprovementSample(userId, sampleResult.sample),
+    data: outcome,
   });
 }
 
@@ -175,6 +187,20 @@ async function deleteCaptureImprovementSamplesResponse(store: LedgerStore, userI
   return jsonResponse({
     success: true,
     data: await store.deleteCaptureImprovementSamples(userId),
+  });
+}
+
+async function setCaptureImprovementPreferenceResponse(
+  store: LedgerStore,
+  userId: string,
+  enabled: boolean | null
+) {
+  if (enabled === null) {
+    return jsonResponse({ success: false, error: "invalid_capture_improvement_sample" }, 400);
+  }
+  return jsonResponse({
+    success: true,
+    data: await store.setCaptureImprovementPreference(userId, enabled),
   });
 }
 
@@ -202,6 +228,14 @@ async function readJsonBody(request: Request): Promise<unknown> {
 
 function readAction(body: unknown) {
   return readRequiredString(body, "action");
+}
+
+function readBoolean(body: unknown, key: string): boolean | null {
+  if (body === null || typeof body !== "object") {
+    return null;
+  }
+  const value = (body as Record<string, unknown>)[key];
+  return typeof value === "boolean" ? value : null;
 }
 
 function readOptionalCursor(body: unknown): LedgerCursor | null | undefined {

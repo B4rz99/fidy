@@ -209,6 +209,21 @@ describe("Cloud Ledger Edge store", () => {
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.schema).not.toHaveBeenCalled();
   });
+
+  it("updates Capture Improvement Preference through a service-only account-linked RPC", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.setCaptureImprovementPreference(USER_ID, true);
+
+    expect(outcome).toEqual({ code: "accepted" });
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_set_capture_improvement_preference", {
+      p_enabled: true,
+      p_user_id: USER_ID,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.schema).not.toHaveBeenCalled();
+  });
 });
 
 function createLedgerSupabase() {
@@ -239,7 +254,9 @@ function ledgerRpcResult(functionName: string) {
           ? { code: "accepted" }
           : functionName === "cloud_ledger_delete_capture_improvement_samples"
             ? { code: "accepted" }
-            : BOOTSTRAP_RPC_DATA,
+            : functionName === "cloud_ledger_set_capture_improvement_preference"
+              ? { code: "accepted" }
+              : BOOTSTRAP_RPC_DATA,
     error: null,
   };
 }

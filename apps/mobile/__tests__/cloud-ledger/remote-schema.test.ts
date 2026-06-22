@@ -83,6 +83,11 @@ describe("Cloud Ledger remote schema", () => {
   it("exposes Capture Improvement Sample retention and deletion only through service-role commands", () => {
     const sql = readFileSync(CAPTURE_IMPROVEMENT_MIGRATION, "utf8").toLowerCase();
 
+    expect(sql).toContain("create table if not exists public.capture_improvement_preferences");
+    expect(sql).toContain("enabled boolean not null default true");
+    expect(sql).toContain(
+      "revoke all on public.capture_improvement_preferences from anon, authenticated"
+    );
     expect(sql).toContain(
       'drop policy if exists "users can insert own notification parse improvement samples"'
     );
@@ -95,6 +100,13 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).toContain(
       "create or replace function public.cloud_ledger_delete_capture_improvement_samples"
     );
+    expect(sql).toContain(
+      "create or replace function public.cloud_ledger_set_capture_improvement_preference"
+    );
+    expect(sql).toMatch(
+      /where capture_improvement_preferences\.user_id = p_user_id\s+and capture_improvement_preferences\.enabled = false/
+    );
+    expect(sql).toContain("do update set enabled = false");
     expect(sql).toMatch(
       /revoke execute on function public\.cloud_ledger_retain_capture_improvement_sample\([\s\S]*?integer\s*\) from public, anon, authenticated/
     );
@@ -106,6 +118,12 @@ describe("Cloud Ledger remote schema", () => {
     );
     expect(sql).toMatch(
       /grant execute on function public\.cloud_ledger_delete_capture_improvement_samples\(uuid\) to service_role/
+    );
+    expect(sql).toMatch(
+      /revoke execute on function public\.cloud_ledger_set_capture_improvement_preference\(uuid, boolean\) from public, anon, authenticated/
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_set_capture_improvement_preference\(uuid, boolean\) to service_role/
     );
   });
 });

@@ -1,7 +1,10 @@
 import { stripPii } from "@/features/email-capture/parsing.public";
 import { capturePipelineEvent } from "@/shared/lib";
 import { insertNotificationParseImprovementSample } from "./notification-parse-improvement-repository";
-export { deleteNotificationParseImprovementSamplesForUser } from "./notification-parse-improvement-repository";
+export {
+  deleteNotificationParseImprovementSamplesForUser,
+  setNotificationParseImprovementPreference,
+} from "./notification-parse-improvement-repository";
 
 export type ParseImprovementStatus = "failed" | "needs_review";
 export type ParseMethod = "regex" | "llm";
@@ -75,7 +78,7 @@ const COUNTERPARTY_RULES: readonly RedactionRule[] = [
   },
   {
     pattern:
-      /(\b(?:comercio|establecimiento|beneficiario|destinatario|para)\s+)(.+?)(?=\s+(?:el|con|tarjeta|cuenta|card)\b|[.;]|$)/gi,
+      /(\b(?:comercio|establecimiento|beneficiario|destinatario|para)\b\s*:?\s*)(.+?)(?=\s+(?:por|of|for|el|con|tarjeta|cuenta|card)\b|[.;]|$)/gi,
     replacement: "$1[COUNTERPARTY]",
   },
   {

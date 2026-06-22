@@ -31,6 +31,13 @@ export class ParseImprovementSamplePrivacyError extends Error {
   }
 }
 
+export class ParseImprovementSampleOptOutError extends Error {
+  constructor() {
+    super("Capture Improvement Preference is disabled");
+    this.name = "ParseImprovementSampleOptOutError";
+  }
+}
+
 type InsertNotificationParseImprovementSampleInput = {
   readonly userId: string;
   readonly sample: PersistedNotificationParseImprovementSample;
@@ -58,10 +65,16 @@ type CaptureImprovementApiResponse =
   | {
       readonly success: false;
       readonly error:
+        | "capture_improvement_opted_out"
         | "internal_error"
         | "invalid_capture_improvement_sample"
         | "unsafe_capture_improvement_sample";
     };
+type CaptureImprovementApiFailure = Extract<
+  CaptureImprovementApiResponse,
+  { readonly success: false }
+>;
+type CaptureImprovementApiFailureCode = CaptureImprovementApiFailure["error"];
 
 type RemoteErrorLike = {
   readonly context?: unknown;
@@ -111,6 +124,8 @@ const SENSITIVE_TEMPLATE_PATTERNS = [
 ].map((pattern) => new RegExp(pattern, "i"));
 const LOWERCASE_COUNTERPARTY_PATTERN =
   /\b[a-záéíóúñ]+(?:\s+[a-záéíóúñ]+)+\s*:?\s+te\s+(?:envio|envió|transfirio|transfirió)\b/i;
+const LOWERCASE_CONTEXT_ENTITY_PATTERN =
+  /\b(?:a|at|beneficiario|cerca de|comercio|de|destinatario|en|establecimiento|para)\b\s*:?\s+(?!\[)[a-záéíóúñ]{3,}(?:\s+(?!\[)[a-záéíóúñ]{2,})*/i;
 const RESIDUAL_ENTITY_PATTERN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ]{3,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*\b(?!\])/;
 const STRUCTURAL_TITLE_WORDS = new Set([
   "Abono",
@@ -139,18 +154,36 @@ const hasResidualTitleEntity = (template: string): boolean =>
     ([word]) => typeof word === "string" && !STRUCTURAL_TITLE_WORDS.has(word)
   );
 
+const TEMPLATE_PRIVACY_CHECKS: readonly {
+  readonly reason: string;
+  readonly isUnsafe: (template: string) => boolean;
+}[] = [
+  {
+    reason: "sensitive_value_pattern",
+    isUnsafe: (template) => SENSITIVE_TEMPLATE_PATTERNS.some((pattern) => pattern.test(template)),
+  },
+  {
+    reason: "lowercase_counterparty_pattern",
+    isUnsafe: (template) => LOWERCASE_COUNTERPARTY_PATTERN.test(template),
+  },
+  {
+    reason: "lowercase_context_entity_pattern",
+    isUnsafe: (template) => LOWERCASE_CONTEXT_ENTITY_PATTERN.test(template),
+  },
+  {
+    reason: "residual_entity_pattern",
+    isUnsafe: (template) => RESIDUAL_ENTITY_PATTERN.test(template),
+  },
+  {
+    reason: "residual_title_entity",
+    isUnsafe: hasResidualTitleEntity,
+  },
+];
+
 function assertTemplateIsAnonymized(template: string): void {
-  if (SENSITIVE_TEMPLATE_PATTERNS.some((pattern) => pattern.test(template))) {
-    throw new ParseImprovementSamplePrivacyError("sensitive_value_pattern");
-  }
-  if (LOWERCASE_COUNTERPARTY_PATTERN.test(template)) {
-    throw new ParseImprovementSamplePrivacyError("lowercase_counterparty_pattern");
-  }
-  if (RESIDUAL_ENTITY_PATTERN.test(template)) {
-    throw new ParseImprovementSamplePrivacyError("residual_entity_pattern");
-  }
-  if (hasResidualTitleEntity(template)) {
-    throw new ParseImprovementSamplePrivacyError("residual_title_entity");
+  const failure = TEMPLATE_PRIVACY_CHECKS.find((check) => check.isUnsafe(template));
+  if (failure) {
+    throw new ParseImprovementSamplePrivacyError(failure.reason);
   }
 }
 
@@ -187,18 +220,38 @@ export async function deleteNotificationParseImprovementSamplesForUser(_input: {
   await assertCaptureImprovementBoundarySuccess(data, error);
 }
 
+export async function setNotificationParseImprovementPreference(_input: {
+  readonly userId: string;
+  readonly enabled: boolean;
+}): Promise<void> {
+  const { data, error } = await getSupabase().functions.invoke<CaptureImprovementApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "setCaptureImprovementPreference",
+        enabled: _input.enabled,
+      },
+    }
+  );
+
+  await assertCaptureImprovementBoundarySuccess(data, error);
+}
+
 const assertCaptureImprovementBoundarySuccess = async (
   data: CaptureImprovementApiResponse | null,
   error: RemoteErrorLike | null
 ): Promise<void> => {
-  throwIfUnsafeSampleResponse(data);
+  throwIfKnownFailureResponse(data);
   await throwIfRemoteBoundaryError(error);
   throwIfMissingSuccess(data);
 };
 
-const throwIfUnsafeSampleResponse = (data: CaptureImprovementApiResponse | null): void => {
+const throwIfKnownFailureResponse = (data: CaptureImprovementApiResponse | null): void => {
   if (data?.success === false && data.error === "unsafe_capture_improvement_sample") {
     throw new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
+  }
+  if (data?.success === false && data.error === "capture_improvement_opted_out") {
+    throw new ParseImprovementSampleOptOutError();
   }
 };
 
@@ -207,6 +260,9 @@ const throwIfRemoteBoundaryError = async (error: RemoteErrorLike | null): Promis
     const remoteFailure = await readRemoteError(error);
     if (remoteFailure === "unsafe_capture_improvement_sample") {
       throw new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
+    }
+    if (remoteFailure === "capture_improvement_opted_out") {
+      throw new ParseImprovementSampleOptOutError();
     }
     throw new ParseImprovementSampleInsertError({
       details: error.message,
@@ -222,7 +278,12 @@ const throwIfMissingSuccess = (data: CaptureImprovementApiResponse | null): void
 
 const readRemoteError = async (
   error: RemoteErrorLike
-): Promise<"invalid_capture_improvement_sample" | "unsafe_capture_improvement_sample" | null> => {
+): Promise<
+  | "capture_improvement_opted_out"
+  | "invalid_capture_improvement_sample"
+  | "unsafe_capture_improvement_sample"
+  | null
+> => {
   if (error.context === undefined) {
     return null;
   }
@@ -245,17 +306,21 @@ const hasJsonReader = (value: unknown): value is { readonly json: () => Promise<
   "json" in value &&
   typeof (value as { readonly json?: unknown }).json === "function";
 
-const isCaptureImprovementApiFailure = (
-  value: unknown
-): value is Extract<CaptureImprovementApiResponse, { readonly success: false }> => {
+const CAPTURE_IMPROVEMENT_API_FAILURE_CODES = new Set<CaptureImprovementApiFailureCode>([
+  "capture_improvement_opted_out",
+  "invalid_capture_improvement_sample",
+  "unsafe_capture_improvement_sample",
+]);
+
+const isCaptureImprovementApiFailure = (value: unknown): value is CaptureImprovementApiFailure => {
   if (value === null || typeof value !== "object") {
     return false;
   }
   const record = value as Record<string, unknown>;
   return (
     record.success === false &&
-    (record.error === "invalid_capture_improvement_sample" ||
-      record.error === "unsafe_capture_improvement_sample")
+    typeof record.error === "string" &&
+    CAPTURE_IMPROVEMENT_API_FAILURE_CODES.has(record.error as CaptureImprovementApiFailureCode)
   );
 };
 

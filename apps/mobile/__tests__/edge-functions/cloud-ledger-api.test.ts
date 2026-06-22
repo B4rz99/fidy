@@ -250,6 +250,56 @@ describe("cloud-ledger-api Edge Function", () => {
     );
   });
 
+  it("rejects Capture Improvement Sample retention when the account has opted out", async () => {
+    const api = createCloudLedgerApiDeps({
+      retainCaptureImprovementResult: { code: "capture_improvement_opted_out" },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: CAPTURE_IMPROVEMENT_SAMPLE,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "capture_improvement_opted_out",
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(
+      USER_ID,
+      CAPTURE_IMPROVEMENT_SAMPLE
+    );
+  });
+
+  it("updates Capture Improvement Preference for the authenticated account only", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "setCaptureImprovementPreference",
+          userId: OTHER_USER_ID,
+          enabled: true,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.setCaptureImprovementPreference).toHaveBeenCalledWith(USER_ID, true);
+  });
+
   it("rejects unsafe Capture Improvement Samples before remote retention", async () => {
     const api = createCloudLedgerApiDeps();
 
@@ -286,6 +336,31 @@ describe("cloud-ledger-api Edge Function", () => {
           sample: {
             ...CAPTURE_IMPROVEMENT_SAMPLE,
             templateShape: "compra en exito cerca de bogota por [AMOUNT]",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects colon-labeled lowercase entities in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "Comercio: exito por [AMOUNT]. Beneficiario: juan perez.",
           },
         },
         "valid-token"
@@ -650,6 +725,7 @@ function createCloudLedgerApiDeps(
     readonly authError?: { readonly message: string };
     readonly bootstrapByUserId?: ReadonlyMap<string, LedgerBootstrapPayload>;
     readonly createTransactionResult?: unknown;
+    readonly retainCaptureImprovementResult?: unknown;
     readonly userId?: string;
   } = {}
 ) {
@@ -686,9 +762,12 @@ function createCloudLedgerApiDeps(
       )
     ),
     retainCaptureImprovementSample: vi.fn<(...args: any[]) => any>(() =>
-      Promise.resolve({ code: "accepted" })
+      Promise.resolve(options.retainCaptureImprovementResult ?? { code: "accepted" })
     ),
     deleteCaptureImprovementSamples: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve({ code: "accepted" })
+    ),
+    setCaptureImprovementPreference: vi.fn<(...args: any[]) => any>(() =>
       Promise.resolve({ code: "accepted" })
     ),
   };

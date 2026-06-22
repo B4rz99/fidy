@@ -3,6 +3,7 @@ import {
   deleteEmailParseImprovementSamplesForUser,
   flushPendingEmailParseImprovementSamples,
   isEmailCaptureDebugEnabled,
+  setEmailParseImprovementSharingPreference,
 } from "@/features/email-capture/parse-improvement.public";
 import { getDb } from "@/shared/db";
 import { captureError, captureWarning } from "@/shared/lib";
@@ -96,6 +97,7 @@ export function applyParseImprovementSharingToggle(input: {
     .catch(() => undefined)
     .then(async () => {
       if (!useSettingsStore.getState().shareAnonymizedParseSamples) return;
+      await setEmailParseImprovementSharingPreference({ enabled: true, userId });
       const result = await flushPendingEmailParseImprovementSamples({
         db,
         userId,

@@ -6,12 +6,16 @@ import type { UserId } from "@/shared/types/branded";
 const {
   mockCaptureError,
   mockCaptureWarning,
+  mockDeleteEmailParseImprovementSamplesForUser,
   mockEnqueueEmailParseImprovementRequests,
   mockFlushPendingEmailParseImprovementSamples,
 } = vi.hoisted(() => ({
   mockCaptureError: vi.fn<(error: unknown) => void>((_error) => undefined),
   mockCaptureWarning: vi.fn<(message: string, context?: unknown) => void>(
     (_message, _context) => undefined
+  ),
+  mockDeleteEmailParseImprovementSamplesForUser: vi.fn<(input: unknown) => Promise<unknown>>(() =>
+    Promise.resolve({ deleted: 0 })
   ),
   mockEnqueueEmailParseImprovementRequests: vi.fn<(input: unknown) => number>(() => 1),
   mockFlushPendingEmailParseImprovementSamples: vi.fn<
@@ -20,6 +24,8 @@ const {
 }));
 
 vi.mock("@/features/email-capture/services/email-parse-improvement-outbox", () => ({
+  deleteEmailParseImprovementSamplesForUser: (input: unknown) =>
+    mockDeleteEmailParseImprovementSamplesForUser(input),
   enqueueEmailParseImprovementRequests: (input: unknown) =>
     mockEnqueueEmailParseImprovementRequests(input),
   flushPendingEmailParseImprovementSamples: (input: unknown) =>
@@ -48,6 +54,7 @@ describe("shareEmailParseImprovementRequests", () => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     mockEnqueueEmailParseImprovementRequests.mockReturnValue(1);
+    mockDeleteEmailParseImprovementSamplesForUser.mockResolvedValue({ deleted: 0 });
     mockFlushPendingEmailParseImprovementSamples.mockResolvedValue({ shared: 1, failed: 0 });
   });
 
@@ -61,6 +68,17 @@ describe("shareEmailParseImprovementRequests", () => {
 
     expect(mockEnqueueEmailParseImprovementRequests).not.toHaveBeenCalled();
     expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
+  });
+
+  it("retries account-linked sample deletion when sharing is disabled", async () => {
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: false,
+      userId,
+      requests: [],
+    });
+
+    expect(mockDeleteEmailParseImprovementSamplesForUser).toHaveBeenCalledWith({ db, userId });
   });
 
   it("logs disabled sharing summaries when debug logging is enabled", async () => {

@@ -6,10 +6,11 @@ const mockAlert = vi.fn<(...args: any[]) => any>();
 const mockBuildSample = vi.fn<(...args: any[]) => any>(() => ({
   template: "[BANK] [AMOUNT] [MERCHANT]",
 }));
-const mockShareSample = vi.fn<(...args: any[]) => any>();
+const mockShareSample = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 const mockSetupNotificationCapture = vi.fn<(...args: any[]) => any>(() =>
   Promise.resolve(() => undefined)
 );
+let mockShareAnonymizedParseSamples = false;
 
 const mockPackages = ["com.todo1.mobile.co.bancolombia"];
 const mockDb = {} as any;
@@ -18,32 +19,35 @@ describe("useNotificationCapture", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    mockShareAnonymizedParseSamples = false;
   });
 
-  it("prompts separately for the same redacted template under different users", async () => {
-    const { useNotificationCapture } = await loadUseNotificationCapture();
-    const userOne = requireUserId("user-1");
-    const userTwo = requireUserId("user-2");
-
-    useNotificationCapture(mockDb, userOne);
-    triggerParseImprovementRequest();
-    useNotificationCapture(mockDb, userTwo);
-    triggerParseImprovementRequest();
-
-    expect(mockAlert).toHaveBeenCalledTimes(2);
-    expect(mockShareSample).not.toHaveBeenCalled();
-  });
-
-  it("dedupes repeated prompts for the same user and redacted template", async () => {
+  it("does not prompt or share when the global preference is disabled", async () => {
     const { useNotificationCapture } = await loadUseNotificationCapture();
     const userId = requireUserId("user-1");
 
     useNotificationCapture(mockDb, userId);
     triggerParseImprovementRequest();
+
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockShareSample).not.toHaveBeenCalled();
+  });
+
+  it("shares automatically without prompting when the global preference is enabled", async () => {
+    mockShareAnonymizedParseSamples = true;
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
     useNotificationCapture(mockDb, userId);
     triggerParseImprovementRequest();
 
-    expect(mockAlert).toHaveBeenCalledTimes(1);
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockShareSample).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consent: true,
+        userId,
+      })
+    );
   });
 });
 
@@ -55,7 +59,8 @@ async function loadUseNotificationCapture() {
       (mockShareSample as (...args: unknown[]) => unknown)(...args),
   }));
   vi.doMock("@/features/settings/hooks.public", () => ({
-    useSettingsStore: (selector: any) => selector({ shareAnonymizedParseSamples: false }),
+    useSettingsStore: (selector: any) =>
+      selector({ shareAnonymizedParseSamples: mockShareAnonymizedParseSamples }),
   }));
   vi.doMock("@/shared/components/rn", () => ({
     Alert: { alert: (...args: any[]) => mockAlert(...args) },

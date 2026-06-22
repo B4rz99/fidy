@@ -117,6 +117,14 @@ export type CaptureImprovementSampleAccepted = {
   readonly code: "accepted";
 };
 
+export type CaptureImprovementSampleRejected = {
+  readonly code: "capture_improvement_opted_out";
+};
+
+export type CaptureImprovementSampleOutcome =
+  | CaptureImprovementSampleAccepted
+  | CaptureImprovementSampleRejected;
+
 export type CloudLedgerApiError =
   | "missing_auth"
   | "invalid_auth"
@@ -125,6 +133,7 @@ export type CloudLedgerApiError =
   | "invalid_cursor"
   | "invalid_capture_improvement_sample"
   | "unsafe_capture_improvement_sample"
+  | "capture_improvement_opted_out"
   | "duplicate_transaction_id"
   | "invalid_ledger_reference"
   | "invalid_transaction"

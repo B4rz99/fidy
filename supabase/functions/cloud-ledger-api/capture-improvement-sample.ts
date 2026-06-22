@@ -70,7 +70,7 @@ const SENSITIVE_TEMPLATE_PATTERNS = [
 const LOWERCASE_COUNTERPARTY_PATTERN =
   /\b[a-záéíóúñ]+(?:\s+[a-záéíóúñ]+)+\s*:?\s+te\s+(?:envio|envió|transfirio|transfirió)\b/i;
 const LOWERCASE_CONTEXT_ENTITY_PATTERN =
-  /\b(?:a|at|beneficiario|cerca de|comercio|de|destinatario|en|establecimiento|para)\s+(?!\[)[a-záéíóúñ]{3,}(?:\s+(?!\[)[a-záéíóúñ]{2,})*/i;
+  /\b(?:a|at|beneficiario|cerca de|comercio|de|destinatario|en|establecimiento|para)\b\s*:?\s+(?!\[)[a-záéíóúñ]{3,}(?:\s+(?!\[)[a-záéíóúñ]{2,})*/i;
 const UNREDACTED_LOCATION_PATTERN =
   /\b(?:bogot[aá]|medell[ií]n|cali|barranquilla|cartagena|colombia)\b/i;
 const RESIDUAL_ENTITY_PATTERN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ]{3,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*\b(?!\])/;

@@ -114,6 +114,21 @@ describe("notification parse improvement samples", () => {
     expect(sample.template).not.toContain("juan perez");
   });
 
+  it("redacts lowercase entities after colon-labeled fields", () => {
+    const sample = buildNotificationParseImprovementSample({
+      rawText: "Comercio: exito por $50.000. Beneficiario: juan perez.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+
+    expect(sample.template).toBe(
+      "Comercio: [COUNTERPARTY] por [AMOUNT]. Beneficiario: [COUNTERPARTY]."
+    );
+    expect(sample.template).not.toMatch(/exito|juan perez/u);
+  });
+
   it("does not share samples without explicit consent", async () => {
     await shareNotificationParseImprovementSample({
       consent: false,

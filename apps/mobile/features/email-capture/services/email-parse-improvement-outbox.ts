@@ -2,6 +2,7 @@ import { and, asc, count, eq, gt, isNull, or } from "drizzle-orm";
 import {
   buildNotificationParseImprovementSample,
   deleteCaptureParseImprovementSamplesForUser,
+  setCaptureParseImprovementPreference,
   shareCaptureParseImprovementSample,
 } from "@/features/capture-sources/diagnostics.public";
 import type { AnyDb } from "@/shared/db";
@@ -52,6 +53,7 @@ const getPrivacyReason = (error: unknown): string | null =>
 
 const isPermanentShareFailure = (error: unknown): boolean => {
   if (getErrorName(error) === "ParseImprovementSamplePrivacyError") return true;
+  if (getErrorName(error) === "ParseImprovementSampleOptOutError") return true;
   const code = getErrorCode(error);
   return getErrorName(error) === "ParseImprovementSampleInsertError" && code !== null
     ? PERMANENT_INSERT_ERROR_CODES.has(code)
@@ -83,6 +85,8 @@ export async function deleteEmailParseImprovementSamplesForUser(input: {
   readonly now?: Date;
 }): Promise<{ readonly deleted: number }> {
   const deletedAt = toIsoDateTime(input.now ?? new Date());
+  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
+
   const deleted = input.db
     .update(emailParseImprovementSamples)
     .set({ deletedAt })
@@ -94,9 +98,15 @@ export async function deleteEmailParseImprovementSamplesForUser(input: {
     )
     .run().changes;
 
-  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
   logParseImprovementOutboxForDebug("delete", { deleted });
   return { deleted };
+}
+
+export async function setEmailParseImprovementSharingPreference(input: {
+  readonly userId: UserId;
+  readonly enabled: boolean;
+}): Promise<void> {
+  await setCaptureParseImprovementPreference(input);
 }
 
 export function enqueueEmailParseImprovementRequests(input: {

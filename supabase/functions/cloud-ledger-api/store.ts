@@ -1,6 +1,7 @@
 import type {
   CaptureImprovementSample,
   CaptureImprovementSampleAccepted,
+  CaptureImprovementSampleOutcome,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
   CloudLedgerCreateTransactionOutcome,
@@ -43,6 +44,11 @@ type DeleteCaptureImprovementSamplesRpcArgs = {
   readonly p_user_id: string;
 };
 
+type SetCaptureImprovementPreferenceRpcArgs = {
+  readonly p_user_id: string;
+  readonly p_enabled: boolean;
+};
+
 type SupabaseLike = {
   rpc(
     functionName: string,
@@ -51,9 +57,11 @@ type SupabaseLike = {
       | CreateTransactionRpcArgs
       | DeleteCaptureImprovementSamplesRpcArgs
       | RetainCaptureImprovementSampleRpcArgs
+      | SetCaptureImprovementPreferenceRpcArgs
   ): Promise<{
     readonly data:
       | CaptureImprovementSampleAccepted
+      | CaptureImprovementSampleOutcome
       | CloudLedgerBootstrapPayload
       | CloudLedgerCreateTransactionOutcome
       | null;
@@ -67,6 +75,8 @@ const CLOUD_LEDGER_RETAIN_CAPTURE_IMPROVEMENT_SAMPLE_RPC =
   "cloud_ledger_retain_capture_improvement_sample";
 const CLOUD_LEDGER_DELETE_CAPTURE_IMPROVEMENT_SAMPLES_RPC =
   "cloud_ledger_delete_capture_improvement_samples";
+const CLOUD_LEDGER_SET_CAPTURE_IMPROVEMENT_PREFERENCE_RPC =
+  "cloud_ledger_set_capture_improvement_preference";
 // ADR-0007/#532 make Supabase-backed Cloud Ledger the financial source of truth;
 // this service-role RPC is the Remote API Boundary, not mobile direct table access.
 
@@ -80,6 +90,8 @@ export function createCloudLedgerStore(supabase: SupabaseLike) {
       retainCaptureImprovementSample(supabase, userId, sample),
     deleteCaptureImprovementSamples: (userId: string) =>
       deleteCaptureImprovementSamples(supabase, userId),
+    setCaptureImprovementPreference: (userId: string, enabled: boolean) =>
+      setCaptureImprovementPreference(supabase, userId, enabled),
   };
 }
 
@@ -129,7 +141,7 @@ async function retainCaptureImprovementSample(
   supabase: SupabaseLike,
   userId: string,
   sample: CaptureImprovementSample
-): Promise<CaptureImprovementSampleAccepted> {
+): Promise<CaptureImprovementSampleOutcome> {
   const response = await supabase.rpc(CLOUD_LEDGER_RETAIN_CAPTURE_IMPROVEMENT_SAMPLE_RPC, {
     p_confidence_bucket: sample.confidenceBucket,
     p_extractor_method: sample.extractor.method,
@@ -146,7 +158,7 @@ async function retainCaptureImprovementSample(
   if (response.data === null) {
     throw new Error("Unable to retain Capture Improvement Sample: missing response");
   }
-  return response.data as CaptureImprovementSampleAccepted;
+  return response.data as CaptureImprovementSampleOutcome;
 }
 
 async function deleteCaptureImprovementSamples(
@@ -160,6 +172,23 @@ async function deleteCaptureImprovementSamples(
   throwIfError(response.error, "delete Capture Improvement Samples");
   if (response.data === null) {
     throw new Error("Unable to delete Capture Improvement Samples: missing response");
+  }
+  return response.data as CaptureImprovementSampleAccepted;
+}
+
+async function setCaptureImprovementPreference(
+  supabase: SupabaseLike,
+  userId: string,
+  enabled: boolean
+): Promise<CaptureImprovementSampleAccepted> {
+  const response = await supabase.rpc(CLOUD_LEDGER_SET_CAPTURE_IMPROVEMENT_PREFERENCE_RPC, {
+    p_enabled: enabled,
+    p_user_id: userId,
+  });
+
+  throwIfError(response.error, "set Capture Improvement Preference");
+  if (response.data === null) {
+    throw new Error("Unable to set Capture Improvement Preference: missing response");
   }
   return response.data as CaptureImprovementSampleAccepted;
 }

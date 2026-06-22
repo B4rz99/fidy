@@ -1,5 +1,16 @@
 create extension if not exists pgcrypto with schema extensions;
 
+create table if not exists public.capture_improvement_preferences (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  enabled boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.capture_improvement_preferences enable row level security;
+alter table public.capture_improvement_preferences force row level security;
+
+revoke all on public.capture_improvement_preferences from anon, authenticated;
+
 drop policy if exists "Users can insert own notification parse improvement samples"
   on public.notification_parse_improvement_samples;
 
@@ -37,6 +48,15 @@ begin
     or p_extractor_version is distinct from 1
   then
     return jsonb_build_object('code', 'invalid_capture_improvement_sample');
+  end if;
+
+  if exists (
+    select 1
+    from public.capture_improvement_preferences
+    where capture_improvement_preferences.user_id = p_user_id
+      and capture_improvement_preferences.enabled = false
+  ) then
+    return jsonb_build_object('code', 'capture_improvement_opted_out');
   end if;
 
   v_source := case
@@ -80,8 +100,53 @@ security definer
 set search_path = ''
 as $$
 begin
+  insert into public.capture_improvement_preferences (
+    user_id,
+    enabled,
+    updated_at
+  ) values (
+    p_user_id,
+    false,
+    now()
+  )
+  on conflict (user_id) do update set enabled = false, updated_at = excluded.updated_at;
+
   delete from public.notification_parse_improvement_samples
   where notification_parse_improvement_samples.user_id = p_user_id;
+
+  return jsonb_build_object('code', 'accepted');
+end;
+$$;
+
+create or replace function public.cloud_ledger_set_capture_improvement_preference(
+  p_user_id uuid,
+  p_enabled boolean
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if p_user_id is null or p_enabled is null then
+    return jsonb_build_object('code', 'invalid_capture_improvement_sample');
+  end if;
+
+  insert into public.capture_improvement_preferences (
+    user_id,
+    enabled,
+    updated_at
+  ) values (
+    p_user_id,
+    p_enabled,
+    now()
+  )
+  on conflict (user_id) do update set enabled = excluded.enabled, updated_at = excluded.updated_at;
+
+  if p_enabled = false then
+    delete from public.notification_parse_improvement_samples
+    where notification_parse_improvement_samples.user_id = p_user_id;
+  end if;
 
   return jsonb_build_object('code', 'accepted');
 end;
@@ -114,3 +179,7 @@ grant execute on function public.cloud_ledger_retain_capture_improvement_sample(
 revoke execute on function public.cloud_ledger_delete_capture_improvement_samples(uuid) from public, anon, authenticated;
 
 grant execute on function public.cloud_ledger_delete_capture_improvement_samples(uuid) to service_role;
+
+revoke execute on function public.cloud_ledger_set_capture_improvement_preference(uuid, boolean) from public, anon, authenticated;
+
+grant execute on function public.cloud_ledger_set_capture_improvement_preference(uuid, boolean) to service_role;

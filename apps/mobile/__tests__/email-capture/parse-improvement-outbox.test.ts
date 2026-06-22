@@ -317,6 +317,24 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("dead-letters server opt-out rejections instead of retrying stale retention", async () => {
+    const { db, sqlite } = createDb();
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+    const error = new Error("opted out");
+    error.name = "ParseImprovementSampleOptOutError";
+    mockShareCaptureParseImprovementSample.mockRejectedValueOnce(error);
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({ db, userId: USER_ID, now: NOW })
+    ).resolves.toMatchObject({ shared: 0, failed: 1 });
+
+    const [sample] = db.select().from(emailParseImprovementSamples).all();
+    expect(sample?.sharedAt).toBeNull();
+    expect(sample?.deletedAt).toBe("2026-05-19T10:00:00.000Z");
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(0);
+    sqlite.close();
+  });
+
   it("dead-letters non-retryable insert failures", async () => {
     const { db, sqlite } = createDb();
     enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
@@ -427,6 +445,25 @@ describe("email parse improvement outbox", () => {
     expect(db.select().from(emailParseImprovementSamples).all()).toEqual([
       expect.objectContaining({ deletedAt: "2026-05-19T10:00:00.000Z" }),
       expect.objectContaining({ deletedAt: "2026-05-19T10:00:00.000Z" }),
+    ]);
+    sqlite.close();
+  });
+
+  it("keeps local user-linked samples retryable when remote opt-out deletion fails", async () => {
+    const { db, sqlite } = createDb();
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+    await flushPendingEmailParseImprovementSamples({ db, userId: USER_ID, now: NOW });
+    mockDeleteCaptureParseImprovementSamplesForUser.mockRejectedValueOnce(new Error("network"));
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("network");
+
+    expect(db.select().from(emailParseImprovementSamples).all()).toEqual([
+      expect.objectContaining({
+        sharedAt: "2026-05-19T10:00:00.000Z",
+        deletedAt: null,
+      }),
     ]);
     sqlite.close();
   });

@@ -4,6 +4,7 @@ import type { UserId } from "@/shared/types/branded";
 import { isEmailCaptureDebugEnabled } from "./email-capture-debug";
 import type { EmailParseImprovementRequest } from "./email-pipeline-service/types";
 import {
+  deleteEmailParseImprovementSamplesForUser,
   enqueueEmailParseImprovementRequests,
   flushPendingEmailParseImprovementSamples,
 } from "./email-parse-improvement-outbox";
@@ -32,6 +33,18 @@ const logDisabledParseImprovementSharing = (requestCount: number): void => {
     failed: 0,
   });
 };
+
+const retryDisabledParseImprovementDeletion = (input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+}) =>
+  deleteEmailParseImprovementSamplesForUser(input).catch((error) => {
+    captureError(error);
+    captureWarning("email_parse_improvement_sample_delete_failed", {
+      errorType: getErrorName(error),
+    });
+    return { deleted: 0 };
+  });
 
 const shouldShareParseImprovements = (input: {
   readonly enabled: boolean;
@@ -83,6 +96,7 @@ export async function shareEmailParseImprovementRequests(input: {
   readonly isSharingEnabled?: () => boolean;
 }): Promise<void> {
   if (!shouldShareParseImprovements(input)) {
+    await retryDisabledParseImprovementDeletion({ db: input.db, userId: input.userId });
     logDisabledParseImprovementSharing(input.requests.length);
     return;
   }

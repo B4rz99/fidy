@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   deleteNotificationParseImprovementSamplesForUser,
   insertNotificationParseImprovementSample,
+  setNotificationParseImprovementPreference,
 } from "@/features/capture-sources/lib/notification-parse-improvement-repository";
 
 const mockFunctionsInvoke = vi.fn<(...args: any[]) => any>();
@@ -112,6 +113,26 @@ describe("notification parse improvement repository", () => {
     ).rejects.toThrow("sensitive values");
   });
 
+  it("throws an opt-out failure when the Remote API Boundary rejects retention for preference", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: false, error: "capture_improvement_opted_out" },
+      error: null,
+    });
+
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "Compra por [AMOUNT] en [MERCHANT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toMatchObject({ name: "ParseImprovementSampleOptOutError" });
+  });
+
   it("deletes user-linked samples through the Remote API Boundary", async () => {
     mockFunctionsInvoke.mockResolvedValueOnce({
       data: { success: true, data: { code: "accepted" } },
@@ -123,6 +144,24 @@ describe("notification parse improvement repository", () => {
     expect(mockFunctionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
       body: {
         action: "deleteCaptureImprovementSamples",
+      },
+    });
+    expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("user-1");
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("updates Capture Improvement Preference through the Remote API Boundary", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: true, data: { code: "accepted" } },
+      error: null,
+    });
+
+    await setNotificationParseImprovementPreference({ userId: "user-1", enabled: true });
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
+      body: {
+        action: "setCaptureImprovementPreference",
+        enabled: true,
       },
     });
     expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("user-1");
@@ -186,6 +225,23 @@ describe("notification parse improvement repository", () => {
         userId: "user-1",
         sample: {
           template: "nequi: juan perez te envio [AMOUNT]",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+  });
+
+  it("rejects residual lowercase entities after colon-labeled fields", async () => {
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "Comercio: exito por [AMOUNT]. Beneficiario: juan perez.",
           source: "notification_android",
           status: "failed",
           confidenceBucket: "none",
