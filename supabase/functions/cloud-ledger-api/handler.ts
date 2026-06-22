@@ -43,6 +43,8 @@ type CreateTransactionCommandReadResult =
   | { readonly kind: "invalid_command" };
 
 const CLIENT_TRANSACTION_ID_PATTERN = /^txn-[A-Za-z0-9][A-Za-z0-9_-]*$/;
+const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
 export async function handleCloudLedgerRequest(
   request: Request,
@@ -190,15 +192,16 @@ function readCreateTransactionCommand(body: unknown): CreateTransactionCommandRe
   const categoryId = readNullableString(transactionRecord, "categoryId");
   const description = readNullableString(transactionRecord, "description");
   const type = readTransactionType(transactionRecord.type);
+  const amount = readCopAmount(transactionRecord.amount);
   const currency = readCopCurrency(transactionRecord.currency);
   const accountId = readRequiredString(transactionRecord, "accountId");
-  const date = readRequiredString(transactionRecord, "date");
+  const date = readIsoDate(transactionRecord.date);
   if (categoryId === undefined || accountId === null) {
     return { kind: "invalid_ledger_reference" };
   }
   if (
     type === null ||
-    typeof transactionRecord.amount !== "number" ||
+    amount === null ||
     currency === null ||
     description === undefined ||
     date === null
@@ -213,7 +216,7 @@ function readCreateTransactionCommand(body: unknown): CreateTransactionCommandRe
       transaction: {
         id,
         type,
-        amount: transactionRecord.amount,
+        amount,
         currency,
         categoryId,
         accountId,
@@ -234,6 +237,34 @@ function readTransactionType(value: unknown): "income" | "expense" | null {
 
 function readCopCurrency(value: unknown): "COP" | null {
   return value === "COP" ? "COP" : null;
+}
+
+function readCopAmount(value: unknown): number | null {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value > 0 &&
+    value <= POSTGRES_INTEGER_MAX
+    ? value
+    : null;
+}
+
+function readIsoDate(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const match = ISO_DATE_PATTERN.exec(value);
+  if (match === null) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+    ? value
+    : null;
 }
 
 function readOptionalCursor(body: unknown): LedgerCursor | null | undefined {
