@@ -1,0 +1,26 @@
+apps/mobile/features/advisor/financial-context-packet.ts
+  s_5f089e67728958::t_6402310993f830 72-79,158-174,176-179,219,226,235,238-242
+supabase/functions/ai-chat/financial-context-packet.ts
+  s_5f089e67728958::t_d943f131d3f722 67-75,83,91-92,103,306-308,310,317
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_5f089e67728958::t_aa6b546a4b013a 333-334,346,349-350
+  s_5f089e67728958::t_25635a8a2801ce 278-279
+  s_5f089e67728958::t_64c2c788f47dae 255-256,268,271-272
+  s_5f089e67728958::t_7fd31f5da63c51 96-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "79ede0d64e8e4e017ae30de138f03766256b6437",
+  "prompts": {},
+  "sessions": {
+    "s_5f089e67728958": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0cf-745f-7063-8434-8b846f4e6f01",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
