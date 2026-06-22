@@ -72,6 +72,8 @@ const LOWERCASE_COUNTERPARTY_PATTERN =
   /\b[a-záéíóúñ]+(?:\s+[a-záéíóúñ]+)+\s*:?\s+te\s+(?:envio|envió|transfirio|transfirió)\b/i;
 const LOWERCASE_CONTEXT_ENTITY_PATTERN =
   /\b(?:a|at|beneficiario|cerca de|comercio|de|destinatario|en|establecimiento|para)\b\s*:?\s+(?!\[)[a-záéíóúñ]{3,}(?:\s+(?!\[)[a-záéíóúñ]{2,})*/i;
+const LOWERCASE_UNLABELED_COUNTERPARTY_PATTERN =
+  /(?:^|[.;:]\s*)[a-záéíóúñ]{3,}(?:\s+[a-záéíóúñ]{2,}){0,3}\s+(?:compra|pago|purchase|payment)\b/;
 const UNREDACTED_LOCATION_PATTERN =
   /\b(?:bogot[aá]|medell[ií]n|cali|barranquilla|cartagena|colombia)\b/i;
 const RESIDUAL_ENTITY_PATTERN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ]{3,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*\b(?!\])/;
@@ -98,7 +100,56 @@ const STRUCTURAL_TITLE_WORDS = new Set([
   "Tel",
   "Transferencia",
 ]);
+const STRUCTURAL_LOWERCASE_WORDS = new Set([
+  "abono",
+  "account",
+  "autorizacion",
+  "autorización",
+  "authorization",
+  "beneficiario",
+  "card",
+  "cel",
+  "cerca",
+  "comercio",
+  "compra",
+  "con",
+  "consignacion",
+  "consignación",
+  "cuenta",
+  "de",
+  "deposito",
+  "depósito",
+  "desde",
+  "destinatario",
+  "el",
+  "en",
+  "envio",
+  "envió",
+  "establecimiento",
+  "for",
+  "from",
+  "informa",
+  "near",
+  "nuevo",
+  "pago",
+  "para",
+  "payment",
+  "por",
+  "purchase",
+  "recibiste",
+  "ref",
+  "referencia",
+  "retiro",
+  "tarjeta",
+  "tel",
+  "the",
+  "transferencia",
+  "transfirio",
+  "transfirió",
+  "with",
+]);
 const RESIDUAL_TITLE_TOKEN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\b(?!\])/g;
+const RESIDUAL_LOWERCASE_TOKEN = /(?<!\[)\b[a-záéíóúñ]{3,}\b(?!\])/g;
 
 export function readCaptureImprovementSample(body: unknown): CaptureImprovementSampleReadResult {
   if (body === null || typeof body !== "object") {
@@ -178,6 +229,8 @@ function hasUnsafeTemplateContent(templateShape: string): boolean {
     SENSITIVE_TEMPLATE_PATTERNS.some((pattern) => pattern.test(templateShape)) ||
     LOWERCASE_COUNTERPARTY_PATTERN.test(templateShape) ||
     LOWERCASE_CONTEXT_ENTITY_PATTERN.test(templateShape) ||
+    LOWERCASE_UNLABELED_COUNTERPARTY_PATTERN.test(templateShape) ||
+    hasResidualLowercaseEntity(templateShape) ||
     UNREDACTED_LOCATION_PATTERN.test(templateShape) ||
     RESIDUAL_ENTITY_PATTERN.test(templateShape) ||
     hasResidualTitleEntity(templateShape)
@@ -187,5 +240,11 @@ function hasUnsafeTemplateContent(templateShape: string): boolean {
 function hasResidualTitleEntity(templateShape: string): boolean {
   return Array.from(templateShape.matchAll(RESIDUAL_TITLE_TOKEN)).some(
     ([word]) => typeof word === "string" && !STRUCTURAL_TITLE_WORDS.has(word)
+  );
+}
+
+function hasResidualLowercaseEntity(templateShape: string): boolean {
+  return Array.from(templateShape.matchAll(RESIDUAL_LOWERCASE_TOKEN)).some(
+    ([word]) => typeof word === "string" && !STRUCTURAL_LOWERCASE_WORDS.has(word)
   );
 }

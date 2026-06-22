@@ -9,10 +9,12 @@ export {
 export type ParseImprovementStatus = "failed" | "needs_review";
 export type ParseMethod = "regex" | "llm";
 export type ConfidenceBucket = "none" | "low" | "medium" | "high";
+export type CaptureImprovementProviderCategory = "bank" | "payment_app" | "wallet" | "unknown";
 
 export type ParseImprovementInput = {
   readonly rawText: string;
   readonly parserTemplate?: string;
+  readonly providerCategory?: CaptureImprovementProviderCategory;
   readonly senderDomain?: string | null;
   readonly source: string;
   readonly status: ParseImprovementStatus;
@@ -26,6 +28,13 @@ export type ShareParseImprovementInput = ParseImprovementInput & {
 };
 
 const MAX_PARSE_IMPROVEMENT_TEMPLATE_LENGTH = 1000;
+const PROVIDER_CATEGORY_BY_SOURCE: Readonly<
+  Partial<Record<string, CaptureImprovementProviderCategory>>
+> = {
+  google_pay: "wallet",
+};
+const EMAIL_CAPTURE_IMPROVEMENT_SOURCES = new Set(["email_gmail", "email_outlook"]);
+const BANK_PROVIDER_DOMAIN_PATTERN = /(?:banco|bank|bbva|davibank|davivienda|nequi|bancolombia)/iu;
 
 type RedactionRule = {
   readonly pattern: RegExp;
@@ -69,6 +78,11 @@ const SENSITIVE_VALUE_RULES: readonly RedactionRule[] = [
 ];
 
 const COUNTERPARTY_RULES: readonly RedactionRule[] = [
+  {
+    pattern:
+      /(^|[.;:]\s*)([a-záéíóúñ]{3,}(?:\s+[a-záéíóúñ]{2,}){0,3})(\s+(?:compra|purchase|pago|payment)\b)/g,
+    replacement: "$1[COUNTERPARTY]$3",
+  },
   {
     pattern: /(\ben\s+)(.+?)(?=\s+(?:el|con|tarjeta|cuenta|card)\b|[.;]|$)/gi,
     replacement: "$1[MERCHANT]",
@@ -126,12 +140,66 @@ const STRUCTURAL_TITLE_WORDS = new Set([
   "Tel",
   "Transferencia",
 ]);
+const STRUCTURAL_LOWERCASE_WORDS = new Set([
+  "abono",
+  "account",
+  "autorizacion",
+  "autorización",
+  "authorization",
+  "beneficiario",
+  "card",
+  "cel",
+  "cerca",
+  "comercio",
+  "compra",
+  "con",
+  "consignacion",
+  "consignación",
+  "cuenta",
+  "de",
+  "deposito",
+  "depósito",
+  "desde",
+  "destinatario",
+  "el",
+  "en",
+  "envio",
+  "envió",
+  "establecimiento",
+  "for",
+  "from",
+  "informa",
+  "near",
+  "nuevo",
+  "pago",
+  "para",
+  "payment",
+  "por",
+  "purchase",
+  "recibiste",
+  "ref",
+  "referencia",
+  "retiro",
+  "tarjeta",
+  "tel",
+  "the",
+  "transferencia",
+  "transfirio",
+  "transfirió",
+  "with",
+]);
 
 const RESIDUAL_ENTITY_TOKEN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\b(?!\])/g;
+const RESIDUAL_LOWERCASE_ENTITY_TOKEN = /(?<!\[)\b[a-záéíóúñ]{3,}\b(?!\])/g;
 
 const redactResidualEntityTokens = (text: string): string =>
   text.replace(RESIDUAL_ENTITY_TOKEN, (word) =>
     STRUCTURAL_TITLE_WORDS.has(word) ? word : "[ENTITY]"
+  );
+
+const redactResidualLowercaseEntityTokens = (text: string): string =>
+  text.replace(RESIDUAL_LOWERCASE_ENTITY_TOKEN, (word) =>
+    STRUCTURAL_LOWERCASE_WORDS.has(word) ? word : "[ENTITY]"
   );
 
 function confidenceBucket(confidence: number | null): ConfidenceBucket {
@@ -144,9 +212,11 @@ function confidenceBucket(confidence: number | null): ConfidenceBucket {
 export function anonymizeNotificationParseSample(rawText: string): string {
   return normalizeTemplateWhitespace(
     redactResidualEntityTokens(
-      COUNTERPARTY_RULES.reduce(
-        applyRedactionRule,
-        SENSITIVE_VALUE_RULES.reduce(applyRedactionRule, stripPii(rawText))
+      redactResidualLowercaseEntityTokens(
+        COUNTERPARTY_RULES.reduce(
+          applyRedactionRule,
+          SENSITIVE_VALUE_RULES.reduce(applyRedactionRule, stripPii(rawText))
+        )
       )
     )
   );
@@ -156,16 +226,36 @@ export function buildNotificationParseImprovementSample(input: ParseImprovementI
   const template = clampParseImprovementTemplate(
     anonymizeNotificationParseSample(input.parserTemplate ?? input.rawText)
   );
+  const providerCategory = captureImprovementProviderCategory(input);
 
   return {
     template,
-    ...(input.senderDomain ? { senderDomain: input.senderDomain } : {}),
+    ...(providerCategory ? { providerCategory } : {}),
     source: input.source,
     status: input.status,
     confidenceBucket: confidenceBucket(input.confidence),
     parseMethod: input.parseMethod,
   };
 }
+
+const captureImprovementProviderCategory = (
+  input: ParseImprovementInput
+): CaptureImprovementProviderCategory | null =>
+  input.providerCategory ??
+  PROVIDER_CATEGORY_BY_SOURCE[input.source] ??
+  emailProviderCategory(input);
+
+const emailProviderCategory = (
+  input: ParseImprovementInput
+): CaptureImprovementProviderCategory | null =>
+  EMAIL_CAPTURE_IMPROVEMENT_SOURCES.has(input.source)
+    ? providerCategoryFromSenderDomain(input.senderDomain)
+    : null;
+
+const providerCategoryFromSenderDomain = (
+  senderDomain: string | null | undefined
+): CaptureImprovementProviderCategory =>
+  senderDomain != null && BANK_PROVIDER_DOMAIN_PATTERN.test(senderDomain) ? "bank" : "unknown";
 
 const LENGTH_BUCKETS = [
   { max: 20, label: "0_19" },

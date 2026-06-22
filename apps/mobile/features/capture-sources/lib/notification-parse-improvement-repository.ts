@@ -2,7 +2,7 @@ import { getSupabase } from "@/shared/db";
 
 export type PersistedNotificationParseImprovementSample = {
   readonly template: string;
-  readonly senderDomain?: string | null;
+  readonly providerCategory?: CaptureImprovementProviderCategory;
   readonly source: string;
   readonly status: "failed" | "needs_review";
   readonly confidenceBucket: "none" | "low" | "medium" | "high";
@@ -100,7 +100,6 @@ const PROVIDER_CATEGORY_BY_SOURCE: Readonly<
   google_pay: "wallet",
   notification_android: "unknown",
 };
-const BANK_PROVIDER_DOMAIN_PATTERN = /(?:banco|bank|bbva|davibank|davivienda|nequi|bancolombia)/iu;
 
 const SENSITIVE_TEMPLATE_PATTERNS = [
   String.raw`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`,
@@ -127,6 +126,8 @@ const LOWERCASE_COUNTERPARTY_PATTERN =
   /\b[a-záéíóúñ]+(?:\s+[a-záéíóúñ]+)+\s*:?\s+te\s+(?:envio|envió|transfirio|transfirió)\b/i;
 const LOWERCASE_CONTEXT_ENTITY_PATTERN =
   /\b(?:a|at|beneficiario|cerca de|comercio|de|destinatario|en|establecimiento|para)\b\s*:?\s+(?!\[)[a-záéíóúñ]{3,}(?:\s+(?!\[)[a-záéíóúñ]{2,})*/i;
+const LOWERCASE_UNLABELED_COUNTERPARTY_PATTERN =
+  /(?:^|[.;:]\s*)[a-záéíóúñ]{3,}(?:\s+[a-záéíóúñ]{2,}){0,3}\s+(?:compra|pago|purchase|payment)\b/;
 const UNREDACTED_LOCATION_PATTERN =
   /\b(?:bogot[aá]|medell[ií]n|cali|barranquilla|cartagena|colombia)\b/i;
 const RESIDUAL_ENTITY_PATTERN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ]{3,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*\b(?!\])/;
@@ -153,11 +154,65 @@ const STRUCTURAL_TITLE_WORDS = new Set([
   "Tel",
   "Transferencia",
 ]);
+const STRUCTURAL_LOWERCASE_WORDS = new Set([
+  "abono",
+  "account",
+  "autorizacion",
+  "autorización",
+  "authorization",
+  "beneficiario",
+  "card",
+  "cel",
+  "cerca",
+  "comercio",
+  "compra",
+  "con",
+  "consignacion",
+  "consignación",
+  "cuenta",
+  "de",
+  "deposito",
+  "depósito",
+  "desde",
+  "destinatario",
+  "el",
+  "en",
+  "envio",
+  "envió",
+  "establecimiento",
+  "for",
+  "from",
+  "informa",
+  "near",
+  "nuevo",
+  "pago",
+  "para",
+  "payment",
+  "por",
+  "purchase",
+  "recibiste",
+  "ref",
+  "referencia",
+  "retiro",
+  "tarjeta",
+  "tel",
+  "the",
+  "transferencia",
+  "transfirio",
+  "transfirió",
+  "with",
+]);
 const RESIDUAL_TITLE_TOKEN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\b(?!\])/g;
+const RESIDUAL_LOWERCASE_TOKEN = /(?<!\[)\b[a-záéíóúñ]{3,}\b(?!\])/g;
 
 const hasResidualTitleEntity = (template: string): boolean =>
   Array.from(template.matchAll(RESIDUAL_TITLE_TOKEN)).some(
     ([word]) => typeof word === "string" && !STRUCTURAL_TITLE_WORDS.has(word)
+  );
+
+const hasResidualLowercaseEntity = (template: string): boolean =>
+  Array.from(template.matchAll(RESIDUAL_LOWERCASE_TOKEN)).some(
+    ([word]) => typeof word === "string" && !STRUCTURAL_LOWERCASE_WORDS.has(word)
   );
 
 const TEMPLATE_PRIVACY_CHECKS: readonly {
@@ -175,6 +230,14 @@ const TEMPLATE_PRIVACY_CHECKS: readonly {
   {
     reason: "lowercase_context_entity_pattern",
     isUnsafe: (template) => LOWERCASE_CONTEXT_ENTITY_PATTERN.test(template),
+  },
+  {
+    reason: "lowercase_unlabeled_counterparty_pattern",
+    isUnsafe: (template) => LOWERCASE_UNLABELED_COUNTERPARTY_PATTERN.test(template),
+  },
+  {
+    reason: "residual_lowercase_entity",
+    isUnsafe: hasResidualLowercaseEntity,
   },
   {
     reason: "unredacted_location",
@@ -368,14 +431,7 @@ const sourceFamily = (source: string): CaptureImprovementSourceFamily => {
 const providerCategory = (
   sample: PersistedNotificationParseImprovementSample
 ): CaptureImprovementProviderCategory => {
+  if (sample.providerCategory !== undefined) return sample.providerCategory;
   const category = PROVIDER_CATEGORY_BY_SOURCE[sample.source];
-  return category === undefined ? providerCategoryFromSenderDomain(sample.senderDomain) : category;
+  return category === undefined ? "unknown" : category;
 };
-
-const providerCategoryFromSenderDomain = (
-  senderDomain: string | null | undefined
-): CaptureImprovementProviderCategory =>
-  senderDomain == null ? "unknown" : providerCategoryFromDomain(senderDomain);
-
-const providerCategoryFromDomain = (senderDomain: string): CaptureImprovementProviderCategory =>
-  BANK_PROVIDER_DOMAIN_PATTERN.test(senderDomain) ? "bank" : "payment_app";

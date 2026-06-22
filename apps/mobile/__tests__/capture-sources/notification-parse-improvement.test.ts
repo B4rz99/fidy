@@ -142,6 +142,37 @@ describe("notification parse improvement samples", () => {
     expect(sample.template).not.toMatch(/ABC123XYZ|ZX98A76/u);
   });
 
+  it("redacts unlabeled lowercase merchant and person tokens before payment actions", () => {
+    const merchantSample = buildNotificationParseImprovementSample({
+      rawText: "exito compra por $50.000.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+    const personSample = buildNotificationParseImprovementSample({
+      rawText: "juan perez pago por $50.000.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+    const unlabeledSample = buildNotificationParseImprovementSample({
+      rawText: "rappi retiro por $50.000.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+
+    expect(merchantSample.template).toBe("[COUNTERPARTY] compra por [AMOUNT].");
+    expect(personSample.template).toBe("[COUNTERPARTY] pago por [AMOUNT].");
+    expect(unlabeledSample.template).toBe("[ENTITY] retiro por [AMOUNT].");
+    expect(
+      `${merchantSample.template} ${personSample.template} ${unlabeledSample.template}`
+    ).not.toMatch(/exito|juan perez|rappi/u);
+  });
+
   it("does not share samples without explicit consent", async () => {
     await shareNotificationParseImprovementSample({
       consent: false,
@@ -210,7 +241,7 @@ describe("notification parse improvement samples", () => {
       userId: "user-1",
       sample: {
         template: "Compra [MERCHANT] por [AMOUNT] con tarjeta [CARD].",
-        senderDomain: "davibank.com",
+        providerCategory: "bank",
         source: "email_gmail",
         status: "needs_review",
         confidenceBucket: "low",
@@ -236,7 +267,7 @@ describe("notification parse improvement samples", () => {
       userId: "user-1",
       sample: {
         template: "Compra [MERCHANT] por [AMOUNT] con tarjeta [CARD].",
-        senderDomain: "davibank.com",
+        providerCategory: "bank",
         source: "email_gmail",
         status: "failed",
         confidenceBucket: "none",

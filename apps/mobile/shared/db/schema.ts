@@ -270,7 +270,7 @@ export const emailParseImprovementSamples = sqliteTable(
     id: text("id").$type<EmailParseImprovementSampleId>().primaryKey(),
     userId: text("user_id").$type<UserId>().notNull(),
     template: text("template").notNull(),
-    senderDomain: text("sender_domain"),
+    providerCategory: text("provider_category").notNull().default("unknown"),
     source: text("source").notNull(),
     status: text("status").notNull(),
     confidence: real("confidence"),
@@ -285,7 +285,7 @@ export const emailParseImprovementSamples = sqliteTable(
       table.source,
       table.status,
       table.parseMethod,
-      sql`coalesce(${table.senderDomain}, '')`,
+      table.providerCategory,
       table.template
     ),
     index("idx_email_parse_improvement_samples_pending").on(

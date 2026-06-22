@@ -32,7 +32,6 @@ describe("notification parse improvement repository", () => {
       userId: "user-1",
       sample: {
         template: "Compra por [AMOUNT] en [MERCHANT].",
-        senderDomain: "davibank.com",
         source: "notification_android",
         status: "failed",
         confidenceBucket: "none",
@@ -73,7 +72,7 @@ describe("notification parse improvement repository", () => {
       userId: "user-1",
       sample: {
         template: "Compra por [AMOUNT] en [MERCHANT].",
-        senderDomain: "davibank.com",
+        providerCategory: "bank",
         source: "email_gmail",
         status: "failed",
         confidenceBucket: "none",
@@ -302,6 +301,49 @@ describe("notification parse improvement repository", () => {
         userId: "user-1",
         sample: {
           template: "retiro bogota por [AMOUNT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+  });
+
+  it("rejects unlabeled lowercase merchant or person tokens before upload", async () => {
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "exito compra por [AMOUNT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "juan perez pago por [AMOUNT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "rappi retiro por [AMOUNT].",
           source: "notification_android",
           status: "failed",
           confidenceBucket: "none",

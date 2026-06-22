@@ -121,8 +121,6 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
     lastAttemptAt: deletedAt,
     userId: input.userId,
   });
-  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
-
   const deleted = input.db
     .update(emailParseImprovementSamples)
     .set({ deletedAt })
@@ -133,6 +131,8 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
       )
     )
     .run().changes;
+
+  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
 
   clearCaptureImprovementDeletionRequest({ db: input.db, userId: input.userId });
   logParseImprovementOutboxForDebug("delete", { deleted });
@@ -200,7 +200,7 @@ export function enqueueEmailParseImprovementRequests(input: {
       id: generateEmailParseImprovementSampleId(),
       userId: input.userId,
       template: sample.template,
-      senderDomain: sample.senderDomain ?? null,
+      providerCategory: sample.providerCategory ?? "unknown",
       source: sample.source,
       status: sample.status,
       confidence: request.confidence,
@@ -298,7 +298,11 @@ export async function flushPendingEmailParseImprovementSamples(input: {
               await shareCaptureParseImprovementSample({
                 rawText: sample.template,
                 parserTemplate: sample.template,
-                senderDomain: sample.senderDomain,
+                providerCategory: sample.providerCategory as
+                  | "bank"
+                  | "payment_app"
+                  | "wallet"
+                  | "unknown",
                 source: sample.source,
                 status: sample.status as "failed" | "needs_review",
                 confidence: sample.confidence,

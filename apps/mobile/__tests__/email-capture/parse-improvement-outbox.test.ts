@@ -33,6 +33,7 @@ const { mockDeleteCaptureParseImprovementSamplesForUser, mockShareCaptureParseIm
 
 vi.mock("@/features/capture-sources/diagnostics.public", () => ({
   buildNotificationParseImprovementSample: (input: {
+    readonly providerCategory?: "bank" | "payment_app" | "wallet" | "unknown";
     readonly parserTemplate?: string;
     readonly senderDomain?: string | null;
     readonly source: string;
@@ -42,7 +43,12 @@ vi.mock("@/features/capture-sources/diagnostics.public", () => ({
     readonly rawText: string;
   }) => ({
     template: input.parserTemplate ?? input.rawText,
-    senderDomain: input.senderDomain ?? undefined,
+    providerCategory:
+      input.providerCategory ??
+      (input.senderDomain != null &&
+      /banco|bank|bbva|davibank|davivienda|nequi|bancolombia/u.test(input.senderDomain)
+        ? "bank"
+        : "unknown"),
     source: input.source,
     status: input.status,
     confidenceBucket: input.confidence == null ? "none" : "medium",
@@ -98,7 +104,7 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
-  it("stores anonymized templates and deduplicates repeats", () => {
+  it("stores anonymized templates with coarse provider category and no raw sender domain", () => {
     const { db, sqlite } = createDb();
 
     expect(
@@ -114,13 +120,16 @@ describe("email parse improvement outbox", () => {
       expect.objectContaining({
         userId: USER_ID,
         template: "Compra en [MERCHANT] por [AMOUNT]",
-        senderDomain: "davibank.com",
+        providerCategory: "bank",
         source: "email_gmail",
         status: "failed",
         parseMethod: "regex",
         sharedAt: null,
       }),
     ]);
+    expect(JSON.stringify(db.select().from(emailParseImprovementSamples).all())).not.toContain(
+      "davibank.com"
+    );
     expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(1);
     sqlite.close();
   });
@@ -150,7 +159,7 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
-  it("keeps bank-specific templates with the same shape", () => {
+  it("deduplicates same-shape samples by coarse provider category", () => {
     const { db, sqlite } = createDb();
 
     expect(
@@ -164,6 +173,11 @@ describe("email parse improvement outbox", () => {
             senderDomain: "bbvanet.com.co",
             rawText: "Compra en Otro Comercio por $123",
           },
+          {
+            ...request,
+            senderDomain: "shop.example",
+            rawText: "Compra en Otro Comercio por $123",
+          },
         ],
         now: NOW,
       })
@@ -174,9 +188,12 @@ describe("email parse improvement outbox", () => {
         .select()
         .from(emailParseImprovementSamples)
         .all()
-        .map((sample) => sample.senderDomain)
+        .map((sample) => sample.providerCategory)
         .sort()
-    ).toEqual(["bbvanet.com.co", "davibank.com"]);
+    ).toEqual(["bank", "unknown"]);
+    expect(JSON.stringify(db.select().from(emailParseImprovementSamples).all())).not.toMatch(
+      /bbvanet|davibank|shop\.example/u
+    );
     sqlite.close();
   });
 
@@ -454,7 +471,7 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
-  it("keeps local user-linked samples retryable when remote opt-out deletion fails", async () => {
+  it("tombstones local user-linked samples immediately when remote opt-out deletion fails", async () => {
     const { db, sqlite } = createDb();
     enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
     await flushPendingEmailParseImprovementSamples({ db, userId: USER_ID, now: NOW });
@@ -467,7 +484,15 @@ describe("email parse improvement outbox", () => {
     expect(db.select().from(emailParseImprovementSamples).all()).toEqual([
       expect.objectContaining({
         sharedAt: "2026-05-19T10:00:00.000Z",
-        deletedAt: null,
+        deletedAt: "2026-05-19T10:00:00.000Z",
+      }),
+    ]);
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(0);
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([
+      expect.objectContaining({
+        userId: USER_ID,
+        requestedAt: "2026-05-19T10:00:00.000Z",
+        lastAttemptAt: "2026-05-19T10:00:00.000Z",
       }),
     ]);
     sqlite.close();
