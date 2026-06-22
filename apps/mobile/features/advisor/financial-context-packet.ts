@@ -69,6 +69,14 @@ export type BuildFinancialContextPacketInput = {
   readonly task?: FinancialContextPacketTask;
 };
 
+type FinancialContextPacketSection =
+  | "summary"
+  | "recentTransactions"
+  | "budgets"
+  | "goals"
+  | "accounts"
+  | "captureEvidence";
+
 export type FinancialContextPacketPorts = {
   readonly getBalance: (db: AnyDb, userId: UserId) => number;
   readonly getSpendingByCategory: (
@@ -147,23 +155,28 @@ const toCategoryDelta = (
 
 const DEFAULT_FINANCIAL_CONTEXT_TASK: FinancialContextPacketTask = { kind: "general_advisor" };
 
-const includesRecentTransactions = (task: FinancialContextPacketTask): boolean =>
-  task.kind === "general_advisor" || task.kind === "spending_overview";
+const PACKET_SECTIONS_BY_TASK: Record<
+  FinancialContextPacketTask["kind"],
+  readonly FinancialContextPacketSection[]
+> = {
+  general_advisor: [
+    "summary",
+    "recentTransactions",
+    "budgets",
+    "goals",
+    "accounts",
+    "captureEvidence",
+  ],
+  spending_overview: ["summary", "recentTransactions", "budgets"],
+  goal_progress: ["goals"],
+  account_overview: ["accounts"],
+  capture_review: ["captureEvidence"],
+};
 
-const includesBudgets = (task: FinancialContextPacketTask): boolean =>
-  task.kind === "general_advisor" || task.kind === "spending_overview";
-
-const includesSpendingSummary = (task: FinancialContextPacketTask): boolean =>
-  task.kind === "general_advisor" || task.kind === "spending_overview";
-
-const includesGoals = (task: FinancialContextPacketTask): boolean =>
-  task.kind === "general_advisor" || task.kind === "goal_progress";
-
-const includesAccounts = (task: FinancialContextPacketTask): boolean =>
-  task.kind === "general_advisor" || task.kind === "account_overview";
-
-const includesCaptureEvidence = (task: FinancialContextPacketTask): boolean =>
-  task.kind === "general_advisor" || task.kind === "capture_review";
+const taskIncludesSection = (
+  task: FinancialContextPacketTask,
+  section: FinancialContextPacketSection
+): boolean => PACKET_SECTIONS_BY_TASK[task.kind].includes(section);
 
 const buildGoalContext = (
   input: BuildFinancialContextPacketInput,
@@ -203,14 +216,14 @@ export function createFinancialContextPacketBuilder(ports: FinancialContextPacke
     const task = input.task ?? DEFAULT_FINANCIAL_CONTEXT_TASK;
     const currentMonth = toContextMonth(input.now ?? new Date());
     const previousMonth = previousContextMonth(currentMonth);
-    const summary = includesSpendingSummary(task)
+    const summary = taskIncludesSection(task, "summary")
       ? buildSpendingSummary(input, ports, currentMonth, previousMonth)
       : null;
 
     return {
       task,
       ...(summary !== null ? { summary } : {}),
-      ...(includesRecentTransactions(task)
+      ...(taskIncludesSection(task, "recentTransactions")
         ? {
             recentTransactions: ports.getRecentTransactions({
               ...input,
@@ -219,12 +232,14 @@ export function createFinancialContextPacketBuilder(ports: FinancialContextPacke
             }),
           }
         : {}),
-      ...(includesBudgets(task)
+      ...(taskIncludesSection(task, "budgets")
         ? { budgets: ports.getBudgetsForMonth(input.db, input.userId, currentMonth) }
         : {}),
-      ...(includesGoals(task) ? { goals: buildGoalContext(input, ports) } : {}),
-      ...(includesAccounts(task) ? { accounts: ports.getAccounts(input.db, input.userId) } : {}),
-      ...(includesCaptureEvidence(task)
+      ...(taskIncludesSection(task, "goals") ? { goals: buildGoalContext(input, ports) } : {}),
+      ...(taskIncludesSection(task, "accounts")
+        ? { accounts: ports.getAccounts(input.db, input.userId) }
+        : {}),
+      ...(taskIncludesSection(task, "captureEvidence")
         ? { captureEvidence: ports.getCaptureEvidence(input.db, input.userId) }
         : {}),
     };

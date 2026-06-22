@@ -64,7 +64,15 @@ export type FinancialContextPacket = {
   }[];
 };
 
-type PacketSection = "recentTransactions" | "budgets" | "goals" | "accounts" | "captureEvidence";
+type PacketSection =
+  | "summary"
+  | "recentTransactions"
+  | "budgets"
+  | "goals"
+  | "accounts"
+  | "captureEvidence";
+
+type ArrayPacketSection = Exclude<PacketSection, "summary">;
 
 type OptionalArrayRead<T> =
   | { readonly valid: true; readonly value?: readonly T[] }
@@ -72,13 +80,15 @@ type OptionalArrayRead<T> =
 
 type OptionalRead<T> = { readonly valid: true; readonly value?: T } | { readonly valid: false };
 
-const PACKET_SECTIONS: readonly PacketSection[] = [
+const ARRAY_PACKET_SECTIONS: readonly ArrayPacketSection[] = [
   "recentTransactions",
   "budgets",
   "goals",
   "accounts",
   "captureEvidence",
 ];
+
+const PACKET_SECTIONS: readonly PacketSection[] = ["summary", ...ARRAY_PACKET_SECTIONS];
 
 const TASK_KINDS = new Set<FinancialContextPacketTaskKind>([
   "general_advisor",
@@ -90,13 +100,11 @@ const TASK_KINDS = new Set<FinancialContextPacketTaskKind>([
 
 const ALLOWED_SECTIONS_BY_TASK: Record<FinancialContextPacketTaskKind, readonly PacketSection[]> = {
   general_advisor: [],
-  spending_overview: ["recentTransactions", "budgets"],
+  spending_overview: ["summary", "recentTransactions", "budgets"],
   goal_progress: ["goals"],
   account_overview: ["accounts"],
   capture_review: ["captureEvidence"],
 };
-
-const TASKS_WITH_SUMMARY = new Set<FinancialContextPacketTaskKind>(["spending_overview"]);
 
 const MAX_SUMMARY_ITEMS = 20;
 const MAX_RECENT_TRANSACTIONS = 20;
@@ -281,10 +289,6 @@ function hasPacketSection(record: Record<string, unknown>, section: PacketSectio
   return section in record && record[section] !== undefined;
 }
 
-function hasPacketSummary(record: Record<string, unknown>): boolean {
-  return "summary" in record && record.summary !== undefined;
-}
-
 function hasDisallowedPacketSection(
   record: Record<string, unknown>,
   task: FinancialContextPacketTask
@@ -299,17 +303,18 @@ function readOptionalSummarySection(
   record: Record<string, unknown>,
   task: FinancialContextPacketTask
 ): OptionalRead<NonNullable<FinancialContextPacket["summary"]>> {
-  if (!hasPacketSummary(record)) {
-    return TASKS_WITH_SUMMARY.has(task.kind) ? { valid: false } : { valid: true };
+  const allowsSummary = ALLOWED_SECTIONS_BY_TASK[task.kind].includes("summary");
+  if (!hasPacketSection(record, "summary")) {
+    return allowsSummary ? { valid: false } : { valid: true };
   }
-  if (!TASKS_WITH_SUMMARY.has(task.kind)) return { valid: false };
+  if (!allowsSummary) return { valid: false };
   const summary = readSummary(record.summary);
   return summary === null ? { valid: false } : { valid: true, value: summary };
 }
 
 function readOptionalArraySection<T>(
   record: Record<string, unknown>,
-  section: PacketSection,
+  section: ArrayPacketSection,
   maxLength: number,
   readItem: (item: unknown) => T | null
 ): OptionalArrayRead<T> {
