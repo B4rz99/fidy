@@ -123,7 +123,7 @@ describe("mobile Cloud Ledger bootstrap", () => {
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it("preserves tombstone record ids exactly while requiring non-empty ids", async () => {
+  it("preserves tombstone record ids exactly during cache reconciliation", async () => {
     const supabase = createCloudLedgerSupabase({
       refreshPayload: {
         cursor: "ledger:8",
@@ -147,6 +147,37 @@ describe("mobile Cloud Ledger bootstrap", () => {
     const refreshedCache = await refreshCloudLedgerCache(supabase.client, bootstrappedCache);
 
     expect(refreshedCache.transactions.map((transaction) => transaction.id)).toEqual(["txn-user"]);
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("rejects blank tombstone record ids from Remote API Boundary responses", async () => {
+    const supabase = createCloudLedgerSupabase({
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [
+          {
+            recordType: "transaction",
+            recordId: "   ",
+            deletedAt: "2026-06-02T11:00:00.000Z",
+          },
+        ],
+      },
+    });
+
+    const bootstrappedCache = await refreshCloudLedgerCache(
+      supabase.client,
+      createEmptyCloudLedgerCache()
+    );
+
+    await expect(refreshCloudLedgerCache(supabase.client, bootstrappedCache)).rejects.toMatchObject(
+      {
+        code: "invalid_response",
+        name: "CloudLedgerClientFailure",
+      } satisfies Partial<CloudLedgerClientFailure>
+    );
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
