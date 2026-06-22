@@ -298,6 +298,15 @@ export const emailParseImprovementSamples = sqliteTable(
   ]
 );
 
+export const captureImprovementDeletionRequests = sqliteTable(
+  "capture_improvement_deletion_requests",
+  {
+    userId: text("user_id").$type<UserId>().primaryKey(),
+    requestedAt: text("requested_at").$type<IsoDateTime>().notNull(),
+    lastAttemptAt: text("last_attempt_at").$type<IsoDateTime>(),
+  }
+);
+
 export const reviewCandidates = sqliteTable(
   "review_candidates",
   {

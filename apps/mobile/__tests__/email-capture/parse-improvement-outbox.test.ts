@@ -10,9 +10,14 @@ import {
   enqueueEmailParseImprovementRequests,
   flushPendingEmailParseImprovementSamples,
   pruneStaleFailedEmailSourceEvents,
+  retryPendingEmailParseImprovementSampleDeletion,
 } from "@/features/email-capture/services/email-parse-improvement-outbox";
 import { recordProcessedCaptureSourceEventWithLocalLedger } from "@/infrastructure/local-ledger/public";
-import { emailParseImprovementSamples, processedSourceEvents } from "@/shared/db/schema";
+import {
+  captureImprovementDeletionRequests,
+  emailParseImprovementSamples,
+  processedSourceEvents,
+} from "@/shared/db/schema";
 import type { AnyDb } from "@/shared/db";
 import type { IsoDateTime, UserId } from "@/shared/types/branded";
 
@@ -465,6 +470,35 @@ describe("email parse improvement outbox", () => {
         deletedAt: null,
       }),
     ]);
+    sqlite.close();
+  });
+
+  it("keeps a durable opt-out deletion request until remote deletion succeeds", async () => {
+    const { db, sqlite } = createDb();
+    mockDeleteCaptureParseImprovementSamplesForUser.mockRejectedValueOnce(new Error("network"));
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("network");
+
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([
+      expect.objectContaining({
+        userId: USER_ID,
+        requestedAt: "2026-05-19T10:00:00.000Z",
+        lastAttemptAt: "2026-05-19T10:00:00.000Z",
+      }),
+    ]);
+
+    await expect(
+      retryPendingEmailParseImprovementSampleDeletion({
+        db,
+        userId: USER_ID,
+        now: new Date("2026-05-19T10:05:00.000Z"),
+      })
+    ).resolves.toEqual({ deleted: 0, retried: true });
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(2);
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([]);
     sqlite.close();
   });
 

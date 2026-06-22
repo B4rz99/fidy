@@ -36,6 +36,11 @@ const SENSITIVE_VALUE_RULES: readonly RedactionRule[] = [
   { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, replacement: "[EMAIL]" },
   { pattern: /\+\d[\d\s-]{8,14}\d/g, replacement: "[PHONE]" },
   { pattern: /(?<!\d)3\d{2}[\s-]?\d{3}[\s-]?\d{4}\b/g, replacement: "[PHONE]" },
+  {
+    pattern:
+      /\b(ref(?:erencia)?|autori[sz]aci[oó]n|authorization)\b\s*:?\s*#?\s*(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{6,}\b/gi,
+    replacement: "$1 [REFERENCE]",
+  },
   { pattern: /\b\d{10}\b/g, replacement: "[ID]" },
   { pattern: /\b\d{9,10}-\d\b/g, replacement: "[ID]" },
   { pattern: /\b\d{3}\.\d{3}\.\d{3,4}-?\d?\b/g, replacement: "[ID]" },
@@ -100,6 +105,9 @@ const normalizeTemplateWhitespace = (text: string): string => text.trim().replac
 
 const STRUCTURAL_TITLE_WORDS = new Set([
   "Abono",
+  "Autorizacion",
+  "Autorización",
+  "Authorization",
   "Beneficiario",
   "Cel",
   "Compra",

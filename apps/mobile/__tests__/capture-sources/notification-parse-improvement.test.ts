@@ -129,6 +129,19 @@ describe("notification parse improvement samples", () => {
     expect(sample.template).not.toMatch(/exito|juan perez/u);
   });
 
+  it("redacts alphanumeric reference and authorization values", () => {
+    const sample = buildNotificationParseImprovementSample({
+      rawText: "Referencia ABC123XYZ por $50.000. Autorizacion ZX98A76.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+
+    expect(sample.template).toBe("Referencia [REFERENCE] por [AMOUNT]. Autorizacion [REFERENCE].");
+    expect(sample.template).not.toMatch(/ABC123XYZ|ZX98A76/u);
+  });
+
   it("does not share samples without explicit consent", async () => {
     await shareNotificationParseImprovementSample({
       consent: false,

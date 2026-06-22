@@ -19,6 +19,7 @@ const mockUseSettingsStore = Object.assign(
 const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
 const mockLoadEmailAccounts = vi.fn<(...args: any[]) => any>();
 const mockFetchAndProcessEmails = vi.fn<(...args: any[]) => any>();
+const mockRetryPendingEmailParseImprovementSampleDeletion = vi.fn<(...args: any[]) => any>();
 const mockAddEventListener = vi.fn<(...args: any[]) => any>();
 
 describe("useEmailCapture", () => {
@@ -32,6 +33,10 @@ describe("useEmailCapture", () => {
       savedCount: 0,
       needsReviewCount: 0,
       failedCount: 0,
+    });
+    mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValue({
+      deleted: 0,
+      retried: false,
     });
     mockAddEventListener.mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
   });
@@ -66,6 +71,19 @@ describe("useEmailCapture", () => {
       }
     );
   });
+
+  it("retries pending opt-out deletion on app open when sharing is disabled", async () => {
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).toHaveBeenCalledWith({
+      db: mockDb,
+      userId,
+    });
+  });
 });
 
 async function loadUseEmailCapture() {
@@ -95,6 +113,10 @@ async function loadUseEmailCapture() {
     initializeEmailCaptureSession: (...args: unknown[]) =>
       mockInitializeEmailCaptureSession(...args),
     loadEmailAccounts: (...args: unknown[]) => mockLoadEmailAccounts(...args),
+  }));
+  vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
+    retryPendingEmailParseImprovementSampleDeletion: (...args: unknown[]) =>
+      mockRetryPendingEmailParseImprovementSampleDeletion(...args),
   }));
 
   return import("@/features/email-capture/hooks/useEmailCapture");

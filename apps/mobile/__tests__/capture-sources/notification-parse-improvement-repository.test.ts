@@ -219,6 +219,49 @@ describe("notification parse improvement repository", () => {
     expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
+  it("rejects residual alphanumeric reference values before upload", async () => {
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "Referencia ABC123XYZ por [AMOUNT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+  });
+
+  it("retains structural authorization reference placeholders", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: true, data: { code: "accepted" } },
+      error: null,
+    });
+
+    await insertNotificationParseImprovementSample({
+      userId: "user-1",
+      sample: {
+        template: "Autorizacion [REFERENCE] por [AMOUNT].",
+        source: "notification_android",
+        status: "failed",
+        confidenceBucket: "none",
+        parseMethod: "llm",
+      },
+    });
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
+      body: expect.objectContaining({
+        sample: expect.objectContaining({
+          templateShape: "Autorizacion [REFERENCE] por [AMOUNT].",
+        }),
+      }),
+    });
+  });
+
   it("rejects residual lowercase counterparty names before transfer verbs", async () => {
     await expect(
       insertNotificationParseImprovementSample({
@@ -242,6 +285,23 @@ describe("notification parse improvement repository", () => {
         userId: "user-1",
         sample: {
           template: "Comercio: exito por [AMOUNT]. Beneficiario: juan perez.",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+  });
+
+  it("rejects unredacted lowercase locations before upload", async () => {
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "retiro bogota por [AMOUNT].",
           source: "notification_android",
           status: "failed",
           confidenceBucket: "none",

@@ -106,6 +106,7 @@ const SENSITIVE_TEMPLATE_PATTERNS = [
   String.raw`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`,
   String.raw`\+\d[\d\s-]{8,14}\d`,
   String.raw`(?<!\d)3\d{2}[\s-]?\d{3}[\s-]?\d{4}\b`,
+  String.raw`\b(?:ref(?:erencia)?|autori[sz]aci[oó]n|authorization)\b\s*:?\s*#?\s*(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{6,}\b`,
   String.raw`\b(?:C\.?\s?C\.?|T\.?\s?I\.?|C\.?\s?E\.?|[Cc][eé]dula)\s*:?\s*#?\s*\d{6,11}\b`,
   String.raw`\bNIT\s*:?\s*\d{3}\.?\d{3}\.?\d{3,4}-?\d?\b`,
   String.raw`\b\d{9,10}-\d\b`,
@@ -126,9 +127,14 @@ const LOWERCASE_COUNTERPARTY_PATTERN =
   /\b[a-záéíóúñ]+(?:\s+[a-záéíóúñ]+)+\s*:?\s+te\s+(?:envio|envió|transfirio|transfirió)\b/i;
 const LOWERCASE_CONTEXT_ENTITY_PATTERN =
   /\b(?:a|at|beneficiario|cerca de|comercio|de|destinatario|en|establecimiento|para)\b\s*:?\s+(?!\[)[a-záéíóúñ]{3,}(?:\s+(?!\[)[a-záéíóúñ]{2,})*/i;
+const UNREDACTED_LOCATION_PATTERN =
+  /\b(?:bogot[aá]|medell[ií]n|cali|barranquilla|cartagena|colombia)\b/i;
 const RESIDUAL_ENTITY_PATTERN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ]{3,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*\b(?!\])/;
 const STRUCTURAL_TITLE_WORDS = new Set([
   "Abono",
+  "Autorizacion",
+  "Autorización",
+  "Authorization",
   "Beneficiario",
   "Cel",
   "Compra",
@@ -169,6 +175,10 @@ const TEMPLATE_PRIVACY_CHECKS: readonly {
   {
     reason: "lowercase_context_entity_pattern",
     isUnsafe: (template) => LOWERCASE_CONTEXT_ENTITY_PATTERN.test(template),
+  },
+  {
+    reason: "unredacted_location",
+    isUnsafe: (template) => UNREDACTED_LOCATION_PATTERN.test(template),
   },
   {
     reason: "residual_entity_pattern",
