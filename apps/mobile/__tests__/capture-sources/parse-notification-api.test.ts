@@ -7,7 +7,7 @@ const { mockParseNotification } = vi.hoisted(() => ({
 vi.mock("@/features/email-capture/parse-service.public", () => ({
   isCaptureNeedsReviewError: (error: unknown) =>
     error instanceof Error && error.message === "capture_needs_review",
-  reviewableParseEmailService: {
+  retryableParseEmailService: {
     parseNotification: (...args: any[]) => mockParseNotification(...args),
   },
 }));
@@ -26,5 +26,16 @@ describe("parseNotificationApi", () => {
       kind: "needs_review",
     });
     expect(mockParseNotification).toHaveBeenCalledWith("ambiguous notification");
+  });
+
+  it("surfaces notification AI unavailability as retryable", async () => {
+    mockParseNotification.mockRejectedValueOnce(new Error("Edge Function unavailable"));
+    const { parseNotificationApi } =
+      await import("@/features/capture-sources/services/parse-notification-api");
+
+    await expect(parseNotificationApi("unparsed notification")).resolves.toEqual({
+      kind: "retry",
+    });
+    expect(mockParseNotification).toHaveBeenCalledWith("unparsed notification");
   });
 });

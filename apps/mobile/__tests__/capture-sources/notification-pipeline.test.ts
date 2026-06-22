@@ -412,6 +412,33 @@ describe("processNotification", () => {
     });
   });
 
+  it("records retryable notification capture when notification AI is unavailable", async () => {
+    mockParseNotificationApi.mockResolvedValueOnce({ kind: "retry" });
+
+    const result = await processNotification(
+      mockDb,
+      USER_ID,
+      makeNotification({ text: "Formato no reconocido con $35,000" })
+    );
+
+    expect(result.saved).toBe(false);
+    expect(result.skippedDuplicate).toBe(false);
+    expect(result.transactionId).toBeNull();
+    expect(result.parseImprovementRequest).toBeUndefined();
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockRecordReviewCandidateCaptureWithLocalLedger).not.toHaveBeenCalled();
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        status: "pending_retry",
+        failureReason: "ai_unavailable",
+      })
+    );
+    expect(mockPersistProcessedSourceEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", failureReason: "parse_failed" })
+    );
+  });
+
   it("records failed source event before throwing when Local Ledger rejects", async () => {
     mockNotificationTypedLlmHintParse();
     mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({

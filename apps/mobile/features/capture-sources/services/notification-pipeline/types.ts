@@ -37,6 +37,10 @@ export type RawNotificationNeedsReview = {
   readonly confidence?: number | null;
 };
 
+export type RawNotificationRetry = {
+  readonly kind: "retry";
+};
+
 export type ParsedNotification = Omit<RawParsedNotification, "amount" | "date"> & {
   amount: CopAmount;
   date: IsoDate;
@@ -73,6 +77,8 @@ export type ReviewableNotificationContext = NotificationStageContext & {
   };
 };
 
+export type RetryableNotificationContext = NotificationStageContext;
+
 export type ResolvedNotificationContext = ParsedNotificationContext & {
   merchantKey: string;
   categoryId: CategoryId;
@@ -84,6 +90,7 @@ export type ResolvedNotificationContext = ParsedNotificationContext & {
 export type ParseStageResult =
   | { kind: "failed"; context: NotificationStageContext }
   | { kind: "needs_review"; context: ReviewableNotificationContext }
+  | { kind: "retry"; context: RetryableNotificationContext }
   | { kind: "parsed"; context: ParsedNotificationContext };
 
 export type DuplicateCheckResult =

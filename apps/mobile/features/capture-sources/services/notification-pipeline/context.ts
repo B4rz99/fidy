@@ -17,19 +17,30 @@ import type {
   NotificationContext,
   ParsedNotification,
   RawNotificationNeedsReview,
+  RawNotificationRetry,
   RawParsedNotification,
 } from "./types";
 
 export function isRawNotificationNeedsReview(
-  parsed: RawParsedNotification | RawNotificationNeedsReview
+  parsed: RawParsedNotification | RawNotificationNeedsReview | RawNotificationRetry
 ): parsed is RawNotificationNeedsReview {
   return "kind" in parsed && parsed.kind === "needs_review";
+}
+
+export function isRawNotificationRetry(
+  parsed: RawParsedNotification | RawNotificationNeedsReview | RawNotificationRetry
+): parsed is RawNotificationRetry {
+  return "kind" in parsed && parsed.kind === "retry";
 }
 
 function isNeedsReviewNotificationParse(
   llm: ParseNotificationApiResult
 ): llm is RawNotificationNeedsReview {
   return llm !== null && "kind" in llm && llm.kind === "needs_review";
+}
+
+function isRetryNotificationParse(llm: ParseNotificationApiResult): llm is RawNotificationRetry {
+  return llm !== null && "kind" in llm && llm.kind === "retry";
 }
 
 export function buildNotificationFingerprint(
@@ -57,10 +68,13 @@ export function normalizeParsedNotification(parsed: RawParsedNotification): Pars
 
 export async function parseNotificationWithLlm(
   sanitizedText: string
-): Promise<RawParsedNotification | RawNotificationNeedsReview | null> {
+): Promise<RawParsedNotification | RawNotificationNeedsReview | RawNotificationRetry | null> {
   const llm = await parseNotificationApi(sanitizedText);
 
   if (isNeedsReviewNotificationParse(llm)) {
+    return llm;
+  }
+  if (isRetryNotificationParse(llm)) {
     return llm;
   }
 

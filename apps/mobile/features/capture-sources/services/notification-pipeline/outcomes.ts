@@ -17,6 +17,7 @@ import type {
   NotificationStageMetrics,
   ParsedNotificationContext,
   ResolvedNotificationContext,
+  RetryableNotificationContext,
   ReviewableNotificationContext,
 } from "./types";
 
@@ -234,6 +235,34 @@ export async function persistReviewableNotification(
       status: "needs_review",
       confidence: context.review.confidence,
     }),
+  };
+}
+
+export async function persistRetryableNotification(
+  context: RetryableNotificationContext
+): Promise<NotificationPipelineResult> {
+  const now = toIsoDateTime(new Date());
+  recordProcessedCaptureSourceEventWithLocalLedger({
+    db: context.db,
+    userId: context.userId,
+    sourceFamily: context.source,
+    sourceId: context.source,
+    sourceEventId: buildFailedFingerprint(context.notification),
+    status: "pending_retry",
+    failureReason: "ai_unavailable",
+    receivedAt: context.receivedAt,
+    processedAt: now,
+  });
+  trackNotificationPipeline(context, {
+    saved: 0,
+    skippedDuplicate: 0,
+    parseFailed: 0,
+  });
+
+  return {
+    saved: false,
+    skippedDuplicate: false,
+    transactionId: null,
   };
 }
 
