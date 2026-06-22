@@ -1,0 +1,60 @@
+supabase/functions/ai-chat/index.ts
+  s_af2302f5bf7782::t_b1e8b5be3fcfbf 9,220-224
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_af2302f5bf7782::t_3d52ccc3a93f46 20,198-235
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_af2302f5bf7782::t_9ffb766e360a67 375-414
+apps/mobile/__tests__/email-capture/parse-email-service.test.ts
+  s_af2302f5bf7782::t_86d4a2d62bf123 222-259
+supabase/functions/ai-chat/financial-context-packet.ts
+  s_af2302f5bf7782::t_1cc63b5426e098 90,134-144,147-149,151-157,301-304,306-307,309
+  s_af2302f5bf7782::t_25b1dd3cff9870 145-146
+apps/mobile/__tests__/edge-functions/ai-chat-context-packet.test.ts
+  s_af2302f5bf7782::t_1124c91c3e4943 2-5,15-51,64-100,108,111-119,121-122,151-158
+  s_af2302f5bf7782::t_f4987d2f3ca216 52-61
+apps/mobile/features/capture-sources/services/notification-pipeline/context.ts
+  s_af2302f5bf7782::t_d19336b30d110a 23-34,63
+  s_af2302f5bf7782::t_56cb51bc99f15a 19,60,64-65
+  s_af2302f5bf7782::t_430788d1f59307 14
+apps/mobile/__tests__/capture-sources/parse-notification-api.test.ts
+  s_af2302f5bf7782::t_430788d1f59307 22-23
+  s_af2302f5bf7782::t_3699cb7ab99ed6 1-21,24-30
+apps/mobile/infrastructure/local-ledger/review-candidate-capture.ts
+  s_af2302f5bf7782::t_16945c18f6d28b 45,264
+apps/mobile/__tests__/email-capture/parse-email-service-wiring.test.ts
+  s_af2302f5bf7782::t_a24f0c199040bc 23-24,34-37,44-46
+apps/mobile/__tests__/edge-functions/ai-chat-privacy-boundary.test.ts
+  s_af2302f5bf7782::t_542244f1e85816 32-34
+apps/mobile/features/capture-sources/services/parse-notification-api.ts
+  s_af2302f5bf7782::t_430788d1f59307 13
+  s_af2302f5bf7782::t_ebedd56e1e4530 7-12,17
+  s_af2302f5bf7782::t_d51d05f420803c 2-5,18-25
+apps/mobile/features/email-capture/parse-service.public.ts
+  s_af2302f5bf7782::t_31e25b94ef5278 1-2
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_af2302f5bf7782::t_7a3b439c9262b1 25,58-61,106-116
+  s_af2302f5bf7782::t_77e3259d1efe82 15,105
+apps/mobile/features/capture-sources/services/notification-pipeline/types.ts
+  s_af2302f5bf7782::t_d4da14928e4d56 34-39,70-75,86
+apps/mobile/features/email-capture/services/parse-email-service.ts
+  s_af2302f5bf7782::t_752929cc99ef89 12-16
+apps/mobile/features/email-capture/services/create-parse-email-service.ts
+  s_af2302f5bf7782::t_eddc0f2298067e 155,196
+  s_af2302f5bf7782::t_87ad51b81158bf 56,60,71-73,121,145-146,156,166,187,191,197,204,260,278,290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "79826b1f0aeead42575f646ff4588b6f47f4a254",
+  "prompts": {},
+  "sessions": {
+    "s_af2302f5bf7782": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-4797-7d70-b995-e5bcc9305782",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
