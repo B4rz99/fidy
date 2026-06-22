@@ -1,0 +1,32 @@
+apps/mobile/features/email-capture/services/create-parse-email-service.ts
+  s_af2302f5bf7782::t_c086348db6ff44 115-116,140-142,156-161
+apps/mobile/__tests__/edge-functions/ai-chat-context-packet.test.ts
+  s_af2302f5bf7782::t_bc39dd86d12cde 38-101
+  s_af2302f5bf7782::t_9394f5f3bc25ea 1-37,102
+apps/mobile/__tests__/email-capture/parse-email-service.test.ts
+  s_af2302f5bf7782::t_f9d98301ed4cd4 186-215,217-221
+  s_af2302f5bf7782::t_73eea361a49638 216
+supabase/functions/ai-chat/financial-context-packet.ts
+  s_af2302f5bf7782::t_6e637e7e4c1f18 1-66,68-325
+  s_af2302f5bf7782::t_73eea361a49638 67
+supabase/functions/ai-chat/index.ts
+  s_af2302f5bf7782::t_dd5abb358bca51 6-10,85,219-220
+apps/mobile/__tests__/edge-functions/ai-chat-privacy-boundary.test.ts
+  s_af2302f5bf7782::t_8e1e1a1150ca80 32-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "50f092fbfc16c66a2b9bc7033b0b8d05ad1d796f",
+  "prompts": {},
+  "sessions": {
+    "s_af2302f5bf7782": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-4797-7d70-b995-e5bcc9305782",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
