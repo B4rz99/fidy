@@ -3,9 +3,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import {
   CloudLedgerClientFailure,
+  createCloudLedgerTransactionAndRefresh,
   createEmptyCloudLedgerCache,
   refreshCloudLedgerCache,
 } from "@/features/cloud-ledger/public";
+import {
+  requireCategoryId,
+  requireCopAmount,
+  requireFinancialAccountId,
+  requireIsoDate,
+  requireTransactionId,
+} from "@/shared/types/assertions";
 
 describe("mobile Cloud Ledger bootstrap", () => {
   it("hydrates the Ledger Cache through the Remote API Boundary without direct table access", async () => {
@@ -91,6 +99,82 @@ describe("mobile Cloud Ledger bootstrap", () => {
     expect(refreshedCache.transactions.map((transaction) => transaction.id)).toEqual([
       "txn-user",
       "txn-refresh",
+    ]);
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("creates a transaction online and refreshes the Ledger Cache from Cloud Ledger state", async () => {
+    const acceptedTransaction = {
+      id: "txn-20260622-client",
+      type: "expense",
+      amount: 18_000,
+      currency: "COP",
+      categoryId: "cat-groceries",
+      accountId: "acct-cash",
+      description: "Coffee",
+      date: "2026-06-02",
+      updatedAt: "2026-06-02T10:02:00.000Z",
+    };
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        transaction: acceptedTransaction,
+        cursor: "ledger:8",
+      },
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [acceptedTransaction],
+        tombstones: [],
+      },
+    });
+
+    const bootstrappedCache = await refreshCloudLedgerCache(
+      supabase.client,
+      createEmptyCloudLedgerCache()
+    );
+    const refreshedCache = await createCloudLedgerTransactionAndRefresh(
+      supabase.client,
+      bootstrappedCache,
+      {
+        commandVersion: 1,
+        transaction: {
+          id: requireTransactionId("txn-20260622-client"),
+          type: "expense",
+          amount: requireCopAmount(18_000),
+          currency: "COP",
+          categoryId: requireCategoryId("cat-groceries"),
+          accountId: requireFinancialAccountId("acct-cash"),
+          description: "Coffee",
+          date: requireIsoDate("2026-06-02"),
+        },
+      }
+    );
+
+    expect(supabase.functionsInvoke).toHaveBeenNthCalledWith(2, "cloud-ledger-api", {
+      body: {
+        action: "createTransaction",
+        commandVersion: 1,
+        transaction: {
+          id: "txn-20260622-client",
+          type: "expense",
+          amount: 18_000,
+          currency: "COP",
+          categoryId: "cat-groceries",
+          accountId: "acct-cash",
+          description: "Coffee",
+          date: "2026-06-02",
+        },
+      },
+    });
+    expect(supabase.functionsInvoke).toHaveBeenNthCalledWith(3, "cloud-ledger-api", {
+      body: { action: "refresh", cursor: "ledger:7" },
+    });
+    expect(refreshedCache.cursor).toBe("ledger:8");
+    expect(refreshedCache.transactions.map((transaction) => transaction.id)).toEqual([
+      "txn-user",
+      "txn-20260622-client",
     ]);
     expect(supabase.from).not.toHaveBeenCalled();
   });
@@ -212,6 +296,33 @@ describe("mobile Cloud Ledger bootstrap", () => {
       name: "CloudLedgerClientFailure",
     } satisfies Partial<CloudLedgerClientFailure>);
   });
+
+  it("surfaces typed create failures without refreshing the Ledger Cache", async () => {
+    const supabase = createCloudLedgerSupabase({
+      apiFailure: "invalid_ledger_reference",
+      invokeError: { message: "Edge Function returned a non-2xx status code" },
+    });
+
+    await expect(
+      createCloudLedgerTransactionAndRefresh(supabase.client, createEmptyCloudLedgerCache(), {
+        commandVersion: 1,
+        transaction: {
+          id: requireTransactionId("txn-20260622-client"),
+          type: "expense",
+          amount: requireCopAmount(18_000),
+          currency: "COP",
+          categoryId: requireCategoryId("cat-groceries"),
+          accountId: requireFinancialAccountId("acct-missing"),
+          description: "Coffee",
+          date: requireIsoDate("2026-06-02"),
+        },
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_ledger_reference",
+      name: "CloudLedgerClientFailure",
+    } satisfies Partial<CloudLedgerClientFailure>);
+    expect(supabase.functionsInvoke).toHaveBeenCalledTimes(1);
+  });
 });
 
 type WirePayload = {
@@ -224,8 +335,9 @@ type WirePayload = {
 
 function createCloudLedgerSupabase(
   options: {
-    readonly apiFailure?: "invalid_cursor" | "invalid_auth";
+    readonly apiFailure?: "invalid_cursor" | "invalid_auth" | "invalid_ledger_reference";
     readonly bootstrapPayload?: WirePayload;
+    readonly createTransactionPayload?: unknown;
     readonly invokeError?: { readonly message: string };
     readonly refreshPayload?: WirePayload;
   } = {}
@@ -239,7 +351,12 @@ function createCloudLedgerSupabase(
           options.apiFailure === undefined
             ? {
                 success: true,
-                data: invokeOptions.body.action === "refresh" ? refreshPayload : bootstrapPayload,
+                data:
+                  invokeOptions.body.action === "createTransaction"
+                    ? options.createTransactionPayload
+                    : invokeOptions.body.action === "refresh"
+                      ? refreshPayload
+                      : bootstrapPayload,
               }
             : { success: false, error: options.apiFailure },
         error: options.invokeError ?? null,

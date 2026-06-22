@@ -6,6 +6,10 @@ const MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622090000_cloud_ledger_bootstrap.sql"
 );
+const CREATE_TRANSACTION_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260622100000_cloud_ledger_transaction_create.sql"
+);
 
 describe("Cloud Ledger remote schema", () => {
   it("creates bootstrap financial tables in a non-exposed ledger schema", () => {
@@ -54,5 +58,18 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).toContain(
       "grant execute on function public.cloud_ledger_bootstrap(uuid, bigint) to service_role"
     );
+  });
+
+  it("exposes transaction creates only through a service-role command and rebuildable projection", () => {
+    const sql = readFileSync(CREATE_TRANSACTION_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("create table if not exists ledger.transaction_monthly_totals");
+    expect(sql).toContain("create or replace function ledger.rebuild_transaction_monthly_total");
+    expect(sql).toContain("create or replace function public.cloud_ledger_create_transaction");
+    expect(sql).toContain("ledger_transactions_amount_positive check (amount > 0)");
+    expect(sql).toContain("ledger_transactions_date_not_future check (date <= current_date)");
+    expect(sql).toContain("revoke execute on function public.cloud_ledger_create_transaction");
+    expect(sql).toContain("grant execute on function public.cloud_ledger_create_transaction");
+    expect(sql).toContain("to service_role");
   });
 });

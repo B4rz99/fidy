@@ -66,14 +66,55 @@ export type CloudLedgerBootstrapPayload = {
   readonly tombstones: readonly CloudLedgerTombstone[];
 };
 
+export type CloudLedgerCreateTransactionCommand = {
+  readonly commandVersion: 1;
+  readonly transaction: {
+    readonly id: string;
+    readonly type: "income" | "expense";
+    readonly amount: number;
+    readonly currency: "COP";
+    readonly categoryId: string | null;
+    readonly accountId: string;
+    readonly description: string | null;
+    readonly date: string;
+  };
+};
+
+export type CloudLedgerCreateTransactionAccepted = {
+  readonly code: "accepted";
+  readonly transaction: CloudLedgerTransaction;
+  readonly cursor: LedgerCursor;
+};
+
+export type CloudLedgerCreateTransactionRejected = {
+  readonly code:
+    | "duplicate_transaction_id"
+    | "invalid_ledger_reference"
+    | "invalid_transaction"
+    | "invalid_transaction_id"
+    | "unauthorized_transaction_id"
+    | "unsupported_command_version";
+};
+
+export type CloudLedgerCreateTransactionOutcome =
+  | CloudLedgerCreateTransactionAccepted
+  | CloudLedgerCreateTransactionRejected;
+
 export type CloudLedgerApiError =
   | "missing_auth"
   | "invalid_auth"
   | "method_not_allowed"
   | "unsupported_action"
   | "invalid_cursor"
+  | "duplicate_transaction_id"
+  | "invalid_ledger_reference"
+  | "invalid_transaction"
+  | "invalid_transaction_id"
+  | "unauthorized_transaction_id"
+  | "unsupported_command_version"
   | "internal_error";
 
 export type CloudLedgerApiResponse =
   | { readonly success: true; readonly data: CloudLedgerBootstrapPayload }
+  | { readonly success: true; readonly data: CloudLedgerCreateTransactionAccepted }
   | { readonly success: false; readonly error: CloudLedgerApiError };

@@ -2,6 +2,8 @@ export type {
   CloudLedgerBootstrapPayload,
   CloudLedgerCache,
   CloudLedgerCategory,
+  CloudLedgerCreateTransactionAccepted,
+  CloudLedgerCreateTransactionCommand,
   CloudLedgerFinancialAccount,
   CloudLedgerTombstone,
   CloudLedgerTombstoneRecordType,
@@ -9,8 +11,13 @@ export type {
 } from "./cache";
 export {
   applyCloudLedgerBootstrap,
+  createCloudLedgerTransactionAndRefresh,
   createEmptyCloudLedgerCache,
   refreshCloudLedgerCache,
 } from "./cache";
 export type { CloudLedgerClientFailureCode } from "./api-client";
-export { CloudLedgerClientFailure, fetchCloudLedgerBootstrap } from "./api-client";
+export {
+  CloudLedgerClientFailure,
+  createCloudLedgerTransaction,
+  fetchCloudLedgerBootstrap,
+} from "./api-client";

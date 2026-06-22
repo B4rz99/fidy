@@ -12,6 +12,8 @@ import type { CategoryId, LedgerCursor } from "@/shared/types/branded";
 import type {
   CloudLedgerBootstrapPayload,
   CloudLedgerCategory,
+  CloudLedgerCreateTransactionAccepted,
+  CloudLedgerCreateTransactionCommand,
   CloudLedgerFinancialAccount,
   CloudLedgerTombstone,
   CloudLedgerTombstoneRecordType,
@@ -24,6 +26,12 @@ type CloudLedgerApiErrorCode =
   | "method_not_allowed"
   | "unsupported_action"
   | "invalid_cursor"
+  | "duplicate_transaction_id"
+  | "invalid_ledger_reference"
+  | "invalid_transaction"
+  | "invalid_transaction_id"
+  | "unauthorized_transaction_id"
+  | "unsupported_command_version"
   | "internal_error";
 
 export type CloudLedgerClientFailureCode =
@@ -74,8 +82,18 @@ type CloudLedgerWirePayload = {
   readonly tombstones: readonly CloudLedgerWireTombstone[];
 };
 
-type CloudLedgerApiResponse =
+type CloudLedgerBootstrapApiResponse =
   | { readonly success: true; readonly data: CloudLedgerWirePayload }
+  | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
+
+type CloudLedgerWireCreateTransactionAccepted = {
+  readonly code: "accepted";
+  readonly transaction: CloudLedgerWireTransaction;
+  readonly cursor: string;
+};
+
+type CloudLedgerCreateTransactionApiResponse =
+  | { readonly success: true; readonly data: CloudLedgerWireCreateTransactionAccepted }
   | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
 
 type RemoteErrorLike = {
@@ -107,9 +125,12 @@ export async function fetchCloudLedgerBootstrap(
   supabase: SupabaseClient,
   cursor: LedgerCursor | null
 ): Promise<CloudLedgerBootstrapPayload> {
-  const response = await supabase.functions.invoke<CloudLedgerApiResponse>(CLOUD_LEDGER_FUNCTION, {
-    body: cursor === null ? { action: "bootstrap" } : { action: "refresh", cursor },
-  });
+  const response = await supabase.functions.invoke<CloudLedgerBootstrapApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: cursor === null ? { action: "bootstrap" } : { action: "refresh", cursor },
+    }
+  );
 
   if (response.data !== null && !response.data.success) {
     throw new CloudLedgerClientFailure(
@@ -125,6 +146,35 @@ export async function fetchCloudLedgerBootstrap(
   return parseCloudLedgerPayload(response.data.data);
 }
 
+export async function createCloudLedgerTransaction(
+  supabase: SupabaseClient,
+  command: CloudLedgerCreateTransactionCommand
+): Promise<CloudLedgerCreateTransactionAccepted> {
+  const response = await supabase.functions.invoke<CloudLedgerCreateTransactionApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "createTransaction",
+        commandVersion: command.commandVersion,
+        transaction: command.transaction,
+      },
+    }
+  );
+
+  if (response.data !== null && !response.data.success) {
+    throw new CloudLedgerClientFailure(
+      response.data.error,
+      `Cloud Ledger API failed: ${response.data.error}`
+    );
+  }
+  throwIfTransportError(response.error);
+  if (response.data === null) {
+    throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
+  }
+
+  return parseCreateTransactionAccepted(response.data.data);
+}
+
 function parseCloudLedgerPayload(data: CloudLedgerWirePayload): CloudLedgerBootstrapPayload {
   try {
     return {
@@ -133,6 +183,26 @@ function parseCloudLedgerPayload(data: CloudLedgerWirePayload): CloudLedgerBoots
       financialAccounts: data.financialAccounts.map(parseFinancialAccount),
       transactions: data.transactions.map(parseTransaction),
       tombstones: data.tombstones.map(parseTombstone),
+    };
+  } catch (error) {
+    throw new CloudLedgerClientFailure(
+      "invalid_response",
+      error instanceof Error ? error.message : "Invalid Cloud Ledger response"
+    );
+  }
+}
+
+function parseCreateTransactionAccepted(
+  data: CloudLedgerWireCreateTransactionAccepted
+): CloudLedgerCreateTransactionAccepted {
+  try {
+    if (data.code !== "accepted") {
+      throw new Error("create transaction outcome must be accepted");
+    }
+    return {
+      code: "accepted",
+      transaction: parseTransaction(data.transaction),
+      cursor: requireLedgerCursor(data.cursor),
     };
   } catch (error) {
     throw new CloudLedgerClientFailure(
