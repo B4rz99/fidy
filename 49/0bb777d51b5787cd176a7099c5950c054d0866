@@ -1,0 +1,28 @@
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_abac2442a38560::t_3f837c9e91e5c1 9-72,105-106,118
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_abac2442a38560::t_0d2b4cefb01039 91
+  s_abac2442a38560::t_f497c314e45b4a 230-236
+  s_abac2442a38560::t_b7ee228f3beaed 87-90,92-95,199-200,203,207-208,211
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_abac2442a38560::t_0d2b4cefb01039 37-40,42-46
+  s_abac2442a38560::t_546fe24fa7c0f0 226,228-234
+  s_abac2442a38560::t_7c0f0d9cebd702 3,5,14-22,41,49-112,120,124,154-156,176,216,235-251
+  s_abac2442a38560::t_86ce735cca32bf 252-263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "490bb777d51b5787cd176a7099c5950c054d0866",
+  "prompts": {},
+  "sessions": {
+    "s_abac2442a38560": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eed9a-9a4d-71c3-af02-be44eae51e62",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
