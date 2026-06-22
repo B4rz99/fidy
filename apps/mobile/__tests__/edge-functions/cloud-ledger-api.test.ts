@@ -457,6 +457,7 @@ describe("cloud-ledger-api Edge Function", () => {
       success: false,
       error: "unauthorized_transaction_id",
     });
+    expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, CREATE_TRANSACTION_COMMAND);
   });
 
   it("rejects refresh requests without a Ledger Cursor before ledger access", async () => {

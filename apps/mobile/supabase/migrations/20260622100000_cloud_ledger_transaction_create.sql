@@ -119,7 +119,7 @@ declare
   v_updated_at timestamptz := now();
   v_month text := to_char(p_date, 'YYYY-MM');
 begin
-  if p_command_version <> 1 then
+  if p_command_version is distinct from 1 then
     return jsonb_build_object('code', 'unsupported_command_version');
   end if;
 
@@ -275,7 +275,7 @@ exception
     return jsonb_build_object('code', 'duplicate_transaction_id');
   when foreign_key_violation then
     return jsonb_build_object('code', 'invalid_ledger_reference');
-  when check_violation then
+  when check_violation or not_null_violation then
     return jsonb_build_object('code', 'invalid_transaction');
 end;
 $$;

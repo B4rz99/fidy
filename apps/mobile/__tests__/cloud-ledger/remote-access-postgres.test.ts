@@ -33,14 +33,15 @@ type PostgresHarness = {
   readonly rootDir: string;
 };
 type CreateTransactionOverrides = Partial<{
+  readonly commandVersion: number | null;
   readonly transactionId: string;
-  readonly type: "income" | "expense";
-  readonly amount: number;
-  readonly currency: "COP";
+  readonly type: "income" | "expense" | null;
+  readonly amount: number | null;
+  readonly currency: "COP" | null;
   readonly categoryId: string | null;
-  readonly accountId: string;
+  readonly accountId: string | null;
   readonly description: string | null;
-  readonly date: string;
+  readonly date: string | null;
 }>;
 type RejectedCreateCase = {
   readonly overrides: CreateTransactionOverrides;
@@ -75,6 +76,26 @@ const INVALID_CREATE_CASES: readonly RejectedCreateCase[] = [
   },
   {
     overrides: { transactionId: "txn-future", date: "2999-01-01" },
+    outcome: { code: "invalid_transaction" },
+  },
+  {
+    overrides: { commandVersion: null, transactionId: "txn-null-version" },
+    outcome: { code: "unsupported_command_version" },
+  },
+  {
+    overrides: { transactionId: "txn-null-type", type: null },
+    outcome: { code: "invalid_transaction" },
+  },
+  {
+    overrides: { transactionId: "txn-null-amount", amount: null },
+    outcome: { code: "invalid_transaction" },
+  },
+  {
+    overrides: { transactionId: "txn-null-currency", currency: null },
+    outcome: { code: "invalid_transaction" },
+  },
+  {
+    overrides: { transactionId: "txn-null-date", date: null },
     outcome: { code: "invalid_transaction" },
   },
 ];
@@ -234,7 +255,12 @@ where user_id = '${USER_ID}'::uuid
     'txn-deleted-account',
     'txn-deleted-category',
     'txn-zero',
-    'txn-future'
+    'txn-future',
+    'txn-null-version',
+    'txn-null-type',
+    'txn-null-amount',
+    'txn-null-currency',
+    'txn-null-date'
   );
 `
     )
@@ -537,15 +563,15 @@ function createTransactionOutcome(
 set role service_role;
 select public.cloud_ledger_create_transaction(
   '${USER_ID}'::uuid,
-  1,
+  ${nullableSqlInteger(overrides.commandVersion === undefined ? 1 : overrides.commandVersion)},
   '${overrides.transactionId ?? CLIENT_TRANSACTION_ID}',
-  '${overrides.type ?? "expense"}',
-  ${overrides.amount ?? 15000},
-  '${overrides.currency ?? "COP"}',
+  ${nullableSqlText(overrides.type === undefined ? "expense" : overrides.type)},
+  ${nullableSqlInteger(overrides.amount === undefined ? 15000 : overrides.amount)},
+  ${nullableSqlText(overrides.currency === undefined ? "COP" : overrides.currency)},
   ${nullableSqlText(overrides.categoryId === undefined ? "cat-groceries" : overrides.categoryId)},
-  '${overrides.accountId ?? "acct-cash"}',
+  ${nullableSqlText(overrides.accountId === undefined ? "acct-cash" : overrides.accountId)},
   ${nullableSqlText(overrides.description === undefined ? "Market" : overrides.description)},
-  '${overrides.date ?? "2026-06-01"}'::date
+  ${nullableSqlDate(overrides.date === undefined ? "2026-06-01" : overrides.date)}
 )::text;
 `
     )
@@ -561,6 +587,14 @@ function readLedgerCursorSequence(harness: PostgresHarness) {
 
 function nullableSqlText(value: string | null) {
   return value === null ? "null" : `'${value}'`;
+}
+
+function nullableSqlInteger(value: number | null) {
+  return value === null ? "null::integer" : String(value);
+}
+
+function nullableSqlDate(value: string | null) {
+  return value === null ? "null::date" : `'${value}'::date`;
 }
 
 function psql(harness: PostgresHarness, sql: string) {
