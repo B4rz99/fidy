@@ -4,17 +4,27 @@ export type {
   CloudLedgerCategory,
   CloudLedgerCreateTransactionAccepted,
   CloudLedgerCreateTransactionCommand,
+  CloudLedgerCategorySpending,
+  CloudLedgerDailySpending,
   CloudLedgerFinancialAccount,
   CloudLedgerTombstone,
   CloudLedgerTombstoneRecordType,
   CloudLedgerTransaction,
+  CloudLedgerTransactionProjection,
 } from "./cache";
 export {
   applyCloudLedgerBootstrap,
   createCloudLedgerTransactionAndRefresh,
   createEmptyCloudLedgerCache,
+  deriveCloudLedgerTransactionProjection,
   refreshCloudLedgerCache,
+  withTransactionProjection,
 } from "./cache";
+export {
+  getCloudLedgerRuntimeCache,
+  resetCloudLedgerRuntimeCaches,
+  setCloudLedgerRuntimeCache,
+} from "./runtime";
 export type {
   CloudLedgerOutboxFailureCode,
   CloudLedgerPendingChange,
@@ -27,12 +37,21 @@ export {
   applyPendingLedgerChanges,
   CloudLedgerOutboxFailure,
   createEncryptedCloudLedgerOutbox,
+  createSecureStoreCloudLedgerOutboxStorage,
   createOfflineCloudLedgerTransaction,
   flushPendingCloudLedgerChanges,
+  getCloudLedgerOutbox,
+  resetCloudLedgerOutboxInstances,
   restoreOptimisticCloudLedgerCache,
 } from "./outbox";
-export type { CloudLedgerClientFailureCode } from "./api-client";
+export type {
+  CloudLedgerApplyPendingChangesAccepted,
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingCreateTransactionChange,
+  CloudLedgerClientFailureCode,
+} from "./api-client";
 export {
+  applyPendingCloudLedgerChanges,
   CloudLedgerClientFailure,
   createCloudLedgerTransaction,
   fetchCloudLedgerBootstrap,

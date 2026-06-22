@@ -1,0 +1,66 @@
+import NetInfo from "@react-native-community/netinfo";
+import type { BootstrapTask, SubscriptionTask } from "@/shared/bootstrap/registry";
+import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
+import { getSupabase } from "@/shared/db/supabase";
+import { captureWarning } from "@/shared/lib";
+import {
+  flushPendingCloudLedgerChanges,
+  getCloudLedgerOutbox,
+  getCloudLedgerRuntimeCache,
+  restoreOptimisticCloudLedgerCache,
+  setCloudLedgerRuntimeCache,
+} from "./public";
+
+export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
+  id: "cloud-ledger",
+  run: async ({ enableRemoteEffects, userId }) => {
+    await restoreCloudLedgerOptimisticState(userId);
+    if (!enableRemoteEffects) {
+      return;
+    }
+    await flushCloudLedgerOutboxForUser(userId).catch(captureCloudLedgerOutboxFlushFailure);
+  },
+};
+
+export const cloudLedgerReconnectFlushTask: SubscriptionTask<AuthenticatedBootstrapContext> = {
+  id: "cloud-ledger-reconnect-flush",
+  isEnabled: ({ enableRemoteEffects }) => enableRemoteEffects,
+  subscribe: ({ userId }) =>
+    NetInfo.addEventListener((state) => {
+      if (state.isConnected !== true) {
+        return;
+      }
+      void flushCloudLedgerOutboxForUser(userId).catch(captureCloudLedgerOutboxFlushFailure);
+    }),
+};
+
+export async function restoreCloudLedgerOptimisticState(
+  userId: AuthenticatedBootstrapContext["userId"]
+): Promise<void> {
+  setCloudLedgerRuntimeCache(
+    userId,
+    await restoreOptimisticCloudLedgerCache({
+      cache: getCloudLedgerRuntimeCache(userId),
+      outbox: getCloudLedgerOutbox(userId),
+    })
+  );
+}
+
+export async function flushCloudLedgerOutboxForUser(
+  userId: AuthenticatedBootstrapContext["userId"]
+): Promise<void> {
+  setCloudLedgerRuntimeCache(
+    userId,
+    await flushPendingCloudLedgerChanges({
+      cache: getCloudLedgerRuntimeCache(userId),
+      outbox: getCloudLedgerOutbox(userId),
+      supabase: getSupabase(),
+    })
+  );
+}
+
+function captureCloudLedgerOutboxFlushFailure(error: unknown): void {
+  captureWarning("cloud_ledger_outbox_flush_failed", {
+    errorType: error instanceof Error ? error.name : typeof error,
+  });
+}

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireCopAmount } from "@/shared/types/assertions";
 import type {
   CategoryId,
   CopAmount,
@@ -46,6 +47,23 @@ export type CloudLedgerTombstone = {
   readonly deletedAt: IsoDateTime;
 };
 
+export type CloudLedgerCategorySpending = {
+  readonly categoryId: CategoryId;
+  readonly total: CopAmount;
+};
+
+export type CloudLedgerDailySpending = {
+  readonly date: IsoDate;
+  readonly total: CopAmount;
+};
+
+export type CloudLedgerTransactionProjection = {
+  readonly incomeTotal: CopAmount;
+  readonly expenseTotal: CopAmount;
+  readonly categorySpending: readonly CloudLedgerCategorySpending[];
+  readonly dailySpending: readonly CloudLedgerDailySpending[];
+};
+
 export type CloudLedgerBootstrapPayload = {
   readonly cursor: LedgerCursor;
   readonly categories: readonly CloudLedgerCategory[];
@@ -79,6 +97,7 @@ export type CloudLedgerCache = {
   readonly categories: readonly CloudLedgerCategory[];
   readonly financialAccounts: readonly CloudLedgerFinancialAccount[];
   readonly transactions: readonly CloudLedgerTransaction[];
+  readonly transactionProjection: CloudLedgerTransactionProjection;
 };
 
 export function createEmptyCloudLedgerCache(): CloudLedgerCache {
@@ -87,6 +106,7 @@ export function createEmptyCloudLedgerCache(): CloudLedgerCache {
     categories: [],
     financialAccounts: [],
     transactions: [],
+    transactionProjection: deriveCloudLedgerTransactionProjection([]),
   };
 }
 
@@ -122,7 +142,38 @@ export function applyCloudLedgerBootstrap(
       payload.tombstones,
       "financialAccount"
     ),
-    transactions: removeTombstonedRows(transactions, payload.tombstones, "transaction"),
+    ...withTransactionProjection(
+      removeTombstonedRows(transactions, payload.tombstones, "transaction")
+    ),
+  };
+}
+
+export function withTransactionProjection(
+  transactions: readonly CloudLedgerTransaction[]
+): Pick<CloudLedgerCache, "transactions" | "transactionProjection"> {
+  return {
+    transactions,
+    transactionProjection: deriveCloudLedgerTransactionProjection(transactions),
+  };
+}
+
+export function deriveCloudLedgerTransactionProjection(
+  transactions: readonly CloudLedgerTransaction[]
+): CloudLedgerTransactionProjection {
+  const expenseTransactions = transactions.filter((transaction) => transaction.type === "expense");
+  return {
+    incomeTotal: sumTransactions(
+      transactions.filter((transaction) => transaction.type === "income")
+    ),
+    expenseTotal: sumTransactions(expenseTransactions),
+    categorySpending: expenseTransactions
+      .reduce<readonly CloudLedgerCategorySpending[]>(addCategorySpending, [])
+      .slice()
+      .sort((left, right) => right.total - left.total),
+    dailySpending: expenseTransactions
+      .reduce<readonly CloudLedgerDailySpending[]>(addDailySpending, [])
+      .slice()
+      .sort((left, right) => left.date.localeCompare(right.date)),
   };
 }
 
@@ -144,4 +195,41 @@ function removeTombstonedRows<Row extends { readonly id: string }>(
       .map((tombstone) => tombstone.recordId)
   );
   return rows.filter((row) => !tombstoneIds.has(row.id));
+}
+
+function sumTransactions(transactions: readonly CloudLedgerTransaction[]): CopAmount {
+  return requireCopAmount(
+    transactions.reduce((total, transaction) => total + transaction.amount, 0)
+  );
+}
+
+function addCategorySpending(
+  items: readonly CloudLedgerCategorySpending[],
+  transaction: CloudLedgerTransaction
+): readonly CloudLedgerCategorySpending[] {
+  if (transaction.categoryId === null) {
+    return items;
+  }
+  const didUpdate = items.some((item) => item.categoryId === transaction.categoryId);
+  return didUpdate
+    ? items.map((item) =>
+        item.categoryId === transaction.categoryId
+          ? { ...item, total: requireCopAmount(item.total + transaction.amount) }
+          : item
+      )
+    : [...items, { categoryId: transaction.categoryId, total: transaction.amount }];
+}
+
+function addDailySpending(
+  items: readonly CloudLedgerDailySpending[],
+  transaction: CloudLedgerTransaction
+): readonly CloudLedgerDailySpending[] {
+  const didUpdate = items.some((item) => item.date === transaction.date);
+  return didUpdate
+    ? items.map((item) =>
+        item.date === transaction.date
+          ? { ...item, total: requireCopAmount(item.total + transaction.amount) }
+          : item
+      )
+    : [...items, { date: transaction.date, total: transaction.amount }];
 }

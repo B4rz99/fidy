@@ -5,10 +5,11 @@ import {
   requireFinancialAccountId,
   requireIsoDate,
   requireIsoDateTime,
+  requireLedgerChangeId,
   requireLedgerCursor,
   requireTransactionId,
 } from "@/shared/types/assertions";
-import type { CategoryId, LedgerCursor } from "@/shared/types/branded";
+import type { CategoryId, LedgerChangeId, LedgerCursor } from "@/shared/types/branded";
 import type {
   CloudLedgerBootstrapPayload,
   CloudLedgerCategory,
@@ -92,9 +93,37 @@ type CloudLedgerWireCreateTransactionAccepted = {
   readonly cursor: string;
 };
 
+type CloudLedgerWireApplyPendingChangesAccepted = {
+  readonly code: "accepted";
+  readonly acceptedChangeIds: readonly string[];
+  readonly cursor: string;
+};
+
 type CloudLedgerCreateTransactionApiResponse =
   | { readonly success: true; readonly data: CloudLedgerWireCreateTransactionAccepted }
   | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
+
+type CloudLedgerApplyPendingChangesApiResponse =
+  | { readonly success: true; readonly data: CloudLedgerWireApplyPendingChangesAccepted }
+  | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
+
+export type CloudLedgerApplyPendingCreateTransactionChange = {
+  readonly id: LedgerChangeId;
+  readonly kind: "createTransaction";
+  readonly commandVersion: 1;
+  readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
+};
+
+export type CloudLedgerApplyPendingChangesCommand = {
+  readonly commandVersion: 1;
+  readonly changes: readonly CloudLedgerApplyPendingCreateTransactionChange[];
+};
+
+export type CloudLedgerApplyPendingChangesAccepted = {
+  readonly code: "accepted";
+  readonly acceptedChangeIds: readonly LedgerChangeId[];
+  readonly cursor: LedgerCursor;
+};
 
 type RemoteErrorLike = {
   readonly context?: unknown;
@@ -198,6 +227,39 @@ export async function createCloudLedgerTransaction(
   return parseCreateTransactionAccepted(response.data.data);
 }
 
+export async function applyPendingCloudLedgerChanges(
+  supabase: SupabaseClient,
+  command: CloudLedgerApplyPendingChangesCommand
+): Promise<CloudLedgerApplyPendingChangesAccepted> {
+  const response = await supabase.functions.invoke<CloudLedgerApplyPendingChangesApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "applyPendingChanges",
+        commandVersion: command.commandVersion,
+        changes: command.changes,
+      },
+    }
+  );
+
+  if (response.data !== null && !response.data.success) {
+    throw new CloudLedgerClientFailure(
+      response.data.error,
+      `Cloud Ledger API failed: ${response.data.error}`
+    );
+  }
+  const httpFailure = await readHttpErrorApiFailure(response.error);
+  if (httpFailure !== null) {
+    throw new CloudLedgerClientFailure(httpFailure, `Cloud Ledger API failed: ${httpFailure}`);
+  }
+  throwIfTransportError(response.error);
+  if (response.data === null) {
+    throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
+  }
+
+  return parseApplyPendingChangesAccepted(response.data.data);
+}
+
 function parseCloudLedgerPayload(data: CloudLedgerWirePayload): CloudLedgerBootstrapPayload {
   try {
     return {
@@ -225,6 +287,26 @@ function parseCreateTransactionAccepted(
     return {
       code: "accepted",
       transaction: parseTransaction(data.transaction),
+      cursor: requireLedgerCursor(data.cursor),
+    };
+  } catch (error) {
+    throw new CloudLedgerClientFailure(
+      "invalid_response",
+      error instanceof Error ? error.message : "Invalid Cloud Ledger response"
+    );
+  }
+}
+
+function parseApplyPendingChangesAccepted(
+  data: CloudLedgerWireApplyPendingChangesAccepted
+): CloudLedgerApplyPendingChangesAccepted {
+  try {
+    if (data.code !== "accepted") {
+      throw new Error("apply pending changes outcome must be accepted");
+    }
+    return {
+      code: "accepted",
+      acceptedChangeIds: data.acceptedChangeIds.map(requireLedgerChangeId),
       cursor: requireLedgerCursor(data.cursor),
     };
   } catch (error) {

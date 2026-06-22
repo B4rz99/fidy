@@ -1,4 +1,6 @@
 import type {
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
   CloudLedgerApiResponse,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
@@ -7,6 +9,10 @@ import type {
   LedgerCursor,
 } from "./model.ts";
 import type { SupabaseError } from "../_shared/supabase-error.ts";
+import {
+  readApplyPendingChangesCommand,
+  type ApplyPendingChangesCommandReadResult,
+} from "./apply-pending-changes-command.ts";
 import {
   readCreateTransactionCommand,
   type CreateTransactionCommandReadResult,
@@ -32,6 +38,10 @@ type LedgerStore = {
     userId: string,
     command: CloudLedgerCreateTransactionCommand
   ): Promise<CloudLedgerCreateTransactionOutcome>;
+  applyPendingChanges(
+    userId: string,
+    command: CloudLedgerApplyPendingChangesCommand
+  ): Promise<CloudLedgerApplyPendingChangesOutcome>;
 };
 
 export type CloudLedgerApiDeps = {
@@ -84,6 +94,9 @@ async function routeAuthenticatedRequest(store: LedgerStore, userId: string, bod
   if (action === "createTransaction") {
     return createTransactionResponse(store, userId, readCreateTransactionCommand(body));
   }
+  if (action === "applyPendingChanges") {
+    return applyPendingChangesResponse(store, userId, readApplyPendingChangesCommand(body));
+  }
 
   return jsonResponse({ success: false, error: "unsupported_action" }, 400);
 }
@@ -129,6 +142,32 @@ async function createTransactionResponse(
   return jsonResponse({
     success: true,
     data: outcome,
+  });
+}
+
+async function applyPendingChangesResponse(
+  store: LedgerStore,
+  userId: string,
+  commandResult: ApplyPendingChangesCommandReadResult
+) {
+  if (commandResult.kind === "invalid_pending_change") {
+    return jsonResponse({ success: false, error: "invalid_transaction" }, 400);
+  }
+  if (commandResult.kind === "invalid_transaction_id") {
+    return jsonResponse({ success: false, error: "invalid_transaction_id" }, 400);
+  }
+  if (commandResult.kind === "invalid_ledger_reference") {
+    return jsonResponse({ success: false, error: "invalid_ledger_reference" }, 400);
+  }
+  if (commandResult.kind === "invalid_transaction") {
+    return jsonResponse({ success: false, error: "invalid_transaction" }, 400);
+  }
+  if (commandResult.kind === "unsupported_command_version") {
+    return jsonResponse({ success: false, error: "unsupported_command_version" }, 400);
+  }
+  return jsonResponse({
+    success: true,
+    data: await store.applyPendingChanges(userId, commandResult.command),
   });
 }
 

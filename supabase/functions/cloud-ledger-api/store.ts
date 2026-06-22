@@ -1,4 +1,6 @@
 import type {
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
   CloudLedgerCreateTransactionOutcome,
@@ -46,6 +48,8 @@ export function createCloudLedgerStore(supabase: SupabaseLike) {
       bootstrapLedger(supabase, userId, cursor),
     createTransaction: (userId: string, command: CloudLedgerCreateTransactionCommand) =>
       createTransaction(supabase, userId, command),
+    applyPendingChanges: (userId: string, command: CloudLedgerApplyPendingChangesCommand) =>
+      applyPendingChanges(supabase, userId, command),
   };
 }
 
@@ -89,4 +93,38 @@ async function createTransaction(
     throw new Error("Unable to create Cloud Ledger transaction: missing response");
   }
   return response.data as CloudLedgerCreateTransactionOutcome;
+}
+
+async function applyPendingChanges(
+  supabase: SupabaseLike,
+  userId: string,
+  command: CloudLedgerApplyPendingChangesCommand
+): Promise<CloudLedgerApplyPendingChangesOutcome> {
+  const outcomes = await command.changes.reduce<
+    Promise<{
+      readonly acceptedChangeIds: readonly string[];
+      readonly cursor: string | null;
+    }>
+  >(
+    async (previous, change) => {
+      const accepted = await previous;
+      const outcome = await createTransaction(supabase, userId, {
+        commandVersion: change.commandVersion,
+        transaction: change.transaction,
+      });
+      return outcome.code === "accepted"
+        ? {
+            acceptedChangeIds: [...accepted.acceptedChangeIds, change.id],
+            cursor: outcome.cursor,
+          }
+        : accepted;
+    },
+    Promise.resolve({ acceptedChangeIds: [], cursor: null })
+  );
+
+  return {
+    code: "accepted",
+    acceptedChangeIds: outcomes.acceptedChangeIds,
+    cursor: (outcomes.cursor ?? "ledger:0") as CloudLedgerApplyPendingChangesOutcome["cursor"],
+  };
 }

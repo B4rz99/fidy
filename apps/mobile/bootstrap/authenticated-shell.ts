@@ -15,6 +15,10 @@ import {
 } from "@/features/capture-sources/bootstrap";
 import { categoriesBootstrapTask } from "@/features/categories/bootstrap";
 import {
+  cloudLedgerBootstrapTask,
+  cloudLedgerReconnectFlushTask,
+} from "@/features/cloud-ledger/bootstrap";
+import {
   emailCaptureMaintenanceBootstrapTask,
   useEmailCaptureBootstrap,
 } from "@/features/email-capture/bootstrap";
@@ -39,6 +43,7 @@ const AUTHENTICATED_BOOTSTRAP_TASKS = [
   budgetBootstrapTask,
   goalsBootstrapTask,
   analyticsBootstrapTask,
+  cloudLedgerBootstrapTask,
   notificationsBootstrapTask,
   categoriesBootstrapTask,
   captureSourcesBootstrapTask,
@@ -49,6 +54,7 @@ const AUTHENTICATED_BOOTSTRAP_TASKS = [
 const AUTHENTICATED_MAINTENANCE_BOOTSTRAP_TASKS = [emailCaptureMaintenanceBootstrapTask] as const;
 
 const AUTHENTICATED_TRANSACTION_SUBSCRIPTIONS = [
+  cloudLedgerReconnectFlushTask,
   budgetTransactionSubscriptionTask,
   goalsTransactionSubscriptionTask,
   analyticsTransactionSubscriptionTask,

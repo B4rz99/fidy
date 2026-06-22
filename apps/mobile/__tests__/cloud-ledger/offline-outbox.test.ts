@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import * as SecureStore from "expo-secure-store";
+import { beforeEach } from "vitest";
 import { describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
@@ -6,7 +8,9 @@ import {
   createEmptyCloudLedgerCache,
   createEncryptedCloudLedgerOutbox,
   createOfflineCloudLedgerTransaction,
+  getCloudLedgerOutbox,
   flushPendingCloudLedgerChanges,
+  resetCloudLedgerOutboxInstances,
   restoreOptimisticCloudLedgerCache,
   type EncryptedCloudLedgerOutboxSnapshot,
   type EncryptedCloudLedgerOutboxStorage,
@@ -20,9 +24,32 @@ import {
   requireLedgerChangeId,
   requireLedgerCursor,
   requireTransactionId,
+  requireUserId,
 } from "@/shared/types/assertions";
 
 const OUTBOX_KEY = new Uint8Array(Array.from({ length: 32 }, (_, index) => index + 1));
+const USER_ID = requireUserId("user-1");
+const secureStore = new Map<string, string>();
+
+beforeEach(() => {
+  secureStore.clear();
+  resetCloudLedgerOutboxInstances();
+  vi.mocked(SecureStore.getItem).mockImplementation((key: string) => secureStore.get(key) ?? null);
+  vi.mocked(SecureStore.setItem).mockImplementation((key: string, value: string) => {
+    secureStore.set(key, value);
+  });
+  vi.mocked(SecureStore.getItemAsync).mockImplementation((key: string) =>
+    Promise.resolve(secureStore.get(key) ?? null)
+  );
+  vi.mocked(SecureStore.setItemAsync).mockImplementation((key: string, value: string) => {
+    secureStore.set(key, value);
+    return Promise.resolve();
+  });
+  vi.mocked(SecureStore.deleteItemAsync).mockImplementation((key: string) => {
+    secureStore.delete(key);
+    return Promise.resolve();
+  });
+});
 
 describe("mobile Cloud Ledger offline outbox", () => {
   it("creates a transaction while offline, shows it optimistically, and stores only encrypted pending state", async () => {
@@ -57,6 +84,12 @@ describe("mobile Cloud Ledger offline outbox", () => {
     });
     expect(optimisticTransaction).not.toHaveProperty("commitStatus");
     expect(optimisticTransaction).not.toHaveProperty("pendingChangeId");
+    expect(optimisticCache.transactionProjection).toEqual({
+      categorySpending: [{ categoryId: "cat-groceries", total: 18_000 }],
+      dailySpending: [{ date: "2026-06-02", total: 18_000 }],
+      expenseTotal: 18_000,
+      incomeTotal: 0,
+    });
     expect(JSON.stringify(storage.readRaw())).not.toContain("Coffee");
     expect(JSON.stringify(storage.readRaw())).not.toContain("txn-20260622-client");
     expect(storage.readRaw()).toMatchObject({
@@ -106,6 +139,30 @@ describe("mobile Cloud Ledger offline outbox", () => {
     } satisfies Partial<CloudLedgerOutboxFailure>);
   });
 
+  it("persists encrypted pending changes in app storage across outbox recreation", async () => {
+    const cache = createSeededLedgerCache();
+
+    await createOfflineCloudLedgerTransaction({
+      cache,
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+
+    resetCloudLedgerOutboxInstances();
+    const restoredCache = await restoreOptimisticCloudLedgerCache({
+      cache,
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+
+    expect(restoredCache.transactions.map((transaction) => transaction.id)).toEqual([
+      "txn-20260622-client",
+    ]);
+    expect(JSON.stringify([...secureStore.entries()])).not.toContain("Coffee");
+    expect(JSON.stringify([...secureStore.entries()])).not.toContain("txn-20260622-client");
+  });
+
   it("flushes pending creates through the Remote API Boundary and reconciles accepted Ledger Cache state", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -124,7 +181,7 @@ describe("mobile Cloud Ledger offline outbox", () => {
     const supabase = createCloudLedgerSupabase({
       createTransactionPayload: {
         code: "accepted",
-        transaction: acceptedTransaction,
+        acceptedChangeIds: ["change-offline-coffee"],
         cursor: "ledger:8",
       },
       refreshPayload: {
@@ -148,6 +205,47 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(storage.readRaw()).toBeNull();
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.getSession).not.toHaveBeenCalled();
+  });
+
+  it("keeps pending state when Cloud Ledger acceptance succeeds but cache reconciliation fails", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:8",
+      },
+      refreshFailure: true,
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [],
+      },
+    });
+
+    await expect(
+      flushPendingCloudLedgerChanges({
+        cache,
+        outbox,
+        supabase: supabase.client,
+      })
+    ).rejects.toMatchObject({ code: "transport_error" });
+
+    expect(await outbox.load()).toHaveLength(1);
+    expect(storage.readRaw()).not.toBeNull();
   });
 });
 
@@ -233,9 +331,16 @@ function expectFlushThroughRemoteApiBoundary(
 ) {
   expect(supabase.functionsInvoke).toHaveBeenNthCalledWith(1, "cloud-ledger-api", {
     body: {
-      action: "createTransaction",
+      action: "applyPendingChanges",
       commandVersion: 1,
-      transaction: offlineCoffeeCommand().transaction,
+      changes: [
+        {
+          id: "change-offline-coffee",
+          kind: "createTransaction",
+          commandVersion: 1,
+          transaction: offlineCoffeeCommand().transaction,
+        },
+      ],
     },
   });
   expect(supabase.functionsInvoke).toHaveBeenNthCalledWith(2, "cloud-ledger-api", {
@@ -253,20 +358,26 @@ type WirePayload = {
 
 function createCloudLedgerSupabase(options: {
   readonly createTransactionPayload: unknown;
+  readonly refreshFailure?: boolean;
   readonly refreshPayload: WirePayload;
 }) {
   const functionsInvoke = vi.fn<(...args: any[]) => any>(
-    (_functionName: string, invokeOptions: { readonly body: { readonly action: string } }) =>
-      Promise.resolve({
+    (_functionName: string, invokeOptions: { readonly body: { readonly action: string } }) => {
+      if (options.refreshFailure === true && invokeOptions.body.action === "refresh") {
+        return Promise.resolve({ data: null, error: { message: "network unavailable" } });
+      }
+      return Promise.resolve({
         data: {
           success: true,
           data:
-            invokeOptions.body.action === "createTransaction"
+            invokeOptions.body.action === "createTransaction" ||
+            invokeOptions.body.action === "applyPendingChanges"
               ? options.createTransactionPayload
               : options.refreshPayload,
         },
         error: null,
-      })
+      });
+    }
   );
   const from = vi.fn<(...args: any[]) => any>();
   const getSession = vi.fn(() =>

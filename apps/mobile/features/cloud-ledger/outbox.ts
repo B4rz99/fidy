@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
 import {
   requireCategoryId,
   requireCopAmount,
@@ -8,10 +10,11 @@ import {
   requireLedgerChangeId,
   requireTransactionId,
 } from "@/shared/types/assertions";
-import type { IsoDateTime, LedgerChangeId } from "@/shared/types/branded";
-import { createCloudLedgerTransaction } from "./api-client";
+import type { IsoDateTime, LedgerChangeId, UserId } from "@/shared/types/branded";
+import { applyPendingCloudLedgerChanges } from "./api-client";
 import {
   refreshCloudLedgerCache,
+  withTransactionProjection,
   type CloudLedgerCache,
   type CloudLedgerCreateTransactionCommand,
   type CloudLedgerTransaction,
@@ -58,6 +61,9 @@ type CloudLedgerOutboxSnapshot = {
 
 const CLOUD_LEDGER_OUTBOX_VERSION = 1;
 const GCM_NONCE_BYTES = 12;
+const OUTBOX_KEY_BYTES = 32;
+const OUTBOX_KEY_PATTERN = /^[0-9a-f]{64}$/;
+const outboxesByUserId = new Map<string, EncryptedCloudLedgerOutbox>();
 
 export class CloudLedgerOutboxFailure extends Error {
   constructor(
@@ -103,6 +109,35 @@ export function createEncryptedCloudLedgerOutbox(input: {
   };
 }
 
+export function getCloudLedgerOutbox(userId: UserId): EncryptedCloudLedgerOutbox {
+  const existing = outboxesByUserId.get(userId);
+  if (existing !== undefined) {
+    return existing;
+  }
+
+  const outbox = createEncryptedCloudLedgerOutbox({
+    encryptionKey: getOrCreateOutboxEncryptionKey(userId),
+    storage: createSecureStoreCloudLedgerOutboxStorage(userId),
+  });
+  outboxesByUserId.set(userId, outbox);
+  return outbox;
+}
+
+export function resetCloudLedgerOutboxInstances(): void {
+  outboxesByUserId.clear();
+}
+
+export function createSecureStoreCloudLedgerOutboxStorage(
+  userId: UserId
+): EncryptedCloudLedgerOutboxStorage {
+  const key = secureStoreOutboxKey(userId);
+  return {
+    clear: async () => SecureStore.deleteItemAsync(key),
+    read: async () => parseEncryptedOutboxSnapshot(await SecureStore.getItemAsync(key)),
+    write: async (snapshot) => SecureStore.setItemAsync(key, JSON.stringify(snapshot)),
+  };
+}
+
 export async function createOfflineCloudLedgerTransaction(input: {
   readonly cache: CloudLedgerCache;
   readonly changeId: LedgerChangeId;
@@ -134,9 +169,10 @@ export async function flushPendingCloudLedgerChanges(input: {
 }): Promise<CloudLedgerCache> {
   const changes = await input.outbox.load();
   const acceptedChangeIds = await flushPendingChanges(input.supabase, changes);
+  const refreshedCache = await refreshCloudLedgerCache(input.supabase, input.cache);
   await input.outbox.remove(acceptedChangeIds);
   return restoreOptimisticCloudLedgerCache({
-    cache: await refreshCloudLedgerCache(input.supabase, input.cache),
+    cache: refreshedCache,
     outbox: input.outbox,
   });
 }
@@ -148,7 +184,7 @@ export function applyPendingLedgerChanges(
   const optimisticTransactions = changes.map(toOptimisticTransaction);
   return {
     ...cache,
-    transactions: upsertTransactions(cache.transactions, optimisticTransactions),
+    ...withTransactionProjection(upsertTransactions(cache.transactions, optimisticTransactions)),
   };
 }
 
@@ -156,14 +192,19 @@ async function flushPendingChanges(
   supabase: SupabaseClient,
   changes: readonly CloudLedgerPendingChange[]
 ): Promise<readonly LedgerChangeId[]> {
-  return changes.reduce<Promise<readonly LedgerChangeId[]>>(async (acceptedIds, change) => {
-    const ids = await acceptedIds;
-    await createCloudLedgerTransaction(supabase, {
+  if (changes.length === 0) {
+    return [];
+  }
+  const outcome = await applyPendingCloudLedgerChanges(supabase, {
+    commandVersion: 1,
+    changes: changes.map((change) => ({
+      id: change.id,
+      kind: change.kind,
       commandVersion: change.commandVersion,
       transaction: change.transaction,
-    });
-    return [...ids, change.id];
-  }, Promise.resolve([]));
+    })),
+  });
+  return outcome.acceptedChangeIds;
 }
 
 function toOptimisticTransaction(change: CloudLedgerPendingChange): CloudLedgerTransaction {
@@ -372,4 +413,62 @@ function toPlainBufferSource(value: Uint8Array): BufferSource {
   const copy = new Uint8Array(new ArrayBuffer(value.byteLength));
   copy.set(value);
   return copy;
+}
+
+function secureStoreOutboxKey(userId: UserId): string {
+  return `cloud-ledger-outbox:${encodeURIComponent(userId)}`;
+}
+
+function secureStoreOutboxEncryptionKey(userId: UserId): string {
+  return `cloud-ledger-outbox-key:${encodeURIComponent(userId)}`;
+}
+
+function getOrCreateOutboxEncryptionKey(userId: UserId): Uint8Array {
+  const key = secureStoreOutboxEncryptionKey(userId);
+  const existing = SecureStore.getItem(key);
+  if (existing !== null && OUTBOX_KEY_PATTERN.test(existing)) {
+    return fromHex(existing);
+  }
+
+  const bytes = Crypto.getRandomBytes(OUTBOX_KEY_BYTES);
+  SecureStore.setItem(key, toHex(bytes));
+  return bytes;
+}
+
+function parseEncryptedOutboxSnapshot(
+  value: string | null
+): EncryptedCloudLedgerOutboxSnapshot | null {
+  if (value === null) {
+    return null;
+  }
+  const parsed = JSON.parse(value);
+  const record = requireRecord(parsed, "encrypted outbox snapshot");
+  return {
+    version: requireOutboxVersion(record.version),
+    algorithm: requireOutboxAlgorithm(record.algorithm),
+    nonce: requireString(record.nonce, "encrypted outbox nonce"),
+    ciphertext: requireString(record.ciphertext, "encrypted outbox ciphertext"),
+  };
+}
+
+function requireOutboxVersion(value: unknown): typeof CLOUD_LEDGER_OUTBOX_VERSION {
+  if (value === CLOUD_LEDGER_OUTBOX_VERSION) {
+    return CLOUD_LEDGER_OUTBOX_VERSION;
+  }
+  throw new Error("encrypted outbox version must be supported");
+}
+
+function requireOutboxAlgorithm(value: unknown): "AES-GCM" {
+  if (value === "AES-GCM") {
+    return "AES-GCM";
+  }
+  throw new Error("encrypted outbox algorithm must be AES-GCM");
+}
+
+function toHex(value: Uint8Array): string {
+  return Array.from(value, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function fromHex(value: string): Uint8Array {
+  return Uint8Array.from(value.match(/.{1,2}/g) ?? [], (byte) => Number.parseInt(byte, 16));
 }

@@ -26,6 +26,18 @@ const CREATE_TRANSACTION_REQUEST_BODY = {
   userId: OTHER_USER_ID,
   transaction: CREATE_TRANSACTION_PAYLOAD,
 } as const;
+const APPLY_PENDING_CHANGES_REQUEST_BODY = {
+  action: "applyPendingChanges",
+  commandVersion: 1,
+  changes: [
+    {
+      id: "change-offline-coffee",
+      kind: "createTransaction",
+      commandVersion: 1,
+      transaction: CREATE_TRANSACTION_PAYLOAD,
+    },
+  ],
+} as const;
 const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
   code: "accepted",
   transaction: {
@@ -210,6 +222,42 @@ describe("cloud-ledger-api Edge Function", () => {
       data: ACCEPTED_CREATE_TRANSACTION_OUTCOME,
     });
     expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, CREATE_TRANSACTION_COMMAND);
+  });
+
+  it("applies pending changes with Ledger Change identities through the authenticated boundary", async () => {
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(APPLY_PENDING_CHANGES_REQUEST_BODY, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:2",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      commandVersion: 1,
+      changes: [
+        {
+          id: "change-offline-coffee",
+          kind: "createTransaction",
+          commandVersion: 1,
+          transaction: CREATE_TRANSACTION_PAYLOAD,
+        },
+      ],
+    });
   });
 
   it("rejects invalid client transaction ids with typed failures before ledger access", async () => {
@@ -512,6 +560,7 @@ function createCloudLedgerApiDeps(
   options: {
     readonly authError?: { readonly message: string };
     readonly bootstrapByUserId?: ReadonlyMap<string, LedgerBootstrapPayload>;
+    readonly applyPendingChangesResult?: unknown;
     readonly createTransactionResult?: unknown;
     readonly userId?: string;
   } = {}
@@ -544,6 +593,15 @@ function createCloudLedgerApiDeps(
             date: "2026-06-01",
             updatedAt: "2026-06-01T10:02:00.000Z",
           },
+          cursor: "ledger:2",
+        }
+      )
+    ),
+    applyPendingChanges: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve(
+        options.applyPendingChangesResult ?? {
+          code: "accepted",
+          acceptedChangeIds: [],
           cursor: "ledger:2",
         }
       )

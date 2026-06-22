@@ -28,6 +28,8 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
+const cloudLedgerOutboxCalls: unknown[] = [];
+
 vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
   getSpendingByCategoryAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
@@ -35,6 +37,25 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   getRecentTransactions: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
   getTransactionById: vi.fn<(...args: any[]) => any>().mockReturnValue(null),
 }));
+
+vi.mock("@/features/cloud-ledger/public", async () => {
+  const actual = await vi.importActual<typeof import("@/features/cloud-ledger/public")>(
+    "@/features/cloud-ledger/public"
+  );
+  return {
+    ...actual,
+    createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return Promise.resolve(input.cache);
+    }),
+    getCloudLedgerOutbox: vi.fn(() => ({
+      clear: vi.fn<(...args: any[]) => any>(),
+      enqueue: vi.fn<(...args: any[]) => any>(),
+      load: vi.fn<(...args: any[]) => any>().mockResolvedValue([]),
+      remove: vi.fn<(...args: any[]) => any>(),
+    })),
+  };
+});
 
 const insertedTransactionRows: unknown[] = [];
 let canUseSelectedAccount = true;
@@ -112,6 +133,7 @@ describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     insertedTransactionRows.length = 0;
+    cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
     initializeTransactionSession(mockUserId);
     useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
@@ -166,13 +188,6 @@ describe("transaction boundaries", () => {
   });
 
   it("saves valid transactions and refreshes read models", async () => {
-    vi.mocked(getSpendingByCategoryAggregate).mockReturnValueOnce([
-      { categoryId: "food" as CategoryId, total: 4520 as CopAmount },
-    ]);
-    vi.mocked(getDailySpendingAggregate).mockReturnValueOnce([
-      { date: "2026-03-04" as IsoDate, total: 4520 as CopAmount },
-    ]);
-
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
     useTransactionStore.getState().setDescription("Groceries");
@@ -182,27 +197,40 @@ describe("transaction boundaries", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.amount).toBe(4520);
-    expect(insertedTransactionRows).toEqual([
+    expect(insertedTransactionRows).toEqual([]);
+    expect(cloudLedgerOutboxCalls).toEqual([
       expect.objectContaining({
-        amount: 4520,
-        categoryId: "food",
-        userId: mockUserId,
-        updatedAt: expect.any(String),
+        command: expect.objectContaining({
+          transaction: expect.objectContaining({
+            amount: 4520,
+            categoryId: "food",
+            description: "Groceries",
+          }),
+        }),
       }),
     ]);
-    expect(getTransactionsPaginated).toHaveBeenCalled();
-    expect(getSpendingByCategoryAggregate).toHaveBeenCalled();
+    expect(getTransactionsPaginated).not.toHaveBeenCalled();
+    expect(getSpendingByCategoryAggregate).not.toHaveBeenCalled();
+    expect(useTransactionStore.getState().pages[0]).toMatchObject({
+      amount: 4520,
+      categoryId: "food",
+      description: "Groceries",
+    });
   });
 
-  it("enforces Local Ledger validation for manual transaction saves", async () => {
+  it("does not use Local Ledger account writes for manual Cloud Ledger creates", async () => {
     canUseSelectedAccount = false;
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
 
     const result = await saveCurrentTransaction(mockDb, mockUserId);
 
-    expect(result).toEqual({ success: false, error: "accountNotUsable" });
+    expect(result).toMatchObject({
+      success: true,
+      transaction: expect.objectContaining({ amount: 4520, categoryId: "food" }),
+    });
     expect(insertedTransactionRows).toEqual([]);
+    expect(cloudLedgerOutboxCalls).toHaveLength(1);
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });
 
