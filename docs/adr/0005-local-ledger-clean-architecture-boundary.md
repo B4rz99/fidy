@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0007
+---
+
 # Local Ledger Clean Architecture boundary
 
 Fidy will make `apps/mobile/local-ledger/**` the pure TypeScript application boundary for Local Ledger policy, with domain types, use cases, ports, and public surfaces for committed transactions, committed transfers, review candidates, processed source events, capture evidence linkage, and ledger snapshots. Infrastructure implementations live outside that boundary under `apps/mobile/infrastructure/local-ledger/**`; features such as manual transaction UI, email capture, notification capture, review queues, backup UX, budgets, goals, search, and activity feed depend inward on Local Ledger public surfaces instead of owning canonical ledger writes.

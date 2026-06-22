@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0007
+---
+
 # Local ledger, encrypted recovery, and explicit cloud AI processing
 
 Fidy will stop treating plaintext Supabase financial tables as the durability mechanism for user financial data. The on-device **Local Ledger** remains the source of truth, recovery is provided by remotely stored **Encrypted Backups**, and AI-first ingestion/advisor features may use explicit **Cloud AI Processing** with task-scoped plaintext inputs that are not persisted as Fidy financial records.
