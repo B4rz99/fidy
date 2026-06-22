@@ -1,0 +1,37 @@
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_abac2442a38560::t_436f02a5cb020e 168-183
+supabase/functions/cloud-ledger-api/store.ts
+  s_abac2442a38560::t_c8e3b529c19da9 2,19-20
+apps/mobile/__tests__/cloud-ledger/mobile-bootstrap.test.ts
+  s_abac2442a38560::t_a51026115ee225 126-152
+  s_abac2442a38560::t_8d324467f301bf 54,218-223,226,236
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_abac2442a38560::t_abe25add3b7a44 211
+supabase/functions/private-backup-api/store.ts
+  s_abac2442a38560::t_f2c5fec7f7a977 3
+supabase/functions/private-backup-api/handler.ts
+  s_abac2442a38560::t_3568ab296fb870 7
+supabase/functions/cloud-ledger-api/handler.ts
+  s_abac2442a38560::t_51fb68e6e0cba9 2
+  s_abac2442a38560::t_65b0bd4b5c571e 62-66,72-98
+supabase/functions/_shared/supabase-error.ts
+  s_abac2442a38560::t_9211f4d067cff2 1-7
+supabase/functions/delete-account/cleanup.ts
+  s_abac2442a38560::t_0b8e11faa05c18 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "bc44d12e549a8ca7a7c92e918b959a9fc0da27a0",
+  "prompts": {},
+  "sessions": {
+    "s_abac2442a38560": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eed9a-9a4d-71c3-af02-be44eae51e62",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
