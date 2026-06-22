@@ -4,6 +4,54 @@ import { createCloudLedgerStore } from "../../../../supabase/functions/cloud-led
 
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const CLIENT_TRANSACTION_ID = "txn-20260622-client";
+const BOOTSTRAP_RPC_DATA = {
+  cursor: "ledger:3",
+  categories: [],
+  financialAccounts: [
+    {
+      id: "acct-cash",
+      name: "Cash",
+      type: "cash",
+      currency: "COP",
+      updatedAt: "2026-06-01T10:01:00.000Z",
+    },
+  ],
+  transactions: [
+    {
+      id: "txn-user",
+      type: "expense",
+      amount: 15_000,
+      currency: "COP",
+      categoryId: null,
+      accountId: "acct-cash",
+      description: "Market",
+      date: "2026-06-01",
+      updatedAt: "2026-06-01T10:02:00.000Z",
+    },
+  ],
+  tombstones: [
+    {
+      recordType: "transaction",
+      recordId: "txn-deleted",
+      deletedAt: "2026-06-02T11:00:00.000Z",
+    },
+  ],
+} as const;
+const CREATE_TRANSACTION_RPC_DATA = {
+  code: "accepted",
+  transaction: {
+    id: CLIENT_TRANSACTION_ID,
+    type: "expense",
+    amount: 15_000,
+    currency: "COP",
+    categoryId: "cat-groceries",
+    accountId: "acct-cash",
+    description: "Market",
+    date: "2026-06-01",
+    updatedAt: "2026-06-01T10:02:00.000Z",
+  },
+  cursor: "ledger:4",
+} as const;
 
 describe("Cloud Ledger Edge store", () => {
   it("refreshes through the service-only Cloud Ledger RPC without exposing table APIs", async () => {
@@ -117,63 +165,7 @@ describe("Cloud Ledger Edge store", () => {
 
 function createLedgerSupabase() {
   const rpc = vi.fn<(...args: any[]) => any>((functionName: string) =>
-    Promise.resolve(
-      functionName === "cloud_ledger_create_transaction"
-        ? {
-            data: {
-              code: "accepted",
-              transaction: {
-                id: CLIENT_TRANSACTION_ID,
-                type: "expense",
-                amount: 15_000,
-                currency: "COP",
-                categoryId: "cat-groceries",
-                accountId: "acct-cash",
-                description: "Market",
-                date: "2026-06-01",
-                updatedAt: "2026-06-01T10:02:00.000Z",
-              },
-              cursor: "ledger:4",
-            },
-            error: null,
-          }
-        : {
-            data: {
-              cursor: "ledger:3",
-              categories: [],
-              financialAccounts: [
-                {
-                  id: "acct-cash",
-                  name: "Cash",
-                  type: "cash",
-                  currency: "COP",
-                  updatedAt: "2026-06-01T10:01:00.000Z",
-                },
-              ],
-              transactions: [
-                {
-                  id: "txn-user",
-                  type: "expense",
-                  amount: 15_000,
-                  currency: "COP",
-                  categoryId: null,
-                  accountId: "acct-cash",
-                  description: "Market",
-                  date: "2026-06-01",
-                  updatedAt: "2026-06-01T10:02:00.000Z",
-                },
-              ],
-              tombstones: [
-                {
-                  recordType: "transaction",
-                  recordId: "txn-deleted",
-                  deletedAt: "2026-06-02T11:00:00.000Z",
-                },
-              ],
-            },
-            error: null,
-          }
-    )
+    Promise.resolve(ledgerRpcResult(functionName))
   );
   const from = vi.fn<(...args: any[]) => any>();
   const schema = vi.fn<(...args: any[]) => any>();
@@ -187,5 +179,15 @@ function createLedgerSupabase() {
     from,
     rpc,
     schema,
+  };
+}
+
+function ledgerRpcResult(functionName: string) {
+  return {
+    data:
+      functionName === "cloud_ledger_create_transaction"
+        ? CREATE_TRANSACTION_RPC_DATA
+        : BOOTSTRAP_RPC_DATA,
+    error: null,
   };
 }

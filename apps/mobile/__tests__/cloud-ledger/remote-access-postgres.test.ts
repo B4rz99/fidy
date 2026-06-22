@@ -32,8 +32,52 @@ type PostgresHarness = {
   readonly env: NodeJS.ProcessEnv;
   readonly rootDir: string;
 };
+type CreateTransactionOverrides = Partial<{
+  readonly transactionId: string;
+  readonly type: "income" | "expense";
+  readonly amount: number;
+  readonly currency: "COP";
+  readonly categoryId: string | null;
+  readonly accountId: string;
+  readonly description: string | null;
+  readonly date: string;
+}>;
+type RejectedCreateCase = {
+  readonly overrides: CreateTransactionOverrides;
+  readonly outcome: { readonly code: string };
+};
 
 const harnesses: PostgresHarness[] = [];
+const INVALID_CREATE_CASES: readonly RejectedCreateCase[] = [
+  {
+    overrides: { transactionId: "txn-other" },
+    outcome: { code: "unauthorized_transaction_id" },
+  },
+  {
+    overrides: { transactionId: "txn-bad-account", accountId: "acct-other" },
+    outcome: { code: "invalid_ledger_reference" },
+  },
+  {
+    overrides: { transactionId: "txn-bad-category", categoryId: "cat-other" },
+    outcome: { code: "invalid_ledger_reference" },
+  },
+  {
+    overrides: { transactionId: "txn-deleted-account", accountId: "acct-deleted" },
+    outcome: { code: "invalid_ledger_reference" },
+  },
+  {
+    overrides: { transactionId: "txn-deleted-category", categoryId: "cat-deleted" },
+    outcome: { code: "invalid_ledger_reference" },
+  },
+  {
+    overrides: { transactionId: "txn-zero", amount: 0 },
+    outcome: { code: "invalid_transaction" },
+  },
+  {
+    overrides: { transactionId: "txn-future", date: "2999-01-01" },
+    outcome: { code: "invalid_transaction" },
+  },
+];
 
 describe("Cloud Ledger Postgres access boundary", () => {
   afterEach(() => {
@@ -60,68 +104,9 @@ describe("Cloud Ledger Postgres access boundary", () => {
       const postgres = setupSeededPostgres();
       seedStaleMonthlyProjection(postgres);
 
-      const outcome = JSON.parse(
-        psqlScalar(
-          postgres,
-          `
-set role service_role;
-select public.cloud_ledger_create_transaction(
-  '${USER_ID}'::uuid,
-  1,
-  '${CLIENT_TRANSACTION_ID}',
-  'expense',
-  15000,
-  'COP',
-  'cat-groceries',
-  'acct-cash',
-  'Market',
-  '2026-06-01'::date
-)::text;
-`
-        )
-      );
-
-      expect(outcome).toEqual({
-        code: "accepted",
-        transaction: {
-          id: CLIENT_TRANSACTION_ID,
-          type: "expense",
-          amount: 15000,
-          currency: "COP",
-          categoryId: "cat-groceries",
-          accountId: "acct-cash",
-          description: "Market",
-          date: "2026-06-01",
-          updatedAt: expect.stringMatching(/^2026-|\d{4}-/),
-        },
-        cursor: "ledger:5",
-      });
-
-      const refresh = JSON.parse(
-        psqlScalar(
-          postgres,
-          `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 4::bigint)::text;`
-        )
-      );
-
-      expect(refresh).toMatchObject({
-        cursor: "ledger:5",
-        transactions: [
-          {
-            id: CLIENT_TRANSACTION_ID,
-            amount: 15000,
-            categoryId: "cat-groceries",
-            accountId: "acct-cash",
-          },
-        ],
-      });
-      expect(readMonthlyProjection(postgres)).toEqual({
-        month: "2026-06",
-        incomeAmount: 0,
-        expenseAmount: 15000,
-        transactionCount: 1,
-        cursorSequence: 5,
-      });
+      expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+      expectRefreshContainsCreatedTransaction(postgres);
+      expectRebuiltMonthlyProjection(postgres);
     }
   );
 
@@ -130,50 +115,81 @@ select public.cloud_ledger_create_transaction(
     () => {
       const postgres = setupSeededPostgres();
 
-      expect(createTransactionOutcome(postgres, { transactionId: "txn-other" })).toEqual({
-        code: "unauthorized_transaction_id",
+      INVALID_CREATE_CASES.forEach((testCase) => {
+        expectRejectedCreateOutcome(postgres, testCase);
       });
-      expect(
-        createTransactionOutcome(postgres, {
-          transactionId: "txn-bad-account",
-          accountId: "acct-other",
-        })
-      ).toEqual({
-        code: "invalid_ledger_reference",
-      });
-      expect(
-        createTransactionOutcome(postgres, {
-          transactionId: "txn-bad-category",
-          categoryId: "cat-other",
-        })
-      ).toEqual({ code: "invalid_ledger_reference" });
-      expect(
-        createTransactionOutcome(postgres, {
-          transactionId: "txn-deleted-account",
-          accountId: "acct-deleted",
-        })
-      ).toEqual({ code: "invalid_ledger_reference" });
-      expect(
-        createTransactionOutcome(postgres, {
-          transactionId: "txn-deleted-category",
-          categoryId: "cat-deleted",
-        })
-      ).toEqual({ code: "invalid_ledger_reference" });
-      expect(createTransactionOutcome(postgres, { transactionId: "txn-zero", amount: 0 })).toEqual({
-        code: "invalid_transaction",
-      });
-      expect(
-        createTransactionOutcome(postgres, {
-          transactionId: "txn-future",
-          date: "2999-01-01",
-        })
-      ).toEqual({ code: "invalid_transaction" });
+      expectRejectedCreatesHaveNoSideEffects(postgres);
+    }
+  );
+});
 
-      expect(readLedgerCursorSequence(postgres)).toBe("4");
-      expect(
-        psqlScalar(
-          postgres,
-          `
+function setupSeededPostgres(): PostgresHarness {
+  const postgres = startPostgres();
+  setupSupabaseAuthSurface(postgres);
+  applyMigration(postgres);
+  seedLedgerRows(postgres);
+  return postgres;
+}
+
+function expectAcceptedCreateOutcome(outcome: unknown) {
+  expect(outcome).toEqual({
+    code: "accepted",
+    transaction: {
+      id: CLIENT_TRANSACTION_ID,
+      type: "expense",
+      amount: 15000,
+      currency: "COP",
+      categoryId: "cat-groceries",
+      accountId: "acct-cash",
+      description: "Market",
+      date: "2026-06-01",
+      updatedAt: expect.stringMatching(/^2026-|\d{4}-/),
+    },
+    cursor: "ledger:5",
+  });
+}
+
+function expectRefreshContainsCreatedTransaction(postgres: PostgresHarness) {
+  const refresh = JSON.parse(
+    psqlScalar(
+      postgres,
+      `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 4::bigint)::text;`
+    )
+  );
+
+  expect(refresh).toMatchObject({
+    cursor: "ledger:5",
+    transactions: [
+      {
+        id: CLIENT_TRANSACTION_ID,
+        amount: 15000,
+        categoryId: "cat-groceries",
+        accountId: "acct-cash",
+      },
+    ],
+  });
+}
+
+function expectRebuiltMonthlyProjection(postgres: PostgresHarness) {
+  expect(readMonthlyProjection(postgres)).toEqual({
+    month: "2026-06",
+    incomeAmount: 0,
+    expenseAmount: 15000,
+    transactionCount: 1,
+    cursorSequence: 5,
+  });
+}
+
+function expectRejectedCreateOutcome(postgres: PostgresHarness, testCase: RejectedCreateCase) {
+  expect(createTransactionOutcome(postgres, testCase.overrides)).toEqual(testCase.outcome);
+}
+
+function expectRejectedCreatesHaveNoSideEffects(postgres: PostgresHarness) {
+  expect(readLedgerCursorSequence(postgres)).toBe("4");
+  expect(
+    psqlScalar(
+      postgres,
+      `
 select count(*)
 from ledger.transactions
 where user_id = '${USER_ID}'::uuid
@@ -186,28 +202,18 @@ where user_id = '${USER_ID}'::uuid
     'txn-future'
   );
 `
-        )
-      ).toBe("0");
-      expect(
-        psqlScalar(
-          postgres,
-          `
+    )
+  ).toBe("0");
+  expect(
+    psqlScalar(
+      postgres,
+      `
 select count(*)
 from ledger.transaction_monthly_totals
 where user_id = '${USER_ID}'::uuid;
 `
-        )
-      ).toBe("0");
-    }
-  );
-});
-
-function setupSeededPostgres(): PostgresHarness {
-  const postgres = startPostgres();
-  setupSupabaseAuthSurface(postgres);
-  applyMigration(postgres);
-  seedLedgerRows(postgres);
-  return postgres;
+    )
+  ).toBe("0");
 }
 
 function expectClientRolesCannotReadLedger(postgres: PostgresHarness) {
@@ -475,16 +481,7 @@ where user_id = '${USER_ID}'::uuid and month = '2026-06';
 
 function createTransactionOutcome(
   harness: PostgresHarness,
-  overrides: Partial<{
-    readonly transactionId: string;
-    readonly type: "income" | "expense";
-    readonly amount: number;
-    readonly currency: "COP";
-    readonly categoryId: string | null;
-    readonly accountId: string;
-    readonly description: string | null;
-    readonly date: string;
-  }> = {}
+  overrides: CreateTransactionOverrides = {}
 ) {
   return JSON.parse(
     psqlScalar(

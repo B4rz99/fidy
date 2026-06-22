@@ -6,6 +6,34 @@ const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
 const CURSOR = "ledger:1";
 const CLIENT_TRANSACTION_ID = "txn-20260622-client";
+const CREATE_TRANSACTION_PAYLOAD = {
+  id: CLIENT_TRANSACTION_ID,
+  type: "expense",
+  amount: 15_000,
+  currency: "COP",
+  categoryId: "cat-groceries",
+  accountId: "acct-cash",
+  description: "Market",
+  date: "2026-06-01",
+} as const;
+const CREATE_TRANSACTION_COMMAND = {
+  commandVersion: 1,
+  transaction: CREATE_TRANSACTION_PAYLOAD,
+} as const;
+const CREATE_TRANSACTION_REQUEST_BODY = {
+  action: "createTransaction",
+  commandVersion: 1,
+  userId: OTHER_USER_ID,
+  transaction: CREATE_TRANSACTION_PAYLOAD,
+} as const;
+const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
+  code: "accepted",
+  transaction: {
+    ...CREATE_TRANSACTION_PAYLOAD,
+    updatedAt: "2026-06-01T10:02:00.000Z",
+  },
+  cursor: "ledger:2",
+} as const;
 
 type LedgerBootstrapPayload = {
   readonly cursor: string;
@@ -168,77 +196,20 @@ describe("cloud-ledger-api Edge Function", () => {
 
   it("creates a transaction for the authenticated user and preserves the client transaction id", async () => {
     const api = createCloudLedgerApiDeps({
-      createTransactionResult: {
-        code: "accepted",
-        transaction: {
-          id: CLIENT_TRANSACTION_ID,
-          type: "expense",
-          amount: 15_000,
-          currency: "COP",
-          categoryId: "cat-groceries",
-          accountId: "acct-cash",
-          description: "Market",
-          date: "2026-06-01",
-          updatedAt: "2026-06-01T10:02:00.000Z",
-        },
-        cursor: "ledger:2",
-      },
+      createTransactionResult: ACCEPTED_CREATE_TRANSACTION_OUTCOME,
     });
 
     const response = await handleCloudLedgerRequest(
-      jsonRequest(
-        {
-          action: "createTransaction",
-          commandVersion: 1,
-          userId: OTHER_USER_ID,
-          transaction: {
-            id: CLIENT_TRANSACTION_ID,
-            type: "expense",
-            amount: 15_000,
-            currency: "COP",
-            categoryId: "cat-groceries",
-            accountId: "acct-cash",
-            description: "Market",
-            date: "2026-06-01",
-          },
-        },
-        "valid-token"
-      ),
+      jsonRequest(CREATE_TRANSACTION_REQUEST_BODY, "valid-token"),
       api.deps
     );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       success: true,
-      data: {
-        code: "accepted",
-        transaction: {
-          id: CLIENT_TRANSACTION_ID,
-          type: "expense",
-          amount: 15_000,
-          currency: "COP",
-          categoryId: "cat-groceries",
-          accountId: "acct-cash",
-          description: "Market",
-          date: "2026-06-01",
-          updatedAt: "2026-06-01T10:02:00.000Z",
-        },
-        cursor: "ledger:2",
-      },
+      data: ACCEPTED_CREATE_TRANSACTION_OUTCOME,
     });
-    expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, {
-      commandVersion: 1,
-      transaction: {
-        id: CLIENT_TRANSACTION_ID,
-        type: "expense",
-        amount: 15_000,
-        currency: "COP",
-        categoryId: "cat-groceries",
-        accountId: "acct-cash",
-        description: "Market",
-        date: "2026-06-01",
-      },
-    });
+    expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, CREATE_TRANSACTION_COMMAND);
   });
 
   it("rejects invalid client transaction ids with typed failures before ledger access", async () => {
