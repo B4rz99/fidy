@@ -1,0 +1,78 @@
+supabase/functions/cloud-ledger-api/store.ts
+  s_d585a7fa922fba::t_262f9cc744eff2 4,47-51,60,64,78-79,93-94,144,161,178-191
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_d585a7fa922fba::t_6e0a7f23052204 259
+  s_d585a7fa922fba::t_a6d0ae92c25bd5 212-226,257-258
+apps/mobile/features/capture-sources/hooks/useNotificationCapture.ts
+  s_d585a7fa922fba::t_ad735d1797c3e8 6,8,38
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_2269cd4b0a1bff 86-90,103-105,109,122-127
+  s_d585a7fa922fba::t_d771505e8fc592 106-108
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_d585a7fa922fba::t_7e34ecf486ff06 99
+  s_d585a7fa922fba::t_fa8dd95e861936 7,37-48
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_bbaa95de4ee429 320-337
+  s_d585a7fa922fba::t_6306682a5dc90c 452-470
+apps/mobile/features/capture-sources/lib/notification-parse-improvement-repository.ts
+  s_d585a7fa922fba::t_75476eadf19da2 34-40,68,223-239,244,249,253-255,264-266,281-286
+  s_d585a7fa922fba::t_6e6c7ed190cf86 127-128
+  s_d585a7fa922fba::t_6e0a7f23052204 73-76,315
+  s_d585a7fa922fba::t_57c6c047e5896d 77,157-182,184-186,309-313,322-323
+apps/mobile/features/settings/components/parse-improvement-sharing-toggle.ts
+  s_d585a7fa922fba::t_f47f87b2b9cddd 6,100
+apps/mobile/__tests__/capture-sources/use-notification-capture.test.ts
+  s_d585a7fa922fba::t_38dc05acbe7fae 13,22,25,27,29,32,36-37,44-50,62-63
+  s_d585a7fa922fba::t_85e535f3680d06 9
+apps/mobile/features/capture-sources/lib/notification-parse-improvement.ts
+  s_d585a7fa922fba::t_2e800a323250db 81
+  s_d585a7fa922fba::t_9388143463211e 4-7
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_1e7521418d2588 56
+  s_d585a7fa922fba::t_bc102ec5d09f34 5,105-109
+  s_d585a7fa922fba::t_e82e5aa18f92b8 88-89
+supabase/functions/delete-account/cleanup.ts
+  s_d585a7fa922fba::t_1e176f59476bf4 61
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_771d14505d5484 253-302,728,765,770
+  s_d585a7fa922fba::t_811f9bea08cb88 354-378
+supabase/functions/cloud-ledger-api/capture-improvement-sample.ts
+  s_d585a7fa922fba::t_e9d4cd616753b8 73
+apps/mobile/__tests__/capture-sources/notification-parse-improvement-repository.test.ts
+  s_d585a7fa922fba::t_fdeef516056316 239-252
+  s_d585a7fa922fba::t_143f023f7c71d0 5,116-135,153-164,166,169,237
+supabase/functions/cloud-ledger-api/model.ts
+  s_d585a7fa922fba::t_e48d83aefb2960 120-127,136
+apps/mobile/features/email-capture/parse-improvement.public.ts
+  s_d585a7fa922fba::t_e0074eb5f97f35 5
+apps/mobile/__tests__/capture-sources/notification-parse-improvement.test.ts
+  s_d585a7fa922fba::t_ce8ef3a6e83af5 117-131
+apps/mobile/supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql
+  s_d585a7fa922fba::t_e38e4161366f54 3-13,53-61,103-113,121-154,182-185
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_d585a7fa922fba::t_f186f150b904a7 9,17-19,27-28,57,73-81
+supabase/functions/cloud-ledger-api/handler.ts
+  s_d585a7fa922fba::t_2c880aa8a336cf 4,42,44-47,110-112,176-179,182,193-206,233-238
+apps/mobile/__tests__/settings/parse-improvement-sharing-toggle.test.ts
+  s_d585a7fa922fba::t_9cf8699eee5bd0 13,27-29,41-42,74,151-167
+apps/mobile/features/capture-sources/diagnostics.public.ts
+  s_d585a7fa922fba::t_476d400bd52a9c 5
+apps/mobile/__tests__/edge-functions/delete-account-cleanup.test.ts
+  s_d585a7fa922fba::t_5236d24b766d39 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "141322b1a1e93a7d8dc2fdaeeebbe969c5be15a3",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
