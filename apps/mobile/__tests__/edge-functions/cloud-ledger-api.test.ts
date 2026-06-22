@@ -6,6 +6,70 @@ const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
 const CURSOR = "ledger:1";
 
+type LedgerBootstrapPayload = {
+  readonly cursor: string;
+  readonly categories: readonly unknown[];
+  readonly financialAccounts: readonly unknown[];
+  readonly transactions: readonly unknown[];
+  readonly tombstones: readonly unknown[];
+};
+
+const AUTHENTICATED_BOOTSTRAP_PAYLOAD: LedgerBootstrapPayload = {
+  cursor: CURSOR,
+  categories: [
+    {
+      id: "cat-groceries",
+      name: "Groceries",
+      icon: "basket",
+      color: "#2F6F5E",
+      updatedAt: "2026-06-01T10:00:00.000Z",
+    },
+  ],
+  financialAccounts: [
+    {
+      id: "acct-cash",
+      name: "Cash",
+      type: "cash",
+      currency: "COP",
+      updatedAt: "2026-06-01T10:00:00.000Z",
+    },
+  ],
+  transactions: [
+    {
+      id: "txn-user",
+      type: "expense",
+      amount: 15_000,
+      currency: "COP",
+      categoryId: "cat-groceries",
+      accountId: "acct-cash",
+      description: "Market",
+      date: "2026-06-01",
+      updatedAt: "2026-06-01T10:00:00.000Z",
+    },
+  ],
+  tombstones: [],
+};
+
+const OTHER_USER_BOOTSTRAP_PAYLOAD: LedgerBootstrapPayload = {
+  cursor: "ledger:99",
+  categories: [],
+  financialAccounts: [],
+  transactions: [
+    {
+      id: "txn-other-user",
+      type: "income",
+      amount: 99_000,
+      currency: "COP",
+      categoryId: null,
+      accountId: "acct-other",
+      description: "Private",
+      date: "2026-06-02",
+      updatedAt: "2026-06-02T10:00:00.000Z",
+    },
+  ],
+  tombstones: [],
+};
+
 describe("cloud-ledger-api Edge Function", () => {
   it("rejects unauthenticated bootstrap requests with typed failures before ledger access", async () => {
     const missingAuth = createCloudLedgerApiDeps();
@@ -38,66 +102,8 @@ describe("cloud-ledger-api Edge Function", () => {
   it("bootstraps ledger data for the authenticated user and ignores body ownership", async () => {
     const api = createCloudLedgerApiDeps({
       bootstrapByUserId: new Map([
-        [
-          USER_ID,
-          {
-            cursor: CURSOR,
-            categories: [
-              {
-                id: "cat-groceries",
-                name: "Groceries",
-                icon: "basket",
-                color: "#2F6F5E",
-                updatedAt: "2026-06-01T10:00:00.000Z",
-              },
-            ],
-            financialAccounts: [
-              {
-                id: "acct-cash",
-                name: "Cash",
-                type: "cash",
-                currency: "COP",
-                updatedAt: "2026-06-01T10:00:00.000Z",
-              },
-            ],
-            transactions: [
-              {
-                id: "txn-user",
-                type: "expense",
-                amount: 15_000,
-                currency: "COP",
-                categoryId: "cat-groceries",
-                accountId: "acct-cash",
-                description: "Market",
-                date: "2026-06-01",
-                updatedAt: "2026-06-01T10:00:00.000Z",
-              },
-            ],
-            tombstones: [],
-          },
-        ],
-        [
-          OTHER_USER_ID,
-          {
-            cursor: "ledger:99",
-            categories: [],
-            financialAccounts: [],
-            transactions: [
-              {
-                id: "txn-other-user",
-                type: "income",
-                amount: 99_000,
-                currency: "COP",
-                categoryId: null,
-                accountId: "acct-other",
-                description: "Private",
-                date: "2026-06-02",
-                updatedAt: "2026-06-02T10:00:00.000Z",
-              },
-            ],
-            tombstones: [],
-          },
-        ],
+        [USER_ID, AUTHENTICATED_BOOTSTRAP_PAYLOAD],
+        [OTHER_USER_ID, OTHER_USER_BOOTSTRAP_PAYLOAD],
       ]),
     });
 
@@ -109,41 +115,7 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       success: true,
-      data: {
-        cursor: CURSOR,
-        categories: [
-          {
-            id: "cat-groceries",
-            name: "Groceries",
-            icon: "basket",
-            color: "#2F6F5E",
-            updatedAt: "2026-06-01T10:00:00.000Z",
-          },
-        ],
-        financialAccounts: [
-          {
-            id: "acct-cash",
-            name: "Cash",
-            type: "cash",
-            currency: "COP",
-            updatedAt: "2026-06-01T10:00:00.000Z",
-          },
-        ],
-        transactions: [
-          {
-            id: "txn-user",
-            type: "expense",
-            amount: 15_000,
-            currency: "COP",
-            categoryId: "cat-groceries",
-            accountId: "acct-cash",
-            description: "Market",
-            date: "2026-06-01",
-            updatedAt: "2026-06-01T10:00:00.000Z",
-          },
-        ],
-        tombstones: [],
-      },
+      data: AUTHENTICATED_BOOTSTRAP_PAYLOAD,
     });
     expect(api.store.bootstrapLedger).toHaveBeenCalledWith(USER_ID, null);
   });
@@ -210,14 +182,6 @@ function jsonRequest(body: unknown, token?: string) {
     body: JSON.stringify(body),
   });
 }
-
-type LedgerBootstrapPayload = {
-  readonly cursor: string;
-  readonly categories: readonly unknown[];
-  readonly financialAccounts: readonly unknown[];
-  readonly transactions: readonly unknown[];
-  readonly tombstones: readonly unknown[];
-};
 
 function createCloudLedgerApiDeps(
   options: {

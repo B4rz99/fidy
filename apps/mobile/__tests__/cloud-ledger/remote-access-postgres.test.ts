@@ -1,8 +1,8 @@
 // biome-ignore-all lint/style/useNamingConvention: PostgreSQL roles and payloads use snake_case fields
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { delimiter, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const MIGRATION = resolve(
@@ -11,6 +11,15 @@ const MIGRATION = resolve(
 );
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
+const POSTGRES_BINARIES = {
+  initdb: findCommand("initdb"),
+  pg_ctl: findCommand("pg_ctl"),
+  psql: findCommand("psql"),
+};
+const missingPostgresBinaries = Object.entries(POSTGRES_BINARIES)
+  .filter(([, path]) => path === null)
+  .map(([command]) => command);
+const postgresIt = missingPostgresBinaries.length === 0 ? it : it.skip;
 
 type PostgresHarness = {
   readonly dataDir: string;
@@ -25,61 +34,81 @@ describe("Cloud Ledger Postgres access boundary", () => {
     harnesses.splice(0).forEach(stopPostgres);
   });
 
-  it("blocks client roles from ledger tables and service-only bootstrap while service role reads scoped rows", () => {
-    const postgres = startPostgres();
-    setupSupabaseAuthSurface(postgres);
-    applyMigration(postgres);
-    seedLedgerRows(postgres);
+  postgresIt(
+    "blocks client roles from ledger tables and service-only bootstrap while service role reads scoped rows",
+    () => {
+      const postgres = setupSeededPostgres();
 
-    expect(
-      psqlFails(postgres, "set role authenticated; select count(*) from ledger.transactions;")
-    ).toMatch(/permission denied/);
-    expect(psqlFails(postgres, "set role anon; select count(*) from ledger.transactions;")).toMatch(
-      /permission denied/
-    );
-    expect(
-      psqlFails(
-        postgres,
-        `set role authenticated; select public.cloud_ledger_bootstrap('${OTHER_USER_ID}'::uuid, null::bigint);`
-      )
-    ).toMatch(/permission denied/);
-    expect(
-      psqlFails(
-        postgres,
-        `set role anon; select public.cloud_ledger_bootstrap('${OTHER_USER_ID}'::uuid, null::bigint);`
-      )
-    ).toMatch(/permission denied/);
-
-    const payload = JSON.parse(
-      psqlScalar(
-        postgres,
-        `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 1::bigint)::text;`
-      )
-    );
-
-    expect(payload).toMatchObject({
-      cursor: "ledger:4",
-      categories: [],
-      financialAccounts: [
-        {
-          id: "acct-cash",
-          name: "Cash",
-          type: "cash",
-          currency: "COP",
-        },
-      ],
-      transactions: [],
-      tombstones: [
-        {
-          recordType: "transaction",
-          recordId: "txn-user",
-        },
-      ],
-    });
-    expect(JSON.stringify(payload)).not.toContain("txn-other");
-    expect(JSON.stringify(payload)).not.toContain("acct-other");
-  });
+      expectClientRolesCannotReadLedger(postgres);
+      expectClientRolesCannotExecuteBootstrap(postgres);
+      expectServiceRoleReadsOnlyScopedBootstrap(postgres);
+    }
+  );
 });
+
+function setupSeededPostgres(): PostgresHarness {
+  const postgres = startPostgres();
+  setupSupabaseAuthSurface(postgres);
+  applyMigration(postgres);
+  seedLedgerRows(postgres);
+  return postgres;
+}
+
+function expectClientRolesCannotReadLedger(postgres: PostgresHarness) {
+  const authenticatedError = psqlFails(
+    postgres,
+    "set role authenticated; select count(*) from ledger.transactions;"
+  );
+  const anonError = psqlFails(postgres, "set role anon; select count(*) from ledger.transactions;");
+
+  expect(authenticatedError).toMatch(/permission denied/);
+  expect(anonError).toMatch(/permission denied/);
+}
+
+function expectClientRolesCannotExecuteBootstrap(postgres: PostgresHarness) {
+  const authenticatedError = psqlFails(
+    postgres,
+    `set role authenticated; select public.cloud_ledger_bootstrap('${OTHER_USER_ID}'::uuid, null::bigint);`
+  );
+  const anonError = psqlFails(
+    postgres,
+    `set role anon; select public.cloud_ledger_bootstrap('${OTHER_USER_ID}'::uuid, null::bigint);`
+  );
+
+  expect(authenticatedError).toMatch(/permission denied/);
+  expect(anonError).toMatch(/permission denied/);
+}
+
+function expectServiceRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) {
+  const payload = JSON.parse(
+    psqlScalar(
+      postgres,
+      `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 1::bigint)::text;`
+    )
+  );
+
+  expect(payload).toMatchObject({
+    cursor: "ledger:4",
+    categories: [],
+    financialAccounts: [
+      {
+        id: "acct-cash",
+        name: "Cash",
+        type: "cash",
+        currency: "COP",
+      },
+    ],
+    transactions: [],
+    tombstones: [
+      {
+        recordType: "transaction",
+        recordId: "txn-user",
+      },
+    ],
+  });
+  expect(JSON.stringify(payload)).not.toContain("txn-other");
+  expect(JSON.stringify(payload)).not.toContain("acct-other");
+}
 
 function startPostgres(): PostgresHarness {
   const rootDir = mkdtempSync(join(tmpdir(), "fidy-cloud-ledger-pg-"));
@@ -88,11 +117,11 @@ function startPostgres(): PostgresHarness {
   const port = String(54_320 + Math.floor(Math.random() * 1_000));
   mkdirSync(socketDir);
 
-  execFileSync("initdb", ["-D", dataDir, "-A", "trust", "-U", "postgres"], {
+  execFileSync(postgresBinary("initdb"), ["-D", dataDir, "-A", "trust", "-U", "postgres"], {
     stdio: "ignore",
   });
   execFileSync(
-    "pg_ctl",
+    postgresBinary("pg_ctl"),
     [
       "-D",
       dataDir,
@@ -122,7 +151,9 @@ function startPostgres(): PostgresHarness {
 
 function stopPostgres(harness: PostgresHarness) {
   try {
-    execFileSync("pg_ctl", ["-D", harness.dataDir, "-m", "fast", "stop"], { stdio: "ignore" });
+    execFileSync(postgresBinary("pg_ctl"), ["-D", harness.dataDir, "-m", "fast", "stop"], {
+      stdio: "ignore",
+    });
   } finally {
     rmSync(harness.rootDir, { force: true, recursive: true });
   }
@@ -142,7 +173,7 @@ create table auth.users (id uuid primary key);
 }
 
 function applyMigration(harness: PostgresHarness) {
-  execFileSync("psql", ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-f", MIGRATION], {
+  execFileSync(postgresBinary("psql"), ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-f", MIGRATION], {
     env: harness.env,
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -182,30 +213,52 @@ insert into ledger.tombstones (
 }
 
 function psql(harness: PostgresHarness, sql: string) {
-  execFileSync("psql", ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-c", sql], {
+  execFileSync(postgresBinary("psql"), ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-c", sql], {
     env: harness.env,
     stdio: ["ignore", "pipe", "pipe"],
   });
 }
 
-function psqlScalar(harness: PostgresHarness, sql: string): string {
-  return execFileSync("psql", ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-t", "-A", "-c", sql], {
-    encoding: "utf8",
-    env: harness.env,
-    stdio: ["ignore", "pipe", "pipe"],
-  }).trim();
-}
-
 function psqlFails(harness: PostgresHarness, sql: string): string {
   try {
     psqlScalar(harness, sql);
-    throw new Error("Expected psql command to fail");
   } catch (error) {
-    if (error instanceof Error && error.message === "Expected psql command to fail") {
-      throw error;
-    }
-    return `${String((error as { readonly stdout?: unknown }).stdout ?? "")}\n${String(
-      (error as { readonly stderr?: unknown }).stderr ?? ""
-    )}`;
+    return psqlFailureOutput(error);
   }
+  throw new Error("Expected psql command to fail");
+}
+
+function psqlFailureOutput(error: unknown): string {
+  return `${String((error as { readonly stdout?: unknown }).stdout ?? "")}\n${String(
+    (error as { readonly stderr?: unknown }).stderr ?? ""
+  )}`;
+}
+
+function findCommand(command: string): string | null {
+  return (
+    (process.env.PATH ?? "")
+      .split(delimiter)
+      .map((directory) => join(directory, command))
+      .find((candidate) => existsSync(candidate)) ?? null
+  );
+}
+
+function postgresBinary(command: keyof typeof POSTGRES_BINARIES): string {
+  const binary = POSTGRES_BINARIES[command];
+  if (binary === null) {
+    throw new Error(`Missing PostgreSQL binary: ${command}`);
+  }
+  return binary;
+}
+
+function psqlScalar(harness: PostgresHarness, sql: string): string {
+  return execFileSync(
+    postgresBinary("psql"),
+    ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-t", "-A", "-c", sql],
+    {
+      encoding: "utf8",
+      env: harness.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  ).trim();
 }

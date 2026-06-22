@@ -84,6 +84,15 @@ type RemoteErrorLike = {
 
 const AUTHORIZATION_HEADER = "Authorization";
 const CLOUD_LEDGER_FUNCTION = "cloud-ledger-api";
+const TRANSACTION_TYPE_BY_VALUE: Partial<Record<string, "income" | "expense">> = {
+  expense: "expense",
+  income: "income",
+};
+const TOMBSTONE_RECORD_TYPE_BY_VALUE: Partial<Record<string, CloudLedgerTombstoneRecordType>> = {
+  category: "category",
+  financialAccount: "financialAccount",
+  transaction: "transaction",
+};
 
 export class CloudLedgerClientFailure extends Error {
   constructor(
@@ -175,14 +184,6 @@ function parseTransaction(row: CloudLedgerWireTransaction): CloudLedgerTransacti
   };
 }
 
-function parseTombstone(row: CloudLedgerWireTombstone): CloudLedgerTombstone {
-  return {
-    recordType: requireTombstoneRecordType(row.recordType),
-    recordId: requireNonEmptyRecordId(row.recordId),
-    deletedAt: requireIsoDateTime(row.deletedAt),
-  };
-}
-
 function readCategoryId(value: string | null): CategoryId | null {
   return value === null ? null : requireCategoryId(value);
 }
@@ -195,17 +196,19 @@ function requireCopCurrency(value: string): "COP" {
 }
 
 function requireTransactionType(value: string): "income" | "expense" {
-  if (value !== "income" && value !== "expense") {
+  const transactionType = TRANSACTION_TYPE_BY_VALUE[value];
+  if (transactionType === undefined) {
     throw new Error("transaction type must be income or expense");
   }
-  return value;
+  return transactionType;
 }
 
 function requireTombstoneRecordType(value: string): CloudLedgerTombstoneRecordType {
-  if (value !== "category" && value !== "financialAccount" && value !== "transaction") {
+  const recordType = TOMBSTONE_RECORD_TYPE_BY_VALUE[value];
+  if (recordType === undefined) {
     throw new Error("tombstone record type must be category, financialAccount, or transaction");
   }
-  return value;
+  return recordType;
 }
 
 function requireNonEmptyRecordId(value: string): string {
@@ -223,4 +226,12 @@ function throwIfTransportError(error: RemoteErrorLike | null) {
       `Unable to call Cloud Ledger API: ${error.message ?? "unknown error"}`
     );
   }
+}
+
+function parseTombstone(row: CloudLedgerWireTombstone): CloudLedgerTombstone {
+  return {
+    recordType: requireTombstoneRecordType(row.recordType),
+    recordId: requireNonEmptyRecordId(row.recordId),
+    deletedAt: requireIsoDateTime(row.deletedAt),
+  };
 }
