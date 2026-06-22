@@ -1,0 +1,20 @@
+apps/mobile/__tests__/cloud-ledger/mobile-bootstrap.test.ts
+  s_abac2442a38560::t_7f0d2719972a75 175-180
+  s_abac2442a38560::t_feae1918269dee 126,153-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "d3fddc566ad14d8cc2474d91b9f4506a8cd640da",
+  "prompts": {},
+  "sessions": {
+    "s_abac2442a38560": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eed9a-9a4d-71c3-af02-be44eae51e62",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
