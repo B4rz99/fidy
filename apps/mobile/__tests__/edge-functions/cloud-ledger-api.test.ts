@@ -273,6 +273,92 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(api.store.createTransaction).not.toHaveBeenCalled();
   });
 
+  it("rejects unsupported create command versions with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 2,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsupported_command_version",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed create transaction fields with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "transfer",
+            amount: 15_000,
+            currency: "USD",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing create transaction payloads with typed failures before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "createTransaction",
+          commandVersion: 1,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_transaction",
+    });
+    expect(api.store.createTransaction).not.toHaveBeenCalled();
+  });
+
   it("maps unauthorized client transaction id outcomes to typed API failures", async () => {
     const api = createCloudLedgerApiDeps({
       createTransactionResult: { code: "unauthorized_transaction_id" },

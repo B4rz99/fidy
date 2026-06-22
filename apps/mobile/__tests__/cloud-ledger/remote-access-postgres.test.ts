@@ -147,6 +147,18 @@ select public.cloud_ledger_create_transaction(
           categoryId: "cat-other",
         })
       ).toEqual({ code: "invalid_ledger_reference" });
+      expect(
+        createTransactionOutcome(postgres, {
+          transactionId: "txn-deleted-account",
+          accountId: "acct-deleted",
+        })
+      ).toEqual({ code: "invalid_ledger_reference" });
+      expect(
+        createTransactionOutcome(postgres, {
+          transactionId: "txn-deleted-category",
+          categoryId: "cat-deleted",
+        })
+      ).toEqual({ code: "invalid_ledger_reference" });
       expect(createTransactionOutcome(postgres, { transactionId: "txn-zero", amount: 0 })).toEqual({
         code: "invalid_transaction",
       });
@@ -165,7 +177,14 @@ select public.cloud_ledger_create_transaction(
 select count(*)
 from ledger.transactions
 where user_id = '${USER_ID}'::uuid
-  and id in ('txn-bad-account', 'txn-bad-category', 'txn-zero', 'txn-future');
+  and id in (
+    'txn-bad-account',
+    'txn-bad-category',
+    'txn-deleted-account',
+    'txn-deleted-category',
+    'txn-zero',
+    'txn-future'
+  );
 `
         )
       ).toBe("0");
@@ -394,16 +413,18 @@ insert into ledger.ledger_cursors (user_id, latest_sequence) values
   ('${OTHER_USER_ID}'::uuid, 9);
 
 insert into ledger.categories (
-  user_id, id, name, icon, color, cursor_sequence, updated_at
+  user_id, id, name, icon, color, cursor_sequence, updated_at, deleted_at
 ) values
-  ('${USER_ID}'::uuid, 'cat-groceries', 'Groceries', 'basket', '#2F6F5E', 1, '2026-06-01T10:00:00Z'),
-  ('${OTHER_USER_ID}'::uuid, 'cat-other', 'Other', null, null, 1, '2026-06-01T10:00:00Z');
+  ('${USER_ID}'::uuid, 'cat-groceries', 'Groceries', 'basket', '#2F6F5E', 1, '2026-06-01T10:00:00Z', null),
+  ('${USER_ID}'::uuid, 'cat-deleted', 'Deleted', null, null, 1, '2026-06-01T10:00:00Z', '2026-06-02T11:00:00Z'),
+  ('${OTHER_USER_ID}'::uuid, 'cat-other', 'Other', null, null, 1, '2026-06-01T10:00:00Z', null);
 
 insert into ledger.financial_accounts (
-  user_id, id, name, type, currency, cursor_sequence, updated_at
+  user_id, id, name, type, currency, cursor_sequence, updated_at, deleted_at
 ) values
-  ('${USER_ID}'::uuid, 'acct-cash', 'Cash', 'cash', 'COP', 2, '2026-06-01T10:01:00Z'),
-  ('${OTHER_USER_ID}'::uuid, 'acct-other', 'Other', 'cash', 'COP', 2, '2026-06-01T10:01:00Z');
+  ('${USER_ID}'::uuid, 'acct-cash', 'Cash', 'cash', 'COP', 2, '2026-06-01T10:01:00Z', null),
+  ('${USER_ID}'::uuid, 'acct-deleted', 'Deleted', 'cash', 'COP', 2, '2026-06-01T10:01:00Z', '2026-06-02T11:00:00Z'),
+  ('${OTHER_USER_ID}'::uuid, 'acct-other', 'Other', 'cash', 'COP', 2, '2026-06-01T10:01:00Z', null);
 
 insert into ledger.transactions (
   user_id, id, type, amount, currency, account_id, date, cursor_sequence, deleted_at, updated_at

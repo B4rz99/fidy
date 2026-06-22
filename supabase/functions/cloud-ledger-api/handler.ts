@@ -37,6 +37,9 @@ export type CloudLedgerApiDeps = {
 type CreateTransactionCommandReadResult =
   | { readonly kind: "valid"; readonly command: CloudLedgerCreateTransactionCommand }
   | { readonly kind: "invalid_transaction_id" }
+  | { readonly kind: "invalid_ledger_reference" }
+  | { readonly kind: "invalid_transaction" }
+  | { readonly kind: "unsupported_command_version" }
   | { readonly kind: "invalid_command" };
 
 const CLIENT_TRANSACTION_ID_PATTERN = /^txn-[A-Za-z0-9][A-Za-z0-9_-]*$/;
@@ -112,6 +115,15 @@ async function createTransactionResponse(
   if (commandResult.kind === "invalid_transaction_id") {
     return jsonResponse({ success: false, error: "invalid_transaction_id" }, 400);
   }
+  if (commandResult.kind === "invalid_ledger_reference") {
+    return jsonResponse({ success: false, error: "invalid_ledger_reference" }, 400);
+  }
+  if (commandResult.kind === "invalid_transaction") {
+    return jsonResponse({ success: false, error: "invalid_transaction" }, 400);
+  }
+  if (commandResult.kind === "unsupported_command_version") {
+    return jsonResponse({ success: false, error: "unsupported_command_version" }, 400);
+  }
   if (commandResult.kind === "invalid_command") {
     return jsonResponse({ success: false, error: "unsupported_action" }, 400);
   }
@@ -164,8 +176,11 @@ function readCreateTransactionCommand(body: unknown): CreateTransactionCommandRe
   }
   const record = body as Record<string, unknown>;
   const transaction = record.transaction;
-  if (record.commandVersion !== 1 || transaction === null || typeof transaction !== "object") {
-    return { kind: "invalid_command" };
+  if (record.commandVersion !== 1) {
+    return { kind: "unsupported_command_version" };
+  }
+  if (transaction === null || typeof transaction !== "object") {
+    return { kind: "invalid_transaction" };
   }
   const transactionRecord = transaction as Record<string, unknown>;
   const id = readClientTransactionId(transactionRecord.id);
@@ -178,16 +193,17 @@ function readCreateTransactionCommand(body: unknown): CreateTransactionCommandRe
   const currency = readCopCurrency(transactionRecord.currency);
   const accountId = readRequiredString(transactionRecord, "accountId");
   const date = readRequiredString(transactionRecord, "date");
+  if (categoryId === undefined || accountId === null) {
+    return { kind: "invalid_ledger_reference" };
+  }
   if (
     type === null ||
     typeof transactionRecord.amount !== "number" ||
     currency === null ||
-    categoryId === undefined ||
-    accountId === null ||
     description === undefined ||
     date === null
   ) {
-    return { kind: "invalid_command" };
+    return { kind: "invalid_transaction" };
   }
 
   return {

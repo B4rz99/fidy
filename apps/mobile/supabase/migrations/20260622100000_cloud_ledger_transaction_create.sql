@@ -129,6 +129,26 @@ begin
     return jsonb_build_object('code', 'unauthorized_transaction_id');
   end if;
 
+  if not exists (
+    select 1
+    from ledger.financial_accounts
+    where ledger.financial_accounts.user_id = p_user_id
+      and ledger.financial_accounts.id = p_account_id
+      and ledger.financial_accounts.deleted_at is null
+  ) then
+    return jsonb_build_object('code', 'invalid_ledger_reference');
+  end if;
+
+  if p_category_id is not null and not exists (
+    select 1
+    from ledger.categories
+    where ledger.categories.user_id = p_user_id
+      and ledger.categories.id = p_category_id
+      and ledger.categories.deleted_at is null
+  ) then
+    return jsonb_build_object('code', 'invalid_ledger_reference');
+  end if;
+
   insert into ledger.ledger_cursors (user_id, latest_sequence, updated_at)
   values (p_user_id, 0, v_updated_at)
   on conflict (user_id) do nothing;
