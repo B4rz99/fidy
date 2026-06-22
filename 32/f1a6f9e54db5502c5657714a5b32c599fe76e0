@@ -1,0 +1,89 @@
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_abac2442a38560::t_9da0a4f5eb84c3 10-37,224,254
+  s_abac2442a38560::t_1d850119b71530 7,82,157,176
+  s_abac2442a38560::t_d2416587ac6942 1-6,8-9,38-75,77-81,83-97,99-144,146-156,158-160,162-175,177-179,181-184,201-218,220-223,225-237,239-250,255-262
+  s_abac2442a38560::t_2e44b574f4637b 185-200
+  s_abac2442a38560::t_b054bc54fd2d3c 251-253
+  s_abac2442a38560::t_2508c0484fc601 76,98,145,161,180,219,238
+supabase/functions/cloud-ledger-api/handler.ts
+  s_abac2442a38560::t_b054bc54fd2d3c 1
+  s_abac2442a38560::t_beae59055c2934 2
+  s_abac2442a38560::t_43c8cd45ebdabc 98
+  s_abac2442a38560::t_7de1ab52d52e8a 3-62,64-97,99-121
+  s_abac2442a38560::t_36c45f0312688b 63
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_abac2442a38560::t_cc90b90674bc0a 35-40,96-104
+  s_abac2442a38560::t_e53e784c770f4b 1-34,41-95,105-211
+apps/mobile/__tests__/cloud-ledger/mobile-bootstrap.test.ts
+  s_abac2442a38560::t_b054bc54fd2d3c 14
+  s_abac2442a38560::t_0294ff0619dc46 162-170
+  s_abac2442a38560::t_9ef3abc9d9aefd 56-75,77-97,145-150,152,154-161,189-225
+  s_e45fe45caebbb7::t_dde957baa0c550 5,126-143,226
+  s_abac2442a38560::t_27e6293ff293dc 98-125,151
+  s_abac2442a38560::t_63e43cf5f781de 1-4,6-13,15-55,144,153,171-188,227-228
+  s_e45fe45caebbb7::t_79b846bfe8b3c0 76
+supabase/functions/cloud-ledger-api/model.ts
+  s_abac2442a38560::t_43c8cd45ebdabc 3-20
+  s_abac2442a38560::t_7de1ab52d52e8a 1-2,21-48,57-61,63-75
+  s_abac2442a38560::t_d82365f7a7d7e2 49-56,62
+supabase/functions/cloud-ledger-api/store.ts
+  s_abac2442a38560::t_06ab5901cf2525 1-2,7-16,19,33-42
+  s_abac2442a38560::t_e8eb62960ecee1 3-6,17-18,20-32,43-49
+apps/mobile/shared/types/branded.ts
+  s_abac2442a38560::t_7d299c5f2af507 31
+apps/mobile/features/cloud-ledger/public.ts
+  s_abac2442a38560::t_d82365f7a7d7e2 6-7
+  s_abac2442a38560::t_7d299c5f2af507 1-5,8-9,15-16
+  s_abac2442a38560::t_b054bc54fd2d3c 10-14
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_abac2442a38560::t_2508c0484fc601 39-45,82-88
+  s_abac2442a38560::t_5766509724f909 1,3-7,9-38,46,53-56,97-99,103,107-108
+  s_abac2442a38560::t_7be16b3df2f19d 8,47-52,57-81,89-96,100-102,104-106
+  s_abac2442a38560::t_8acaf14b58de5a 2
+supabase/functions/cloud-ledger-api/index.ts
+  s_abac2442a38560::t_e8eb62960ecee1 1-20
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_abac2442a38560::t_f43200422878ff 18,39
+  s_abac2442a38560::t_b054bc54fd2d3c 20-22
+  s_abac2442a38560::t_329fcd7f3f61bd 34-38,40-46
+  s_abac2442a38560::t_fd3510b5396303 1-17,19,23-33,47
+apps/mobile/features/cloud-ledger/cache.ts
+  s_abac2442a38560::t_7d299c5f2af507 1-40,49-53,55-83,88-89,97-104,118
+  s_abac2442a38560::t_d82365f7a7d7e2 41-48,54,84-87,90-96,105-117
+apps/mobile/supabase/migrations/20260622090000_cloud_ledger_bootstrap.sql
+  s_abac2442a38560::t_a916f8f25a88ce 91-186,212-217,220,222-226
+  s_abac2442a38560::t_f9c70446972f7b 1-54,64-75,79-82,84-88,90,228,230,232
+  s_abac2442a38560::t_fb2279e1dcfbc6 55-63,76-78,83,89,187-211,218-219,221
+  s_abac2442a38560::t_6cf3f4fbddca42 227,229,231
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_abac2442a38560::t_7d299c5f2af507 1-15,18-62,69-73,75-101,106-133,135-153,155-174,183-201,217-226
+  s_abac2442a38560::t_b054bc54fd2d3c 102-105,154
+  s_e45fe45caebbb7::t_920c21ea6021e9 74,134
+  s_abac2442a38560::t_d82365f7a7d7e2 16-17,63-68,175-182,202-216
+apps/mobile/shared/types/assertions.ts
+  s_abac2442a38560::t_7d299c5f2af507 11,21,201-206,258-261
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "32f1a6f9e54db5502c5657714a5b32c599fe76e0",
+  "prompts": {},
+  "sessions": {
+    "s_abac2442a38560": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eed9a-9a4d-71c3-af02-be44eae51e62",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_e45fe45caebbb7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eedbc-ebde-74e2-b438-05290ba56776",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
