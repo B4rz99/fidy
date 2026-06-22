@@ -14,38 +14,46 @@ export type FinancialContextCategoryDelta = {
   readonly delta: number;
 };
 
+export type FinancialContextPacketTask =
+  | { readonly kind: "general_advisor" }
+  | { readonly kind: "spending_overview" }
+  | { readonly kind: "goal_progress" }
+  | { readonly kind: "account_overview" }
+  | { readonly kind: "capture_review" };
+
 export type FinancialContextPacket = {
+  readonly task: FinancialContextPacketTask;
   readonly summary: {
     readonly balance: number;
     readonly currentMonthSpending: readonly FinancialContextCategoryTotal[];
     readonly previousMonthSpending: readonly FinancialContextCategoryTotal[];
     readonly monthOverMonthDeltas: readonly FinancialContextCategoryDelta[];
   };
-  readonly recentTransactions: readonly {
+  readonly recentTransactions?: readonly {
     readonly type: string;
     readonly amount: number;
     readonly categoryId: string;
     readonly description: string;
     readonly date: string;
   }[];
-  readonly budgets: readonly {
+  readonly budgets?: readonly {
     readonly categoryId: string;
     readonly amount: number;
     readonly month: Month;
   }[];
-  readonly goals: readonly {
+  readonly goals?: readonly {
     readonly name: string;
     readonly type: string;
     readonly targetAmount: number;
     readonly currentAmount: number;
     readonly progressPct: number;
   }[];
-  readonly accounts: readonly {
+  readonly accounts?: readonly {
     readonly name: string;
     readonly kind: string;
     readonly isDefault: boolean;
   }[];
-  readonly captureEvidence: readonly {
+  readonly captureEvidence?: readonly {
     readonly scope: string;
     readonly value: string;
     readonly sourceFamily: string;
@@ -58,6 +66,7 @@ export type BuildFinancialContextPacketInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
   readonly now?: Date;
+  readonly task?: FinancialContextPacketTask;
 };
 
 export type FinancialContextPacketPorts = {
@@ -136,8 +145,42 @@ const toCategoryDelta = (
   delta: current - previous,
 });
 
+const DEFAULT_FINANCIAL_CONTEXT_TASK: FinancialContextPacketTask = { kind: "general_advisor" };
+
+const includesRecentTransactions = (task: FinancialContextPacketTask): boolean =>
+  task.kind === "general_advisor" || task.kind === "spending_overview";
+
+const includesBudgets = (task: FinancialContextPacketTask): boolean =>
+  task.kind === "general_advisor" || task.kind === "spending_overview";
+
+const includesGoals = (task: FinancialContextPacketTask): boolean =>
+  task.kind === "general_advisor" || task.kind === "goal_progress";
+
+const includesAccounts = (task: FinancialContextPacketTask): boolean =>
+  task.kind === "general_advisor" || task.kind === "account_overview";
+
+const includesCaptureEvidence = (task: FinancialContextPacketTask): boolean =>
+  task.kind === "general_advisor" || task.kind === "capture_review";
+
+const buildGoalContext = (
+  input: BuildFinancialContextPacketInput,
+  ports: FinancialContextPacketPorts
+): NonNullable<FinancialContextPacket["goals"]> =>
+  ports.getGoals(input.db, input.userId).map((goal) => {
+    const currentAmount = ports.getGoalCurrentAmount(input.db, goal.id);
+    return {
+      name: goal.name,
+      type: goal.type,
+      targetAmount: goal.targetAmount,
+      currentAmount,
+      progressPct:
+        goal.targetAmount > 0 ? Math.round((currentAmount / goal.targetAmount) * 100) : 0,
+    };
+  });
+
 export function createFinancialContextPacketBuilder(ports: FinancialContextPacketPorts) {
   return (input: BuildFinancialContextPacketInput): FinancialContextPacket => {
+    const task = input.task ?? DEFAULT_FINANCIAL_CONTEXT_TASK;
     const currentMonth = toContextMonth(input.now ?? new Date());
     const previousMonth = previousContextMonth(currentMonth);
     const currentMonthSpending = ports.getSpendingByCategory(input.db, input.userId, currentMonth);
@@ -146,19 +189,9 @@ export function createFinancialContextPacketBuilder(ports: FinancialContextPacke
       input.userId,
       previousMonth
     );
-    const goals = ports.getGoals(input.db, input.userId).map((goal) => {
-      const currentAmount = ports.getGoalCurrentAmount(input.db, goal.id);
-      return {
-        name: goal.name,
-        type: goal.type,
-        targetAmount: goal.targetAmount,
-        currentAmount,
-        progressPct:
-          goal.targetAmount > 0 ? Math.round((currentAmount / goal.targetAmount) * 100) : 0,
-      };
-    });
 
     return {
+      task,
       summary: {
         balance: ports.getBalance(input.db, input.userId),
         currentMonthSpending,
@@ -168,11 +201,23 @@ export function createFinancialContextPacketBuilder(ports: FinancialContextPacke
           previousMonthSpending
         ),
       },
-      recentTransactions: ports.getRecentTransactions({ ...input, currentMonth, previousMonth }),
-      budgets: ports.getBudgetsForMonth(input.db, input.userId, currentMonth),
-      goals,
-      accounts: ports.getAccounts(input.db, input.userId),
-      captureEvidence: ports.getCaptureEvidence(input.db, input.userId),
+      ...(includesRecentTransactions(task)
+        ? {
+            recentTransactions: ports.getRecentTransactions({
+              ...input,
+              currentMonth,
+              previousMonth,
+            }),
+          }
+        : {}),
+      ...(includesBudgets(task)
+        ? { budgets: ports.getBudgetsForMonth(input.db, input.userId, currentMonth) }
+        : {}),
+      ...(includesGoals(task) ? { goals: buildGoalContext(input, ports) } : {}),
+      ...(includesAccounts(task) ? { accounts: ports.getAccounts(input.db, input.userId) } : {}),
+      ...(includesCaptureEvidence(task)
+        ? { captureEvidence: ports.getCaptureEvidence(input.db, input.userId) }
+        : {}),
     };
   };
 }

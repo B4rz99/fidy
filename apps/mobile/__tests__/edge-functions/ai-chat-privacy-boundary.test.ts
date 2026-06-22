@@ -31,6 +31,12 @@ describe("ai-chat Edge Function privacy boundary", () => {
   it("validates packet collections before building chat prompts", () => {
     expect(source).toContain("isOptionalArrayOf(value.goals, isGoalSummary)");
     expect(source).toContain('typeof value.targetAmount === "number"');
+    expect(source).toContain("isFinancialContextPacketTask(value.task)");
     expect(source).toContain("invalid_context_packet");
+  });
+
+  it("keeps advisor prompts scoped to the packet task", () => {
+    expect(source).toContain("## Financial context task");
+    expect(source).toContain("context.packet.task.kind");
   });
 });

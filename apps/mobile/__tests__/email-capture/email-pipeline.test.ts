@@ -505,6 +505,36 @@ describe("email processing pipeline", () => {
     expect(JSON.stringify(captureWarning.mock.calls)).not.toContain("50.000");
   });
 
+  it("schedules ambiguous AI-dependent emails for retry when AI is unavailable", async () => {
+    const fixedNow = requireIsoDateTime("2026-04-18T12:34:56.000Z");
+    const service = createTestEmailPipelineService({
+      clock: {
+        now: () => new Date(fixedNow),
+        nowIsoDateTime: () => fixedNow,
+      },
+    });
+    mockParseEmailApi.mockRejectedValueOnce(new Error("AI unavailable"));
+
+    const result = await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(result.pendingRetry).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(result.saved).toBe(0);
+    expect(mockRecordAutomatedTransactionWithLocalLedger).not.toHaveBeenCalled();
+    expect(mockCreateReviewCandidate).not.toHaveBeenCalled();
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        sourceEventId: "ext-1",
+        status: "pending_retry",
+        failureReason: "parse_error",
+        retryCount: 0,
+        nextRetryAt: "2026-04-18T12:35:56.000Z",
+      })
+    );
+    expect(mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1]).not.toHaveProperty("rawBody");
+  });
+
   it("reports first-saved timing without transaction content", async () => {
     const capturePipelineEvent = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({
@@ -631,6 +661,33 @@ describe("email processing pipeline", () => {
       })
     );
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
+  it("saves deterministic high-confidence bank captures when AI is unavailable", async () => {
+    const email = makeRawEmail({
+      from: "alertas@davibank.com",
+      subject: "Compra aprobada",
+      body: "Compra aprobada en EXITO COLOMBIA por $50.000 el 18/05/2026 con tarjeta **** 1234.",
+      receivedAt: "2026-05-18T19:04:59.000Z",
+    });
+    mockParseEmailApi.mockRejectedValueOnce(new Error("AI unavailable"));
+
+    const result = await processEmails(mockDb, USER_ID, [email]);
+
+    expect(result.saved).toBe(1);
+    expect(result.pendingRetry).toBe(0);
+    expect(result.failed).toBe(0);
+    expect(mockParseEmailApi).not.toHaveBeenCalled();
+    expectSavedTransaction({
+      userId: USER_ID,
+      type: "expense",
+      amount: 50000,
+      accountId: "fa-default-user-1",
+      accountAttributionState: "unresolved",
+      counterpartyName: "EXITO COLOMBIA",
+      source: "email_capture",
+      date: "2026-05-18",
+    });
   });
 
   it("falls back to the LLM and records a regex template when a known bank regex misses", async () => {
@@ -792,11 +849,10 @@ describe("email processing pipeline", () => {
       mockDb,
       expect.objectContaining({
         createdAt: fixedNow,
+        nextRetryAt: "2026-04-18T12:35:56.000Z",
       })
     );
-    expect(mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1]).not.toHaveProperty(
-      "nextRetryAt"
-    );
+    expect(mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1]).not.toHaveProperty("rawBody");
   });
 
   it("waits between parse-email calls when a rate-limit delay is configured", async () => {
@@ -1286,22 +1342,23 @@ describe("email processing pipeline", () => {
     );
   });
 
-  it("marks email as failed without caching rawBody when LLM throws", async () => {
+  it("marks email for retry without caching rawBody when LLM throws", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
     const result = await processEmails(mockDb, USER_ID, emails);
 
-    expect(result.failed).toBe(1);
-    expect(result.pendingRetry).toBe(0);
+    expect(result.failed).toBe(0);
+    expect(result.pendingRetry).toBe(1);
     expect(result.saved).toBe(0);
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "failed",
+        status: "pending_retry",
         failureReason: "parse_error",
       })
     );
+    expect(mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1]).not.toHaveProperty("rawBody");
     expect(result.parseImprovementRequests).toEqual([
       {
         rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",

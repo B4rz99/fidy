@@ -85,7 +85,17 @@ type GoalSummary = {
   readonly progressPct: number;
 };
 
+type FinancialContextPacketTask = {
+  readonly kind:
+    | "general_advisor"
+    | "spending_overview"
+    | "goal_progress"
+    | "account_overview"
+    | "capture_review";
+};
+
 type FinancialContextPacket = {
+  readonly task: FinancialContextPacketTask;
   readonly summary: unknown;
   readonly recentTransactions?: readonly unknown[];
   readonly budgets?: readonly unknown[];
@@ -101,6 +111,8 @@ function formatGoalLine(g: GoalSummary): string {
 
 function buildSystemPrompt(context: { packet: FinancialContextPacket }): string {
   const parts = [SYSTEM_PROMPT];
+
+  parts.push(`\n## Financial context task\n${context.packet.task.kind}`);
 
   if ((context.packet.goals ?? []).length > 0) {
     const goalLines = (context.packet.goals ?? []).map(formatGoalLine).join("\n");
@@ -140,6 +152,22 @@ function isUnknownItem(_value: unknown): boolean {
   return true;
 }
 
+const FINANCIAL_CONTEXT_PACKET_TASK_KINDS = new Set([
+  "general_advisor",
+  "spending_overview",
+  "goal_progress",
+  "account_overview",
+  "capture_review",
+]);
+
+function isFinancialContextPacketTask(value: unknown): value is FinancialContextPacketTask {
+  return (
+    isRecord(value) &&
+    typeof value.kind === "string" &&
+    FINANCIAL_CONTEXT_PACKET_TASK_KINDS.has(value.kind)
+  );
+}
+
 function isGoalSummary(value: unknown): boolean {
   return (
     isRecord(value) &&
@@ -154,6 +182,7 @@ function isGoalSummary(value: unknown): boolean {
 function isFinancialContextPacket(value: unknown): value is FinancialContextPacket {
   if (!isRecord(value) || !("summary" in value)) return false;
   return (
+    isFinancialContextPacketTask(value.task) &&
     isOptionalArrayOf(value.recentTransactions, isUnknownItem) &&
     isOptionalArrayOf(value.budgets, isUnknownItem) &&
     isOptionalArrayOf(value.goals, isGoalSummary) &&

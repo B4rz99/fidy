@@ -150,6 +150,7 @@ describe("createAiChatApiService", () => {
       },
       {
         financialContextPacket: {
+          task: { kind: "spending_overview" },
           summary: {
             balance: 125000,
             currentMonthSpending: [{ categoryId: "food", total: 50000 }],
@@ -179,6 +180,7 @@ describe("createAiChatApiService", () => {
     expect(JSON.parse(String(init.body))).toMatchObject({
       messages: [{ role: "user", content: "how am I doing?" }],
       financialContextPacket: {
+        task: { kind: "spending_overview" },
         summary: {
           balance: 125000,
         },

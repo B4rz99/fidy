@@ -57,11 +57,64 @@ describe("financial context packet", () => {
           { categoryId: "food", current: 120000, previous: 90000, delta: 30000 },
         ],
       },
-      recentTransactions: [{ description: "Groceries" }],
+      recentTransactions: [
+        {
+          type: "expense",
+          amount: 120000,
+          categoryId: "food",
+          description: "Groceries",
+          date: "2026-04-20",
+        },
+      ],
       budgets: [{ categoryId: "food", amount: 300000, month: "2026-04" }],
       goals: [{ name: "Emergency fund", currentAmount: 250000, progressPct: 25 }],
       accounts: [{ name: "Cash" }],
       captureEvidence: [{ value: "Market", occurrences: 3 }],
     });
+  });
+
+  it("minimizes spending overview packets to only spending context", () => {
+    const unrelatedPort = () => {
+      throw new Error("unrelated port should not be called for spending overview packets");
+    };
+    const builder = createFinancialContextPacketBuilder({
+      ...createPorts(),
+      getGoals: unrelatedPort,
+      getGoalCurrentAmount: unrelatedPort,
+      getAccounts: unrelatedPort,
+      getCaptureEvidence: unrelatedPort,
+    });
+
+    const packet = builder({
+      db,
+      userId,
+      now: new Date("2026-04-25T12:00:00.000Z"),
+      task: { kind: "spending_overview" },
+    });
+
+    expect(packet).toEqual({
+      task: { kind: "spending_overview" },
+      summary: {
+        balance: 1000000,
+        currentMonthSpending: [{ categoryId: "food", total: 120000 }],
+        previousMonthSpending: [{ categoryId: "food", total: 90000 }],
+        monthOverMonthDeltas: [
+          { categoryId: "food", current: 120000, previous: 90000, delta: 30000 },
+        ],
+      },
+      recentTransactions: [
+        {
+          type: "expense",
+          amount: 120000,
+          categoryId: "food",
+          description: "Groceries",
+          date: "2026-04-20",
+        },
+      ],
+      budgets: [{ categoryId: "food", amount: 300000, month: "2026-04" }],
+    });
+    expect("accounts" in packet).toBe(false);
+    expect("goals" in packet).toBe(false);
+    expect("captureEvidence" in packet).toBe(false);
   });
 });

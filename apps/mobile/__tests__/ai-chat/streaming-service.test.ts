@@ -35,6 +35,7 @@ function makeAddAction(): ChatAction {
 
 function makeFinancialContextPacket() {
   return {
+    task: { kind: "spending_overview" as const },
     summary: {
       balance: 750000,
       currentMonthSpending: [],
@@ -209,7 +210,11 @@ describe("streaming chat service", () => {
       executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
-    expect(buildFinancialContextPacket).toHaveBeenCalledWith({ db: mockDb, userId: USER_ID });
+    expect(buildFinancialContextPacket).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: USER_ID,
+      task: { kind: "spending_overview" },
+    });
     expect(streamChat).toHaveBeenCalledWith(
       [{ role: "user", content: "how am I doing?" }],
       expect.any(Object),
@@ -259,7 +264,7 @@ describe("streaming chat service", () => {
     });
   });
 
-  it("persists an assistant error message when the stream reports an error", async () => {
+  it("persists an unavailable assistant message when the stream reports an error", async () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);
     const addAssistantChatMessage = vi
@@ -289,11 +294,54 @@ describe("streaming chat service", () => {
       executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
-    expect(addAssistantChatMessage).toHaveBeenCalledWith(mockDb, USER_ID, "partial");
+    expect(addAssistantChatMessage).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      "I can't produce a reliable answer right now. Please try again."
+    );
     expect(state.getState()).toMatchObject({
       isStreaming: false,
       streamingContent: "",
     });
+  });
+
+  it("persists retry copy instead of partial advisor output when the stream errors", async () => {
+    const state = createState();
+    state.setCurrentSessionId("chat-1" as ChatSessionId);
+    const addAssistantChatMessage = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeAssistantMessage("unavailable"));
+
+    const service = createStreamingChatService({
+      getState: state.getState,
+      setStreaming: state.setStreaming,
+      setStreamingContent: state.setStreamingContent,
+      streamChat: async (_messages, callbacks) => {
+        callbacks.onChunk("Spend less on groceries by");
+        callbacks.onError("stream_error");
+      },
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage,
+      parseActionFromResponse: vi.fn<(...args: any[]) => any>(() => {
+        throw new Error("partial output should not be parsed");
+      }),
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
+      telemetry: makeTelemetry().telemetry,
+    });
+
+    await service.sendMessage({
+      db: mockDb,
+      userId: USER_ID,
+      text: "what should I change?",
+      executeAction: vi.fn<(...args: any[]) => any>(),
+    });
+
+    expect(addAssistantChatMessage).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      "I can't produce a reliable answer right now. Please try again."
+    );
   });
 
   it("aborts the active stream and resets state on cancel", async () => {
