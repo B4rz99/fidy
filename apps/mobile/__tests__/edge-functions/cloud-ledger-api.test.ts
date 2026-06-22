@@ -71,6 +71,16 @@ const OTHER_USER_BOOTSTRAP_PAYLOAD: LedgerBootstrapPayload = {
 };
 
 describe("cloud-ledger-api Edge Function", () => {
+  it("answers preflight requests with allowed Remote API Boundary methods", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(optionsRequest(), api.deps);
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("Access-Control-Allow-Methods")).toBe("POST, OPTIONS");
+    expect(api.store.bootstrapLedger).not.toHaveBeenCalled();
+  });
+
   it("rejects unauthenticated bootstrap requests with typed failures before ledger access", async () => {
     const missingAuth = createCloudLedgerApiDeps();
     const missingAuthResponse = await handleCloudLedgerRequest(
@@ -171,6 +181,10 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(api.store.bootstrapLedger).not.toHaveBeenCalled();
   });
 });
+
+function optionsRequest() {
+  return new Request("http://localhost/cloud-ledger-api", { method: "OPTIONS" });
+}
 
 function jsonRequest(body: unknown, token?: string) {
   return new Request("http://localhost/cloud-ledger-api", {

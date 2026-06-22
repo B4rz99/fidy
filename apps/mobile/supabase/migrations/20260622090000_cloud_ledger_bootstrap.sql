@@ -8,7 +8,7 @@ create table if not exists ledger.ledger_cursors (
 
 create table if not exists ledger.categories (
   user_id uuid not null references auth.users(id) on delete cascade,
-  id text not null,
+  id text not null check (length(trim(id)) > 0),
   name text not null check (length(trim(name)) > 0),
   icon text,
   color text,
@@ -21,7 +21,7 @@ create table if not exists ledger.categories (
 
 create table if not exists ledger.financial_accounts (
   user_id uuid not null references auth.users(id) on delete cascade,
-  id text not null,
+  id text not null check (length(trim(id)) > 0),
   name text not null check (length(trim(name)) > 0),
   type text not null check (length(trim(type)) > 0),
   currency text not null default 'COP' check (currency = 'COP'),
@@ -34,12 +34,12 @@ create table if not exists ledger.financial_accounts (
 
 create table if not exists ledger.transactions (
   user_id uuid not null references auth.users(id) on delete cascade,
-  id text not null,
+  id text not null check (length(trim(id)) > 0),
   type text not null check (type in ('income', 'expense')),
   amount integer not null check (amount >= 0),
   currency text not null default 'COP' check (currency = 'COP'),
-  category_id text,
-  account_id text not null,
+  category_id text check (category_id is null or length(trim(category_id)) > 0),
+  account_id text not null check (length(trim(account_id)) > 0),
   description text,
   date date not null,
   record_version integer not null default 1 check (record_version > 0),

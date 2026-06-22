@@ -113,15 +113,15 @@ export async function fetchCloudLedgerBootstrap(
     ...(await authorizationHeaders(supabase)),
   });
 
-  throwIfTransportError(response.error);
-  if (response.data === null) {
-    throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
-  }
-  if (!response.data.success) {
+  if (response.data !== null && !response.data.success) {
     throw new CloudLedgerClientFailure(
       response.data.error,
       `Cloud Ledger API failed: ${response.data.error}`
     );
+  }
+  throwIfTransportError(response.error);
+  if (response.data === null) {
+    throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
   }
 
   return parseCloudLedgerPayload(response.data.data);

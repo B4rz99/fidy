@@ -45,11 +45,23 @@ describe("Cloud Ledger Edge store", () => {
       ],
     });
     expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_bootstrap", {
-      p_after_sequence: 1,
+      p_after_sequence: "1",
       p_user_id: USER_ID,
     });
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.schema).not.toHaveBeenCalled();
+  });
+
+  it("passes large Ledger Cursor sequences to the RPC without unsafe numeric coercion", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    await store.bootstrapLedger(USER_ID, "ledger:9007199254740993");
+
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_bootstrap", {
+      p_after_sequence: "9007199254740993",
+      p_user_id: USER_ID,
+    });
   });
 });
 

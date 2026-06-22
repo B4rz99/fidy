@@ -32,6 +32,17 @@ describe("Cloud Ledger remote schema", () => {
     );
   });
 
+  it("rejects blank ledger identifiers before they can reach the mobile parser", () => {
+    const sql = readFileSync(MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("id text not null check (length(trim(id)) > 0)");
+    expect(sql).toContain(
+      "category_id text check (category_id is null or length(trim(category_id)) > 0)"
+    );
+    expect(sql).toContain("account_id text not null check (length(trim(account_id)) > 0)");
+    expect(sql).toContain("record_id text not null check (length(trim(record_id)) > 0)");
+  });
+
   it("exposes bootstrap data only through a service-role Remote API Boundary function", () => {
     const sql = readFileSync(MIGRATION, "utf8").toLowerCase();
 

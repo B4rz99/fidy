@@ -8,7 +8,7 @@ type SupabaseLike = {
     functionName: string,
     args: {
       readonly p_user_id: string;
-      readonly p_after_sequence: number | null;
+      readonly p_after_sequence: string | null;
     }
   ): Promise<{
     readonly data: CloudLedgerBootstrapPayload | null;

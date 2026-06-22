@@ -6,12 +6,16 @@ export function isLedgerCursor(value: string): value is LedgerCursor {
   return LEDGER_CURSOR_PATTERN.test(value);
 }
 
-export function readLedgerCursorSequence(cursor: LedgerCursor): number {
+export function readLedgerCursorSequence(cursor: LedgerCursor): string {
   const match = LEDGER_CURSOR_PATTERN.exec(cursor);
   if (match === null) {
     throw new Error("Invalid Ledger Cursor");
   }
-  return Number(match[1]);
+  const sequence = match[1];
+  if (sequence === undefined) {
+    throw new Error("Invalid Ledger Cursor");
+  }
+  return sequence;
 }
 
 export function toLedgerCursor(sequence: number): LedgerCursor {

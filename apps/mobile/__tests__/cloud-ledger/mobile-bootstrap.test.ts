@@ -141,6 +141,20 @@ describe("mobile Cloud Ledger bootstrap", () => {
       name: "CloudLedgerClientFailure",
     } satisfies Partial<CloudLedgerClientFailure>);
   });
+
+  it("surfaces typed Cloud Ledger API failures when invoke also reports non-2xx", async () => {
+    const supabase = createCloudLedgerSupabase({
+      apiFailure: "invalid_cursor",
+      invokeError: { message: "Edge Function returned a non-2xx status code" },
+    });
+
+    await expect(
+      refreshCloudLedgerCache(supabase.client, createEmptyCloudLedgerCache())
+    ).rejects.toMatchObject({
+      code: "invalid_cursor",
+      name: "CloudLedgerClientFailure",
+    } satisfies Partial<CloudLedgerClientFailure>);
+  });
 });
 
 type WirePayload = {
@@ -153,7 +167,9 @@ type WirePayload = {
 
 function createCloudLedgerSupabase(
   options: {
+    readonly apiFailure?: "invalid_cursor" | "invalid_auth";
     readonly bootstrapPayload?: WirePayload;
+    readonly invokeError?: { readonly message: string };
     readonly refreshPayload?: WirePayload;
   } = {}
 ) {
@@ -162,11 +178,14 @@ function createCloudLedgerSupabase(
   const functionsInvoke = vi.fn<(...args: any[]) => any>(
     (_functionName: string, invokeOptions: { readonly body: { readonly action: string } }) =>
       Promise.resolve({
-        data: {
-          success: true,
-          data: invokeOptions.body.action === "refresh" ? refreshPayload : bootstrapPayload,
-        },
-        error: null,
+        data:
+          options.apiFailure === undefined
+            ? {
+                success: true,
+                data: invokeOptions.body.action === "refresh" ? refreshPayload : bootstrapPayload,
+              }
+            : { success: false, error: options.apiFailure },
+        error: options.invokeError ?? null,
       })
   );
   const from = vi.fn<(...args: any[]) => any>();

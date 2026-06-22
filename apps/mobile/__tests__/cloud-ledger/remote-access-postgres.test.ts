@@ -41,6 +41,7 @@ describe("Cloud Ledger Postgres access boundary", () => {
 
       expectClientRolesCannotReadLedger(postgres);
       expectClientRolesCannotExecuteBootstrap(postgres);
+      expectBlankLedgerIdentifiersRejected(postgres);
       expectServiceRoleReadsOnlyScopedBootstrap(postgres);
     }
   );
@@ -77,6 +78,34 @@ function expectClientRolesCannotExecuteBootstrap(postgres: PostgresHarness) {
 
   expect(authenticatedError).toMatch(/permission denied/);
   expect(anonError).toMatch(/permission denied/);
+}
+
+function expectBlankLedgerIdentifiersRejected(postgres: PostgresHarness) {
+  const blankCategoryIdError = psqlFails(
+    postgres,
+    `insert into ledger.categories (user_id, id, name) values ('${USER_ID}'::uuid, ' ', 'Blank');`
+  );
+  const blankAccountIdError = psqlFails(
+    postgres,
+    `insert into ledger.financial_accounts (user_id, id, name, type) values ('${USER_ID}'::uuid, ' ', 'Blank', 'cash');`
+  );
+  const blankTransactionIdError = psqlFails(
+    postgres,
+    `insert into ledger.transactions (user_id, id, type, amount, account_id, date) values ('${USER_ID}'::uuid, ' ', 'expense', 1, 'acct-cash', '2026-06-01');`
+  );
+  const blankTransactionAccountIdError = psqlFails(
+    postgres,
+    `insert into ledger.transactions (user_id, id, type, amount, account_id, date) values ('${USER_ID}'::uuid, 'txn-blank-account', 'expense', 1, ' ', '2026-06-01');`
+  );
+
+  [
+    blankCategoryIdError,
+    blankAccountIdError,
+    blankTransactionIdError,
+    blankTransactionAccountIdError,
+  ].forEach((error) => {
+    expect(error).toMatch(/violates check constraint/);
+  });
 }
 
 function expectServiceRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) {
