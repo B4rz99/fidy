@@ -12,8 +12,8 @@ import { parseNotificationWithRegex } from "./notification-regex-parser";
 import {
   appendParsedNotificationEvidence,
   buildNotificationFingerprint,
+  isRawNotificationAiUnavailable,
   isRawNotificationNeedsReview,
-  isRawNotificationRetry,
   normalizeNotificationCommand,
   normalizeParsedNotification,
   parseNotificationWithLlm,
@@ -22,8 +22,8 @@ import {
 } from "./notification-pipeline/context";
 import {
   persistDuplicateNotification,
+  persistAiUnavailableNotificationReview,
   persistFailedNotification,
-  persistRetryableNotification,
   persistReviewableNotification,
   persistSuccessfulNotification,
   reportSkippedDuplicate,
@@ -57,12 +57,12 @@ export async function processNotification(
       return persistFailedNotification(parseStage.context);
     }
 
-    if (parseStage.kind === "needs_review") {
-      return persistReviewableNotification(parseStage.context);
+    if (parseStage.kind === "ai_unavailable") {
+      return persistAiUnavailableNotificationReview(parseStage.context);
     }
 
-    if (parseStage.kind === "retry") {
-      return persistRetryableNotification(parseStage.context);
+    if (parseStage.kind === "needs_review") {
+      return persistReviewableNotification(parseStage.context);
     }
 
     return withFingerprintLock(parseStage.context, handleParsedNotification);
@@ -123,9 +123,9 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
       },
     };
   }
-  if (isRawNotificationRetry(rawParsed)) {
+  if (isRawNotificationAiUnavailable(rawParsed)) {
     return {
-      kind: "retry",
+      kind: "ai_unavailable",
       context: {
         ...context,
         parseMethod: "llm",

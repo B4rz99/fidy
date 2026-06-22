@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createFinancialContextPacketBuilder,
   type FinancialContextPacketPorts,
@@ -116,5 +116,41 @@ describe("financial context packet", () => {
     expect("accounts" in packet).toBe(false);
     expect("goals" in packet).toBe(false);
     expect("captureEvidence" in packet).toBe(false);
+  });
+
+  it("omits spending summaries from goal progress packets", () => {
+    const unrelatedPort = vi.fn(() => {
+      throw new Error("spending port should not be called for goal progress packets");
+    });
+    const builder = createFinancialContextPacketBuilder({
+      ...createPorts(),
+      getBalance: unrelatedPort,
+      getSpendingByCategory: unrelatedPort,
+      getRecentTransactions: unrelatedPort,
+      getBudgetsForMonth: unrelatedPort,
+      getAccounts: unrelatedPort,
+      getCaptureEvidence: unrelatedPort,
+    });
+
+    const packet = builder({
+      db,
+      userId,
+      now: new Date("2026-04-25T12:00:00.000Z"),
+      task: { kind: "goal_progress" },
+    });
+
+    expect(packet).toEqual({
+      task: { kind: "goal_progress" },
+      goals: [
+        {
+          name: "Emergency fund",
+          type: "savings",
+          targetAmount: 1000000,
+          currentAmount: 250000,
+          progressPct: 25,
+        },
+      ],
+    });
+    expect(unrelatedPort).not.toHaveBeenCalled();
   });
 });

@@ -89,6 +89,100 @@ describe("ai-chat financial context packet", () => {
     ).toBeNull();
   });
 
+  it("accepts non-spending task packets without spending summary", () => {
+    expect(
+      readFinancialContextPacket(
+        {
+          task: { kind: "goal_progress" },
+          goals: [
+            {
+              name: "Emergency fund",
+              type: "savings",
+              targetAmount: 1000000,
+              currentAmount: 250000,
+              progressPct: 25,
+            },
+          ],
+        },
+        "goal_progress"
+      )
+    ).toEqual({
+      task: { kind: "goal_progress" },
+      goals: [
+        {
+          name: "Emergency fund",
+          type: "savings",
+          targetAmount: 1000000,
+          currentAmount: 250000,
+          progressPct: 25,
+        },
+      ],
+    });
+
+    expect(
+      readFinancialContextPacket(
+        {
+          task: { kind: "account_overview" },
+          accounts: [{ name: "Cash", kind: "cash", isDefault: true }],
+        },
+        "account_overview"
+      )
+    ).toEqual({
+      task: { kind: "account_overview" },
+      accounts: [{ name: "Cash", kind: "cash", isDefault: true }],
+    });
+
+    expect(
+      readFinancialContextPacket(
+        {
+          task: { kind: "capture_review" },
+          captureEvidence: [
+            {
+              scope: "merchant",
+              value: "Market",
+              sourceFamily: "email",
+              evidenceType: "merchant",
+              occurrences: 3,
+            },
+          ],
+        },
+        "capture_review"
+      )
+    ).toEqual({
+      task: { kind: "capture_review" },
+      captureEvidence: [
+        {
+          scope: "merchant",
+          value: "Market",
+          sourceFamily: "email",
+          evidenceType: "merchant",
+          occurrences: 3,
+        },
+      ],
+    });
+  });
+
+  it("rejects spending summaries on non-spending task packets", () => {
+    expect(
+      readFinancialContextPacket(
+        {
+          task: { kind: "goal_progress" },
+          summary,
+          goals: [
+            {
+              name: "Emergency fund",
+              type: "savings",
+              targetAmount: 1000000,
+              currentAmount: 250000,
+              progressPct: 25,
+            },
+          ],
+        },
+        "goal_progress"
+      )
+    ).toBeNull();
+  });
+
   it("sanitizes accepted packets to whitelisted fields", () => {
     const packet = readFinancialContextPacket(
       {

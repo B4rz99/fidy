@@ -16,21 +16,21 @@ import type {
   NotificationCommand,
   NotificationContext,
   ParsedNotification,
+  RawNotificationAiUnavailable,
   RawNotificationNeedsReview,
-  RawNotificationRetry,
   RawParsedNotification,
 } from "./types";
 
 export function isRawNotificationNeedsReview(
-  parsed: RawParsedNotification | RawNotificationNeedsReview | RawNotificationRetry
+  parsed: RawParsedNotification | RawNotificationNeedsReview | RawNotificationAiUnavailable
 ): parsed is RawNotificationNeedsReview {
   return "kind" in parsed && parsed.kind === "needs_review";
 }
 
-export function isRawNotificationRetry(
-  parsed: RawParsedNotification | RawNotificationNeedsReview | RawNotificationRetry
-): parsed is RawNotificationRetry {
-  return "kind" in parsed && parsed.kind === "retry";
+export function isRawNotificationAiUnavailable(
+  parsed: RawParsedNotification | RawNotificationNeedsReview | RawNotificationAiUnavailable
+): parsed is RawNotificationAiUnavailable {
+  return "kind" in parsed && parsed.kind === "ai_unavailable";
 }
 
 function isNeedsReviewNotificationParse(
@@ -39,8 +39,10 @@ function isNeedsReviewNotificationParse(
   return llm !== null && "kind" in llm && llm.kind === "needs_review";
 }
 
-function isRetryNotificationParse(llm: ParseNotificationApiResult): llm is RawNotificationRetry {
-  return llm !== null && "kind" in llm && llm.kind === "retry";
+function isAiUnavailableNotificationParse(
+  llm: ParseNotificationApiResult
+): llm is RawNotificationAiUnavailable {
+  return llm !== null && "kind" in llm && llm.kind === "ai_unavailable";
 }
 
 export function buildNotificationFingerprint(
@@ -68,13 +70,15 @@ export function normalizeParsedNotification(parsed: RawParsedNotification): Pars
 
 export async function parseNotificationWithLlm(
   sanitizedText: string
-): Promise<RawParsedNotification | RawNotificationNeedsReview | RawNotificationRetry | null> {
+): Promise<
+  RawParsedNotification | RawNotificationNeedsReview | RawNotificationAiUnavailable | null
+> {
   const llm = await parseNotificationApi(sanitizedText);
 
   if (isNeedsReviewNotificationParse(llm)) {
     return llm;
   }
-  if (isRetryNotificationParse(llm)) {
+  if (isAiUnavailableNotificationParse(llm)) {
     return llm;
   }
 

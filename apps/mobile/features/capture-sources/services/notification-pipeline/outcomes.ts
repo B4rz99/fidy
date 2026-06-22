@@ -11,13 +11,13 @@ import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
 import { requireIsoDate } from "@/shared/types/assertions";
 import { buildFailedFingerprint } from "./context";
 import type {
+  AiUnavailableNotificationContext,
   DuplicateCheckResult,
   NotificationPipelineResult,
   NotificationStageContext,
   NotificationStageMetrics,
   ParsedNotificationContext,
   ResolvedNotificationContext,
-  RetryableNotificationContext,
   ReviewableNotificationContext,
 } from "./types";
 
@@ -238,20 +238,30 @@ export async function persistReviewableNotification(
   };
 }
 
-export async function persistRetryableNotification(
-  context: RetryableNotificationContext
+export async function persistAiUnavailableNotificationReview(
+  context: AiUnavailableNotificationContext
 ): Promise<NotificationPipelineResult> {
   const now = toIsoDateTime(new Date());
-  recordProcessedCaptureSourceEventWithLocalLedger({
+  await recordReviewCandidateCaptureWithLocalLedger({
     db: context.db,
     userId: context.userId,
     sourceFamily: context.source,
     sourceId: context.source,
     sourceEventId: buildFailedFingerprint(context.notification),
-    status: "pending_retry",
+    status: "needs_review",
     failureReason: "ai_unavailable",
     receivedAt: context.receivedAt,
     processedAt: now,
+    candidate: {
+      candidateKind: "unknown",
+      occurredAt: null,
+      amount: null,
+      transactionType: null,
+      categoryId: null,
+      description: null,
+      confidence: null,
+    },
+    evidence: context.captureEvidence,
   });
   trackNotificationPipeline(context, {
     saved: 0,

@@ -412,8 +412,8 @@ describe("processNotification", () => {
     });
   });
 
-  it("records retryable notification capture when notification AI is unavailable", async () => {
-    mockParseNotificationApi.mockResolvedValueOnce({ kind: "retry" });
+  it("creates a Review Candidate when notification AI is unavailable", async () => {
+    mockParseNotificationApi.mockResolvedValueOnce({ kind: "ai_unavailable" });
 
     const result = await processNotification(
       mockDb,
@@ -426,16 +426,23 @@ describe("processNotification", () => {
     expect(result.transactionId).toBeNull();
     expect(result.parseImprovementRequest).toBeUndefined();
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockRecordReviewCandidateCaptureWithLocalLedger).not.toHaveBeenCalled();
-    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+    expect(mockRecordReviewCandidateCaptureWithLocalLedger).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        status: "pending_retry",
+        status: "needs_review",
         failureReason: "ai_unavailable",
+        candidate: expect.objectContaining({
+          candidateKind: "unknown",
+          amount: null,
+          confidence: null,
+        }),
       })
     );
     expect(mockPersistProcessedSourceEvent).not.toHaveBeenCalledWith(
       expect.objectContaining({ status: "failed", failureReason: "parse_failed" })
+    );
+    expect(mockPersistProcessedSourceEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "pending_retry" })
     );
   });
 

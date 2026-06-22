@@ -10,14 +10,14 @@ export type NeedsReviewNotificationParse = {
   readonly confidence?: number | null;
 };
 
-export type RetryNotificationParse = {
-  readonly kind: "retry";
+export type AiUnavailableNotificationParse = {
+  readonly kind: "ai_unavailable";
 };
 
 export type ParseNotificationApiResult =
   | LlmParsedTransaction
   | NeedsReviewNotificationParse
-  | RetryNotificationParse
+  | AiUnavailableNotificationParse
   | null;
 
 export async function parseNotificationApi(
@@ -29,6 +29,6 @@ export async function parseNotificationApi(
     if (isCaptureNeedsReviewError(error)) {
       return { kind: "needs_review" };
     }
-    return { kind: "retry" };
+    return { kind: "ai_unavailable" };
   }
 }

@@ -37,8 +37,8 @@ export type RawNotificationNeedsReview = {
   readonly confidence?: number | null;
 };
 
-export type RawNotificationRetry = {
-  readonly kind: "retry";
+export type RawNotificationAiUnavailable = {
+  readonly kind: "ai_unavailable";
 };
 
 export type ParsedNotification = Omit<RawParsedNotification, "amount" | "date"> & {
@@ -77,7 +77,7 @@ export type ReviewableNotificationContext = NotificationStageContext & {
   };
 };
 
-export type RetryableNotificationContext = NotificationStageContext;
+export type AiUnavailableNotificationContext = NotificationStageContext;
 
 export type ResolvedNotificationContext = ParsedNotificationContext & {
   merchantKey: string;
@@ -89,8 +89,8 @@ export type ResolvedNotificationContext = ParsedNotificationContext & {
 
 export type ParseStageResult =
   | { kind: "failed"; context: NotificationStageContext }
+  | { kind: "ai_unavailable"; context: AiUnavailableNotificationContext }
   | { kind: "needs_review"; context: ReviewableNotificationContext }
-  | { kind: "retry"; context: RetryableNotificationContext }
   | { kind: "parsed"; context: ParsedNotificationContext };
 
 export type DuplicateCheckResult =

@@ -23,7 +23,7 @@ export type FinancialContextPacketTask =
 
 export type FinancialContextPacket = {
   readonly task: FinancialContextPacketTask;
-  readonly summary: {
+  readonly summary?: {
     readonly balance: number;
     readonly currentMonthSpending: readonly FinancialContextCategoryTotal[];
     readonly previousMonthSpending: readonly FinancialContextCategoryTotal[];
@@ -153,6 +153,9 @@ const includesRecentTransactions = (task: FinancialContextPacketTask): boolean =
 const includesBudgets = (task: FinancialContextPacketTask): boolean =>
   task.kind === "general_advisor" || task.kind === "spending_overview";
 
+const includesSpendingSummary = (task: FinancialContextPacketTask): boolean =>
+  task.kind === "general_advisor" || task.kind === "spending_overview";
+
 const includesGoals = (task: FinancialContextPacketTask): boolean =>
   task.kind === "general_advisor" || task.kind === "goal_progress";
 
@@ -178,29 +181,35 @@ const buildGoalContext = (
     };
   });
 
+function buildSpendingSummary(
+  input: BuildFinancialContextPacketInput,
+  ports: FinancialContextPacketPorts,
+  currentMonth: Month,
+  previousMonth: Month
+): NonNullable<FinancialContextPacket["summary"]> {
+  const currentMonthSpending = ports.getSpendingByCategory(input.db, input.userId, currentMonth);
+  const previousMonthSpending = ports.getSpendingByCategory(input.db, input.userId, previousMonth);
+
+  return {
+    balance: ports.getBalance(input.db, input.userId),
+    currentMonthSpending,
+    previousMonthSpending,
+    monthOverMonthDeltas: deriveFinancialContextDeltas(currentMonthSpending, previousMonthSpending),
+  };
+}
+
 export function createFinancialContextPacketBuilder(ports: FinancialContextPacketPorts) {
   return (input: BuildFinancialContextPacketInput): FinancialContextPacket => {
     const task = input.task ?? DEFAULT_FINANCIAL_CONTEXT_TASK;
     const currentMonth = toContextMonth(input.now ?? new Date());
     const previousMonth = previousContextMonth(currentMonth);
-    const currentMonthSpending = ports.getSpendingByCategory(input.db, input.userId, currentMonth);
-    const previousMonthSpending = ports.getSpendingByCategory(
-      input.db,
-      input.userId,
-      previousMonth
-    );
+    const summary = includesSpendingSummary(task)
+      ? buildSpendingSummary(input, ports, currentMonth, previousMonth)
+      : null;
 
     return {
       task,
-      summary: {
-        balance: ports.getBalance(input.db, input.userId),
-        currentMonthSpending,
-        previousMonthSpending,
-        monthOverMonthDeltas: deriveFinancialContextDeltas(
-          currentMonthSpending,
-          previousMonthSpending
-        ),
-      },
+      ...(summary !== null ? { summary } : {}),
       ...(includesRecentTransactions(task)
         ? {
             recentTransactions: ports.getRecentTransactions({

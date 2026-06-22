@@ -34,7 +34,7 @@ describe("parseNotificationApi", () => {
       await import("@/features/capture-sources/services/parse-notification-api");
 
     await expect(parseNotificationApi("unparsed notification")).resolves.toEqual({
-      kind: "retry",
+      kind: "ai_unavailable",
     });
     expect(mockParseNotification).toHaveBeenCalledWith("unparsed notification");
   });

@@ -98,7 +98,9 @@ function buildSystemPrompt(context: { packet: FinancialContextPacket }): string 
     parts.push(`\n## User's Financial Goals\n${goalLines}`);
   }
 
-  parts.push(`\n## Current financial context\n${JSON.stringify(context.packet.summary)}`);
+  if (context.packet.summary !== undefined) {
+    parts.push(`\n## Current financial context\n${JSON.stringify(context.packet.summary)}`);
+  }
 
   if ((context.packet.budgets ?? []).length > 0) {
     parts.push(`\n## Current budgets\n${JSON.stringify(context.packet.budgets)}`);
