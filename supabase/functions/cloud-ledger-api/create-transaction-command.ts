@@ -5,8 +5,7 @@ export type CreateTransactionCommandReadResult =
   | { readonly kind: "invalid_transaction_id" }
   | { readonly kind: "invalid_ledger_reference" }
   | { readonly kind: "invalid_transaction" }
-  | { readonly kind: "unsupported_command_version" }
-  | { readonly kind: "invalid_command" };
+  | { readonly kind: "unsupported_command_version" };
 
 const CLIENT_TRANSACTION_ID_PATTERN = /^txn-[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -14,7 +13,7 @@ const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
 export function readCreateTransactionCommand(body: unknown): CreateTransactionCommandReadResult {
   if (body === null || typeof body !== "object") {
-    return { kind: "invalid_command" };
+    return { kind: "invalid_transaction" };
   }
   const record = body as Record<string, unknown>;
   const transaction = record.transaction;

@@ -118,9 +118,6 @@ async function createTransactionResponse(
   if (commandResult.kind === "unsupported_command_version") {
     return jsonResponse({ success: false, error: "unsupported_command_version" }, 400);
   }
-  if (commandResult.kind === "invalid_command") {
-    return jsonResponse({ success: false, error: "unsupported_action" }, 400);
-  }
   const outcome = await store.createTransaction(userId, commandResult.command);
   if (outcome.code !== "accepted") {
     return jsonResponse(

@@ -68,8 +68,11 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).toContain("create or replace function public.cloud_ledger_create_transaction");
     expect(sql).toContain("ledger_transactions_amount_positive check (amount > 0)");
     expect(sql).toContain("ledger_transactions_date_not_future check (date <= current_date)");
-    expect(sql).toContain("revoke execute on function public.cloud_ledger_create_transaction");
-    expect(sql).toContain("grant execute on function public.cloud_ledger_create_transaction");
-    expect(sql).toContain("to service_role");
+    expect(sql).toMatch(
+      /revoke execute on function public\.cloud_ledger_create_transaction\([\s\S]*?date\s*\) from public, anon, authenticated/
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_create_transaction\([\s\S]*?date\s*\) to service_role/
+    );
   });
 });
