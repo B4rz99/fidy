@@ -1,4 +1,4 @@
-type SupabaseError = { readonly message?: string } | null;
+import type { SupabaseError } from "../_shared/supabase-error.ts";
 
 type DeleteResponse =
   | Promise<{ readonly error: SupabaseError }>

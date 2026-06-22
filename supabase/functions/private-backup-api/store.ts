@@ -1,7 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: Supabase tables use snake_case fields
 import type { RemoteBackupMetadata, SignedUploadUrl } from "./model.ts";
-
-type SupabaseError = { readonly message?: string } | null;
+import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
 
 type RemoteBackupMetadataRow = {
   readonly id: string;
@@ -262,10 +261,4 @@ async function orderMany(
       }>;
     }
   ).order(column, { ascending });
-}
-
-function throwIfError(error: SupabaseError, operation: string) {
-  if (error !== null) {
-    throw new Error(`Unable to ${operation}: ${error.message ?? "unknown error"}`);
-  }
 }

@@ -1,7 +1,6 @@
 import type { CloudLedgerBootstrapPayload, LedgerCursor } from "./model.ts";
+import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
 import { readLedgerCursorSequence } from "./model.ts";
-
-type SupabaseError = { readonly message?: string } | null;
 
 type SupabaseLike = {
   rpc(
@@ -17,6 +16,8 @@ type SupabaseLike = {
 };
 
 const CLOUD_LEDGER_BOOTSTRAP_RPC = "cloud_ledger_bootstrap";
+// ADR-0007/#532 make Supabase-backed Cloud Ledger the financial source of truth;
+// this service-role RPC is the Remote API Boundary, not mobile direct table access.
 
 export function createCloudLedgerStore(supabase: SupabaseLike) {
   return {
@@ -40,10 +41,4 @@ async function bootstrapLedger(
     throw new Error("Unable to load Cloud Ledger bootstrap: missing response");
   }
   return response.data;
-}
-
-function throwIfError(error: SupabaseError, operation: string) {
-  if (error !== null) {
-    throw new Error(`Unable to ${operation}: ${error.message ?? "unknown error"}`);
-  }
 }

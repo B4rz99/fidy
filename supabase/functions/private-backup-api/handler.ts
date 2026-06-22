@@ -4,8 +4,7 @@ import {
   uploadedObjectMatchesMetadata,
 } from "./metadata.ts";
 import type { RemoteBackupMetadata, SignedUploadUrl } from "./model.ts";
-
-type SupabaseError = { readonly message?: string } | null;
+import type { SupabaseError } from "../_shared/supabase-error.ts";
 
 type AuthClient = {
   readonly auth: {

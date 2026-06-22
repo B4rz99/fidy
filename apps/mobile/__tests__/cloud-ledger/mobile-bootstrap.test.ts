@@ -15,7 +15,6 @@ describe("mobile Cloud Ledger bootstrap", () => {
 
     expect(supabase.functionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
       body: { action: "bootstrap" },
-      headers: { Authorization: "Bearer ledger-access-token" },
     });
     expect(cache).toEqual({
       cursor: "ledger:7",
@@ -52,6 +51,7 @@ describe("mobile Cloud Ledger bootstrap", () => {
       ],
     });
     expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.getSession).not.toHaveBeenCalled();
   });
 
   it("refreshes an existing Ledger Cache with its cursor and merges returned rows", async () => {
@@ -85,7 +85,6 @@ describe("mobile Cloud Ledger bootstrap", () => {
 
     expect(supabase.functionsInvoke).toHaveBeenLastCalledWith("cloud-ledger-api", {
       body: { action: "refresh", cursor: "ledger:7" },
-      headers: { Authorization: "Bearer ledger-access-token" },
     });
     expect(refreshedCache.cursor).toBe("ledger:8");
     expect(refreshedCache.categories).toHaveLength(1);
@@ -121,6 +120,33 @@ describe("mobile Cloud Ledger bootstrap", () => {
 
     expect(refreshedCache.cursor).toBe("ledger:8");
     expect(refreshedCache.transactions).toEqual([]);
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("preserves tombstone record ids exactly while requiring non-empty ids", async () => {
+    const supabase = createCloudLedgerSupabase({
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [
+          {
+            recordType: "transaction",
+            recordId: " txn-user ",
+            deletedAt: "2026-06-02T11:00:00.000Z",
+          },
+        ],
+      },
+    });
+
+    const bootstrappedCache = await refreshCloudLedgerCache(
+      supabase.client,
+      createEmptyCloudLedgerCache()
+    );
+    const refreshedCache = await refreshCloudLedgerCache(supabase.client, bootstrappedCache);
+
+    expect(refreshedCache.transactions.map((transaction) => transaction.id)).toEqual(["txn-user"]);
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
@@ -189,13 +215,15 @@ function createCloudLedgerSupabase(
       })
   );
   const from = vi.fn<(...args: any[]) => any>();
+  const getSession = vi.fn(() =>
+    Promise.resolve({
+      data: { session: { access_token: "ledger-access-token" } },
+      error: null,
+    })
+  );
   const client = {
     auth: {
-      getSession: () =>
-        Promise.resolve({
-          data: { session: { access_token: "ledger-access-token" } },
-          error: null,
-        }),
+      getSession,
     },
     from,
     functions: { invoke: functionsInvoke },
@@ -205,6 +233,7 @@ function createCloudLedgerSupabase(
     client: client as unknown as SupabaseClient,
     from,
     functionsInvoke,
+    getSession,
   };
 }
 

@@ -165,6 +165,22 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(api.store.bootstrapLedger).toHaveBeenCalledWith(USER_ID, CURSOR);
   });
 
+  it("rejects refresh requests without a Ledger Cursor before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest({ action: "refresh" }, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_cursor",
+    });
+    expect(api.store.bootstrapLedger).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid Ledger Cursors with typed failures before ledger access", async () => {
     const api = createCloudLedgerApiDeps();
 

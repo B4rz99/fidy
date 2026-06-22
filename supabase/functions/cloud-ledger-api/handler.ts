@@ -1,7 +1,6 @@
 import type { CloudLedgerApiResponse, CloudLedgerBootstrapPayload, LedgerCursor } from "./model.ts";
+import type { SupabaseError } from "../_shared/supabase-error.ts";
 import { isLedgerCursor } from "./model.ts";
-
-type SupabaseError = { readonly message?: string } | null;
 
 type AuthClient = {
   readonly auth: {
@@ -60,19 +59,42 @@ export async function handleCloudLedgerRequest(
 
 async function routeAuthenticatedRequest(store: LedgerStore, userId: string, body: unknown) {
   const action = readAction(body);
-  if (action === "bootstrap" || action === "refresh") {
-    const cursor = readOptionalCursor(body);
-    if (cursor === undefined) {
-      return jsonResponse({ success: false, error: "invalid_cursor" }, 400);
-    }
-
-    return jsonResponse({
-      success: true,
-      data: await store.bootstrapLedger(userId, cursor),
-    });
+  if (action === "bootstrap") {
+    return bootstrapResponse(store, userId, readOptionalCursor(body));
+  }
+  if (action === "refresh") {
+    return refreshResponse(store, userId, readOptionalCursor(body));
   }
 
   return jsonResponse({ success: false, error: "unsupported_action" }, 400);
+}
+
+async function bootstrapResponse(
+  store: LedgerStore,
+  userId: string,
+  cursor: LedgerCursor | null | undefined
+) {
+  if (cursor === undefined) {
+    return jsonResponse({ success: false, error: "invalid_cursor" }, 400);
+  }
+  return jsonResponse({
+    success: true,
+    data: await store.bootstrapLedger(userId, cursor),
+  });
+}
+
+async function refreshResponse(
+  store: LedgerStore,
+  userId: string,
+  cursor: LedgerCursor | null | undefined
+) {
+  if (cursor === null || cursor === undefined) {
+    return jsonResponse({ success: false, error: "invalid_cursor" }, 400);
+  }
+  return jsonResponse({
+    success: true,
+    data: await store.bootstrapLedger(userId, cursor),
+  });
 }
 
 async function readJsonBody(request: Request): Promise<unknown> {

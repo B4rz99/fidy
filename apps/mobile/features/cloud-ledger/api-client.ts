@@ -82,7 +82,6 @@ type RemoteErrorLike = {
   readonly message?: string;
 };
 
-const AUTHORIZATION_HEADER = "Authorization";
 const CLOUD_LEDGER_FUNCTION = "cloud-ledger-api";
 const TRANSACTION_TYPE_BY_VALUE: Partial<Record<string, "income" | "expense">> = {
   expense: "expense",
@@ -110,7 +109,6 @@ export async function fetchCloudLedgerBootstrap(
 ): Promise<CloudLedgerBootstrapPayload> {
   const response = await supabase.functions.invoke<CloudLedgerApiResponse>(CLOUD_LEDGER_FUNCTION, {
     body: cursor === null ? { action: "bootstrap" } : { action: "refresh", cursor },
-    ...(await authorizationHeaders(supabase)),
   });
 
   if (response.data !== null && !response.data.success) {
@@ -125,12 +123,6 @@ export async function fetchCloudLedgerBootstrap(
   }
 
   return parseCloudLedgerPayload(response.data.data);
-}
-
-async function authorizationHeaders(supabase: SupabaseClient) {
-  const sessionResult = await supabase.auth.getSession();
-  const accessToken = sessionResult.data.session?.access_token;
-  return accessToken ? { headers: { [AUTHORIZATION_HEADER]: `Bearer ${accessToken}` } } : {};
 }
 
 function parseCloudLedgerPayload(data: CloudLedgerWirePayload): CloudLedgerBootstrapPayload {
@@ -216,7 +208,7 @@ function requireNonEmptyRecordId(value: string): string {
   if (trimmed.length === 0) {
     throw new Error("tombstone record id must be a non-empty string");
   }
-  return trimmed;
+  return value;
 }
 
 function throwIfTransportError(error: RemoteErrorLike | null) {
