@@ -1,0 +1,39 @@
+apps/mobile/__tests__/edge-functions/ai-chat-context-packet.test.ts
+  s_af2302f5bf7782::t_4d9ffbded4ea3d 92-185
+apps/mobile/features/capture-sources/services/parse-notification-api.ts
+  s_af2302f5bf7782::t_15b4feaf79a378 13-14,20,32
+apps/mobile/features/capture-sources/services/notification-pipeline/types.ts
+  s_af2302f5bf7782::t_25bb62f2381379 40-41,80,92
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_af2302f5bf7782::t_6e33a6c47f7de8 415-416,429,432,434-438,444-445
+apps/mobile/features/advisor/financial-context-packet.ts
+  s_af2302f5bf7782::t_ca7a066a0ec36a 26,156-158,184-200,206-208,212
+supabase/functions/ai-chat/financial-context-packet.ts
+  s_af2302f5bf7782::t_a78dd1d8f89029 34,73-74,99-100,182,284-287,298-309,328-329,359
+apps/mobile/__tests__/capture-sources/parse-notification-api.test.ts
+  s_af2302f5bf7782::t_89041890869b04 37
+apps/mobile/features/capture-sources/services/notification-pipeline/context.ts
+  s_af2302f5bf7782::t_577881d9815176 19,25,30-33,42-45,73-75,81
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_af2302f5bf7782::t_6be0bac617cc4b 15,25,60-61,64-65,126,128
+supabase/functions/ai-chat/index.ts
+  s_af2302f5bf7782::t_81c0014fb49761 101-103
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_af2302f5bf7782::t_6f3e9ea0c1db91 14,241-242,245,251,255-264
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "33d685628e10ab985b7a62b5becc0fbdf499b1e7",
+  "prompts": {},
+  "sessions": {
+    "s_af2302f5bf7782": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-4797-7d70-b995-e5bcc9305782",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
