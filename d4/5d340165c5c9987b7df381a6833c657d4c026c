@@ -1,0 +1,45 @@
+apps/mobile/__tests__/advisor/financial-context-packet.test.ts
+  s_af2302f5bf7782::t_6c3835b6efb1e9 105-113
+  s_af2302f5bf7782::t_551221c0fab85a 75-104,114-119
+  s_af2302f5bf7782::t_09307daede5ce2 60-68
+apps/mobile/features/advisor/financial-context-packet.ts
+  s_af2302f5bf7782::t_59c49d0a7b3741 17-23,25,32,39,44,51,56,69,148-175,178-180,183,194,204,212-220
+  s_af2302f5bf7782::t_1455ce0aadb179 176-177,205-211
+apps/mobile/features/advisor/public.ts
+  s_af2302f5bf7782::t_d58b79b7018e97 6
+apps/mobile/__tests__/edge-functions/ai-chat-privacy-boundary.test.ts
+  s_af2302f5bf7782::t_68c8832205ca99 34,37-40
+apps/mobile/__tests__/ai-chat/ai-chat-api-service.test.ts
+  s_af2302f5bf7782::t_6a1d4677f4ad40 153,183
+supabase/functions/ai-chat/index.ts
+  s_af2302f5bf7782::t_2df0747db3a696 88-96,98,115-116,155-170,185
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_af2302f5bf7782::t_2413a873785385 852,855,1345,1351-1352,1357,1361
+  s_af2302f5bf7782::t_af0ecf6ee2e06c 666-692
+  s_af2302f5bf7782::t_4c846c586cdbc3 508-537
+apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts
+  s_af2302f5bf7782::t_e0572c55cce989 4,82-98,135
+  s_af2302f5bf7782::t_4071dbf20563fb 181-182,184-188
+apps/mobile/__tests__/ai-chat/streaming-service.test.ts
+  s_af2302f5bf7782::t_f58d3a5cd70666 267,297-301
+  s_af2302f5bf7782::t_cd6c6b1b4fb25d 38,213-217
+  s_af2302f5bf7782::t_f0697670e25a0d 308-346
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_af2302f5bf7782::t_ea25da9eb9e6fc 13,82-123,283
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "d45d340165c5c9987b7df381a6833c657d4c026c",
+  "prompts": {},
+  "sessions": {
+    "s_af2302f5bf7782": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-4797-7d70-b995-e5bcc9305782",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
