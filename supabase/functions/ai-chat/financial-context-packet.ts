@@ -1,0 +1,325 @@
+export type FinancialContextPacketTaskKind =
+  | "general_advisor"
+  | "spending_overview"
+  | "goal_progress"
+  | "account_overview"
+  | "capture_review";
+
+export type FinancialContextPacketTask = {
+  readonly kind: FinancialContextPacketTaskKind;
+};
+
+export type FinancialContextCategoryTotal = {
+  readonly categoryId: string;
+  readonly total: number;
+};
+
+export type FinancialContextCategoryDelta = {
+  readonly categoryId: string;
+  readonly current: number;
+  readonly previous: number;
+  readonly delta: number;
+};
+
+export type FinancialContextGoalSummary = {
+  readonly name: string;
+  readonly type: string;
+  readonly targetAmount: number;
+  readonly currentAmount: number;
+  readonly progressPct: number;
+};
+
+export type FinancialContextPacket = {
+  readonly task: FinancialContextPacketTask;
+  readonly summary: {
+    readonly balance: number;
+    readonly currentMonthSpending: readonly FinancialContextCategoryTotal[];
+    readonly previousMonthSpending: readonly FinancialContextCategoryTotal[];
+    readonly monthOverMonthDeltas: readonly FinancialContextCategoryDelta[];
+  };
+  readonly recentTransactions?: readonly {
+    readonly type: string;
+    readonly amount: number;
+    readonly categoryId: string;
+    readonly description: string;
+    readonly date: string;
+  }[];
+  readonly budgets?: readonly {
+    readonly categoryId: string;
+    readonly amount: number;
+    readonly month: string;
+  }[];
+  readonly goals?: readonly FinancialContextGoalSummary[];
+  readonly accounts?: readonly {
+    readonly name: string;
+    readonly kind: string;
+    readonly isDefault: boolean;
+  }[];
+  readonly captureEvidence?: readonly {
+    readonly scope: string;
+    readonly value: string;
+    readonly sourceFamily: string;
+    readonly evidenceType: string;
+    readonly occurrences: number;
+  }[];
+};
+
+type PacketSection = "recentTransactions" | "budgets" | "goals" | "accounts" | "captureEvidence";
+
+type OptionalArrayRead<T> =
+  | { readonly valid: true; readonly value?: readonly T[] }
+  | { readonly valid: false };
+
+const PACKET_SECTIONS: readonly PacketSection[] = [
+  "recentTransactions",
+  "budgets",
+  "goals",
+  "accounts",
+  "captureEvidence",
+];
+
+const TASK_KINDS = new Set<FinancialContextPacketTaskKind>([
+  "general_advisor",
+  "spending_overview",
+  "goal_progress",
+  "account_overview",
+  "capture_review",
+]);
+
+const ALLOWED_SECTIONS_BY_TASK: Record<FinancialContextPacketTaskKind, readonly PacketSection[]> = {
+  general_advisor: PACKET_SECTIONS,
+  spending_overview: ["recentTransactions", "budgets"],
+  goal_progress: ["goals"],
+  account_overview: ["accounts"],
+  capture_review: ["captureEvidence"],
+};
+
+const MAX_SUMMARY_ITEMS = 20;
+const MAX_RECENT_TRANSACTIONS = 20;
+const MAX_BUDGETS = 20;
+const MAX_GOALS = 20;
+const MAX_ACCOUNTS = 20;
+const MAX_CAPTURE_EVIDENCE = 50;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isPresent<T>(value: T | null): value is T {
+  return value !== null;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function readNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function readBoolean(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
+function readArray<T>(
+  value: unknown,
+  maxLength: number,
+  readItem: (item: unknown) => T | null
+): readonly T[] | null {
+  if (!Array.isArray(value) || value.length > maxLength) return null;
+  const items = value.map(readItem);
+  return items.every(isPresent) ? items : null;
+}
+
+function readTask(value: unknown): FinancialContextPacketTask | null {
+  if (!isRecord(value) || !TASK_KINDS.has(value.kind as FinancialContextPacketTaskKind)) {
+    return null;
+  }
+  return { kind: value.kind as FinancialContextPacketTaskKind };
+}
+
+function readCategoryTotal(value: unknown): FinancialContextCategoryTotal | null {
+  if (!isRecord(value)) return null;
+  const categoryId = readString(value.categoryId);
+  const total = readNumber(value.total);
+  return categoryId !== null && total !== null ? { categoryId, total } : null;
+}
+
+function readCategoryDelta(value: unknown): FinancialContextCategoryDelta | null {
+  if (!isRecord(value)) return null;
+  const categoryId = readString(value.categoryId);
+  const current = readNumber(value.current);
+  const previous = readNumber(value.previous);
+  const delta = readNumber(value.delta);
+  return categoryId !== null && current !== null && previous !== null && delta !== null
+    ? { categoryId, current, previous, delta }
+    : null;
+}
+
+function readSummary(value: unknown): FinancialContextPacket["summary"] | null {
+  if (!isRecord(value)) return null;
+  const balance = readNumber(value.balance);
+  const currentMonthSpending = readArray(
+    value.currentMonthSpending,
+    MAX_SUMMARY_ITEMS,
+    readCategoryTotal
+  );
+  const previousMonthSpending = readArray(
+    value.previousMonthSpending,
+    MAX_SUMMARY_ITEMS,
+    readCategoryTotal
+  );
+  const monthOverMonthDeltas = readArray(
+    value.monthOverMonthDeltas,
+    MAX_SUMMARY_ITEMS,
+    readCategoryDelta
+  );
+  return balance !== null &&
+    currentMonthSpending !== null &&
+    previousMonthSpending !== null &&
+    monthOverMonthDeltas !== null
+    ? { balance, currentMonthSpending, previousMonthSpending, monthOverMonthDeltas }
+    : null;
+}
+
+function readRecentTransaction(
+  value: unknown
+): NonNullable<FinancialContextPacket["recentTransactions"]>[number] | null {
+  if (!isRecord(value)) return null;
+  const type = readString(value.type);
+  const amount = readNumber(value.amount);
+  const categoryId = readString(value.categoryId);
+  const description = readString(value.description);
+  const date = readString(value.date);
+  return type !== null &&
+    amount !== null &&
+    categoryId !== null &&
+    description !== null &&
+    date !== null
+    ? { type, amount, categoryId, description, date }
+    : null;
+}
+
+function readBudget(value: unknown): NonNullable<FinancialContextPacket["budgets"]>[number] | null {
+  if (!isRecord(value)) return null;
+  const categoryId = readString(value.categoryId);
+  const amount = readNumber(value.amount);
+  const month = readString(value.month);
+  return categoryId !== null && amount !== null && month !== null
+    ? { categoryId, amount, month }
+    : null;
+}
+
+function readGoal(value: unknown): FinancialContextGoalSummary | null {
+  if (!isRecord(value)) return null;
+  const name = readString(value.name);
+  const type = readString(value.type);
+  const targetAmount = readNumber(value.targetAmount);
+  const currentAmount = readNumber(value.currentAmount);
+  const progressPct = readNumber(value.progressPct);
+  return name !== null &&
+    type !== null &&
+    targetAmount !== null &&
+    currentAmount !== null &&
+    progressPct !== null
+    ? { name, type, targetAmount, currentAmount, progressPct }
+    : null;
+}
+
+function readAccount(
+  value: unknown
+): NonNullable<FinancialContextPacket["accounts"]>[number] | null {
+  if (!isRecord(value)) return null;
+  const name = readString(value.name);
+  const kind = readString(value.kind);
+  const isDefault = readBoolean(value.isDefault);
+  return name !== null && kind !== null && isDefault !== null ? { name, kind, isDefault } : null;
+}
+
+function readCaptureEvidence(
+  value: unknown
+): NonNullable<FinancialContextPacket["captureEvidence"]>[number] | null {
+  if (!isRecord(value)) return null;
+  const scope = readString(value.scope);
+  const evidenceValue = readString(value.value);
+  const sourceFamily = readString(value.sourceFamily);
+  const evidenceType = readString(value.evidenceType);
+  const occurrences = readNumber(value.occurrences);
+  return scope !== null &&
+    evidenceValue !== null &&
+    sourceFamily !== null &&
+    evidenceType !== null &&
+    occurrences !== null
+    ? { scope, value: evidenceValue, sourceFamily, evidenceType, occurrences }
+    : null;
+}
+
+function hasPacketSection(record: Record<string, unknown>, section: PacketSection): boolean {
+  return section in record && record[section] !== undefined;
+}
+
+function hasDisallowedPacketSection(
+  record: Record<string, unknown>,
+  task: FinancialContextPacketTask
+): boolean {
+  const allowedSections = ALLOWED_SECTIONS_BY_TASK[task.kind];
+  return PACKET_SECTIONS.some(
+    (section) => !allowedSections.includes(section) && hasPacketSection(record, section)
+  );
+}
+
+function readOptionalArraySection<T>(
+  record: Record<string, unknown>,
+  section: PacketSection,
+  maxLength: number,
+  readItem: (item: unknown) => T | null
+): OptionalArrayRead<T> {
+  if (!hasPacketSection(record, section)) return { valid: true };
+  const value = readArray(record[section], maxLength, readItem);
+  return value === null ? { valid: false } : { valid: true, value };
+}
+
+export function readFinancialContextPacket(value: unknown): FinancialContextPacket | null {
+  if (!isRecord(value)) return null;
+  const task = readTask(value.task);
+  const summary = readSummary(value.summary);
+  if (task === null || summary === null || hasDisallowedPacketSection(value, task)) return null;
+
+  const recentTransactions = readOptionalArraySection(
+    value,
+    "recentTransactions",
+    MAX_RECENT_TRANSACTIONS,
+    readRecentTransaction
+  );
+  const budgets = readOptionalArraySection(value, "budgets", MAX_BUDGETS, readBudget);
+  const goals = readOptionalArraySection(value, "goals", MAX_GOALS, readGoal);
+  const accounts = readOptionalArraySection(value, "accounts", MAX_ACCOUNTS, readAccount);
+  const captureEvidence = readOptionalArraySection(
+    value,
+    "captureEvidence",
+    MAX_CAPTURE_EVIDENCE,
+    readCaptureEvidence
+  );
+
+  if (
+    !recentTransactions.valid ||
+    !budgets.valid ||
+    !goals.valid ||
+    !accounts.valid ||
+    !captureEvidence.valid
+  ) {
+    return null;
+  }
+
+  return {
+    task,
+    summary,
+    ...(recentTransactions.value !== undefined
+      ? { recentTransactions: recentTransactions.value }
+      : {}),
+    ...(budgets.value !== undefined ? { budgets: budgets.value } : {}),
+    ...(goals.value !== undefined ? { goals: goals.value } : {}),
+    ...(accounts.value !== undefined ? { accounts: accounts.value } : {}),
+    ...(captureEvidence.value !== undefined ? { captureEvidence: captureEvidence.value } : {}),
+  };
+}

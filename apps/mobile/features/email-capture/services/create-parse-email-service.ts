@@ -112,7 +112,8 @@ function logParseApiFailureEffect(
 function validateParsedTransactionEffect(
   warningPrefix: "parse_email" | "parse_notification",
   data: unknown,
-  validCategoryIds: readonly string[]
+  validCategoryIds: readonly string[],
+  throwOnApiFailure: boolean
 ) {
   const interpreted = interpretCaptureCandidate(data);
   if (interpreted.kind === "invalid") {
@@ -136,7 +137,9 @@ function validateParsedTransactionEffect(
     captureWarningEffect(`${warningPrefix}_${validation.kind}`, {
       reason: validation.reason,
     }),
-    Effect.succeed(null)
+    validation.kind === "needs_review" && throwOnApiFailure
+      ? Effect.fail(new Error("capture_needs_review"))
+      : Effect.succeed(null)
   );
 }
 
@@ -150,7 +153,12 @@ function handleParseTransactionResponseEffect(
     return logParseApiFailureEffect(warningPrefix, response, throwOnApiFailure);
   }
 
-  return validateParsedTransactionEffect(warningPrefix, response.data.data, validCategoryIds);
+  return validateParsedTransactionEffect(
+    warningPrefix,
+    response.data.data,
+    validCategoryIds,
+    throwOnApiFailure
+  );
 }
 
 function logParseExceptionEffect(

@@ -3,6 +3,11 @@ import OpenAI from "https://deno.land/x/openai@v4.24.0/mod.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { readBodyWithLimit } from "../_shared/body-size.ts";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
+import {
+  type FinancialContextGoalSummary,
+  type FinancialContextPacket,
+  readFinancialContextPacket,
+} from "./financial-context-packet.ts";
 
 const CATEGORY_IDS = [
   "food",
@@ -77,34 +82,7 @@ function structuredLog(fields: {
   );
 }
 
-type GoalSummary = {
-  readonly name: string;
-  readonly type: string;
-  readonly targetAmount: number;
-  readonly currentAmount: number;
-  readonly progressPct: number;
-};
-
-type FinancialContextPacketTask = {
-  readonly kind:
-    | "general_advisor"
-    | "spending_overview"
-    | "goal_progress"
-    | "account_overview"
-    | "capture_review";
-};
-
-type FinancialContextPacket = {
-  readonly task: FinancialContextPacketTask;
-  readonly summary: unknown;
-  readonly recentTransactions?: readonly unknown[];
-  readonly budgets?: readonly unknown[];
-  readonly goals?: readonly GoalSummary[];
-  readonly accounts?: readonly unknown[];
-  readonly captureEvidence?: readonly unknown[];
-};
-
-function formatGoalLine(g: GoalSummary): string {
+function formatGoalLine(g: FinancialContextGoalSummary): string {
   const amounts = `$${g.currentAmount.toLocaleString("es-CO")} / $${g.targetAmount.toLocaleString("es-CO")} (${g.progressPct}%)`;
   return `- "${g.name}" (${g.type}): ${amounts}`;
 }
@@ -138,57 +116,6 @@ function buildSystemPrompt(context: { packet: FinancialContextPacket }): string 
   }
 
   return parts.join("\n");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isOptionalArrayOf(value: unknown, isItemValid: (item: unknown) => boolean): boolean {
-  return value === undefined || (Array.isArray(value) && value.every(isItemValid));
-}
-
-function isUnknownItem(_value: unknown): boolean {
-  return true;
-}
-
-const FINANCIAL_CONTEXT_PACKET_TASK_KINDS = new Set([
-  "general_advisor",
-  "spending_overview",
-  "goal_progress",
-  "account_overview",
-  "capture_review",
-]);
-
-function isFinancialContextPacketTask(value: unknown): value is FinancialContextPacketTask {
-  return (
-    isRecord(value) &&
-    typeof value.kind === "string" &&
-    FINANCIAL_CONTEXT_PACKET_TASK_KINDS.has(value.kind)
-  );
-}
-
-function isGoalSummary(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    typeof value.name === "string" &&
-    typeof value.type === "string" &&
-    typeof value.targetAmount === "number" &&
-    typeof value.currentAmount === "number" &&
-    typeof value.progressPct === "number"
-  );
-}
-
-function isFinancialContextPacket(value: unknown): value is FinancialContextPacket {
-  if (!isRecord(value) || !("summary" in value)) return false;
-  return (
-    isFinancialContextPacketTask(value.task) &&
-    isOptionalArrayOf(value.recentTransactions, isUnknownItem) &&
-    isOptionalArrayOf(value.budgets, isUnknownItem) &&
-    isOptionalArrayOf(value.goals, isGoalSummary) &&
-    isOptionalArrayOf(value.accounts, isUnknownItem) &&
-    isOptionalArrayOf(value.captureEvidence, isUnknownItem)
-  );
 }
 
 Deno.serve(async (req) => {
@@ -289,8 +216,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
-    const { financialContextPacket } = body;
-    if (!isFinancialContextPacket(financialContextPacket)) {
+    const financialContextPacket = readFinancialContextPacket(body.financialContextPacket);
+    if (financialContextPacket === null) {
       structuredLog({
         request_id: requestId,
         user_id: userId,
