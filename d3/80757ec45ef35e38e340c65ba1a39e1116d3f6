@@ -1,0 +1,53 @@
+apps/mobile/shared/i18n/locales/en.ts
+  s_4796ddced78425::t_d5d36b487b6b47 771-772
+apps/mobile/features/transactions/store.ts
+  s_4796ddced78425::t_7d2279c19b5cab 4,14,18,22,42-47,93,112-113,258-303,308-310,316-324,328,330-399,416,418-419
+  s_4796ddced78425::t_fc1cb680483aaa 304-307,311-315,325-327,329
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_4796ddced78425::t_561cb1695f2033 88-94
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_4796ddced78425::t_967d67f7b23a7a 98-106,111-122
+  s_4796ddced78425::t_401e8e5229c499 83-92,95-97,107,109-110,123
+  s_4796ddced78425::t_8efeb9f78f03fd 145-154
+apps/mobile/__tests__/transactions/store.test.ts
+  s_4796ddced78425::t_0a5ee7be362c34 3,273-284,286,288-289,291,293-296,311
+  s_4796ddced78425::t_c861664bc50aa4 4-5
+  s_4796ddced78425::t_b074c56b344bc3 142,272,285,287,290,292,297-310,312-314
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_4796ddced78425::t_967d67f7b23a7a 5-10
+  s_4796ddced78425::t_f4299249058232 11,25,39-51
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_4796ddced78425::t_1609b6c290599c 7,378
+  s_4796ddced78425::t_73042a9a33facf 12,168-183
+  s_4796ddced78425::t_07c2297b87195b 184,186-210,360-377,379-388
+apps/mobile/__tests__/settings/profile-screen.test.ts
+  s_4796ddced78425::t_51849635a0bda6 22-29
+apps/mobile/features/cloud-ledger/runtime.ts
+  s_4796ddced78425::t_3edc90834ff6a5 20-23
+apps/mobile/features/auth/store.ts
+  s_4796ddced78425::t_efc6d50b3516de 186
+  s_4796ddced78425::t_41af71bfa255d2 3-6,17-18,185,187-204,276
+apps/mobile/shared/i18n/locales/es.ts
+  s_4796ddced78425::t_dc522410164b51 782-783
+apps/mobile/__tests__/auth/store.test.ts
+  s_4796ddced78425::t_787ba884be1551 10,12,19,21,46,48,125-129,452-461
+apps/mobile/features/cloud-ledger/public.ts
+  s_4796ddced78425::t_8ed68b9e2f744b 43,46
+  s_4796ddced78425::t_56e8d6e90932d9 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "d380757ec45ef35e38e340c65ba1a39e1116d3f6",
+  "prompts": {},
+  "sessions": {
+    "s_4796ddced78425": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0a6-4756-79b2-ae1c-dbc2848fbe9e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
