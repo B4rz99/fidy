@@ -1,4 +1,5 @@
 import type { CloudLedgerCreateTransactionCommand } from "./model.ts";
+import { readRequiredString } from "./request-readers.ts";
 
 export type CreateTransactionCommandReadResult =
   | { readonly kind: "valid"; readonly command: CloudLedgerCreateTransactionCommand }
@@ -115,12 +116,4 @@ function readNullableString(body: Record<string, unknown>, key: string): string 
     return null;
   }
   return typeof value === "string" ? value : undefined;
-}
-
-function readRequiredString(body: unknown, key: string): string | null {
-  if (body === null || typeof body !== "object" || !(key in body)) {
-    return null;
-  }
-  const value = (body as Record<string, unknown>)[key];
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }

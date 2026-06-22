@@ -12,6 +12,7 @@ import {
   type CreateTransactionCommandReadResult,
 } from "./create-transaction-command.ts";
 import { isLedgerCursor } from "./model.ts";
+import { readRequiredString } from "./request-readers.ts";
 
 type AuthClient = {
   readonly auth: {
@@ -170,14 +171,6 @@ function readOptionalCursor(body: unknown): LedgerCursor | null | undefined {
     return null;
   }
   return typeof value === "string" && isLedgerCursor(value.trim()) ? value.trim() : undefined;
-}
-
-function readRequiredString(body: unknown, key: string): string | null {
-  if (body === null || typeof body !== "object" || !(key in body)) {
-    return null;
-  }
-  const value = (body as Record<string, unknown>)[key];
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
 function jsonResponse(body: CloudLedgerApiResponse, status = 200): Response {
