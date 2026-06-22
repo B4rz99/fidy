@@ -15,6 +15,22 @@ export {
   createEmptyCloudLedgerCache,
   refreshCloudLedgerCache,
 } from "./cache";
+export type {
+  CloudLedgerOutboxFailureCode,
+  CloudLedgerPendingChange,
+  CloudLedgerPendingCreateTransaction,
+  EncryptedCloudLedgerOutbox,
+  EncryptedCloudLedgerOutboxSnapshot,
+  EncryptedCloudLedgerOutboxStorage,
+} from "./outbox";
+export {
+  applyPendingLedgerChanges,
+  CloudLedgerOutboxFailure,
+  createEncryptedCloudLedgerOutbox,
+  createOfflineCloudLedgerTransaction,
+  flushPendingCloudLedgerChanges,
+  restoreOptimisticCloudLedgerCache,
+} from "./outbox";
 export type { CloudLedgerClientFailureCode } from "./api-client";
 export {
   CloudLedgerClientFailure,
