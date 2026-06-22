@@ -1,0 +1,57 @@
+apps/mobile/drizzle/migrations.js
+  s_d585a7fa922fba::t_f9d713329ee67b 36,76
+apps/mobile/features/capture-sources/lib/notification-parse-improvement.ts
+  s_d585a7fa922fba::t_ac503cfeafc485 39-43,108-109
+  s_d585a7fa922fba::t_5e4bfbb3a00777 110
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_75adecb8cc4e6d 96,101
+  s_d585a7fa922fba::t_86621447b70d80 9-12,90-95,97-100,102-117,119-123,137,139-177
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_5e4bfbb3a00777 404-429
+  s_d585a7fa922fba::t_136e888e458778 379-403
+apps/mobile/features/capture-sources/lib/notification-parse-improvement-repository.ts
+  s_d585a7fa922fba::t_6836c1bbd909fc 109
+  s_d585a7fa922fba::t_25233985215cd5 130-131,179-181
+  s_d585a7fa922fba::t_5e4bfbb3a00777 135-137
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_6c081de416070c 13,16-20,476-501
+apps/mobile/features/email-capture/parse-improvement.public.ts
+  s_d585a7fa922fba::t_e796f7edafe231 5
+apps/mobile/shared/db/schema.ts
+  s_d585a7fa922fba::t_cc6b29594ffa2f 301-308
+  s_d585a7fa922fba::t_94eb657a8d8443 309
+apps/mobile/__tests__/capture-sources/notification-parse-improvement.test.ts
+  s_d585a7fa922fba::t_5f3b9a49c0f438 132-140,142-144
+  s_d585a7fa922fba::t_cc6b29594ffa2f 141
+apps/mobile/drizzle/0034_capture_improvement_deletion_requests.sql
+  s_d585a7fa922fba::t_e56a8d26f1750c 1-5
+supabase/functions/cloud-ledger-api/capture-improvement-sample.ts
+  s_d585a7fa922fba::t_5e4bfbb3a00777 80-82
+  s_d585a7fa922fba::t_cc50a1e6ca6597 54
+apps/mobile/features/email-capture/hooks/useEmailCapture.ts
+  s_d585a7fa922fba::t_ba4899042999f7 8,18-24
+  s_d585a7fa922fba::t_849ebe3b9287ec 25-26,47-49
+apps/mobile/__tests__/capture-sources/notification-parse-improvement-repository.test.ts
+  s_d585a7fa922fba::t_7333020fdb6203 299-312
+  s_d585a7fa922fba::t_5e4bfbb3a00777 239-264,297
+  s_d585a7fa922fba::t_77d012a740638e 222,227
+  s_d585a7fa922fba::t_c280b0b332e339 223-226,228-238,296
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_d585a7fa922fba::t_636d1b1169e76e 22,37-40,74-86,117-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "7b2f9ba5ec5369a026f59fc2083af301e4d4ec37",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
