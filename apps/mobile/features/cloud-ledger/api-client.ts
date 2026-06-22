@@ -97,10 +97,25 @@ type CloudLedgerCreateTransactionApiResponse =
   | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
 
 type RemoteErrorLike = {
+  readonly context?: unknown;
   readonly message?: string;
 };
 
 const CLOUD_LEDGER_FUNCTION = "cloud-ledger-api";
+const CLOUD_LEDGER_API_ERROR_CODES = new Set<CloudLedgerApiErrorCode>([
+  "missing_auth",
+  "invalid_auth",
+  "method_not_allowed",
+  "unsupported_action",
+  "invalid_cursor",
+  "duplicate_transaction_id",
+  "invalid_ledger_reference",
+  "invalid_transaction",
+  "invalid_transaction_id",
+  "unauthorized_transaction_id",
+  "unsupported_command_version",
+  "internal_error",
+]);
 const TRANSACTION_TYPE_BY_VALUE: Partial<Record<string, "income" | "expense">> = {
   expense: "expense",
   income: "income",
@@ -138,6 +153,10 @@ export async function fetchCloudLedgerBootstrap(
       `Cloud Ledger API failed: ${response.data.error}`
     );
   }
+  const httpFailure = await readHttpErrorApiFailure(response.error);
+  if (httpFailure !== null) {
+    throw new CloudLedgerClientFailure(httpFailure, `Cloud Ledger API failed: ${httpFailure}`);
+  }
   throwIfTransportError(response.error);
   if (response.data === null) {
     throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
@@ -166,6 +185,10 @@ export async function createCloudLedgerTransaction(
       response.data.error,
       `Cloud Ledger API failed: ${response.data.error}`
     );
+  }
+  const httpFailure = await readHttpErrorApiFailure(response.error);
+  if (httpFailure !== null) {
+    throw new CloudLedgerClientFailure(httpFailure, `Cloud Ledger API failed: ${httpFailure}`);
   }
   throwIfTransportError(response.error);
   if (response.data === null) {
@@ -288,6 +311,49 @@ function throwIfTransportError(error: RemoteErrorLike | null) {
       `Unable to call Cloud Ledger API: ${error.message ?? "unknown error"}`
     );
   }
+}
+
+async function readHttpErrorApiFailure(
+  error: RemoteErrorLike | null
+): Promise<CloudLedgerApiErrorCode | null> {
+  if (error?.context === undefined) {
+    return null;
+  }
+  try {
+    const body = await readRemoteErrorContext(error.context);
+    return isCloudLedgerApiFailure(body) ? body.error : null;
+  } catch {
+    return null;
+  }
+}
+
+async function readRemoteErrorContext(context: unknown): Promise<unknown> {
+  return hasJsonReader(context) ? await context.json() : context;
+}
+
+function hasJsonReader(value: unknown): value is { readonly json: () => Promise<unknown> } {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "json" in value &&
+    typeof (value as { readonly json?: unknown }).json === "function"
+  );
+}
+
+function isCloudLedgerApiFailure(
+  value: unknown
+): value is { readonly success: false; readonly error: CloudLedgerApiErrorCode } {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return record.success === false && isCloudLedgerApiErrorCode(record.error);
+}
+
+function isCloudLedgerApiErrorCode(value: unknown): value is CloudLedgerApiErrorCode {
+  return (
+    typeof value === "string" && CLOUD_LEDGER_API_ERROR_CODES.has(value as CloudLedgerApiErrorCode)
+  );
 }
 
 function parseTombstone(row: CloudLedgerWireTombstone): CloudLedgerTombstone {

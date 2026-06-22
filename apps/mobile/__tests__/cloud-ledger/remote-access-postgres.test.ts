@@ -110,6 +110,16 @@ describe("Cloud Ledger Postgres access boundary", () => {
     }
   );
 
+  postgresIt("accepts repeated matching transaction creates without advancing the cursor", () => {
+    const postgres = setupSeededPostgres();
+
+    expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+    expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+
+    expect(readLedgerCursorSequence(postgres)).toBe("5");
+    expect(readCreatedTransactionRowCount(postgres)).toBe("1");
+  });
+
   postgresIt(
     "rejects invalid transaction creates without partial cursor or projection writes",
     () => {
@@ -214,6 +224,18 @@ where user_id = '${USER_ID}'::uuid;
 `
     )
   ).toBe("0");
+}
+
+function readCreatedTransactionRowCount(postgres: PostgresHarness) {
+  return psqlScalar(
+    postgres,
+    `
+select count(*)
+from ledger.transactions
+where user_id = '${USER_ID}'::uuid
+  and id = '${CLIENT_TRANSACTION_ID}';
+`
+  );
 }
 
 function expectClientRolesCannotReadLedger(postgres: PostgresHarness) {

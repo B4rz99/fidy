@@ -323,6 +323,32 @@ describe("mobile Cloud Ledger bootstrap", () => {
     } satisfies Partial<CloudLedgerClientFailure>);
     expect(supabase.functionsInvoke).toHaveBeenCalledTimes(1);
   });
+
+  it("surfaces typed create failures from Functions HTTP error context", async () => {
+    const supabase = createCloudLedgerSupabase({
+      httpFailure: "invalid_ledger_reference",
+    });
+
+    await expect(
+      createCloudLedgerTransactionAndRefresh(supabase.client, createEmptyCloudLedgerCache(), {
+        commandVersion: 1,
+        transaction: {
+          id: requireTransactionId("txn-20260622-client"),
+          type: "expense",
+          amount: requireCopAmount(18_000),
+          currency: "COP",
+          categoryId: requireCategoryId("cat-groceries"),
+          accountId: requireFinancialAccountId("acct-missing"),
+          description: "Coffee",
+          date: requireIsoDate("2026-06-02"),
+        },
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_ledger_reference",
+      name: "CloudLedgerClientFailure",
+    } satisfies Partial<CloudLedgerClientFailure>);
+    expect(supabase.functionsInvoke).toHaveBeenCalledTimes(1);
+  });
 });
 
 type WirePayload = {
@@ -338,6 +364,7 @@ function createCloudLedgerSupabase(
     readonly apiFailure?: "invalid_cursor" | "invalid_auth" | "invalid_ledger_reference";
     readonly bootstrapPayload?: WirePayload;
     readonly createTransactionPayload?: unknown;
+    readonly httpFailure?: "invalid_ledger_reference";
     readonly invokeError?: { readonly message: string };
     readonly refreshPayload?: WirePayload;
   } = {}
@@ -347,19 +374,11 @@ function createCloudLedgerSupabase(
   const functionsInvoke = vi.fn<(...args: any[]) => any>(
     (_functionName: string, invokeOptions: { readonly body: { readonly action: string } }) =>
       Promise.resolve({
-        data:
-          options.apiFailure === undefined
-            ? {
-                success: true,
-                data:
-                  invokeOptions.body.action === "createTransaction"
-                    ? options.createTransactionPayload
-                    : invokeOptions.body.action === "refresh"
-                      ? refreshPayload
-                      : bootstrapPayload,
-              }
-            : { success: false, error: options.apiFailure },
-        error: options.invokeError ?? null,
+        data: invokeData(options, invokeOptions.body.action, {
+          bootstrapPayload,
+          refreshPayload,
+        }),
+        error: invokeError(options),
       })
   );
   const from = vi.fn<(...args: any[]) => any>();
@@ -382,6 +401,54 @@ function createCloudLedgerSupabase(
     from,
     functionsInvoke,
     getSession,
+  };
+}
+
+function invokeData(
+  options: {
+    readonly apiFailure?: "invalid_cursor" | "invalid_auth" | "invalid_ledger_reference";
+    readonly createTransactionPayload?: unknown;
+    readonly httpFailure?: "invalid_ledger_reference";
+  },
+  action: string,
+  payloads: {
+    readonly bootstrapPayload: WirePayload;
+    readonly refreshPayload: WirePayload;
+  }
+) {
+  if (options.httpFailure !== undefined) {
+    return null;
+  }
+  if (options.apiFailure !== undefined) {
+    return { success: false, error: options.apiFailure };
+  }
+  return {
+    success: true,
+    data:
+      action === "createTransaction"
+        ? options.createTransactionPayload
+        : action === "refresh"
+          ? payloads.refreshPayload
+          : payloads.bootstrapPayload,
+  };
+}
+
+function invokeError(options: {
+  readonly httpFailure?: "invalid_ledger_reference";
+  readonly invokeError?: { readonly message: string };
+}) {
+  if (options.httpFailure === undefined) {
+    return options.invokeError ?? null;
+  }
+  return {
+    message: "Edge Function returned a non-2xx status code",
+    context: new Response(
+      JSON.stringify({
+        success: false,
+        error: options.httpFailure,
+      }),
+      { status: 400 }
+    ),
   };
 }
 

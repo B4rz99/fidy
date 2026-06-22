@@ -108,6 +108,8 @@ security definer
 set search_path = ''
 as $$
 declare
+  v_current_sequence bigint;
+  v_existing_transaction ledger.transactions%rowtype;
   v_next_sequence bigint;
   v_updated_at timestamptz := now();
   v_month text := to_char(p_date, 'YYYY-MM');
@@ -127,6 +129,55 @@ begin
       and ledger.transactions.user_id <> p_user_id
   ) then
     return jsonb_build_object('code', 'unauthorized_transaction_id');
+  end if;
+
+  select ledger.transactions.*
+  into v_existing_transaction
+  from ledger.transactions
+  where ledger.transactions.user_id = p_user_id
+    and ledger.transactions.id = p_transaction_id;
+
+  if found then
+    if v_existing_transaction.deleted_at is null
+      and v_existing_transaction.type = p_type
+      and v_existing_transaction.amount = p_amount
+      and v_existing_transaction.currency = p_currency
+      and v_existing_transaction.category_id is not distinct from p_category_id
+      and v_existing_transaction.account_id = p_account_id
+      and v_existing_transaction.description is not distinct from p_description
+      and v_existing_transaction.date = p_date
+    then
+      select coalesce(
+        (
+          select ledger.ledger_cursors.latest_sequence
+          from ledger.ledger_cursors
+          where ledger.ledger_cursors.user_id = p_user_id
+        ),
+        v_existing_transaction.cursor_sequence
+      )
+      into v_current_sequence;
+
+      return jsonb_build_object(
+        'code', 'accepted',
+        'transaction', jsonb_build_object(
+          'id', v_existing_transaction.id,
+          'type', v_existing_transaction.type,
+          'amount', v_existing_transaction.amount,
+          'currency', v_existing_transaction.currency,
+          'categoryId', v_existing_transaction.category_id,
+          'accountId', v_existing_transaction.account_id,
+          'description', v_existing_transaction.description,
+          'date', v_existing_transaction.date::text,
+          'updatedAt', to_char(
+            v_existing_transaction.updated_at at time zone 'UTC',
+            'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+          )
+        ),
+        'cursor', 'ledger:' || v_current_sequence::text
+      );
+    end if;
+
+    return jsonb_build_object('code', 'duplicate_transaction_id');
   end if;
 
   if not exists (
