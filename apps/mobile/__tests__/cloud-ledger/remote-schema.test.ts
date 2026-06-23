@@ -14,6 +14,10 @@ const CAPTURE_IMPROVEMENT_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql"
 );
+const CAPTURE_IMPROVEMENT_SENDER_DOMAIN_SCRUB_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260622230000_capture_improvement_sender_domain_scrub.sql"
+);
 
 describe("Cloud Ledger remote schema", () => {
   it("creates bootstrap financial tables in a non-exposed ledger schema", () => {
@@ -125,5 +129,30 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).toMatch(
       /grant execute on function public\.cloud_ledger_set_capture_improvement_preference\(uuid, boolean\) to service_role/
     );
+  });
+
+  it("scrubs legacy Capture Improvement Sample sender domains into coarse provider category", () => {
+    const sql = readFileSync(
+      CAPTURE_IMPROVEMENT_SENDER_DOMAIN_SCRUB_MIGRATION,
+      "utf8"
+    ).toLowerCase();
+
+    expect(sql).toContain(
+      "add column if not exists provider_category text not null default 'unknown'"
+    );
+    expect(sql).toContain("provider_category in ('bank', 'payment_app', 'wallet', 'unknown')");
+    expect(sql).toMatch(
+      /update public\.notification_parse_improvement_samples[\s\S]*set[\s\S]*provider_category = case[\s\S]*sender_domain[\s\S]*sender_domain = null/
+    );
+    expect(sql).toContain(
+      "drop index if exists public.idx_notification_parse_samples_sender_domain"
+    );
+    expect(sql).toContain(
+      "create or replace function public.cloud_ledger_retain_capture_improvement_sample"
+    );
+    expect(sql).toMatch(
+      /insert into public\.notification_parse_improvement_samples \([\s\S]*provider_category[\s\S]*\) values \([\s\S]*p_provider_category/
+    );
+    expect(sql).not.toMatch(/raw_text|raw_body|merchant_name|amount_value/u);
   });
 });
