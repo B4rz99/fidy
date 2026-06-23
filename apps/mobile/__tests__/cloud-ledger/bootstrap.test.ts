@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cloudLedgerBootstrapTask,
   flushCloudLedgerOutboxForUser,
+  restoreCloudLedgerOptimisticState,
 } from "@/features/cloud-ledger/bootstrap";
 import { requireUserId } from "@/shared/types/assertions";
 
@@ -19,7 +20,9 @@ const mocks = vi.hoisted(() => {
     getCloudLedgerOutbox: vi.fn(),
     getCloudLedgerRuntimeCache: vi.fn(),
     getSupabase: vi.fn(),
+    isCloudLedgerRuntimeCacheWriteCurrent: vi.fn(),
     restoreOptimisticCloudLedgerCache: vi.fn(),
+    resumeCloudLedgerRuntimeCacheWrites: vi.fn(),
     setCloudLedgerRuntimeCache: vi.fn(),
     setCloudLedgerRuntimeCacheIfCurrent: vi.fn(),
   };
@@ -30,7 +33,9 @@ vi.mock("@/features/cloud-ledger/public", () => ({
   flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
   getCloudLedgerRuntimeCache: mocks.getCloudLedgerRuntimeCache,
+  isCloudLedgerRuntimeCacheWriteCurrent: mocks.isCloudLedgerRuntimeCacheWriteCurrent,
   restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
+  resumeCloudLedgerRuntimeCacheWrites: mocks.resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCache: mocks.setCloudLedgerRuntimeCache,
   setCloudLedgerRuntimeCacheIfCurrent: mocks.setCloudLedgerRuntimeCacheIfCurrent,
 }));
@@ -52,6 +57,7 @@ describe("Cloud Ledger bootstrap task", () => {
     mocks.getSupabase.mockReturnValue({ functions: { invoke: vi.fn() } });
     mocks.restoreOptimisticCloudLedgerCache.mockResolvedValue({ cursor: "optimistic" });
     mocks.flushPendingCloudLedgerChanges.mockResolvedValue({ cursor: "flushed" });
+    mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValue(true);
     mocks.setCloudLedgerRuntimeCacheIfCurrent.mockReturnValue(true);
   });
 
@@ -73,12 +79,46 @@ describe("Cloud Ledger bootstrap task", () => {
       cache: mocks.cache,
       outbox: mocks.outbox,
     });
-    expect(mocks.setCloudLedgerRuntimeCache).toHaveBeenCalledWith(userId, {
-      cursor: "optimistic",
-    });
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      {
+        cursor: "optimistic",
+      }
+    );
     expect(mocks.captureWarning).toHaveBeenCalledWith("cloud_ledger_outbox_flush_failed", {
       errorType: "OfflineFlushFailure",
     });
+  });
+
+  it("does not write restored optimistic runtime cache when generation is stale after outbox restore", async () => {
+    const userId = requireUserId("user-cloud-ledger-bootstrap");
+    mocks.setCloudLedgerRuntimeCacheIfCurrent.mockReturnValueOnce(false);
+
+    await restoreCloudLedgerOptimisticState(userId);
+
+    expect(mocks.beginCloudLedgerRuntimeCacheWrite).toHaveBeenCalledWith(userId);
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      {
+        cursor: "optimistic",
+      }
+    );
+    expect(mocks.setCloudLedgerRuntimeCache).not.toHaveBeenCalledWith(userId, {
+      cursor: "optimistic",
+    });
+  });
+
+  it("does not start outbox flush when the user generation is already stale", async () => {
+    const userId = requireUserId("user-cloud-ledger-bootstrap");
+    mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValueOnce(false);
+
+    await flushCloudLedgerOutboxForUser(userId);
+
+    expect(mocks.beginCloudLedgerRuntimeCacheWrite).toHaveBeenCalledWith(userId);
+    expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).not.toHaveBeenCalled();
   });
 
   it("does not write flushed runtime cache when the user generation is stale after logout", async () => {

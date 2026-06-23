@@ -382,6 +382,53 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(supabase.getSession).not.toHaveBeenCalled();
   });
 
+  it("does not send pending changes when the flush generation is stale after loading them", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = createSeededLedgerCache();
+    await createOfflineCloudLedgerTransaction({
+      cache,
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:8",
+      },
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [acceptedCoffeeTransaction()],
+        tombstones: [],
+      },
+    });
+
+    const guardedCache = await flushPendingCloudLedgerChanges({
+      cache,
+      outbox,
+      supabase: supabase.client,
+      shouldContinue: () => false,
+    });
+
+    expect(supabase.functionsInvoke).not.toHaveBeenCalled();
+    expect((await outbox.load()).map((change) => change.id)).toEqual(["change-offline-coffee"]);
+    expect(storage.readRaw()).not.toBeNull();
+    expect(guardedCache.transactions).toEqual([
+      expect.objectContaining({
+        id: "txn-20260622-client",
+        description: "Coffee",
+      }),
+    ]);
+  });
+
   it("keeps pending state when Cloud Ledger acceptance succeeds but cache reconciliation fails", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({

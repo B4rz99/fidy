@@ -6,6 +6,7 @@ import {
   CloudLedgerOutboxFailure,
   clearCloudLedgerRuntimeCache,
   createEmptyCloudLedgerCache,
+  createOfflineCloudLedgerTransaction,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   getCloudLedgerRuntimeCache,
@@ -301,11 +302,14 @@ describe("transaction boundaries", () => {
     expect(result.success).toBe(true);
     expect(cloudLedgerOutboxCalls).toHaveLength(1);
     await vi.waitFor(() => {
-      expect(flushPendingCloudLedgerChanges).toHaveBeenCalledWith({
-        cache: expect.any(Object),
-        outbox,
-        supabase,
-      });
+      expect(flushPendingCloudLedgerChanges).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cache: expect.any(Object),
+          outbox,
+          shouldContinue: expect.any(Function),
+          supabase,
+        })
+      );
     });
     expect(useTransactionStore.getState().pages[0]).toMatchObject({
       amount: 4520,
@@ -354,6 +358,74 @@ describe("transaction boundaries", () => {
 
     expect(getCloudLedgerRuntimeCache(mockUserId).transactions).toEqual([]);
     expect(getCloudLedgerRuntimeCache(mockUserId).cursor).toBeNull();
+  });
+
+  it("does not write optimistic runtime cache when manual create enqueue resolves after logout", async () => {
+    const optimisticCache = applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+      cursor: "ledger:optimistic" as LedgerCursor,
+      categories: [],
+      financialAccounts: [],
+      transactions: [
+        {
+          id: "txn-optimistic-after-logout" as TransactionId,
+          type: "expense",
+          amount: 4520 as CopAmount,
+          currency: "COP",
+          categoryId: "food" as CategoryId,
+          accountId: "fa-default-user-1" as FinancialAccountId,
+          description: "Late optimistic enqueue",
+          date: "2026-03-04" as IsoDate,
+          updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        },
+      ],
+      tombstones: [],
+    });
+    let resolveCreate!: (cache: typeof optimisticCache) => void;
+    const createPromise = new Promise<typeof optimisticCache>((resolve) => {
+      resolveCreate = resolve;
+    });
+    vi.mocked(createOfflineCloudLedgerTransaction).mockImplementationOnce((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return createPromise;
+    });
+    vi.mocked(NetInfo.fetch).mockResolvedValueOnce({ isConnected: false } as never);
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    const savePromise = saveCurrentTransaction(mockDb, mockUserId);
+    await vi.waitFor(() => {
+      expect(createOfflineCloudLedgerTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    clearCloudLedgerRuntimeCache(mockUserId);
+    resolveCreate(optimisticCache);
+    const result = await savePromise;
+
+    expect(result.success).toBe(true);
+    expect(getCloudLedgerRuntimeCache(mockUserId).transactions).toEqual([]);
+    expect(getCloudLedgerRuntimeCache(mockUserId).cursor).toBeNull();
+  });
+
+  it("does not start create flush when logout happens before the network check completes", async () => {
+    let resolveNetwork!: (state: { readonly isConnected: boolean }) => void;
+    const networkPromise = new Promise<{ readonly isConnected: boolean }>((resolve) => {
+      resolveNetwork = resolve;
+    });
+    vi.mocked(NetInfo.fetch).mockReturnValueOnce(networkPromise as never);
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+    expect(result.success).toBe(true);
+    await vi.waitFor(() => {
+      expect(NetInfo.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    clearCloudLedgerRuntimeCache(mockUserId);
+    resolveNetwork({ isConnected: true });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
   });
 
   it("does not use Local Ledger account writes for manual Cloud Ledger creates", async () => {

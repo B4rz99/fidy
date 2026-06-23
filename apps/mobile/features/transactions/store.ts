@@ -7,8 +7,9 @@ import {
   flushPendingCloudLedgerChanges,
   getCloudLedgerRuntimeCache,
   getCloudLedgerOutbox,
-  setCloudLedgerRuntimeCache,
+  isCloudLedgerRuntimeCacheWriteCurrent,
   setCloudLedgerRuntimeCacheIfCurrent,
+  type CloudLedgerRuntimeCacheWriteToken,
 } from "@/features/cloud-ledger/public";
 import { getSupabase } from "@/shared/db/supabase";
 import {
@@ -159,6 +160,7 @@ async function recordManualTransactionWithCloudLedger({
   const validation = validateCloudLedgerManualTransaction(input, now);
   if (!validation.success) return validation;
 
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
   const optimisticCache = await createOfflineCloudLedgerTransaction({
     cache: getCloudLedgerRuntimeCache(userId),
     changeId: generateLedgerChangeId(),
@@ -166,32 +168,39 @@ async function recordManualTransactionWithCloudLedger({
     createdAt: toIsoDateTime(now),
     outbox: getCloudLedgerOutbox(userId),
   });
-  setCloudLedgerRuntimeCache(userId, optimisticCache);
-  void flushCloudLedgerOutboxAfterCreate(userId).catch((error) => {
-    captureWarning("cloud_ledger_outbox_flush_failed", {
-      errorType: getErrorType(error),
-    });
+  const transaction = toOptimisticStoredTransaction({
+    transactionId,
+    transaction: validation.transaction,
+    userId,
+    now,
   });
+  if (setCloudLedgerRuntimeCacheIfCurrent(userId, writeToken, optimisticCache)) {
+    void flushCloudLedgerOutboxAfterCreate(userId, writeToken).catch((error) => {
+      captureWarning("cloud_ledger_outbox_flush_failed", {
+        errorType: getErrorType(error),
+      });
+    });
+  }
 
   return {
     success: true,
-    transaction: toOptimisticStoredTransaction({
-      transactionId,
-      transaction: validation.transaction,
-      userId,
-      now,
-    }),
+    transaction,
   };
 }
 
-async function flushCloudLedgerOutboxAfterCreate(userId: UserId): Promise<void> {
-  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+async function flushCloudLedgerOutboxAfterCreate(
+  userId: UserId,
+  writeToken: CloudLedgerRuntimeCacheWriteToken
+): Promise<void> {
+  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
   const networkState = await NetInfo.fetch();
   if (networkState.isConnected !== true) return;
+  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
 
   const supabase = getSupabase();
   const sessionResult = await supabase.auth.getSession();
   if (sessionResult.error != null || sessionResult.data.session == null) return;
+  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
 
   setCloudLedgerRuntimeCacheIfCurrent(
     userId,
@@ -200,6 +209,7 @@ async function flushCloudLedgerOutboxAfterCreate(userId: UserId): Promise<void> 
       cache: getCloudLedgerRuntimeCache(userId),
       outbox: getCloudLedgerOutbox(userId),
       supabase,
+      shouldContinue: () => isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken),
     })
   );
 }

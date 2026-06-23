@@ -8,8 +8,9 @@ import {
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   getCloudLedgerRuntimeCache,
+  isCloudLedgerRuntimeCacheWriteCurrent,
   restoreOptimisticCloudLedgerCache,
-  setCloudLedgerRuntimeCache,
+  resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCacheIfCurrent,
 } from "./public";
 
@@ -39,8 +40,11 @@ export const cloudLedgerReconnectFlushTask: SubscriptionTask<AuthenticatedBootst
 export async function restoreCloudLedgerOptimisticState(
   userId: AuthenticatedBootstrapContext["userId"]
 ): Promise<void> {
-  setCloudLedgerRuntimeCache(
+  resumeCloudLedgerRuntimeCacheWrites(userId);
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+  setCloudLedgerRuntimeCacheIfCurrent(
     userId,
+    writeToken,
     await restoreOptimisticCloudLedgerCache({
       cache: getCloudLedgerRuntimeCache(userId),
       outbox: getCloudLedgerOutbox(userId),
@@ -52,6 +56,9 @@ export async function flushCloudLedgerOutboxForUser(
   userId: AuthenticatedBootstrapContext["userId"]
 ): Promise<void> {
   const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+    return;
+  }
   setCloudLedgerRuntimeCacheIfCurrent(
     userId,
     writeToken,
@@ -59,6 +66,7 @@ export async function flushCloudLedgerOutboxForUser(
       cache: getCloudLedgerRuntimeCache(userId),
       outbox: getCloudLedgerOutbox(userId),
       supabase: getSupabase(),
+      shouldContinue: () => isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken),
     })
   );
 }

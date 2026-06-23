@@ -3,6 +3,8 @@ import { create } from "zustand";
 import {
   clearCloudLedgerRuntimeCache,
   discardCloudLedgerOutbox,
+  resumeCloudLedgerRuntimeCacheWrites,
+  suspendCloudLedgerRuntimeCacheWrites,
 } from "@/features/cloud-ledger/public";
 import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
 import { useLocalOnboardingState } from "@/features/onboarding/store.public";
@@ -194,9 +196,11 @@ async function discardCloudLedgerStateBeforeSignOut(): Promise<void> {
   }
 
   try {
+    suspendCloudLedgerRuntimeCacheWrites(userId);
     await discardCloudLedgerOutbox(userId);
     clearCloudLedgerRuntimeCache(userId);
   } catch (err) {
+    resumeCloudLedgerRuntimeCacheWrites(userId);
     captureAuthFailure("auth_signout_cloud_ledger_outbox_discard_failed", err);
     throw err;
   }

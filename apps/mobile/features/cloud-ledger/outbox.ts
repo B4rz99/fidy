@@ -205,10 +205,20 @@ export async function flushPendingCloudLedgerChanges(input: {
   readonly cache: CloudLedgerCache;
   readonly outbox: EncryptedCloudLedgerOutbox;
   readonly supabase: SupabaseClient;
+  readonly shouldContinue?: () => boolean;
 }): Promise<CloudLedgerCache> {
   const changes = await input.outbox.load();
+  if (input.shouldContinue?.() === false) {
+    return applyPendingLedgerChanges(input.cache, changes);
+  }
   const acceptedChangeIds = await flushPendingChanges(input.supabase, changes);
+  if (input.shouldContinue?.() === false) {
+    return applyPendingLedgerChanges(input.cache, changes);
+  }
   const refreshedCache = await refreshCloudLedgerCache(input.supabase, input.cache);
+  if (input.shouldContinue?.() === false) {
+    return applyPendingLedgerChanges(input.cache, changes);
+  }
   await input.outbox.remove(acceptedChangeIds);
   return restoreOptimisticCloudLedgerCache({
     cache: refreshedCache,

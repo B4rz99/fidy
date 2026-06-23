@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => {
     },
   });
   const state = { runtimeCache: createEmptyCache() };
+  const writeToken = { generation: 1, userId: "user-1" };
   const noopTask = (id: string) => ({
     id,
     run: vi.fn<(...args: any[]) => any>(),
@@ -47,16 +48,26 @@ const mocks = vi.hoisted(() => {
     acceptedTransaction,
     createEmptyCache,
     state,
+    writeToken,
     noopTask,
     noopSubscriptionTask,
+    beginCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerOutbox: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerRuntimeCache: vi.fn<(...args: any[]) => any>(() => state.runtimeCache),
     getSupabase: vi.fn<(...args: any[]) => any>(),
+    isCloudLedgerRuntimeCacheWriteCurrent: vi.fn<(...args: any[]) => any>(),
     restoreOptimisticCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
+    resumeCloudLedgerRuntimeCacheWrites: vi.fn<(...args: any[]) => any>(),
     setCloudLedgerRuntimeCache: vi.fn<(...args: any[]) => any>((_userId, cache) => {
       state.runtimeCache = cache;
     }),
+    setCloudLedgerRuntimeCacheIfCurrent: vi.fn<(...args: any[]) => any>(
+      (_userId, _token, cache) => {
+        state.runtimeCache = cache;
+        return true;
+      }
+    ),
     tryEnsureDefaultFinancialAccount: vi.fn<(...args: any[]) => any>(),
   };
 });
@@ -116,11 +127,15 @@ vi.mock("@/features/financial-accounts/public", () => ({
 }));
 
 vi.mock("@/features/cloud-ledger/public", () => ({
+  beginCloudLedgerRuntimeCacheWrite: mocks.beginCloudLedgerRuntimeCacheWrite,
   flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
   getCloudLedgerRuntimeCache: mocks.getCloudLedgerRuntimeCache,
+  isCloudLedgerRuntimeCacheWriteCurrent: mocks.isCloudLedgerRuntimeCacheWriteCurrent,
   restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
+  resumeCloudLedgerRuntimeCacheWrites: mocks.resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCache: mocks.setCloudLedgerRuntimeCache,
+  setCloudLedgerRuntimeCacheIfCurrent: mocks.setCloudLedgerRuntimeCacheIfCurrent,
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -145,6 +160,8 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
       load: vi.fn<(...args: any[]) => any>().mockResolvedValue([]),
       remove: vi.fn<(...args: any[]) => any>(),
     });
+    mocks.beginCloudLedgerRuntimeCacheWrite.mockReturnValue(mocks.writeToken);
+    mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValue(true);
     mocks.getSupabase.mockReturnValue({ functions: { invoke: vi.fn<(...args: any[]) => any>() } });
     mocks.restoreOptimisticCloudLedgerCache.mockImplementation(async ({ cache }) => cache);
     mocks.flushPendingCloudLedgerChanges.mockImplementation(async ({ cache }) => ({

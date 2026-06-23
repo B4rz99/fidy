@@ -8,15 +8,43 @@ export type CloudLedgerRuntimeCacheWriteToken = {
 
 const cachesByUserId = new Map<string, CloudLedgerCache>();
 const generationsByUserId = new Map<string, number>();
+const suspendedWriteUserIds = new Set<string>();
 
 function getCloudLedgerRuntimeCacheGeneration(userId: UserId): number {
   return generationsByUserId.get(userId) ?? 0;
+}
+
+function invalidateCloudLedgerRuntimeCacheWrites(userId: UserId): void {
+  generationsByUserId.set(userId, getCloudLedgerRuntimeCacheGeneration(userId) + 1);
+}
+
+export function suspendCloudLedgerRuntimeCacheWrites(userId: UserId): void {
+  suspendedWriteUserIds.add(userId);
+  invalidateCloudLedgerRuntimeCacheWrites(userId);
+}
+
+export function resumeCloudLedgerRuntimeCacheWrites(userId: UserId): void {
+  if (!suspendedWriteUserIds.delete(userId)) {
+    return;
+  }
+  invalidateCloudLedgerRuntimeCacheWrites(userId);
 }
 
 export function beginCloudLedgerRuntimeCacheWrite(
   userId: UserId
 ): CloudLedgerRuntimeCacheWriteToken {
   return { userId, generation: getCloudLedgerRuntimeCacheGeneration(userId) };
+}
+
+export function isCloudLedgerRuntimeCacheWriteCurrent(
+  userId: UserId,
+  writeToken: CloudLedgerRuntimeCacheWriteToken
+): boolean {
+  return (
+    !suspendedWriteUserIds.has(userId) &&
+    writeToken.userId === userId &&
+    writeToken.generation === getCloudLedgerRuntimeCacheGeneration(userId)
+  );
 }
 
 export function getCloudLedgerRuntimeCache(userId: UserId): CloudLedgerCache {
@@ -38,10 +66,7 @@ export function setCloudLedgerRuntimeCacheIfCurrent(
   writeToken: CloudLedgerRuntimeCacheWriteToken,
   cache: CloudLedgerCache
 ): boolean {
-  if (
-    writeToken.userId !== userId ||
-    writeToken.generation !== getCloudLedgerRuntimeCacheGeneration(userId)
-  ) {
+  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
     return false;
   }
   setCloudLedgerRuntimeCache(userId, cache);
@@ -50,10 +75,11 @@ export function setCloudLedgerRuntimeCacheIfCurrent(
 
 export function clearCloudLedgerRuntimeCache(userId: UserId): void {
   cachesByUserId.delete(userId);
-  generationsByUserId.set(userId, getCloudLedgerRuntimeCacheGeneration(userId) + 1);
+  invalidateCloudLedgerRuntimeCacheWrites(userId);
 }
 
 export function resetCloudLedgerRuntimeCaches(): void {
   cachesByUserId.clear();
   generationsByUserId.clear();
+  suspendedWriteUserIds.clear();
 }

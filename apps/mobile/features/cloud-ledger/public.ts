@@ -24,9 +24,12 @@ export {
   beginCloudLedgerRuntimeCacheWrite,
   clearCloudLedgerRuntimeCache,
   getCloudLedgerRuntimeCache,
+  isCloudLedgerRuntimeCacheWriteCurrent,
   resetCloudLedgerRuntimeCaches,
+  resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCache,
   setCloudLedgerRuntimeCacheIfCurrent,
+  suspendCloudLedgerRuntimeCacheWrites,
 } from "./runtime";
 export type { CloudLedgerRuntimeCacheWriteToken } from "./runtime";
 export type {
