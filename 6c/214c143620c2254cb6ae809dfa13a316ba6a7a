@@ -1,0 +1,39 @@
+apps/mobile/drizzle/0036_capture_improvement_active_sample_dedupe.sql
+  s_d585a7fa922fba::t_7a45cd2557e78f 1-3
+apps/mobile/features/settings/store.ts
+  s_d585a7fa922fba::t_3b275cba11853b 158
+apps/mobile/features/email-capture/services/email-parse-improvement-dedupe.ts
+  s_d585a7fa922fba::t_7a45cd2557e78f 1,37-38
+apps/mobile/drizzle/migrations.js
+  s_d585a7fa922fba::t_7a45cd2557e78f 38,80
+apps/mobile/shared/db/schema.ts
+  s_d585a7fa922fba::t_09a857588ef41c 283-292
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_4d047d86b4459e 277-278,535-558,622-623
+  s_d585a7fa922fba::t_b3cf6a93a0cce6 14,588-621
+  s_d585a7fa922fba::t_325d4897ebed16 25-29,66-67,97,253-273
+  s_d585a7fa922fba::t_09a857588ef41c 30-39,274-276
+  s_d585a7fa922fba::t_bf2650c0e8fe1f 357
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_65478bb21ebc0b 30,71-72,74-84,86,152-154,165-167,234
+  s_d585a7fa922fba::t_9a04e3ab61551b 70,73,85
+  s_d585a7fa922fba::t_3542288f9fe3d7 231-233,235,238
+apps/mobile/__tests__/settings/store.test.ts
+  s_d585a7fa922fba::t_d6847d44b72693 32,86-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "6c214c143620c2254cb6ae809dfa13a316ba6a7a",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
