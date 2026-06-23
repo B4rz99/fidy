@@ -1,0 +1,22 @@
+apps/mobile/features/email-capture/services/capture-improvement-deletion-request-queue.ts
+  s_3fe77ba985873d::t_3ddb37779272e2 1-59
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_3fe77ba985873d::t_b861628ecef6ab 113
+  s_3fe77ba985873d::t_3ddb37779272e2 9,13-18,112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "2ad09774b1822e2433a0c18a7d2e958c7d825e88",
+  "prompts": {},
+  "sessions": {
+    "s_3fe77ba985873d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ea-4660-76b1-93e3-bc63c73cddef",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

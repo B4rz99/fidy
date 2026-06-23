@@ -1,0 +1,84 @@
+supabase/functions/cloud-ledger-api/model.ts
+  s_d585a7fa922fba::t_b94c5b1191d1da 103-119,126-127,139
+apps/mobile/features/capture-sources/lib/notification-parse-improvement-repository.ts
+  s_d585a7fa922fba::t_c651c7d752c3e2 60-63,173-185,204
+  s_d585a7fa922fba::t_6d13291bbfa738 224,226-236,238,241,247,249,251-259,261
+  s_d585a7fa922fba::t_d5341b46250a15 284-285,289-290,296-297
+  s_d585a7fa922fba::t_840b6c25e4e3b3 72-89,172,186-189,191-192,194-196,198,200-202,207-210,212,216,218-219,299,301
+  s_d585a7fa922fba::t_9604c77d839a9e 265,273-274,276,279-280
+  s_d585a7fa922fba::t_0ff5bb372e689a 90
+  s_d585a7fa922fba::t_1498ee0a2a475f 39-59,64-71,162-170,220,222,263,266-272,282,287,292,294
+  s_d585a7fa922fba::t_400ee4b19d4ad6 190,193,197,199,203,205,215,217,221,223,225,237,239-240,242,248,250,260,262,264,275,277-278,281,283,286,288,291,293,295,298,300,302-306
+  s_d585a7fa922fba::t_59b40c2d6deec3 243-246
+apps/mobile/features/settings/store.ts
+  s_d585a7fa922fba::t_a51e4268c94717 149-151,158,248-252
+apps/mobile/features/settings/components/parse-improvement-sharing-toggle.ts
+  s_d585a7fa922fba::t_364c493de92cd0 3,31-36,70-94
+apps/mobile/__tests__/settings/store.test.ts
+  s_d585a7fa922fba::t_29554b97158b18 32,65,75-86,89
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_fd3f5e04621dda 37-48,227-278,304-329,688,692
+  s_d585a7fa922fba::t_03893b0df1c052 330-351,689-691,693
+  s_d585a7fa922fba::t_f5c318c9a0e9aa 279-303
+apps/mobile/shared/i18n/locales/es.ts
+  s_d585a7fa922fba::t_3fd7dbf9f65696 751,753
+apps/mobile/supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql
+  s_d585a7fa922fba::t_d9a5c6d10e4fdc 1-5,7-113,115
+  s_d585a7fa922fba::t_18b7e16f972bc0 6
+  s_d585a7fa922fba::t_34642309c30170 114,116
+apps/mobile/features/capture-sources/diagnostics.public.ts
+  s_d585a7fa922fba::t_62508dae8564d0 4
+apps/mobile/__tests__/capture-sources/notification-parse-improvement-repository.test.ts
+  s_d585a7fa922fba::t_b7a6a32d81e9f6 2-5,113-129
+  s_d585a7fa922fba::t_516c17a8ed89a4 95,112
+  s_d585a7fa922fba::t_bbdb8f2b070cff 7-8,12-14,24-28,42-73,75-76,78-92,96-99,146,163,180,197,214,231
+supabase/functions/cloud-ledger-api/store.ts
+  s_d585a7fa922fba::t_34bb51fdbd4df8 2-3,30-41,55-59,66-67,79-80,127-147,163-164
+  s_d585a7fa922fba::t_6a87d10ce85e05 42-45,49-53,68-69,81-82,148-162,165
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_ed3f38424ff8c1 9,19-23,46-47,77
+  s_d585a7fa922fba::t_1441e317ae0e1b 24-27
+  s_d585a7fa922fba::t_49d456e0d08c98 408-433
+apps/mobile/__tests__/settings/parse-improvement-sharing-toggle.test.ts
+  s_d585a7fa922fba::t_daac746b7e9314 9,18-20,32-33,67,144-158
+supabase/functions/cloud-ledger-api/handler.ts
+  s_d585a7fa922fba::t_a0c572037a6766 2-3,12,38-41,95-101,157-170,178
+  s_d585a7fa922fba::t_512736d7ad68ca 42,102-104,171-177,179
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_d772c206a28e81 4,80-88,95-99
+  s_d585a7fa922fba::t_1441e317ae0e1b 89-94
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_d585a7fa922fba::t_615b056a70c28d 193
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_d585a7fa922fba::t_1441e317ae0e1b 181,242
+  s_d585a7fa922fba::t_14817d2356b0f3 55-66,176-180,182-197,238-239
+  s_d585a7fa922fba::t_856f5d3477e0d9 198-211,240-241
+apps/mobile/shared/i18n/locales/en.ts
+  s_d585a7fa922fba::t_0dbce819e9a51b 741,743
+apps/mobile/features/capture-sources/lib/notification-parse-improvement.ts
+  s_d585a7fa922fba::t_7364fc92bf155e 4
+apps/mobile/features/email-capture/parse-improvement.public.ts
+  s_d585a7fa922fba::t_a7e45970f3b1a4 3
+supabase/functions/cloud-ledger-api/capture-improvement-sample.ts
+  s_d585a7fa922fba::t_03218e86a48dd9 8-37
+  s_d585a7fa922fba::t_e64fadd9e88115 72-75,176-177
+  s_d585a7fa922fba::t_8e45d9b958fa7a 1-7,38-71,76-175,178-187
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_41bdb7e0c93481 13-16,82-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "6b0c041dc1644488e4e08dca433ae293a2129a02",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
