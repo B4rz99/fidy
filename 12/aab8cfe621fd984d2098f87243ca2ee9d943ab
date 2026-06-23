@@ -1,0 +1,54 @@
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_bbf549db51a0c4 87-115,164-165,170,174-182,249-253
+apps/mobile/features/capture-sources/lib/notification-parse-improvement-repository.ts
+  s_d585a7fa922fba::t_0c60430c4274bd 60,65,96-100
+  s_d585a7fa922fba::t_4fa5b964c2c007 141-143,150,160-162,168,179-181,188
+  s_d585a7fa922fba::t_9629230b4cf24b 115-120,219
+  s_d585a7fa922fba::t_d3ed84f33a3057 45-51,204-218
+  s_d585a7fa922fba::t_cbc0082a848108 303,307,332-333
+supabase/functions/cloud-ledger-api/model.ts
+  s_d585a7fa922fba::t_ed852d0850d152 106
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_4ceea1746a3c3c 606,626-653
+apps/mobile/__tests__/capture-sources/notification-parse-improvement-repository.test.ts
+  s_d585a7fa922fba::t_e9b2e6e2f70448 66-67
+  s_d585a7fa922fba::t_3b7c065840035d 103-105
+  s_d585a7fa922fba::t_af1991cb5ae0fa 10,14-16,27-30,68,76,99,110-164,217-219,238-240,371-373
+apps/mobile/supabase/migrations/20260623223000_capture_improvement_source_provider.sql
+  s_d585a7fa922fba::t_a821b184e00b08 1-108
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_25a2b0567c136e 25-28,192-194,196-198
+  s_d585a7fa922fba::t_6e1de9d8968c96 195,199-215
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_d585a7fa922fba::t_cf813f5e4d104d 22,42-44,79,86,90,123-124
+supabase/functions/cloud-ledger-api/capture-improvement-sample.ts
+  s_d585a7fa922fba::t_ed852d0850d152 19-20,48,71,91-97,107-113
+apps/mobile/__tests__/settings/parse-improvement-sharing-toggle.test.ts
+  s_d585a7fa922fba::t_c921bd842c6396 162
+supabase/functions/cloud-ledger-api/store.ts
+  s_d585a7fa922fba::t_87f1d752955eae 35,154
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_c9ad6eb61971ce 40,254-301
+apps/mobile/features/settings/components/parse-improvement-sharing-toggle.ts
+  s_d585a7fa922fba::t_4d329f5afb8d71 100
+apps/mobile/features/email-capture/hooks/useEmailCapture.ts
+  s_d585a7fa922fba::t_4d329f5afb8d71 8,20
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_d585a7fa922fba::t_bd435322a6af74 58,193,201-222
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "12aab8cfe621fd984d2098f87243ca2ee9d943ab",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
