@@ -235,6 +235,23 @@ describe("notification parse improvement repository", () => {
     expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
+  it("rejects short residual alphanumeric reference values before upload", async () => {
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "Ref A123B por [AMOUNT]. Autorizacion A1B2C.",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+  });
+
   it("rejects unlabeled alphanumeric reference values before upload", async () => {
     await expect(
       insertNotificationParseImprovementSample({
