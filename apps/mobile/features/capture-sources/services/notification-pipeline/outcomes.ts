@@ -109,25 +109,21 @@ type PersistNotificationReviewCandidateInput = {
   };
 };
 
-async function persistNotificationReviewCandidate({
-  context,
-  sourceEventId,
-  failureReason,
-  processedAt,
-  candidate,
-  parseImprovement,
-}: PersistNotificationReviewCandidateInput): Promise<NotificationPipelineResult> {
+async function persistNotificationReviewCandidate(
+  input: PersistNotificationReviewCandidateInput
+): Promise<NotificationPipelineResult> {
+  const { context } = input;
   await recordReviewCandidateCaptureWithLocalLedger({
     db: context.db,
     userId: context.userId,
     sourceFamily: context.source,
     sourceId: context.source,
-    sourceEventId,
+    sourceEventId: input.sourceEventId,
     status: "needs_review",
-    failureReason,
+    failureReason: input.failureReason,
     receivedAt: context.receivedAt,
-    processedAt: processedAt ?? toIsoDateTime(new Date()),
-    candidate,
+    processedAt: input.processedAt ?? toIsoDateTime(new Date()),
+    candidate: input.candidate,
     evidence: context.captureEvidence,
   });
   trackNotificationPipeline(context, {
@@ -140,8 +136,8 @@ async function persistNotificationReviewCandidate({
     saved: false,
     skippedDuplicate: false,
     transactionId: null,
-    ...(parseImprovement
-      ? { parseImprovementRequest: buildParseImprovementRequest(context, parseImprovement) }
+    ...(input.parseImprovement
+      ? { parseImprovementRequest: buildParseImprovementRequest(context, input.parseImprovement) }
       : {}),
   };
 }

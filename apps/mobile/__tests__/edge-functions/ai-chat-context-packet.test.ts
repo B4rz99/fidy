@@ -11,8 +11,95 @@ const summary = {
   monthOverMonthDeltas: [{ categoryId: "food", current: 50000, previous: 0, delta: 50000 }],
 };
 
+function buildRecentTransactionFixture(index: number) {
+  return {
+    type: "expense",
+    amount: 50000 + index,
+    categoryId: "food",
+    description: `Lunch ${index}`,
+    date: "2026-04-20",
+  };
+}
+
+function acceptsGoalProgressPacketWithoutSpendingSummary() {
+  expect(
+    readFinancialContextPacket(
+      {
+        task: { kind: "goal_progress" },
+        goals: [
+          {
+            name: "Emergency fund",
+            type: "savings",
+            targetAmount: 1000000,
+            currentAmount: 250000,
+            progressPct: 25,
+          },
+        ],
+      },
+      "goal_progress"
+    )
+  ).toEqual({
+    task: { kind: "goal_progress" },
+    goals: [
+      {
+        name: "Emergency fund",
+        type: "savings",
+        targetAmount: 1000000,
+        currentAmount: 250000,
+        progressPct: 25,
+      },
+    ],
+  });
+}
+
+function acceptsAccountOverviewPacketWithoutSpendingSummary() {
+  expect(
+    readFinancialContextPacket(
+      {
+        task: { kind: "account_overview" },
+        accounts: [{ name: "Cash", kind: "cash", isDefault: true }],
+      },
+      "account_overview"
+    )
+  ).toEqual({
+    task: { kind: "account_overview" },
+    accounts: [{ name: "Cash", kind: "cash", isDefault: true }],
+  });
+}
+
+function acceptsCaptureReviewPacketWithoutSpendingSummary() {
+  expect(
+    readFinancialContextPacket(
+      {
+        task: { kind: "capture_review" },
+        captureEvidence: [
+          {
+            scope: "merchant",
+            value: "Market",
+            sourceFamily: "email",
+            evidenceType: "merchant",
+            occurrences: 3,
+          },
+        ],
+      },
+      "capture_review"
+    )
+  ).toEqual({
+    task: { kind: "capture_review" },
+    captureEvidence: [
+      {
+        scope: "merchant",
+        value: "Market",
+        sourceFamily: "email",
+        evidenceType: "merchant",
+        occurrences: 3,
+      },
+    ],
+  });
+}
+
 describe("ai-chat financial context packet", () => {
-  it("uses the server-inferred task instead of a broad client packet label", () => {
+  it("uses the server-inferred task to sanitize broad legacy packets", () => {
     const inferredTask = inferFinancialContextPacketTaskFromMessages([
       { role: "user", content: "How are my savings goals doing?" },
     ]);
@@ -46,7 +133,18 @@ describe("ai-chat financial context packet", () => {
         },
         inferredTask
       )
-    ).toBeNull();
+    ).toEqual({
+      task: { kind: "goal_progress" },
+      goals: [
+        {
+          name: "Emergency fund",
+          type: "savings",
+          targetAmount: 1000000,
+          currentAmount: 250000,
+          progressPct: 25,
+        },
+      ],
+    });
   });
 
   it("infers the packet task from the latest user message", () => {
@@ -59,7 +157,7 @@ describe("ai-chat financial context packet", () => {
     ).toBe("spending_overview");
   });
 
-  it("rejects packets containing sections outside the requested advisor task", () => {
+  it("ignores sections outside the requested advisor task", () => {
     expect(
       readFinancialContextPacket(
         {
@@ -86,14 +184,41 @@ describe("ai-chat financial context packet", () => {
         },
         "goal_progress"
       )
-    ).toBeNull();
+    ).toEqual({
+      task: { kind: "goal_progress" },
+      goals: [
+        {
+          name: "Emergency fund",
+          type: "savings",
+          targetAmount: 1000000,
+          currentAmount: 250000,
+          progressPct: 25,
+        },
+      ],
+    });
   });
 
-  it("accepts non-spending task packets without spending summary", () => {
+  it(
+    "accepts goal progress packets without spending summary",
+    acceptsGoalProgressPacketWithoutSpendingSummary
+  );
+
+  it(
+    "accepts account overview packets without spending summary",
+    acceptsAccountOverviewPacketWithoutSpendingSummary
+  );
+
+  it(
+    "accepts capture review packets without spending summary",
+    acceptsCaptureReviewPacketWithoutSpendingSummary
+  );
+
+  it("ignores spending summaries on non-spending task packets", () => {
     expect(
       readFinancialContextPacket(
         {
           task: { kind: "goal_progress" },
+          summary,
           goals: [
             {
               name: "Emergency fund",
@@ -118,69 +243,6 @@ describe("ai-chat financial context packet", () => {
         },
       ],
     });
-
-    expect(
-      readFinancialContextPacket(
-        {
-          task: { kind: "account_overview" },
-          accounts: [{ name: "Cash", kind: "cash", isDefault: true }],
-        },
-        "account_overview"
-      )
-    ).toEqual({
-      task: { kind: "account_overview" },
-      accounts: [{ name: "Cash", kind: "cash", isDefault: true }],
-    });
-
-    expect(
-      readFinancialContextPacket(
-        {
-          task: { kind: "capture_review" },
-          captureEvidence: [
-            {
-              scope: "merchant",
-              value: "Market",
-              sourceFamily: "email",
-              evidenceType: "merchant",
-              occurrences: 3,
-            },
-          ],
-        },
-        "capture_review"
-      )
-    ).toEqual({
-      task: { kind: "capture_review" },
-      captureEvidence: [
-        {
-          scope: "merchant",
-          value: "Market",
-          sourceFamily: "email",
-          evidenceType: "merchant",
-          occurrences: 3,
-        },
-      ],
-    });
-  });
-
-  it("rejects spending summaries on non-spending task packets", () => {
-    expect(
-      readFinancialContextPacket(
-        {
-          task: { kind: "goal_progress" },
-          summary,
-          goals: [
-            {
-              name: "Emergency fund",
-              type: "savings",
-              targetAmount: 1000000,
-              currentAmount: 250000,
-              progressPct: 25,
-            },
-          ],
-        },
-        "goal_progress"
-      )
-    ).toBeNull();
   });
 
   it("sanitizes accepted packets to whitelisted fields", () => {
@@ -232,14 +294,10 @@ describe("ai-chat financial context packet", () => {
     expect(JSON.stringify(packet)).not.toContain("secret");
   });
 
-  it("rejects oversized allowed sections", () => {
-    const recentTransactions = Array.from({ length: 21 }, (_, index) => ({
-      type: "expense",
-      amount: 50000 + index,
-      categoryId: "food",
-      description: `Lunch ${index}`,
-      date: "2026-04-20",
-    }));
+  it("truncates oversized allowed sections", () => {
+    const recentTransactions = Array.from({ length: 21 }, (_, index) =>
+      buildRecentTransactionFixture(index)
+    );
 
     expect(
       readFinancialContextPacket(
@@ -250,6 +308,10 @@ describe("ai-chat financial context packet", () => {
         },
         "spending_overview"
       )
-    ).toBeNull();
+    ).toEqual({
+      task: { kind: "spending_overview" },
+      summary,
+      recentTransactions: recentTransactions.slice(0, 20),
+    });
   });
 });

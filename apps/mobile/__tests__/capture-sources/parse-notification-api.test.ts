@@ -7,7 +7,7 @@ const { mockParseNotification } = vi.hoisted(() => ({
 vi.mock("@/features/email-capture/parse-service.public", () => ({
   isCaptureNeedsReviewError: (error: unknown) =>
     error instanceof Error && error.message === "capture_needs_review",
-  retryableParseEmailService: {
+  retryableReviewableParseEmailService: {
     parseNotification: (...args: any[]) => mockParseNotification(...args),
   },
 }));

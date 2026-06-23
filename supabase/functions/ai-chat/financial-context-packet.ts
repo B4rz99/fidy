@@ -80,16 +80,6 @@ type OptionalArrayRead<T> =
 
 type OptionalRead<T> = { readonly valid: true; readonly value?: T } | { readonly valid: false };
 
-const ARRAY_PACKET_SECTIONS: readonly ArrayPacketSection[] = [
-  "recentTransactions",
-  "budgets",
-  "goals",
-  "accounts",
-  "captureEvidence",
-];
-
-const PACKET_SECTIONS: readonly PacketSection[] = ["summary", ...ARRAY_PACKET_SECTIONS];
-
 const TASK_KINDS = new Set<FinancialContextPacketTaskKind>([
   "general_advisor",
   "spending_overview",
@@ -102,7 +92,7 @@ const ALLOWED_SECTIONS_BY_TASK: Record<FinancialContextPacketTaskKind, readonly 
   general_advisor: [],
   spending_overview: ["summary", "recentTransactions", "budgets"],
   goal_progress: ["goals"],
-  account_overview: ["accounts"],
+  account_overview: ["summary", "accounts"],
   capture_review: ["captureEvidence"],
 };
 
@@ -138,8 +128,8 @@ function readArray<T>(
   maxLength: number,
   readItem: (item: unknown) => T | null
 ): readonly T[] | null {
-  if (!Array.isArray(value) || value.length > maxLength) return null;
-  const items = value.map(readItem);
+  if (!Array.isArray(value)) return null;
+  const items = value.slice(0, maxLength).map(readItem);
   return items.every(isPresent) ? items : null;
 }
 
@@ -157,11 +147,11 @@ export function inferFinancialContextPacketTaskFromMessages(
   const userTexts = messages.map(readMessageText).filter(isPresent);
   const normalized = (userTexts[userTexts.length - 1] ?? "").toLocaleLowerCase();
 
-  if (containsAny(normalized, ["goal", "goals", "meta", "metas", "ahorro", "savings"])) {
-    return "goal_progress";
-  }
   if (containsAny(normalized, ["account", "accounts", "cuenta", "cuentas", "card", "tarjeta"])) {
     return "account_overview";
+  }
+  if (containsAny(normalized, ["goal", "goals", "meta", "metas", "ahorro", "savings"])) {
+    return "goal_progress";
   }
   if (containsAny(normalized, ["capture", "email", "notification", "correo", "notificacion"])) {
     return "capture_review";
@@ -289,35 +279,27 @@ function hasPacketSection(record: Record<string, unknown>, section: PacketSectio
   return section in record && record[section] !== undefined;
 }
 
-function hasDisallowedPacketSection(
-  record: Record<string, unknown>,
-  task: FinancialContextPacketTask
-): boolean {
-  const allowedSections = ALLOWED_SECTIONS_BY_TASK[task.kind];
-  return PACKET_SECTIONS.some(
-    (section) => !allowedSections.includes(section) && hasPacketSection(record, section)
-  );
-}
-
 function readOptionalSummarySection(
   record: Record<string, unknown>,
   task: FinancialContextPacketTask
 ): OptionalRead<NonNullable<FinancialContextPacket["summary"]>> {
   const allowsSummary = ALLOWED_SECTIONS_BY_TASK[task.kind].includes("summary");
   if (!hasPacketSection(record, "summary")) {
-    return allowsSummary ? { valid: false } : { valid: true };
+    return task.kind === "spending_overview" ? { valid: false } : { valid: true };
   }
-  if (!allowsSummary) return { valid: false };
+  if (!allowsSummary) return { valid: true };
   const summary = readSummary(record.summary);
   return summary === null ? { valid: false } : { valid: true, value: summary };
 }
 
 function readOptionalArraySection<T>(
   record: Record<string, unknown>,
+  task: FinancialContextPacketTask,
   section: ArrayPacketSection,
   maxLength: number,
   readItem: (item: unknown) => T | null
 ): OptionalArrayRead<T> {
+  if (!ALLOWED_SECTIONS_BY_TASK[task.kind].includes(section)) return { valid: true };
   if (!hasPacketSection(record, section)) return { valid: true };
   const value = readArray(record[section], maxLength, readItem);
   return value === null ? { valid: false } : { valid: true, value };
@@ -331,19 +313,21 @@ export function readFinancialContextPacket(
   if (!TASK_KINDS.has(taskKind)) return null;
   const task = { kind: taskKind };
   const summary = readOptionalSummarySection(value, task);
-  if (!summary.valid || hasDisallowedPacketSection(value, task)) return null;
+  if (!summary.valid) return null;
 
   const recentTransactions = readOptionalArraySection(
     value,
+    task,
     "recentTransactions",
     MAX_RECENT_TRANSACTIONS,
     readRecentTransaction
   );
-  const budgets = readOptionalArraySection(value, "budgets", MAX_BUDGETS, readBudget);
-  const goals = readOptionalArraySection(value, "goals", MAX_GOALS, readGoal);
-  const accounts = readOptionalArraySection(value, "accounts", MAX_ACCOUNTS, readAccount);
+  const budgets = readOptionalArraySection(value, task, "budgets", MAX_BUDGETS, readBudget);
+  const goals = readOptionalArraySection(value, task, "goals", MAX_GOALS, readGoal);
+  const accounts = readOptionalArraySection(value, task, "accounts", MAX_ACCOUNTS, readAccount);
   const captureEvidence = readOptionalArraySection(
     value,
+    task,
     "captureEvidence",
     MAX_CAPTURE_EVIDENCE,
     readCaptureEvidence

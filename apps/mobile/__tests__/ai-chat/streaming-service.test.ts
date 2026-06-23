@@ -225,6 +225,45 @@ describe("streaming chat service", () => {
     );
   });
 
+  it("treats savings account questions as account overview requests", async () => {
+    const state = createState();
+    state.setCurrentSessionId("chat-1" as ChatSessionId);
+    const buildFinancialContextPacket = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeFinancialContextPacket());
+
+    const service = createStreamingChatService({
+      getState: state.getState,
+      setStreaming: state.setStreaming,
+      setStreamingContent: state.setStreamingContent,
+      streamChat: async (_messages, callbacks) => {
+        callbacks.onDone();
+      },
+      buildFinancialContextPacket,
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi
+        .fn<(...args: any[]) => any>()
+        .mockResolvedValue(makeAssistantMessage("")),
+      parseActionFromResponse: () => null,
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
+      telemetry: makeTelemetry().telemetry,
+    });
+
+    await service.sendMessage({
+      db: mockDb,
+      userId: USER_ID,
+      text: "cuanto tengo en mi cuenta de ahorros?",
+      executeAction: vi.fn<(...args: any[]) => any>(),
+    });
+
+    expect(buildFinancialContextPacket).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: USER_ID,
+      task: { kind: "account_overview" },
+    });
+  });
+
   it("captures action failures without breaking the assistant reply", async () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);

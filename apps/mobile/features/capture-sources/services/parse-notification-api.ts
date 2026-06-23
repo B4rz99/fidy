@@ -1,7 +1,7 @@
 import type { LlmParsedTransaction } from "@/features/email-capture/llm-parser.public";
 import {
   isCaptureNeedsReviewError,
-  retryableParseEmailService,
+  retryableReviewableParseEmailService,
 } from "@/features/email-capture/parse-service.public";
 
 export type NeedsReviewNotificationParse = {
@@ -24,7 +24,7 @@ export async function parseNotificationApi(
   sanitizedText: string
 ): Promise<ParseNotificationApiResult> {
   try {
-    return await retryableParseEmailService.parseNotification(sanitizedText);
+    return await retryableReviewableParseEmailService.parseNotification(sanitizedText);
   } catch (error) {
     if (isCaptureNeedsReviewError(error)) {
       return { kind: "needs_review" };

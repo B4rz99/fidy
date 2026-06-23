@@ -153,4 +153,38 @@ describe("financial context packet", () => {
     });
     expect(unrelatedPort).not.toHaveBeenCalled();
   });
+
+  it("includes balance context in account overview packets", () => {
+    const unrelatedPort = vi.fn(() => {
+      throw new Error("unrelated port should not be called for account overview packets");
+    });
+    const builder = createFinancialContextPacketBuilder({
+      ...createPorts(),
+      getSpendingByCategory: unrelatedPort,
+      getRecentTransactions: unrelatedPort,
+      getBudgetsForMonth: unrelatedPort,
+      getGoals: unrelatedPort,
+      getGoalCurrentAmount: unrelatedPort,
+      getCaptureEvidence: unrelatedPort,
+    });
+
+    const packet = builder({
+      db,
+      userId,
+      now: new Date("2026-04-25T12:00:00.000Z"),
+      task: { kind: "account_overview" },
+    });
+
+    expect(packet).toEqual({
+      task: { kind: "account_overview" },
+      summary: {
+        balance: 1000000,
+        currentMonthSpending: [],
+        previousMonthSpending: [],
+        monthOverMonthDeltas: [],
+      },
+      accounts: [{ name: "Cash", kind: "cash", isDefault: true }],
+    });
+    expect(unrelatedPort).not.toHaveBeenCalled();
+  });
 });

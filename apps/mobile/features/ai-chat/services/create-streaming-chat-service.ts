@@ -84,11 +84,11 @@ const containsAny = (text: string, terms: readonly string[]): boolean =>
 
 function inferFinancialContextPacketTask(text: string): FinancialContextPacketTask {
   const normalized = text.toLocaleLowerCase();
-  if (containsAny(normalized, ["goal", "goals", "meta", "metas", "ahorro", "savings"])) {
-    return { kind: "goal_progress" };
-  }
   if (containsAny(normalized, ["account", "accounts", "cuenta", "cuentas", "card", "tarjeta"])) {
     return { kind: "account_overview" };
+  }
+  if (containsAny(normalized, ["goal", "goals", "meta", "metas", "ahorro", "savings"])) {
+    return { kind: "goal_progress" };
   }
   if (containsAny(normalized, ["capture", "email", "notification", "correo", "notificacion"])) {
     return { kind: "capture_review" };

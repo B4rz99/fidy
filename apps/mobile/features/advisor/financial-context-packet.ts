@@ -169,7 +169,7 @@ const PACKET_SECTIONS_BY_TASK: Record<
   ],
   spending_overview: ["summary", "recentTransactions", "budgets"],
   goal_progress: ["goals"],
-  account_overview: ["accounts"],
+  account_overview: ["summary", "accounts"],
   capture_review: ["captureEvidence"],
 };
 
@@ -211,14 +211,29 @@ function buildSpendingSummary(
   };
 }
 
+function buildBalanceSummary(
+  input: BuildFinancialContextPacketInput,
+  ports: FinancialContextPacketPorts
+): NonNullable<FinancialContextPacket["summary"]> {
+  return {
+    balance: ports.getBalance(input.db, input.userId),
+    currentMonthSpending: [],
+    previousMonthSpending: [],
+    monthOverMonthDeltas: [],
+  };
+}
+
 export function createFinancialContextPacketBuilder(ports: FinancialContextPacketPorts) {
   return (input: BuildFinancialContextPacketInput): FinancialContextPacket => {
     const task = input.task ?? DEFAULT_FINANCIAL_CONTEXT_TASK;
     const currentMonth = toContextMonth(input.now ?? new Date());
     const previousMonth = previousContextMonth(currentMonth);
-    const summary = taskIncludesSection(task, "summary")
-      ? buildSpendingSummary(input, ports, currentMonth, previousMonth)
-      : null;
+    const summary =
+      task.kind === "account_overview"
+        ? buildBalanceSummary(input, ports)
+        : taskIncludesSection(task, "summary")
+          ? buildSpendingSummary(input, ports, currentMonth, previousMonth)
+          : null;
 
     return {
       task,

@@ -183,7 +183,7 @@ describe("createParseEmailService", () => {
     });
   });
 
-  it("throws on ambiguous needs-review candidates when configured for retryable parsing", async () => {
+  it("returns null for ambiguous needs-review candidates when configured for retryable parsing", async () => {
     const captureWarning = vi.fn<(...args: any[]) => any>();
     const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: {
@@ -213,7 +213,7 @@ describe("createParseEmailService", () => {
       },
     });
 
-    await expect(service.parseEmail("ambiguous capture")).rejects.toThrow("capture_needs_review");
+    await expect(service.parseEmail("ambiguous capture")).resolves.toBeNull();
     expect(captureWarning).toHaveBeenCalledWith("parse_email_needs_review", {
       reason: "amount and merchant conflict",
     });
