@@ -42,6 +42,7 @@ type PersistReviewCandidateInput = {
   readonly receivedAt: IsoDateTime;
   readonly processedAt: IsoDateTime;
   readonly candidate: {
+    readonly candidateKind?: CreateReviewCandidateInput["candidate"]["candidateKind"];
     readonly occurredAt: IsoDate | null;
     readonly amount: CopAmount | null;
     readonly transactionType?: "expense" | "income" | null;
@@ -260,7 +261,7 @@ const toReviewCandidateInput = (input: PersistReviewCandidateInput): CreateRevie
     },
     candidate: {
       id: generateReviewCandidateId(),
-      candidateKind: "transaction",
+      candidateKind: input.candidate.candidateKind ?? "transaction",
       status: "pending",
       occurredAt: input.candidate.occurredAt,
       money:

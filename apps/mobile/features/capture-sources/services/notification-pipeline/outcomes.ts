@@ -11,12 +11,14 @@ import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
 import { requireIsoDate } from "@/shared/types/assertions";
 import { buildFailedFingerprint } from "./context";
 import type {
+  AiUnavailableNotificationContext,
   DuplicateCheckResult,
   NotificationPipelineResult,
   NotificationStageContext,
   NotificationStageMetrics,
   ParsedNotificationContext,
   ResolvedNotificationContext,
+  ReviewableNotificationContext,
 } from "./types";
 
 async function cacheMerchantRuleIfEligible(context: ResolvedNotificationContext) {
@@ -87,6 +89,59 @@ function buildParseImprovementRequest(
     parseMethod: context.regexParseImprovementTemplate ? "regex" : context.parseMethod,
     ...(context.regexParseImprovementTemplate
       ? { parserTemplate: context.regexParseImprovementTemplate }
+      : {}),
+  };
+}
+
+function formatNeedsReviewFailureReason(reason: string | undefined): string {
+  return reason ? `parse_needs_review:${reason}` : "parse_needs_review";
+}
+
+type ReviewCandidateCaptureInput = Parameters<
+  typeof recordReviewCandidateCaptureWithLocalLedger
+>[0];
+
+type PersistNotificationReviewCandidateInput = {
+  readonly context: NotificationStageContext;
+  readonly sourceEventId: string;
+  readonly failureReason: ReviewCandidateCaptureInput["failureReason"];
+  readonly processedAt?: ReviewCandidateCaptureInput["processedAt"];
+  readonly candidate: ReviewCandidateCaptureInput["candidate"];
+  readonly parseImprovement?: {
+    readonly status: "needs_review";
+    readonly confidence: number | null;
+  };
+};
+
+async function persistNotificationReviewCandidate(
+  input: PersistNotificationReviewCandidateInput
+): Promise<NotificationPipelineResult> {
+  const { context } = input;
+  await recordReviewCandidateCaptureWithLocalLedger({
+    db: context.db,
+    userId: context.userId,
+    sourceFamily: context.source,
+    sourceId: context.source,
+    sourceEventId: input.sourceEventId,
+    status: "needs_review",
+    failureReason: input.failureReason,
+    receivedAt: context.receivedAt,
+    processedAt: input.processedAt ?? toIsoDateTime(new Date()),
+    candidate: input.candidate,
+    evidence: context.captureEvidence,
+  });
+  trackNotificationPipeline(context, {
+    saved: 0,
+    skippedDuplicate: 0,
+    parseFailed: 0,
+  });
+
+  return {
+    saved: false,
+    skippedDuplicate: false,
+    transactionId: null,
+    ...(input.parseImprovement
+      ? { parseImprovementRequest: buildParseImprovementRequest(context, input.parseImprovement) }
       : {}),
   };
 }
@@ -194,6 +249,48 @@ export async function persistFailedNotification(
   };
 }
 
+export async function persistReviewableNotification(
+  context: ReviewableNotificationContext
+): Promise<NotificationPipelineResult> {
+  return persistNotificationReviewCandidate({
+    context,
+    sourceEventId: buildFailedFingerprint(context.notification),
+    failureReason: formatNeedsReviewFailureReason(context.review.reason),
+    candidate: {
+      candidateKind: "unknown",
+      occurredAt: null,
+      amount: null,
+      transactionType: null,
+      categoryId: null,
+      description: null,
+      confidence: context.review.confidence,
+    },
+    parseImprovement: {
+      status: "needs_review",
+      confidence: context.review.confidence,
+    },
+  });
+}
+
+export async function persistAiUnavailableNotificationReview(
+  context: AiUnavailableNotificationContext
+): Promise<NotificationPipelineResult> {
+  return persistNotificationReviewCandidate({
+    context,
+    sourceEventId: buildFailedFingerprint(context.notification),
+    failureReason: "ai_unavailable",
+    candidate: {
+      candidateKind: "unknown",
+      occurredAt: null,
+      amount: null,
+      transactionType: null,
+      categoryId: null,
+      description: null,
+      confidence: null,
+    },
+  });
+}
+
 export async function persistDuplicateNotification(
   context: ParsedNotificationContext,
   duplicate: DuplicateCheckResult
@@ -233,15 +330,10 @@ export async function persistSuccessfulNotification(
   context: ResolvedNotificationContext
 ): Promise<NotificationPipelineResult> {
   if (resolveProcessedCaptureStatus(context) === "needs_review") {
-    await recordReviewCandidateCaptureWithLocalLedger({
-      db: context.db,
-      userId: context.userId,
-      sourceFamily: context.source,
-      sourceId: context.source,
+    return persistNotificationReviewCandidate({
+      context,
       sourceEventId: context.fingerprint,
-      status: "needs_review",
       failureReason: resolveReviewFailureReason(context),
-      receivedAt: context.receivedAt,
       processedAt: context.now,
       candidate: {
         occurredAt: requireIsoDate(context.parsed.date),
@@ -251,24 +343,11 @@ export async function persistSuccessfulNotification(
         description: "",
         confidence: context.parsed.confidence,
       },
-      evidence: context.captureEvidence,
-    });
-
-    trackNotificationPipeline(context, {
-      saved: 0,
-      skippedDuplicate: 0,
-      parseFailed: 0,
-    });
-
-    return {
-      saved: false,
-      skippedDuplicate: false,
-      transactionId: null,
-      parseImprovementRequest: buildParseImprovementRequest(context, {
+      parseImprovement: {
         status: "needs_review",
         confidence: context.parsed.confidence,
-      }),
-    };
+      },
+    });
   }
 
   const transactionId = await saveTransactionRecord(context);

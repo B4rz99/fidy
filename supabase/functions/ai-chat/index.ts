@@ -3,6 +3,12 @@ import OpenAI from "https://deno.land/x/openai@v4.24.0/mod.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { readBodyWithLimit } from "../_shared/body-size.ts";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
+import {
+  type FinancialContextGoalSummary,
+  type FinancialContextPacket,
+  inferFinancialContextPacketTaskFromMessages,
+  readFinancialContextPacket,
+} from "./financial-context-packet.ts";
 
 const CATEGORY_IDS = [
   "food",
@@ -77,24 +83,7 @@ function structuredLog(fields: {
   );
 }
 
-type GoalSummary = {
-  readonly name: string;
-  readonly type: string;
-  readonly targetAmount: number;
-  readonly currentAmount: number;
-  readonly progressPct: number;
-};
-
-type FinancialContextPacket = {
-  readonly summary: unknown;
-  readonly recentTransactions?: readonly unknown[];
-  readonly budgets?: readonly unknown[];
-  readonly goals?: readonly GoalSummary[];
-  readonly accounts?: readonly unknown[];
-  readonly captureEvidence?: readonly unknown[];
-};
-
-function formatGoalLine(g: GoalSummary): string {
+function formatGoalLine(g: FinancialContextGoalSummary): string {
   const amounts = `$${g.currentAmount.toLocaleString("es-CO")} / $${g.targetAmount.toLocaleString("es-CO")} (${g.progressPct}%)`;
   return `- "${g.name}" (${g.type}): ${amounts}`;
 }
@@ -102,12 +91,16 @@ function formatGoalLine(g: GoalSummary): string {
 function buildSystemPrompt(context: { packet: FinancialContextPacket }): string {
   const parts = [SYSTEM_PROMPT];
 
+  parts.push(`\n## Financial context task\n${context.packet.task.kind}`);
+
   if ((context.packet.goals ?? []).length > 0) {
     const goalLines = (context.packet.goals ?? []).map(formatGoalLine).join("\n");
     parts.push(`\n## User's Financial Goals\n${goalLines}`);
   }
 
-  parts.push(`\n## Current financial context\n${JSON.stringify(context.packet.summary)}`);
+  if (context.packet.summary !== undefined) {
+    parts.push(`\n## Current financial context\n${JSON.stringify(context.packet.summary)}`);
+  }
 
   if ((context.packet.budgets ?? []).length > 0) {
     parts.push(`\n## Current budgets\n${JSON.stringify(context.packet.budgets)}`);
@@ -126,40 +119,6 @@ function buildSystemPrompt(context: { packet: FinancialContextPacket }): string 
   }
 
   return parts.join("\n");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isOptionalArrayOf(value: unknown, isItemValid: (item: unknown) => boolean): boolean {
-  return value === undefined || (Array.isArray(value) && value.every(isItemValid));
-}
-
-function isUnknownItem(_value: unknown): boolean {
-  return true;
-}
-
-function isGoalSummary(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    typeof value.name === "string" &&
-    typeof value.type === "string" &&
-    typeof value.targetAmount === "number" &&
-    typeof value.currentAmount === "number" &&
-    typeof value.progressPct === "number"
-  );
-}
-
-function isFinancialContextPacket(value: unknown): value is FinancialContextPacket {
-  if (!isRecord(value) || !("summary" in value)) return false;
-  return (
-    isOptionalArrayOf(value.recentTransactions, isUnknownItem) &&
-    isOptionalArrayOf(value.budgets, isUnknownItem) &&
-    isOptionalArrayOf(value.goals, isGoalSummary) &&
-    isOptionalArrayOf(value.accounts, isUnknownItem) &&
-    isOptionalArrayOf(value.captureEvidence, isUnknownItem)
-  );
 }
 
 Deno.serve(async (req) => {
@@ -260,8 +219,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
-    const { financialContextPacket } = body;
-    if (!isFinancialContextPacket(financialContextPacket)) {
+    const financialContextPacketTask = inferFinancialContextPacketTaskFromMessages(messages);
+    const financialContextPacket = readFinancialContextPacket(
+      body.financialContextPacket,
+      financialContextPacketTask
+    );
+    if (financialContextPacket === null) {
       structuredLog({
         request_id: requestId,
         user_id: userId,

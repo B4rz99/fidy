@@ -1,6 +1,7 @@
 import type {
   BuildFinancialContextPacketInput,
   FinancialContextPacket,
+  FinancialContextPacketTask,
 } from "@/features/advisor/public";
 import type { AnyDb } from "@/shared/db";
 import {
@@ -78,6 +79,35 @@ type StreamingTelemetry = {
   ) => Promise<void>;
 };
 
+const containsAny = (text: string, terms: readonly string[]): boolean =>
+  terms.some((term) => text.includes(term));
+
+function normalizeTaskInferenceText(text: string): string {
+  return text
+    .toLocaleLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function inferFinancialContextPacketTask(text: string): FinancialContextPacketTask {
+  const normalized = normalizeTaskInferenceText(text);
+  if (
+    containsAny(normalized, ["spend", "spent", "spending", "gaste", "gasto", "gastos", "compras"])
+  ) {
+    return { kind: "spending_overview" };
+  }
+  if (containsAny(normalized, ["account", "accounts", "cuenta", "cuentas", "card", "tarjeta"])) {
+    return { kind: "account_overview" };
+  }
+  if (containsAny(normalized, ["goal", "goals", "meta", "metas", "ahorro", "savings"])) {
+    return { kind: "goal_progress" };
+  }
+  if (containsAny(normalized, ["capture", "email", "notification", "correo", "notificacion"])) {
+    return { kind: "capture_review" };
+  }
+  return { kind: "spending_overview" };
+}
+
 const ensureCurrentSession = async (
   deps: CreateStreamingChatServiceDeps,
   request: ReadySendMessageInput
@@ -114,6 +144,7 @@ async function consumeStream(
     const financialContextPacket = await run.deps.buildFinancialContextPacket?.({
       db: run.request.db,
       userId: run.request.userId,
+      task: inferFinancialContextPacketTask(run.request.text),
     });
     await run.deps.streamChat(conversation, createStreamCallbacks(run, recorder), {
       signal: run.controller.signal,
@@ -159,11 +190,14 @@ async function persistDoneOutcome(
 
 async function persistErrorOutcome(
   run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
-  accumulated: string,
-  error: string
+  _accumulated: string,
+  _error: string
 ): Promise<void> {
-  const content = accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
-  await run.deps.addAssistantChatMessage(run.request.db, run.request.userId, content);
+  await run.deps.addAssistantChatMessage(
+    run.request.db,
+    run.request.userId,
+    "I can't produce a reliable answer right now. Please try again."
+  );
 }
 
 async function persistStreamOutcome(

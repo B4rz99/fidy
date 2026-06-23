@@ -10,6 +10,7 @@ import {
 import {
   getProcessedEmailSourceEventIdsEffect,
   insertProcessedEmailSourceEventEffect,
+  nextRetryAtEffect,
 } from "./runtime";
 import {
   buildDuplicateProcessedSourceEventRow,
@@ -76,6 +77,48 @@ async function persistFailedIncomingEmail(
   return failureReason === "parse_error"
     ? appendFailedEmailParseImprovementRequest(result, email)
     : result;
+}
+
+async function persistRetryableIncomingEmail(
+  context: EmailBatchContext,
+  email: RawEmail,
+  failureReason: string
+): Promise<PipelineResult> {
+  const sourceEventIds = await context.runtime.runEmailEffect(
+    getProcessedEmailSourceEventIdsEffect(context.db, context.userId, [
+      { sourceId: getEmailSourceId(email), sourceEventId: email.externalId },
+    ])
+  );
+  if (sourceEventIds.has(getEmailSourceEventKey(email))) {
+    return createPipelineMetricResult("pendingRetry");
+  }
+
+  const { createdAt, processedSourceEventId } = await createIncomingEmailPersistenceState(
+    context,
+    email
+  );
+  const nextRetryAt = await context.runtime.runClockEffect(nextRetryAtEffect(0));
+  const sourceEventRow = buildUnparsedProcessedSourceEventRow({
+    email,
+    userId: context.userId,
+    processedSourceEventId,
+    createdAt,
+    status: "pending_retry",
+    failureReason,
+    nextRetryAt,
+  });
+
+  await persistIncomingEmailRecord({
+    context,
+    email,
+    sourceEventRow,
+    transactionId: null,
+    createdAt,
+  });
+  return appendFailedEmailParseImprovementRequest(
+    createPipelineMetricResult("pendingRetry"),
+    email
+  );
 }
 
 async function persistSkippedIncomingEmail(
@@ -237,7 +280,7 @@ export async function processIncomingEmail(
     if (parsed.kind === "failed") {
       const persistenceStartedAt = nowMs();
       const result = appendOptionalParseImprovementRequest(
-        await persistFailedIncomingEmail(context, email, "parse_error"),
+        await persistRetryableIncomingEmail(context, email, "parse_error"),
         parsed.parseImprovementRequest
       );
       return {

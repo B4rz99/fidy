@@ -1,8 +1,38 @@
 import type { LlmParsedTransaction } from "@/features/email-capture/llm-parser.public";
-import { liveParseEmailService } from "@/features/email-capture/parse-service.public";
+import {
+  isCaptureNeedsReviewError,
+  retryableReviewableParseEmailService,
+} from "@/features/email-capture/parse-service.public";
+
+export type NeedsReviewNotificationParse = {
+  readonly kind: "needs_review";
+  readonly reason?: string;
+  readonly confidence?: number | null;
+};
+
+export type AiUnavailableNotificationParse = {
+  readonly kind: "ai_unavailable";
+};
+
+export type ParseNotificationApiResult =
+  | LlmParsedTransaction
+  | NeedsReviewNotificationParse
+  | AiUnavailableNotificationParse
+  | null;
 
 export async function parseNotificationApi(
   sanitizedText: string
-): Promise<LlmParsedTransaction | null> {
-  return liveParseEmailService.parseNotification(sanitizedText);
+): Promise<ParseNotificationApiResult> {
+  try {
+    return await retryableReviewableParseEmailService.parseNotification(sanitizedText);
+  } catch (error) {
+    if (isCaptureNeedsReviewError(error)) {
+      return {
+        kind: "needs_review",
+        ...(error.reason !== undefined ? { reason: error.reason } : {}),
+        ...(error.confidence !== undefined ? { confidence: error.confidence } : {}),
+      };
+    }
+    throw error;
+  }
 }

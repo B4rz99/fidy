@@ -31,6 +31,16 @@ export type RawParsedNotification = {
   counterpartyHint?: string;
 };
 
+export type RawNotificationNeedsReview = {
+  readonly kind: "needs_review";
+  readonly reason?: string;
+  readonly confidence?: number | null;
+};
+
+export type RawNotificationAiUnavailable = {
+  readonly kind: "ai_unavailable";
+};
+
 export type ParsedNotification = Omit<RawParsedNotification, "amount" | "date"> & {
   amount: CopAmount;
   date: IsoDate;
@@ -61,6 +71,15 @@ export type ParsedNotificationContext = NotificationStageContext & {
   fingerprint: string;
 };
 
+export type ReviewableNotificationContext = NotificationStageContext & {
+  readonly review: {
+    readonly confidence: number | null;
+    readonly reason?: string;
+  };
+};
+
+export type AiUnavailableNotificationContext = NotificationStageContext;
+
 export type ResolvedNotificationContext = ParsedNotificationContext & {
   merchantKey: string;
   categoryId: CategoryId;
@@ -71,6 +90,8 @@ export type ResolvedNotificationContext = ParsedNotificationContext & {
 
 export type ParseStageResult =
   | { kind: "failed"; context: NotificationStageContext }
+  | { kind: "ai_unavailable"; context: AiUnavailableNotificationContext }
+  | { kind: "needs_review"; context: ReviewableNotificationContext }
   | { kind: "parsed"; context: ParsedNotificationContext };
 
 export type DuplicateCheckResult =

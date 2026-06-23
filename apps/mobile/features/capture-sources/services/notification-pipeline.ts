@@ -8,10 +8,15 @@ import type { CategoryId } from "@/shared/types/branded";
 import { findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { parseNotificationLocalHint } from "../lib/notification-parser";
 import type { NotificationData } from "../schema";
-import { parseNotificationWithRegex } from "./notification-regex-parser";
+import {
+  parseNotificationWithRegex,
+  type NotificationRegexParseResult,
+} from "./notification-regex-parser";
 import {
   appendParsedNotificationEvidence,
   buildNotificationFingerprint,
+  isRawNotificationAiUnavailable,
+  isRawNotificationNeedsReview,
   normalizeNotificationCommand,
   normalizeParsedNotification,
   parseNotificationWithLlm,
@@ -20,7 +25,9 @@ import {
 } from "./notification-pipeline/context";
 import {
   persistDuplicateNotification,
+  persistAiUnavailableNotificationReview,
   persistFailedNotification,
+  persistReviewableNotification,
   persistSuccessfulNotification,
   reportSkippedDuplicate,
 } from "./notification-pipeline/outcomes";
@@ -30,6 +37,9 @@ import type {
   NotificationPipelineResult,
   ParsedNotificationContext,
   ParseStageResult,
+  RawNotificationAiUnavailable,
+  RawNotificationNeedsReview,
+  RawParsedNotification,
   ResolvedNotificationContext,
 } from "./notification-pipeline/types";
 
@@ -53,6 +63,14 @@ export async function processNotification(
       return persistFailedNotification(parseStage.context);
     }
 
+    if (parseStage.kind === "ai_unavailable") {
+      return persistAiUnavailableNotificationReview(parseStage.context);
+    }
+
+    if (parseStage.kind === "needs_review") {
+      return persistReviewableNotification(parseStage.context);
+    }
+
     return withFingerprintLock(parseStage.context, handleParsedNotification);
   } catch (error) {
     captureWarning("notification_pipeline_exception", {
@@ -66,36 +84,107 @@ export async function processNotification(
 async function parseNotificationStage(context: NotificationContext): Promise<ParseStageResult> {
   const regexParse = parseNotificationWithRegex(context.notification, context.notificationText);
   if (regexParse.kind === "parsed") {
-    const parsed = normalizeParsedNotification(regexParse.parsed);
-    const parsedContext = appendParsedNotificationEvidence(context, parsed);
-    const fingerprint = buildNotificationFingerprint(context, parsed);
-    return {
-      kind: "parsed",
-      context: {
-        ...parsedContext,
-        parseMethod: "regex",
-        parsed,
-        fingerprint,
-      },
-    };
+    return buildParsedNotificationStage({
+      context,
+      parseMethod: "regex",
+      rawParsed: regexParse.parsed,
+    });
   }
 
   const localHint = parseNotificationLocalHint(context.notificationText);
   const rawParsed = await parseNotificationWithLlm(
     buildNotificationLlmInput(context.sanitizedText, localHint)
   );
+  const regexImprovement = buildRegexParseImprovement(regexParse);
+  return buildLlmParseStage(context, rawParsed, regexImprovement);
+}
+
+type RegexParseImprovement = {
+  readonly regexParseImprovementTemplate?: ParsedNotificationContext["regexParseImprovementTemplate"];
+};
+type RawLlmNotificationParse =
+  | RawParsedNotification
+  | RawNotificationNeedsReview
+  | RawNotificationAiUnavailable
+  | null;
+
+function buildLlmParseStage(
+  context: NotificationContext,
+  rawParsed: RawLlmNotificationParse,
+  regexImprovement: RegexParseImprovement
+): ParseStageResult {
   if (!rawParsed) {
-    return {
-      kind: "failed",
-      context: {
-        ...context,
-        parseMethod: "llm",
-        ...(regexParse.kind === "failed"
-          ? { regexParseImprovementTemplate: regexParse.parserTemplate }
-          : {}),
-      },
-    };
+    return buildFailedLlmParseStage(context, regexImprovement);
   }
+  if (isRawNotificationNeedsReview(rawParsed)) {
+    return buildReviewableLlmParseStage(context, rawParsed, regexImprovement);
+  }
+  if (isRawNotificationAiUnavailable(rawParsed)) {
+    return buildAiUnavailableLlmParseStage(context, regexImprovement);
+  }
+  return buildParsedNotificationStage({
+    context,
+    parseMethod: "llm",
+    rawParsed,
+    regexImprovement,
+  });
+}
+
+const buildRegexParseImprovement = (
+  regexParse: NotificationRegexParseResult
+): RegexParseImprovement =>
+  regexParse.kind === "failed" ? { regexParseImprovementTemplate: regexParse.parserTemplate } : {};
+
+const buildFailedLlmParseStage = (
+  context: NotificationContext,
+  regexImprovement: RegexParseImprovement
+): ParseStageResult => ({
+  kind: "failed",
+  context: {
+    ...context,
+    parseMethod: "llm",
+    ...regexImprovement,
+  },
+});
+
+const buildReviewableLlmParseStage = (
+  context: NotificationContext,
+  rawParsed: RawNotificationNeedsReview,
+  regexImprovement: RegexParseImprovement
+): ParseStageResult => ({
+  kind: "needs_review",
+  context: {
+    ...context,
+    parseMethod: "llm",
+    ...regexImprovement,
+    review: {
+      confidence: rawParsed.confidence ?? null,
+      ...(rawParsed.reason !== undefined ? { reason: rawParsed.reason } : {}),
+    },
+  },
+});
+
+const buildAiUnavailableLlmParseStage = (
+  context: NotificationContext,
+  regexImprovement: RegexParseImprovement
+): ParseStageResult => ({
+  kind: "ai_unavailable",
+  context: {
+    ...context,
+    parseMethod: "llm",
+    ...regexImprovement,
+  },
+});
+
+type ParsedNotificationStageInput = {
+  readonly context: NotificationContext;
+  readonly parseMethod: ParsedNotificationContext["parseMethod"];
+  readonly rawParsed: RawParsedNotification;
+  readonly regexImprovement?: RegexParseImprovement;
+};
+
+function buildParsedNotificationStage(input: ParsedNotificationStageInput): ParseStageResult {
+  const { context, parseMethod, rawParsed, regexImprovement = {} } = input;
   const parsed = normalizeParsedNotification(rawParsed);
   const parsedContext = appendParsedNotificationEvidence(context, parsed);
   const fingerprint = buildNotificationFingerprint(context, parsed);
@@ -103,10 +192,8 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
     kind: "parsed",
     context: {
       ...parsedContext,
-      parseMethod: "llm",
-      ...(regexParse.kind === "failed"
-        ? { regexParseImprovementTemplate: regexParse.parserTemplate }
-        : {}),
+      parseMethod,
+      ...regexImprovement,
       parsed,
       fingerprint,
     },

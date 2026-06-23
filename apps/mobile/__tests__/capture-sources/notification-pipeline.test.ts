@@ -372,6 +372,67 @@ describe("processNotification", () => {
     );
   });
 
+  it("creates a Review Candidate when notification AI returns needs_review", async () => {
+    mockParseNotificationApi.mockResolvedValueOnce({
+      kind: "needs_review",
+      reason: "amount and merchant conflict",
+      confidence: 0.4,
+    });
+
+    const result = await processNotification(
+      mockDb,
+      USER_ID,
+      makeNotification({ text: "Formato ambiguo con $35,000" })
+    );
+
+    expect(result.saved).toBe(false);
+    expect(result.skippedDuplicate).toBe(false);
+    expect(result.transactionId).toBeNull();
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockPersistProcessedSourceEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", failureReason: "parse_failed" })
+    );
+    expect(mockRecordReviewCandidateCaptureWithLocalLedger).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        status: "needs_review",
+        failureReason: "parse_needs_review:amount and merchant conflict",
+        candidate: expect.objectContaining({
+          candidateKind: "unknown",
+          amount: null,
+          confidence: 0.4,
+        }),
+      })
+    );
+    expect(result.parseImprovementRequest).toEqual({
+      source: "notification_android",
+      status: "needs_review",
+      confidence: 0.4,
+      parseMethod: "llm",
+    });
+  });
+
+  it("throws retryable notification AI outages instead of creating a Review Candidate", async () => {
+    mockParseNotificationApi.mockRejectedValueOnce(new Error("Edge Function unavailable"));
+
+    await expect(
+      processNotification(
+        mockDb,
+        USER_ID,
+        makeNotification({ text: "Formato no reconocido con $35,000" })
+      )
+    ).rejects.toThrow("Edge Function unavailable");
+
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockRecordReviewCandidateCaptureWithLocalLedger).not.toHaveBeenCalled();
+    expect(mockPersistProcessedSourceEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", failureReason: "parse_failed" })
+    );
+    expect(mockPersistProcessedSourceEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "pending_retry" })
+    );
+  });
+
   it("records failed source event before throwing when Local Ledger rejects", async () => {
     mockNotificationTypedLlmHintParse();
     mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({

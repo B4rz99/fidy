@@ -35,6 +35,7 @@ function makeAddAction(): ChatAction {
 
 function makeFinancialContextPacket() {
   return {
+    task: { kind: "spending_overview" as const },
     summary: {
       balance: 750000,
       currentMonthSpending: [],
@@ -47,6 +48,41 @@ function makeFinancialContextPacket() {
     accounts: [],
     captureEvidence: [],
   };
+}
+
+async function inferFinancialTaskForMessage(text: string) {
+  const state = createState();
+  state.setCurrentSessionId("chat-1" as ChatSessionId);
+  const buildFinancialContextPacket = vi
+    .fn<(...args: any[]) => any>()
+    .mockResolvedValue(makeFinancialContextPacket());
+
+  const service = createStreamingChatService({
+    getState: state.getState,
+    setStreaming: state.setStreaming,
+    setStreamingContent: state.setStreamingContent,
+    streamChat: async (_messages, callbacks) => {
+      callbacks.onDone();
+    },
+    buildFinancialContextPacket,
+    createChatSession: vi.fn<(...args: any[]) => any>(),
+    addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+    addAssistantChatMessage: vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeAssistantMessage("")),
+    parseActionFromResponse: () => null,
+    trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
+    telemetry: makeTelemetry().telemetry,
+  });
+
+  await service.sendMessage({
+    db: mockDb,
+    userId: USER_ID,
+    text,
+    executeAction: vi.fn<(...args: any[]) => any>(),
+  });
+
+  return buildFinancialContextPacket.mock.calls[0]?.[0].task;
 }
 
 function createState() {
@@ -209,7 +245,11 @@ describe("streaming chat service", () => {
       executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
-    expect(buildFinancialContextPacket).toHaveBeenCalledWith({ db: mockDb, userId: USER_ID });
+    expect(buildFinancialContextPacket).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: USER_ID,
+      task: { kind: "spending_overview" },
+    });
     expect(streamChat).toHaveBeenCalledWith(
       [{ role: "user", content: "how am I doing?" }],
       expect.any(Object),
@@ -218,6 +258,59 @@ describe("streaming chat service", () => {
         financialContextPacket: packet,
       }
     );
+  });
+
+  it("treats savings account questions as account overview requests", async () => {
+    const state = createState();
+    state.setCurrentSessionId("chat-1" as ChatSessionId);
+    const buildFinancialContextPacket = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeFinancialContextPacket());
+
+    const service = createStreamingChatService({
+      getState: state.getState,
+      setStreaming: state.setStreaming,
+      setStreamingContent: state.setStreamingContent,
+      streamChat: async (_messages, callbacks) => {
+        callbacks.onDone();
+      },
+      buildFinancialContextPacket,
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi
+        .fn<(...args: any[]) => any>()
+        .mockResolvedValue(makeAssistantMessage("")),
+      parseActionFromResponse: () => null,
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
+      telemetry: makeTelemetry().telemetry,
+    });
+
+    await service.sendMessage({
+      db: mockDb,
+      userId: USER_ID,
+      text: "cuanto tengo en mi cuenta de ahorros?",
+      executeAction: vi.fn<(...args: any[]) => any>(),
+    });
+
+    expect(buildFinancialContextPacket).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: USER_ID,
+      task: { kind: "account_overview" },
+    });
+  });
+
+  it("prefers spending context for card spending questions", async () => {
+    await expect(
+      inferFinancialTaskForMessage("cuánto gasté con mi tarjeta este mes?")
+    ).resolves.toEqual({
+      kind: "spending_overview",
+    });
+  });
+
+  it("normalizes accented notification prompts before task inference", async () => {
+    await expect(inferFinancialTaskForMessage("revisa mi notificación bancaria")).resolves.toEqual({
+      kind: "capture_review",
+    });
   });
 
   it("captures action failures without breaking the assistant reply", async () => {
@@ -259,7 +352,7 @@ describe("streaming chat service", () => {
     });
   });
 
-  it("persists an assistant error message when the stream reports an error", async () => {
+  it("persists an unavailable assistant message when the stream reports an error", async () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);
     const addAssistantChatMessage = vi
@@ -289,11 +382,54 @@ describe("streaming chat service", () => {
       executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
-    expect(addAssistantChatMessage).toHaveBeenCalledWith(mockDb, USER_ID, "partial");
+    expect(addAssistantChatMessage).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      "I can't produce a reliable answer right now. Please try again."
+    );
     expect(state.getState()).toMatchObject({
       isStreaming: false,
       streamingContent: "",
     });
+  });
+
+  it("persists retry copy instead of partial advisor output when the stream errors", async () => {
+    const state = createState();
+    state.setCurrentSessionId("chat-1" as ChatSessionId);
+    const addAssistantChatMessage = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeAssistantMessage("unavailable"));
+
+    const service = createStreamingChatService({
+      getState: state.getState,
+      setStreaming: state.setStreaming,
+      setStreamingContent: state.setStreamingContent,
+      streamChat: async (_messages, callbacks) => {
+        callbacks.onChunk("Spend less on groceries by");
+        callbacks.onError("stream_error");
+      },
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage,
+      parseActionFromResponse: vi.fn<(...args: any[]) => any>(() => {
+        throw new Error("partial output should not be parsed");
+      }),
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
+      telemetry: makeTelemetry().telemetry,
+    });
+
+    await service.sendMessage({
+      db: mockDb,
+      userId: USER_ID,
+      text: "what should I change?",
+      executeAction: vi.fn<(...args: any[]) => any>(),
+    });
+
+    expect(addAssistantChatMessage).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      "I can't produce a reliable answer right now. Please try again."
+    );
   });
 
   it("aborts the active stream and resets state on cancel", async () => {
