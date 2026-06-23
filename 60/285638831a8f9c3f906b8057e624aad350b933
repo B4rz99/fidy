@@ -1,0 +1,50 @@
+apps/mobile/__tests__/capture-sources/parse-notification-api.test.ts
+  s_2ea9ccf55a8cc2::t_afcb940d8ba2fb 21-25,31-32
+  s_2ea9ccf55a8cc2::t_33be0b13fbc8c4 42-44
+apps/mobile/__tests__/edge-functions/ai-chat-context-packet.test.ts
+  s_2ea9ccf55a8cc2::t_c318a3a534a3e1 168-175
+  s_2ea9ccf55a8cc2::t_319222d151544f 160-167
+apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts
+  s_2ea9ccf55a8cc2::t_214874919cf01a 85-91,93-94,96-98
+  s_2ea9ccf55a8cc2::t_9f14b7890d9150 95
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_2ea9ccf55a8cc2::t_ed432dfbe273f1 399
+  s_2ea9ccf55a8cc2::t_ef0508f2ffa594 415-416,418-424,427
+apps/mobile/features/email-capture/services/create-parse-email-service.ts
+  s_2ea9ccf55a8cc2::t_0263ff6e62640c 70-74,84,87-93,166-169,173-174
+  s_2ea9ccf55a8cc2::t_9f14b7890d9150 170-172
+apps/mobile/features/capture-sources/services/parse-notification-api.ts
+  s_2ea9ccf55a8cc2::t_fbb1cfefe39d73 30-34
+  s_2ea9ccf55a8cc2::t_9733c9b7e237bb 36
+apps/mobile/__tests__/email-capture/parse-email-service.test.ts
+  s_2ea9ccf55a8cc2::t_2c8c9252c173ff 252-256
+apps/mobile/__tests__/ai-chat/streaming-service.test.ts
+  s_2ea9ccf55a8cc2::t_4b54306a25df27 53-87,302,306
+  s_2ea9ccf55a8cc2::t_9f14b7890d9150 307,311-313
+  s_2ea9ccf55a8cc2::t_54faef7e92cddb 303-305,308-310,314
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_2ea9ccf55a8cc2::t_0090c018faef8f 96-99,258
+supabase/functions/ai-chat/financial-context-packet.ts
+  s_2ea9ccf55a8cc2::t_9f14b7890d9150 158
+  s_2ea9ccf55a8cc2::t_d97a7eeec3b77c 139-145,155,157,159-161
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_2ea9ccf55a8cc2::t_7c27928333b627 120,152,160-163
+apps/mobile/features/capture-sources/services/notification-pipeline/types.ts
+  s_2ea9ccf55a8cc2::t_eeca3d62298283 77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.10",
+  "base_commit_sha": "60285638831a8f9c3f906b8057e624aad350b933",
+  "prompts": {},
+  "sessions": {
+    "s_2ea9ccf55a8cc2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-65f4-7b42-8583-1ff0c1af5417",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
