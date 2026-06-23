@@ -25,7 +25,15 @@ const unsafeCases: readonly {
   },
   {
     expected: "sensitive_value_pattern",
+    template: "Ref No. A123B por [AMOUNT].",
+  },
+  {
+    expected: "sensitive_value_pattern",
     template: "Autorizacion A1B2C por [AMOUNT].",
+  },
+  {
+    expected: "sensitive_value_pattern",
+    template: "Autorizacion No. A1B2C por [AMOUNT].",
   },
   {
     expected: "lowercase_counterparty_pattern",

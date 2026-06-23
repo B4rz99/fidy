@@ -18,6 +18,10 @@ const CAPTURE_IMPROVEMENT_SENDER_DOMAIN_SCRUB_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622230000_capture_improvement_sender_domain_scrub.sql"
 );
+const CAPTURE_IMPROVEMENT_OPT_OUT_SERIALIZATION_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260623170000_capture_improvement_opt_out_serialization.sql"
+);
 
 describe("Cloud Ledger remote schema", () => {
   it("creates bootstrap financial tables in a non-exposed ledger schema", () => {
@@ -155,4 +159,34 @@ describe("Cloud Ledger remote schema", () => {
     );
     expect(sql).not.toMatch(/raw_text|raw_body|merchant_name|amount_value/u);
   });
+
+  it("serializes Capture Improvement Sample retain and opt-out deletion for each user", () => {
+    const sql = readFileSync(
+      CAPTURE_IMPROVEMENT_OPT_OUT_SERIALIZATION_MIGRATION,
+      "utf8"
+    ).toLowerCase();
+    const lockCall =
+      "pg_advisory_xact_lock(hashtext('capture_improvement_samples'), hashtext(p_user_id::text))";
+
+    expect(sql.match(/perform pg_advisory_xact_lock/g)).toHaveLength(3);
+    expect(sql).toMatch(
+      new RegExp(
+        `create or replace function public\\.cloud_ledger_retain_capture_improvement_sample[\\s\\S]*perform ${escapeRegExp(lockCall)}[\\s\\S]*where capture_improvement_preferences\\.user_id = p_user_id[\\s\\S]*insert into public\\.notification_parse_improvement_samples`
+      )
+    );
+    expect(sql).toMatch(
+      new RegExp(
+        `create or replace function public\\.cloud_ledger_delete_capture_improvement_samples[\\s\\S]*perform ${escapeRegExp(lockCall)}[\\s\\S]*insert into public\\.capture_improvement_preferences[\\s\\S]*delete from public\\.notification_parse_improvement_samples`
+      )
+    );
+    expect(sql).toMatch(
+      new RegExp(
+        `create or replace function public\\.cloud_ledger_set_capture_improvement_preference[\\s\\S]*perform ${escapeRegExp(lockCall)}[\\s\\S]*insert into public\\.capture_improvement_preferences[\\s\\S]*if p_enabled = false then[\\s\\S]*delete from public\\.notification_parse_improvement_samples`
+      )
+    );
+  });
 });
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

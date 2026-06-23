@@ -433,7 +433,7 @@ describe("cloud-ledger-api Edge Function", () => {
           action: "retainCaptureImprovementSample",
           sample: {
             ...CAPTURE_IMPROVEMENT_SAMPLE,
-            templateShape: "Ref A123B por [AMOUNT]. Autorizacion A1B2C.",
+            templateShape: "Ref No. A123B por [AMOUNT]. Autorizacion No. A1B2C.",
           },
         },
         "valid-token"

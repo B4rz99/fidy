@@ -240,7 +240,7 @@ describe("notification parse improvement repository", () => {
       insertNotificationParseImprovementSample({
         userId: "user-1",
         sample: {
-          template: "Ref A123B por [AMOUNT]. Autorizacion A1B2C.",
+          template: "Ref No. A123B por [AMOUNT]. Autorizacion No. A1B2C.",
           source: "notification_android",
           status: "failed",
           confidenceBucket: "none",

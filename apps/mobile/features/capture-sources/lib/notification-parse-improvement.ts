@@ -51,7 +51,7 @@ const SENSITIVE_VALUE_RULES: readonly RedactionRule[] = [
   { pattern: /(?<!\d)3\d{2}[\s-]?\d{3}[\s-]?\d{4}\b/g, replacement: "[PHONE]" },
   {
     pattern:
-      /\b(ref(?:erencia)?|autori[sz]aci[oó]n|authorization)\b\s*:?\s*#?\s*(?=[A-Z0-9-]{3,}\b)(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{3,}\b/gi,
+      /\b(ref(?:erencia)?|autori[sz]aci[oó]n|authorization)\b\s*:?\s*(?:no\.?\s*)?#?\s*(?=[A-Z0-9-]{3,}\b)(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{3,}\b/gi,
     replacement: "$1 [REFERENCE]",
   },
   { pattern: /\b\d{10}\b/g, replacement: "[ID]" },

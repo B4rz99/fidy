@@ -132,7 +132,7 @@ describe("notification parse improvement samples", () => {
   it("redacts alphanumeric reference and authorization values", () => {
     const sample = buildNotificationParseImprovementSample({
       rawText:
-        "Referencia ABC123XYZ por $50.000. Ref A123B. Autorizacion ZX98A76. Autorizacion A1B2C.",
+        "Referencia ABC123XYZ por $50.000. Ref A123B. Ref No. A123B. Autorizacion ZX98A76. Autorizacion A1B2C. Autorizacion No. A1B2C.",
       source: "notification_android",
       status: "failed",
       confidence: null,
@@ -140,7 +140,7 @@ describe("notification parse improvement samples", () => {
     });
 
     expect(sample.template).toBe(
-      "Referencia [REFERENCE] por [AMOUNT]. Ref [REFERENCE]. Autorizacion [REFERENCE]. Autorizacion [REFERENCE]."
+      "Referencia [REFERENCE] por [AMOUNT]. Ref [REFERENCE]. Ref [REFERENCE]. Autorizacion [REFERENCE]. Autorizacion [REFERENCE]. Autorizacion [REFERENCE]."
     );
     expect(sample.template).not.toMatch(/ABC123XYZ|A123B|ZX98A76|A1B2C/u);
   });
