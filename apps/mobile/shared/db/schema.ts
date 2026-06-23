@@ -280,14 +280,16 @@ export const emailParseImprovementSamples = sqliteTable(
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
-    uniqueIndex("uq_email_parse_improvement_sample").on(
-      table.userId,
-      table.source,
-      table.status,
-      table.parseMethod,
-      table.providerCategory,
-      table.template
-    ),
+    uniqueIndex("uq_email_parse_improvement_sample")
+      .on(
+        table.userId,
+        table.source,
+        table.status,
+        table.parseMethod,
+        table.providerCategory,
+        table.template
+      )
+      .where(sql`${table.deletedAt} is null`),
     index("idx_email_parse_improvement_samples_pending").on(
       table.userId,
       table.sharedAt,

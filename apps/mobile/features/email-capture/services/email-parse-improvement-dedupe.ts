@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { emailParseImprovementSamples } from "@/shared/db/schema";
 import type { UserId } from "@/shared/types/branded";
@@ -34,7 +34,8 @@ export function hasEmailParseImprovementSample(input: {
           eq(emailParseImprovementSamples.status, input.sample.status),
           eq(emailParseImprovementSamples.parseMethod, input.sample.parseMethod),
           eq(emailParseImprovementSamples.providerCategory, input.sample.providerCategory),
-          eq(emailParseImprovementSamples.template, input.sample.template)
+          eq(emailParseImprovementSamples.template, input.sample.template),
+          isNull(emailParseImprovementSamples.deletedAt)
         )
       )
       .limit(1)

@@ -27,6 +27,7 @@ import type { EmailParseImprovementRequest } from "./email-pipeline-service/type
 const FLUSH_BATCH_SIZE = 10;
 const PERMANENT_INSERT_ERROR_CODES = new Set(["22P02", "23502", "23505", "23514"]);
 const activeFlushesByUserId = new Map<UserId, Promise<FlushResult>>();
+const activeRemoteOperationsByUserId = new Map<UserId, Promise<unknown>>();
 
 type FlushCursor = {
   readonly createdAt: IsoDateTime;
@@ -65,6 +66,23 @@ const isPermanentShareFailure = (error: unknown): boolean => {
     ? PERMANENT_INSERT_ERROR_CODES.has(code)
     : false;
 };
+
+async function runCaptureImprovementRemoteOperation<T>(
+  userId: UserId,
+  operation: () => Promise<T>
+): Promise<T> {
+  const previous = activeRemoteOperationsByUserId.get(userId) ?? Promise.resolve();
+  const current = previous.catch(() => undefined).then(operation);
+  activeRemoteOperationsByUserId.set(userId, current);
+
+  try {
+    return await current;
+  } finally {
+    if (activeRemoteOperationsByUserId.get(userId) === current) {
+      activeRemoteOperationsByUserId.delete(userId);
+    }
+  }
+}
 
 export function countPendingEmailParseImprovementSamples(input: {
   readonly db: AnyDb;
@@ -131,7 +149,9 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
     )
     .run().changes;
 
-  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
+  await runCaptureImprovementRemoteOperation(input.userId, () =>
+    deleteCaptureParseImprovementSamplesForUser({ userId: input.userId })
+  );
 
   clearCaptureImprovementDeletionRequest({ db: input.db, userId: input.userId });
   logParseImprovementOutboxForDebug("delete", { deleted });
@@ -142,7 +162,9 @@ export async function setEmailParseImprovementSharingPreference(input: {
   readonly userId: UserId;
   readonly enabled: boolean;
 }): Promise<void> {
-  await setCaptureParseImprovementPreference(input);
+  await runCaptureImprovementRemoteOperation(input.userId, () =>
+    setCaptureParseImprovementPreference(input)
+  );
 }
 
 export function enqueueEmailParseImprovementRequests(input: {
@@ -206,9 +228,14 @@ export async function flushPendingEmailParseImprovementSamples(input: {
     if (!isSharingEnabled()) return { shared: 0, failed: 0 };
 
     const sharedAt = toIsoDateTime(input.now ?? new Date());
+    const pendingCount = countPendingEmailParseImprovementSamples(input);
+    if (pendingCount === 0) return { shared: 0, failed: 0 };
+
+    await setEmailParseImprovementSharingPreference({ enabled: true, userId: input.userId });
+
     if (isEmailCaptureDebugEnabled()) {
       logParseImprovementOutboxForDebug("flush.start", {
-        pending: countPendingEmailParseImprovementSamples(input),
+        pending: pendingCount,
       });
     }
 

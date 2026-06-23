@@ -155,7 +155,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   areAllNotificationsOff: false,
   privateBackup: DEFAULT_PRIVATE_BACKUP_STATE,
-  shareAnonymizedParseSamples: true,
+  shareAnonymizedParseSamples: false,
 
   setThemePreference: (pref) => {
     set({ themePreference: pref });

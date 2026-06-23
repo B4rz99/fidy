@@ -29,7 +29,7 @@ describe("useSettingsStore", () => {
       goalMilestones: true,
       spendingAnomalies: true,
     });
-    expect(initial.shareAnonymizedParseSamples).toBe(true);
+    expect(initial.shareAnonymizedParseSamples).toBe(false);
   });
 
   beforeEach(() => {
@@ -83,6 +83,8 @@ describe("useSettingsStore", () => {
   });
 
   test("hydrates missing anonymized parse sample sharing preference as enabled", async () => {
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(false);
+
     await useSettingsStore.getState().hydrate();
 
     expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);

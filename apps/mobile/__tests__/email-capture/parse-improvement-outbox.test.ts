@@ -11,6 +11,7 @@ import {
   flushPendingEmailParseImprovementSamples,
   pruneStaleFailedEmailSourceEvents,
   retryPendingEmailParseImprovementSampleDeletion,
+  setEmailParseImprovementSharingPreference,
 } from "@/features/email-capture/services/email-parse-improvement-outbox";
 import { recordProcessedCaptureSourceEventWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
@@ -21,15 +22,21 @@ import {
 import type { AnyDb } from "@/shared/db";
 import type { IsoDateTime, UserId } from "@/shared/types/branded";
 
-const { mockDeleteCaptureParseImprovementSamplesForUser, mockShareCaptureParseImprovementSample } =
-  vi.hoisted(() => ({
-    mockDeleteCaptureParseImprovementSamplesForUser: vi.fn<(...args: unknown[]) => Promise<void>>(
-      () => Promise.resolve()
-    ),
-    mockShareCaptureParseImprovementSample: vi.fn<(sample: unknown) => Promise<void>>(() =>
-      Promise.resolve()
-    ),
-  }));
+const {
+  mockDeleteCaptureParseImprovementSamplesForUser,
+  mockSetCaptureParseImprovementPreference,
+  mockShareCaptureParseImprovementSample,
+} = vi.hoisted(() => ({
+  mockDeleteCaptureParseImprovementSamplesForUser: vi.fn<(...args: unknown[]) => Promise<void>>(
+    () => Promise.resolve()
+  ),
+  mockSetCaptureParseImprovementPreference: vi.fn<(...args: unknown[]) => Promise<void>>(() =>
+    Promise.resolve()
+  ),
+  mockShareCaptureParseImprovementSample: vi.fn<(sample: unknown) => Promise<void>>(() =>
+    Promise.resolve()
+  ),
+}));
 
 vi.mock("@/features/capture-sources/diagnostics.public", () => ({
   buildNotificationParseImprovementSample: (input: {
@@ -56,6 +63,8 @@ vi.mock("@/features/capture-sources/diagnostics.public", () => ({
   }),
   deleteCaptureParseImprovementSamplesForUser: (input: unknown) =>
     mockDeleteCaptureParseImprovementSamplesForUser(input),
+  setCaptureParseImprovementPreference: (input: unknown) =>
+    mockSetCaptureParseImprovementPreference(input),
   shareCaptureParseImprovementSample: (sample: unknown) =>
     mockShareCaptureParseImprovementSample(sample),
 }));
@@ -85,6 +94,7 @@ describe("email parse improvement outbox", () => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     mockShareCaptureParseImprovementSample.mockResolvedValue(undefined);
+    mockSetCaptureParseImprovementPreference.mockResolvedValue(undefined);
     mockDeleteCaptureParseImprovementSamplesForUser.mockResolvedValue(undefined);
   });
 
@@ -240,6 +250,33 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("retries the remote opt-in preference before flushing retained templates", async () => {
+    const { db, sqlite } = createDb();
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+    mockSetCaptureParseImprovementPreference.mockRejectedValueOnce(new Error("offline"));
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("offline");
+
+    expect(mockShareCaptureParseImprovementSample).not.toHaveBeenCalled();
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(1);
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({ db, userId: USER_ID, now: NOW })
+    ).resolves.toMatchObject({ shared: 1, failed: 0 });
+
+    expect(mockSetCaptureParseImprovementPreference).toHaveBeenCalledTimes(2);
+    expect(mockSetCaptureParseImprovementPreference).toHaveBeenLastCalledWith({
+      enabled: true,
+      userId: USER_ID,
+    });
+    expect(mockSetCaptureParseImprovementPreference.mock.invocationCallOrder[1] ?? 0).toBeLessThan(
+      mockShareCaptureParseImprovementSample.mock.invocationCallOrder[0] ?? 0
+    );
+    sqlite.close();
+  });
+
   it("releases the per-user flush guard when startup counting fails", async () => {
     const { db, sqlite } = createDb();
     enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
@@ -317,7 +354,7 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
-  it("dead-letters privacy failures instead of retrying them forever", async () => {
+  it("dead-letters privacy failures instead of retrying the same local row", async () => {
     const { db, sqlite } = createDb();
     enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
     const error = new Error("privacy");
@@ -333,9 +370,6 @@ describe("email parse improvement outbox", () => {
     expect(sample?.sharedAt).toBeNull();
     expect(sample?.deletedAt).toBe("2026-05-19T10:00:00.000Z");
     expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(0);
-    expect(enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request] })).toBe(
-      0
-    );
     sqlite.close();
   });
 
@@ -498,6 +532,30 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("allows same-shape samples to enqueue again after opt-out tombstones prior samples", async () => {
+    const { db, sqlite } = createDb();
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).resolves.toEqual({ deleted: 1 });
+
+    expect(
+      enqueueEmailParseImprovementRequests({
+        db,
+        userId: USER_ID,
+        requests: [request],
+        now: new Date("2026-05-19T10:05:00.000Z"),
+      })
+    ).toBe(1);
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(1);
+    expect(db.select().from(emailParseImprovementSamples).all()).toEqual([
+      expect.objectContaining({ deletedAt: "2026-05-19T10:00:00.000Z" }),
+      expect.objectContaining({ deletedAt: null }),
+    ]);
+    sqlite.close();
+  });
+
   it("keeps a durable opt-out deletion request until remote deletion succeeds", async () => {
     const { db, sqlite } = createDb();
     mockDeleteCaptureParseImprovementSamplesForUser.mockRejectedValueOnce(new Error("network"));
@@ -524,6 +582,43 @@ describe("email parse improvement outbox", () => {
 
     expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(2);
     expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([]);
+    sqlite.close();
+  });
+
+  it("serializes opt-in preference updates behind pending opt-out deletion retries", async () => {
+    const { db, sqlite } = createDb();
+    let resolveDelete: () => void = () => undefined;
+    mockDeleteCaptureParseImprovementSamplesForUser.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        })
+    );
+
+    const deletion = deleteEmailParseImprovementSamplesForUser({
+      db,
+      userId: USER_ID,
+      now: NOW,
+    });
+    await Promise.resolve();
+
+    const optIn = setEmailParseImprovementSharingPreference({
+      enabled: true,
+      userId: USER_ID,
+    });
+    await Promise.resolve();
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(1);
+    expect(mockSetCaptureParseImprovementPreference).not.toHaveBeenCalled();
+
+    resolveDelete();
+    await expect(deletion).resolves.toEqual({ deleted: 0 });
+    await expect(optIn).resolves.toBeUndefined();
+
+    expect(mockSetCaptureParseImprovementPreference).toHaveBeenCalledWith({
+      enabled: true,
+      userId: USER_ID,
+    });
     sqlite.close();
   });
 
