@@ -1,4 +1,5 @@
 import { getTransactionsPaginated } from "@/features/transactions/query.public";
+import type { StoredTransaction } from "@/features/transactions/query.public";
 import { getTransfersPaginated } from "@/features/transfers/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import type { UserId } from "@/shared/types/branded";
@@ -22,8 +23,12 @@ type LoadActivityPageInput = {
 type CreateActivityQueryServiceDeps = {
   readonly getTransactionsPaginated?: typeof getTransactionsPaginated;
   readonly getTransfersPaginated?: typeof getTransfersPaginated;
+  readonly loadCloudLedgerOptimisticTransactions?: (
+    userId: UserId
+  ) => Promise<readonly StoredTransaction[]>;
 };
 type LoadActivityPageRequest = LoadActivityPageInput & {
+  readonly optimisticTransactions?: readonly StoredTransaction[];
   readonly transactionsLoader: typeof getTransactionsPaginated;
   readonly transfersLoader: typeof getTransfersPaginated;
 };
@@ -31,6 +36,7 @@ type LoadActivityPageRequest = LoadActivityPageInput & {
 function loadActivityPage(input: LoadActivityPageRequest): ActivityPageSnapshot {
   const fetchSize = input.offset + input.pageSize + 1;
   const mergedItems = toStoredActivityItems({
+    optimisticTransactions: input.optimisticTransactions ?? [],
     transactionRows: input.transactionsLoader({
       db: input.db,
       userId: input.userId,
@@ -60,12 +66,20 @@ export function createActivityQueryService(deps: CreateActivityQueryServiceDeps 
   const {
     getTransactionsPaginated: transactionsLoader = getTransactionsPaginated,
     getTransfersPaginated: transfersLoader = getTransfersPaginated,
+    loadCloudLedgerOptimisticTransactions: optimisticTransactionsLoader = async () => [],
   } = deps;
 
   return {
     loadPage: (input: LoadActivityPageInput) =>
       loadActivityPage({
         ...input,
+        transactionsLoader,
+        transfersLoader,
+      }),
+    loadPageWithCloudLedgerOptimisticView: async (input: LoadActivityPageInput) =>
+      loadActivityPage({
+        ...input,
+        optimisticTransactions: await optimisticTransactionsLoader(input.userId),
         transactionsLoader,
         transfersLoader,
       }),

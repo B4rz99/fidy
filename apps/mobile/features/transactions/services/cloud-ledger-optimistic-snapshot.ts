@@ -166,18 +166,27 @@ function toPendingStoredTransaction(
   ];
 }
 
-function loadRuntimeCloudLedgerTransactions(userId: UserId): readonly StoredTransaction[] {
+export function loadRuntimeCloudLedgerTransactions(userId: UserId): readonly StoredTransaction[] {
   return getCloudLedgerRuntimeCache(userId).transactions.flatMap((transaction) =>
     toCloudLedgerStoredTransaction(userId, transaction)
   );
 }
 
-async function loadRestoredCloudLedgerPendingTransactions(
+export async function loadRestoredCloudLedgerPendingTransactions(
   userId: UserId
 ): Promise<readonly StoredTransaction[]> {
   return (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
     toPendingStoredTransaction(userId, change)
   );
+}
+
+export async function loadCloudLedgerOptimisticTransactions(
+  userId: UserId
+): Promise<readonly StoredTransaction[]> {
+  return [
+    ...loadRuntimeCloudLedgerTransactions(userId),
+    ...(await loadRestoredCloudLedgerPendingTransactions(userId)),
+  ];
 }
 
 function applyCloudLedgerTransactionsToSnapshot(
@@ -207,7 +216,7 @@ export async function applyCloudLedgerOptimisticView(
   userId: UserId
 ): Promise<TransactionSnapshot> {
   return applyCloudLedgerTransactionsToSnapshot(
-    applyRuntimeCloudLedgerTransactions(snapshot, userId),
-    await loadRestoredCloudLedgerPendingTransactions(userId)
+    snapshot,
+    await loadCloudLedgerOptimisticTransactions(userId)
   );
 }

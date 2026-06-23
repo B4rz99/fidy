@@ -46,7 +46,8 @@ test("keeps home header actions wired through ScreenLayout", () => {
 });
 
 test("keeps the home activity feed wired to pagination and transaction mutations", () => {
-  expect(activityFeedSource).toContain("activityQueryService.loadPage");
+  expect(activityFeedSource).toContain("activityQueryService");
+  expect(activityFeedSource).toContain("loadPageWithCloudLedgerOptimisticView");
   expect(activityFeedSource).toContain("appendUniqueActivityItems");
   expect(activityFeedSource).toContain("deleteTransaction(db, userId, id)");
   expect(activityFeedSource).toContain('pathname: "/edit-transaction"');

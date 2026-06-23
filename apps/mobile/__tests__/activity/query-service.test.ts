@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createActivityQueryService } from "@/features/activity/services/create-activity-query-service";
+import type { StoredTransaction } from "@/features/transactions/query.public";
 import type {
   CategoryId,
   CopAmount,
@@ -164,6 +165,41 @@ function createActivityServiceHarness(input: ActivityServiceHarnessInput) {
   };
 }
 
+function makeCloudLedgerStoredTransaction(
+  overrides: Partial<{
+    id: TransactionId;
+    amount: CopAmount;
+    categoryId: CategoryId;
+    description: string;
+    date: IsoDate;
+    createdAt: IsoDateTime;
+    updatedAt: IsoDateTime;
+  }> = {}
+): StoredTransaction {
+  const date = overrides.date ?? ("2026-04-20" as IsoDate);
+  const createdAt = overrides.createdAt ?? ("2026-04-20T12:00:00.000Z" as IsoDateTime);
+  const updatedAt = overrides.updatedAt ?? createdAt;
+
+  return {
+    id: overrides.id ?? ("tx-cloud-pending" as TransactionId),
+    userId: USER_ID,
+    type: "expense",
+    amount: overrides.amount ?? (85_000 as CopAmount),
+    categoryId: overrides.categoryId ?? ("food" as CategoryId),
+    description: overrides.description ?? "Offline groceries",
+    date: new Date(`${date}T00:00:00.000Z`),
+    accountId: "fa-checking" as FinancialAccountId,
+    accountAttributionState: "confirmed",
+    counterpartyName: "",
+    createdAt: new Date(createdAt),
+    updatedAt: new Date(updatedAt),
+    source: "manual",
+    supersededAt: null,
+    supersededByTransferId: null,
+    voidedAt: null,
+  };
+}
+
 function loadActivitySnapshot(
   service: ReturnType<typeof createActivityServiceHarness>["service"],
   pageSize: number,
@@ -257,6 +293,54 @@ describe("activity query service", () => {
     expect(item?.kind).toBe("transaction");
     if (item?.kind !== "transaction") return;
     expect(item.transaction.categoryId).toBe("ucat-desserts");
+  });
+
+  it("includes optimistic Cloud Ledger transactions in the ordinary home activity page", async () => {
+    const loadCloudLedgerOptimisticTransactions = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue([
+        makeCloudLedgerStoredTransaction({
+          id: "tx-cloud-pending" as TransactionId,
+          date: "2026-04-20" as IsoDate,
+          createdAt: "2026-04-20T12:00:00.000Z" as IsoDateTime,
+        }),
+      ]);
+    const getTransactionsPaginated = vi
+      .fn<(...args: any[]) => any>()
+      .mockReturnValue(MERGED_TRANSACTION_ROWS);
+    const getTransfersPaginated = vi
+      .fn<(...args: any[]) => any>()
+      .mockReturnValue(MERGED_TRANSFER_ROWS);
+    const service = createActivityQueryService({
+      getTransactionsPaginated,
+      getTransfersPaginated,
+      loadCloudLedgerOptimisticTransactions,
+    });
+
+    const snapshot = await service.loadPageWithCloudLedgerOptimisticView({
+      db: {} as never,
+      userId: USER_ID,
+      pageSize: 30,
+      offset: 0,
+    });
+
+    expect(loadCloudLedgerOptimisticTransactions).toHaveBeenCalledWith(USER_ID);
+    expect(snapshot.pages.map((item) => `${item.kind}:${item.id}`)).toEqual([
+      "transaction:tx-cloud-pending",
+      "transfer:tr-newest",
+      "transaction:tx-newer",
+      "transaction:tx-older",
+    ]);
+    const cloudLedgerItem = snapshot.pages[0];
+    expect(cloudLedgerItem?.kind).toBe("transaction");
+    if (cloudLedgerItem?.kind !== "transaction") return;
+    expect(cloudLedgerItem.transaction).toMatchObject({
+      amount: 85_000,
+      categoryId: "food",
+      description: "Offline groceries",
+    });
+    expect(cloudLedgerItem.transaction).not.toHaveProperty("commitStatus");
+    expect(cloudLedgerItem.transaction).not.toHaveProperty("pendingChangeId");
   });
 
   it("keeps large merged offsets stack-safe", () => {
