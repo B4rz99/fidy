@@ -93,6 +93,10 @@ function buildParseImprovementRequest(
   };
 }
 
+function formatNeedsReviewFailureReason(reason: string | undefined): string {
+  return reason ? `parse_needs_review:${reason}` : "parse_needs_review";
+}
+
 type ReviewCandidateCaptureInput = Parameters<
   typeof recordReviewCandidateCaptureWithLocalLedger
 >[0];
@@ -251,7 +255,7 @@ export async function persistReviewableNotification(
   return persistNotificationReviewCandidate({
     context,
     sourceEventId: buildFailedFingerprint(context.notification),
-    failureReason: "parse_needs_review",
+    failureReason: formatNeedsReviewFailureReason(context.review.reason),
     candidate: {
       candidateKind: "unknown",
       occurredAt: null,

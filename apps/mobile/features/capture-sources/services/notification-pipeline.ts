@@ -117,7 +117,7 @@ function buildLlmParseStage(
     return buildFailedLlmParseStage(context, regexImprovement);
   }
   if (isRawNotificationNeedsReview(rawParsed)) {
-    return buildReviewableLlmParseStage(context, rawParsed.confidence ?? null, regexImprovement);
+    return buildReviewableLlmParseStage(context, rawParsed, regexImprovement);
   }
   if (isRawNotificationAiUnavailable(rawParsed)) {
     return buildAiUnavailableLlmParseStage(context, regexImprovement);
@@ -149,7 +149,7 @@ const buildFailedLlmParseStage = (
 
 const buildReviewableLlmParseStage = (
   context: NotificationContext,
-  confidence: number | null,
+  rawParsed: RawNotificationNeedsReview,
   regexImprovement: RegexParseImprovement
 ): ParseStageResult => ({
   kind: "needs_review",
@@ -157,7 +157,10 @@ const buildReviewableLlmParseStage = (
     ...context,
     parseMethod: "llm",
     ...regexImprovement,
-    review: { confidence },
+    review: {
+      confidence: rawParsed.confidence ?? null,
+      ...(rawParsed.reason !== undefined ? { reason: rawParsed.reason } : {}),
+    },
   },
 });
 

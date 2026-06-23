@@ -18,12 +18,18 @@ describe("parseNotificationApi", () => {
   });
 
   it("surfaces ambiguous notification AI results as needs_review", async () => {
-    mockParseNotification.mockRejectedValueOnce(new Error("capture_needs_review"));
+    const reviewError = Object.assign(new Error("capture_needs_review"), {
+      reason: "amount and merchant conflict",
+      confidence: 0.42,
+    });
+    mockParseNotification.mockRejectedValueOnce(reviewError);
     const { parseNotificationApi } =
       await import("@/features/capture-sources/services/parse-notification-api");
 
     await expect(parseNotificationApi("ambiguous notification")).resolves.toEqual({
       kind: "needs_review",
+      reason: "amount and merchant conflict",
+      confidence: 0.42,
     });
     expect(mockParseNotification).toHaveBeenCalledWith("ambiguous notification");
   });
@@ -33,9 +39,9 @@ describe("parseNotificationApi", () => {
     const { parseNotificationApi } =
       await import("@/features/capture-sources/services/parse-notification-api");
 
-    await expect(parseNotificationApi("unparsed notification")).resolves.toEqual({
-      kind: "ai_unavailable",
-    });
+    await expect(parseNotificationApi("unparsed notification")).rejects.toThrow(
+      "Edge Function unavailable"
+    );
     expect(mockParseNotification).toHaveBeenCalledWith("unparsed notification");
   });
 });

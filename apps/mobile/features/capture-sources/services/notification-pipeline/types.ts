@@ -74,6 +74,7 @@ export type ParsedNotificationContext = NotificationStageContext & {
 export type ReviewableNotificationContext = NotificationStageContext & {
   readonly review: {
     readonly confidence: number | null;
+    readonly reason?: string;
   };
 };
 

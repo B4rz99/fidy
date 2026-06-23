@@ -157,6 +157,22 @@ describe("ai-chat financial context packet", () => {
     ).toBe("spending_overview");
   });
 
+  it("prefers spending context for card spending messages", () => {
+    expect(
+      inferFinancialContextPacketTaskFromMessages([
+        { role: "user", content: "what did I spend on my card this month?" },
+      ])
+    ).toBe("spending_overview");
+  });
+
+  it("normalizes accented notification messages before task inference", () => {
+    expect(
+      inferFinancialContextPacketTaskFromMessages([
+        { role: "user", content: "revisa mi notificación bancaria" },
+      ])
+    ).toBe("capture_review");
+  });
+
   it("ignores sections outside the requested advisor task", () => {
     expect(
       readFinancialContextPacket(

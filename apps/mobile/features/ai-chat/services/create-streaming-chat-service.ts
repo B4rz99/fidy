@@ -82,8 +82,20 @@ type StreamingTelemetry = {
 const containsAny = (text: string, terms: readonly string[]): boolean =>
   terms.some((term) => text.includes(term));
 
+function normalizeTaskInferenceText(text: string): string {
+  return text
+    .toLocaleLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 function inferFinancialContextPacketTask(text: string): FinancialContextPacketTask {
-  const normalized = text.toLocaleLowerCase();
+  const normalized = normalizeTaskInferenceText(text);
+  if (
+    containsAny(normalized, ["spend", "spent", "spending", "gaste", "gasto", "gastos", "compras"])
+  ) {
+    return { kind: "spending_overview" };
+  }
   if (containsAny(normalized, ["account", "accounts", "cuenta", "cuentas", "card", "tarjeta"])) {
     return { kind: "account_overview" };
   }

@@ -136,6 +136,13 @@ function readArray<T>(
 const containsAny = (text: string, terms: readonly string[]): boolean =>
   terms.some((term) => text.includes(term));
 
+function normalizeTaskInferenceText(text: string): string {
+  return text
+    .toLocaleLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 function readMessageText(value: unknown): string | null {
   if (!isRecord(value) || value.role !== "user") return null;
   return readString(value.content);
@@ -145,8 +152,13 @@ export function inferFinancialContextPacketTaskFromMessages(
   messages: readonly unknown[]
 ): FinancialContextPacketTaskKind {
   const userTexts = messages.map(readMessageText).filter(isPresent);
-  const normalized = (userTexts[userTexts.length - 1] ?? "").toLocaleLowerCase();
+  const normalized = normalizeTaskInferenceText(userTexts[userTexts.length - 1] ?? "");
 
+  if (
+    containsAny(normalized, ["spend", "spent", "spending", "gaste", "gasto", "gastos", "compras"])
+  ) {
+    return "spending_overview";
+  }
   if (containsAny(normalized, ["account", "accounts", "cuenta", "cuentas", "card", "tarjeta"])) {
     return "account_overview";
   }

@@ -249,9 +249,11 @@ describe("createParseEmailService", () => {
       },
     });
 
-    await expect(service.parseNotification("ambiguous notification")).rejects.toThrow(
-      "capture_needs_review"
-    );
+    await expect(service.parseNotification("ambiguous notification")).rejects.toMatchObject({
+      message: "capture_needs_review",
+      reason: "amount and merchant conflict",
+      confidence: 0.4,
+    });
     expect(captureWarning).toHaveBeenCalledWith("parse_notification_needs_review", {
       reason: "amount and merchant conflict",
     });

@@ -50,6 +50,41 @@ function makeFinancialContextPacket() {
   };
 }
 
+async function inferFinancialTaskForMessage(text: string) {
+  const state = createState();
+  state.setCurrentSessionId("chat-1" as ChatSessionId);
+  const buildFinancialContextPacket = vi
+    .fn<(...args: any[]) => any>()
+    .mockResolvedValue(makeFinancialContextPacket());
+
+  const service = createStreamingChatService({
+    getState: state.getState,
+    setStreaming: state.setStreaming,
+    setStreamingContent: state.setStreamingContent,
+    streamChat: async (_messages, callbacks) => {
+      callbacks.onDone();
+    },
+    buildFinancialContextPacket,
+    createChatSession: vi.fn<(...args: any[]) => any>(),
+    addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+    addAssistantChatMessage: vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeAssistantMessage("")),
+    parseActionFromResponse: () => null,
+    trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
+    telemetry: makeTelemetry().telemetry,
+  });
+
+  await service.sendMessage({
+    db: mockDb,
+    userId: USER_ID,
+    text,
+    executeAction: vi.fn<(...args: any[]) => any>(),
+  });
+
+  return buildFinancialContextPacket.mock.calls[0]?.[0].task;
+}
+
 function createState() {
   let state: {
     isStreaming: boolean;
@@ -261,6 +296,20 @@ describe("streaming chat service", () => {
       db: mockDb,
       userId: USER_ID,
       task: { kind: "account_overview" },
+    });
+  });
+
+  it("prefers spending context for card spending questions", async () => {
+    await expect(
+      inferFinancialTaskForMessage("cuánto gasté con mi tarjeta este mes?")
+    ).resolves.toEqual({
+      kind: "spending_overview",
+    });
+  });
+
+  it("normalizes accented notification prompts before task inference", async () => {
+    await expect(inferFinancialTaskForMessage("revisa mi notificación bancaria")).resolves.toEqual({
+      kind: "capture_review",
     });
   });
 

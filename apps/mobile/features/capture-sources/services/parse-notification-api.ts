@@ -27,8 +27,12 @@ export async function parseNotificationApi(
     return await retryableReviewableParseEmailService.parseNotification(sanitizedText);
   } catch (error) {
     if (isCaptureNeedsReviewError(error)) {
-      return { kind: "needs_review" };
+      return {
+        kind: "needs_review",
+        ...(error.reason !== undefined ? { reason: error.reason } : {}),
+        ...(error.confidence !== undefined ? { confidence: error.confidence } : {}),
+      };
     }
-    return { kind: "ai_unavailable" };
+    throw error;
   }
 }

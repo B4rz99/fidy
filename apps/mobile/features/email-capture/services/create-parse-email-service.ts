@@ -67,6 +67,11 @@ type CreateParseEmailServiceDeps = {
 const AUTHORIZATION_HEADER = "Authorization";
 const CAPTURE_NEEDS_REVIEW_ERROR_MESSAGE = "capture_needs_review";
 
+export type CaptureNeedsReviewError = Error & {
+  readonly reason?: string;
+  readonly confidence?: number | null;
+};
+
 export type ParseEmailService = {
   readonly classifyMerchant: (merchant: string) => Promise<string>;
   readonly parseEmail: (
@@ -76,8 +81,15 @@ export type ParseEmailService = {
   readonly parseNotification: (sanitizedText: string) => Promise<LlmParsedTransaction | null>;
 };
 
-export const isCaptureNeedsReviewError = (error: unknown): error is Error =>
+export const isCaptureNeedsReviewError = (error: unknown): error is CaptureNeedsReviewError =>
   error instanceof Error && error.message === CAPTURE_NEEDS_REVIEW_ERROR_MESSAGE;
+
+function createCaptureNeedsReviewError(input: {
+  readonly reason?: string;
+  readonly confidence?: number | null;
+}): CaptureNeedsReviewError {
+  return Object.assign(new Error(CAPTURE_NEEDS_REVIEW_ERROR_MESSAGE), input);
+}
 
 function invokeParseEmailFunctionEffect<Response>(
   body: string,
@@ -151,7 +163,15 @@ function validateParsedTransactionEffect(
       reason: validation.reason,
     }),
     validation.kind === "needs_review" && shouldThrowOnNeedsReview
-      ? Effect.fail(new Error(CAPTURE_NEEDS_REVIEW_ERROR_MESSAGE))
+      ? Effect.fail(
+          createCaptureNeedsReviewError({
+            reason: validation.reason,
+            confidence:
+              interpreted.candidate.kind === "needs_review"
+                ? interpreted.candidate.confidence
+                : null,
+          })
+        )
       : Effect.succeed(null)
   );
 }

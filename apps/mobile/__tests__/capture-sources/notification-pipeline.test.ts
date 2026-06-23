@@ -396,7 +396,7 @@ describe("processNotification", () => {
       expect.objectContaining({
         db: mockDb,
         status: "needs_review",
-        failureReason: "parse_needs_review",
+        failureReason: "parse_needs_review:amount and merchant conflict",
         candidate: expect.objectContaining({
           candidateKind: "unknown",
           amount: null,
@@ -412,32 +412,19 @@ describe("processNotification", () => {
     });
   });
 
-  it("creates a Review Candidate when notification AI is unavailable", async () => {
-    mockParseNotificationApi.mockResolvedValueOnce({ kind: "ai_unavailable" });
+  it("throws retryable notification AI outages instead of creating a Review Candidate", async () => {
+    mockParseNotificationApi.mockRejectedValueOnce(new Error("Edge Function unavailable"));
 
-    const result = await processNotification(
-      mockDb,
-      USER_ID,
-      makeNotification({ text: "Formato no reconocido con $35,000" })
-    );
+    await expect(
+      processNotification(
+        mockDb,
+        USER_ID,
+        makeNotification({ text: "Formato no reconocido con $35,000" })
+      )
+    ).rejects.toThrow("Edge Function unavailable");
 
-    expect(result.saved).toBe(false);
-    expect(result.skippedDuplicate).toBe(false);
-    expect(result.transactionId).toBeNull();
-    expect(result.parseImprovementRequest).toBeUndefined();
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockRecordReviewCandidateCaptureWithLocalLedger).toHaveBeenCalledWith(
-      expect.objectContaining({
-        db: mockDb,
-        status: "needs_review",
-        failureReason: "ai_unavailable",
-        candidate: expect.objectContaining({
-          candidateKind: "unknown",
-          amount: null,
-          confidence: null,
-        }),
-      })
-    );
+    expect(mockRecordReviewCandidateCaptureWithLocalLedger).not.toHaveBeenCalled();
     expect(mockPersistProcessedSourceEvent).not.toHaveBeenCalledWith(
       expect.objectContaining({ status: "failed", failureReason: "parse_failed" })
     );
