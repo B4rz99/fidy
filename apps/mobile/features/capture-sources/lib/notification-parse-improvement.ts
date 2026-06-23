@@ -1,5 +1,9 @@
 import { stripPii } from "@/features/email-capture/parsing.public";
 import { capturePipelineEvent } from "@/shared/lib";
+import {
+  isAllowedStructuralLowercaseWord,
+  isAllowedStructuralTitleWord,
+} from "./capture-improvement-template-shape-policy";
 import { insertNotificationParseImprovementSample } from "./notification-parse-improvement-repository";
 export {
   deleteNotificationParseImprovementSamplesForUser,
@@ -117,89 +121,17 @@ const applyRedactionRule = (text: string, rule: RedactionRule): string =>
 
 const normalizeTemplateWhitespace = (text: string): string => text.trim().replace(/\s+/g, " ");
 
-const STRUCTURAL_TITLE_WORDS = new Set([
-  "Abono",
-  "Autorizacion",
-  "Autorización",
-  "Authorization",
-  "Beneficiario",
-  "Cel",
-  "Compra",
-  "Comercio",
-  "Consignacion",
-  "Consignación",
-  "Deposito",
-  "Depósito",
-  "Destinatario",
-  "Establecimiento",
-  "Pago",
-  "Recibiste",
-  "Ref",
-  "Referencia",
-  "Tarjeta",
-  "Tel",
-  "Transferencia",
-]);
-const STRUCTURAL_LOWERCASE_WORDS = new Set([
-  "abono",
-  "account",
-  "autorizacion",
-  "autorización",
-  "authorization",
-  "beneficiario",
-  "card",
-  "cel",
-  "cerca",
-  "comercio",
-  "compra",
-  "con",
-  "consignacion",
-  "consignación",
-  "cuenta",
-  "de",
-  "deposito",
-  "depósito",
-  "desde",
-  "destinatario",
-  "el",
-  "en",
-  "envio",
-  "envió",
-  "establecimiento",
-  "for",
-  "from",
-  "informa",
-  "near",
-  "nuevo",
-  "pago",
-  "para",
-  "payment",
-  "por",
-  "purchase",
-  "recibiste",
-  "ref",
-  "referencia",
-  "retiro",
-  "tarjeta",
-  "tel",
-  "the",
-  "transferencia",
-  "transfirio",
-  "transfirió",
-  "with",
-]);
-
 const RESIDUAL_ENTITY_TOKEN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\b(?!\])/g;
 const RESIDUAL_LOWERCASE_ENTITY_TOKEN = /(?<!\[)\b[a-záéíóúñ]{3,}\b(?!\])/g;
 
 const redactResidualEntityTokens = (text: string): string =>
   text.replace(RESIDUAL_ENTITY_TOKEN, (word) =>
-    STRUCTURAL_TITLE_WORDS.has(word) ? word : "[ENTITY]"
+    isAllowedStructuralTitleWord(word) ? word : "[ENTITY]"
   );
 
 const redactResidualLowercaseEntityTokens = (text: string): string =>
   text.replace(RESIDUAL_LOWERCASE_ENTITY_TOKEN, (word) =>
-    STRUCTURAL_LOWERCASE_WORDS.has(word) ? word : "[ENTITY]"
+    isAllowedStructuralLowercaseWord(word) ? word : "[ENTITY]"
   );
 
 function confidenceBucket(confidence: number | null): ConfidenceBucket {
