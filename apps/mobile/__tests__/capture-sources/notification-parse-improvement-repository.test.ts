@@ -235,6 +235,23 @@ describe("notification parse improvement repository", () => {
     expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
+  it("rejects unlabeled alphanumeric reference values before upload", async () => {
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "ABC123XYZ Compra por [AMOUNT] en [MERCHANT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("sensitive values");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+  });
+
   it("retains structural authorization reference placeholders", async () => {
     mockFunctionsInvoke.mockResolvedValueOnce({
       data: { success: true, data: { code: "accepted" } },

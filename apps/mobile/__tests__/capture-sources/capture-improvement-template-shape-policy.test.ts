@@ -16,6 +16,10 @@ const unsafeCases: readonly {
     template: "Compra por 50000 en [MERCHANT].",
   },
   {
+    expected: "sensitive_value_pattern",
+    template: "ABC123XYZ Compra por [AMOUNT] en [MERCHANT].",
+  },
+  {
     expected: "lowercase_counterparty_pattern",
     template: "juan perez te envio [AMOUNT].",
   },

@@ -424,6 +424,31 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
   });
 
+  it("rejects unlabeled alphanumeric reference values in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "ABC123XYZ Compra por [AMOUNT] en [MERCHANT].",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
   it("accepts structural authorization reference placeholders in Capture Improvement Samples", async () => {
     const api = createCloudLedgerApiDeps();
     const sample = {
