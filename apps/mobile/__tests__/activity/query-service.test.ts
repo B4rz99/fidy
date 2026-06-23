@@ -343,6 +343,39 @@ describe("activity query service", () => {
     expect(cloudLedgerItem.transaction).not.toHaveProperty("pendingChangeId");
   });
 
+  it("keeps ordinary home activity when encrypted Cloud Ledger outbox optimistic loading fails", async () => {
+    const outboxFailure = new Error("decrypt failed");
+    outboxFailure.name = "CloudLedgerOutboxFailure";
+    const loadCloudLedgerOptimisticTransactions = vi
+      .fn<(...args: any[]) => any>()
+      .mockRejectedValue(outboxFailure);
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const service = createActivityQueryService({
+      getTransactionsPaginated: vi
+        .fn<(...args: any[]) => any>()
+        .mockReturnValue(MERGED_TRANSACTION_ROWS),
+      getTransfersPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue(MERGED_TRANSFER_ROWS),
+      loadCloudLedgerOptimisticTransactions,
+      captureWarning,
+    });
+
+    const snapshot = await service.loadPageWithCloudLedgerOptimisticView({
+      db: {} as never,
+      userId: USER_ID,
+      pageSize: 30,
+      offset: 0,
+    });
+
+    expect(snapshot.pages.map((item) => `${item.kind}:${item.id}`)).toEqual([
+      "transfer:tr-newest",
+      "transaction:tx-newer",
+      "transaction:tx-older",
+    ]);
+    expect(captureWarning).toHaveBeenCalledWith("cloud_ledger_home_activity_load_failed", {
+      errorType: "CloudLedgerOutboxFailure",
+    });
+  });
+
   it("keeps large merged offsets stack-safe", () => {
     const totalItems = 6000;
     const buildTimestamp = (dayOffset: number): IsoDateTime =>
