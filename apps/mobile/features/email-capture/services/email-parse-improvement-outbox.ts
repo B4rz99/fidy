@@ -84,6 +84,35 @@ async function runCaptureImprovementRemoteOperation<T>(
   }
 }
 
+async function performPendingEmailParseImprovementSampleDeletion(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly now?: Date;
+}): Promise<{ readonly deleted: number; readonly retried: true }> {
+  const deletedAt = toIsoDateTime(input.now ?? new Date());
+  markCaptureImprovementDeletionAttempt({
+    db: input.db,
+    lastAttemptAt: deletedAt,
+    userId: input.userId,
+  });
+  const deleted = input.db
+    .update(emailParseImprovementSamples)
+    .set({ deletedAt })
+    .where(
+      and(
+        eq(emailParseImprovementSamples.userId, input.userId),
+        isNull(emailParseImprovementSamples.deletedAt)
+      )
+    )
+    .run().changes;
+
+  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
+
+  clearCaptureImprovementDeletionRequest({ db: input.db, userId: input.userId });
+  logParseImprovementOutboxForDebug("delete", { deleted });
+  return { deleted, retried: true };
+}
+
 export function countPendingEmailParseImprovementSamples(input: {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -132,39 +161,25 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
     return { deleted: 0, retried: false };
   }
 
-  const deletedAt = toIsoDateTime(input.now ?? new Date());
-  markCaptureImprovementDeletionAttempt({
-    db: input.db,
-    lastAttemptAt: deletedAt,
-    userId: input.userId,
-  });
-  const deleted = input.db
-    .update(emailParseImprovementSamples)
-    .set({ deletedAt })
-    .where(
-      and(
-        eq(emailParseImprovementSamples.userId, input.userId),
-        isNull(emailParseImprovementSamples.deletedAt)
-      )
-    )
-    .run().changes;
-
-  await runCaptureImprovementRemoteOperation(input.userId, () =>
-    deleteCaptureParseImprovementSamplesForUser({ userId: input.userId })
+  return await runCaptureImprovementRemoteOperation(input.userId, () =>
+    performPendingEmailParseImprovementSampleDeletion(input)
   );
-
-  clearCaptureImprovementDeletionRequest({ db: input.db, userId: input.userId });
-  logParseImprovementOutboxForDebug("delete", { deleted });
-  return { deleted, retried: true };
 }
 
 export async function setEmailParseImprovementSharingPreference(input: {
+  readonly db: AnyDb;
   readonly userId: UserId;
   readonly enabled: boolean;
 }): Promise<void> {
-  await runCaptureImprovementRemoteOperation(input.userId, () =>
-    setCaptureParseImprovementPreference(input)
-  );
+  await runCaptureImprovementRemoteOperation(input.userId, async () => {
+    if (input.enabled && getCaptureImprovementDeletionRequest(input) !== null) {
+      await performPendingEmailParseImprovementSampleDeletion(input);
+    }
+    await setCaptureParseImprovementPreference({
+      enabled: input.enabled,
+      userId: input.userId,
+    });
+  });
 }
 
 export function enqueueEmailParseImprovementRequests(input: {
@@ -231,7 +246,11 @@ export async function flushPendingEmailParseImprovementSamples(input: {
     const pendingCount = countPendingEmailParseImprovementSamples(input);
     if (pendingCount === 0) return { shared: 0, failed: 0 };
 
-    await setEmailParseImprovementSharingPreference({ enabled: true, userId: input.userId });
+    await setEmailParseImprovementSharingPreference({
+      db: input.db,
+      enabled: true,
+      userId: input.userId,
+    });
 
     if (isEmailCaptureDebugEnabled()) {
       logParseImprovementOutboxForDebug("flush.start", {

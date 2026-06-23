@@ -42,6 +42,13 @@ export class ParseImprovementSampleOptOutError extends Error {
   }
 }
 
+export class ParseImprovementSampleAccountSessionError extends Error {
+  constructor() {
+    super("Capture improvement account session changed");
+    this.name = "ParseImprovementSampleAccountSessionError";
+  }
+}
+
 type InsertNotificationParseImprovementSampleInput = {
   readonly userId: string;
   readonly sample: PersistedNotificationParseImprovementSample;
@@ -50,10 +57,12 @@ type InsertNotificationParseImprovementSampleInput = {
 type CaptureImprovementSourceChannel = "email" | "notification" | "wallet";
 type CaptureImprovementSourceFamily = "email" | "android_notification" | "wallet_notification";
 type CaptureImprovementProviderCategory = "bank" | "payment_app" | "wallet" | "unknown";
+type CaptureImprovementSourceProvider = "gmail" | "outlook";
 
 type CaptureImprovementSamplePayload = {
   readonly sourceChannel: CaptureImprovementSourceChannel;
   readonly sourceFamily: CaptureImprovementSourceFamily;
+  readonly sourceProvider?: CaptureImprovementSourceProvider;
   readonly providerCategory: CaptureImprovementProviderCategory;
   readonly templateShape: string;
   readonly parseOutcome: "failed" | "needs_review";
@@ -84,6 +93,11 @@ type RemoteErrorLike = {
   readonly context?: unknown;
   readonly message?: string;
 };
+type CaptureImprovementBoundaryAuth = {
+  readonly headers: {
+    readonly Authorization: string;
+  };
+};
 
 const CLOUD_LEDGER_FUNCTION = "cloud-ledger-api";
 const SOURCE_CHANNEL_BY_SOURCE: Readonly<Record<string, CaptureImprovementSourceChannel>> = {
@@ -97,6 +111,12 @@ const SOURCE_FAMILY_BY_SOURCE: Readonly<Record<string, CaptureImprovementSourceF
   email_outlook: "email",
   google_pay: "wallet_notification",
   notification_android: "android_notification",
+};
+const SOURCE_PROVIDER_BY_SOURCE: Readonly<
+  Partial<Record<string, CaptureImprovementSourceProvider>>
+> = {
+  email_gmail: "gmail",
+  email_outlook: "outlook",
 };
 const PROVIDER_CATEGORY_BY_SOURCE: Readonly<
   Partial<Record<string, CaptureImprovementProviderCategory>>
@@ -118,13 +138,16 @@ export async function insertNotificationParseImprovementSample(
 ): Promise<void> {
   assertTemplateIsAnonymized(input.sample.template);
 
-  const { data, error } = await getSupabase().functions.invoke<CaptureImprovementApiResponse>(
+  const supabase = getSupabase();
+  const auth = await captureImprovementBoundaryAuth(supabase, input.userId);
+  const { data, error } = await supabase.functions.invoke<CaptureImprovementApiResponse>(
     CLOUD_LEDGER_FUNCTION,
     {
       body: {
         action: "retainCaptureImprovementSample",
         sample: toCaptureImprovementSamplePayload(input.sample),
       },
+      ...auth,
     }
   );
 
@@ -134,12 +157,15 @@ export async function insertNotificationParseImprovementSample(
 export async function deleteNotificationParseImprovementSamplesForUser(_input: {
   readonly userId: string;
 }): Promise<void> {
-  const { data, error } = await getSupabase().functions.invoke<CaptureImprovementApiResponse>(
+  const supabase = getSupabase();
+  const auth = await captureImprovementBoundaryAuth(supabase, _input.userId);
+  const { data, error } = await supabase.functions.invoke<CaptureImprovementApiResponse>(
     CLOUD_LEDGER_FUNCTION,
     {
       body: {
         action: "deleteCaptureImprovementSamples",
       },
+      ...auth,
     }
   );
 
@@ -150,13 +176,16 @@ export async function setNotificationParseImprovementPreference(_input: {
   readonly userId: string;
   readonly enabled: boolean;
 }): Promise<void> {
-  const { data, error } = await getSupabase().functions.invoke<CaptureImprovementApiResponse>(
+  const supabase = getSupabase();
+  const auth = await captureImprovementBoundaryAuth(supabase, _input.userId);
+  const { data, error } = await supabase.functions.invoke<CaptureImprovementApiResponse>(
     CLOUD_LEDGER_FUNCTION,
     {
       body: {
         action: "setCaptureImprovementPreference",
         enabled: _input.enabled,
       },
+      ...auth,
     }
   );
 
@@ -170,6 +199,23 @@ const assertCaptureImprovementBoundarySuccess = async (
   throwIfKnownFailureResponse(data);
   await throwIfRemoteBoundaryError(error);
   throwIfMissingSuccess(data);
+};
+
+const captureImprovementBoundaryAuth = async (
+  supabase: ReturnType<typeof getSupabase>,
+  userId: string
+): Promise<CaptureImprovementBoundaryAuth> => {
+  const { data, error } = await supabase.auth.getSession();
+  const session = error === null ? data.session : null;
+  if (session?.user.id !== userId) {
+    throw new ParseImprovementSampleAccountSessionError();
+  }
+
+  return {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  };
 };
 
 const throwIfKnownFailureResponse = (data: CaptureImprovementApiResponse | null): void => {
@@ -254,9 +300,11 @@ const toCaptureImprovementSamplePayload = (
   sample: PersistedNotificationParseImprovementSample
 ): CaptureImprovementSamplePayload => {
   const extractor = captureImprovementExtractor(sample.parseMethod);
+  const provider = sourceProvider(sample.source);
   return {
     sourceChannel: sourceChannel(sample.source),
     sourceFamily: sourceFamily(sample.source),
+    ...(provider === undefined ? {} : { sourceProvider: provider }),
     providerCategory: providerCategory(sample),
     templateShape: sample.template,
     parseOutcome: sample.status,
@@ -280,6 +328,9 @@ const sourceFamily = (source: string): CaptureImprovementSourceFamily => {
   const family = SOURCE_FAMILY_BY_SOURCE[source];
   return family === undefined ? "android_notification" : family;
 };
+
+const sourceProvider = (source: string): CaptureImprovementSourceProvider | undefined =>
+  SOURCE_PROVIDER_BY_SOURCE[source];
 
 const providerCategory = (
   sample: PersistedNotificationParseImprovementSample

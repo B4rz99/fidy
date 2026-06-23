@@ -37,6 +37,7 @@ const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
 const CAPTURE_IMPROVEMENT_SAMPLE = {
   sourceChannel: "email",
   sourceFamily: "email",
+  sourceProvider: "gmail",
   providerCategory: "bank",
   templateShape: "Compra por [AMOUNT] en [MERCHANT] con tarjeta [CARD].",
   parseOutcome: "failed",
@@ -248,6 +249,55 @@ describe("cloud-ledger-api Edge Function", () => {
       USER_ID,
       CAPTURE_IMPROVEMENT_SAMPLE
     );
+  });
+
+  it("preserves Outlook source-provider Capture Improvement Samples at the API boundary", async () => {
+    const api = createCloudLedgerApiDeps();
+    const sample = {
+      ...CAPTURE_IMPROVEMENT_SAMPLE,
+      sourceProvider: "outlook",
+    } as const;
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(USER_ID, sample);
+  });
+
+  it("rejects email Capture Improvement Samples without a coarse source provider", async () => {
+    const api = createCloudLedgerApiDeps();
+    const { sourceProvider: _sourceProvider, ...sample } = CAPTURE_IMPROVEMENT_SAMPLE;
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
   });
 
   it("rejects Capture Improvement Sample retention when the account has opted out", async () => {

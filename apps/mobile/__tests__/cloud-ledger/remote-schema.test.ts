@@ -22,6 +22,10 @@ const CAPTURE_IMPROVEMENT_OPT_OUT_SERIALIZATION_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260623170000_capture_improvement_opt_out_serialization.sql"
 );
+const CAPTURE_IMPROVEMENT_SOURCE_PROVIDER_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260623223000_capture_improvement_source_provider.sql"
+);
 
 describe("Cloud Ledger remote schema", () => {
   it("creates bootstrap financial tables in a non-exposed ledger schema", () => {
@@ -184,6 +188,31 @@ describe("Cloud Ledger remote schema", () => {
         `create or replace function public\\.cloud_ledger_set_capture_improvement_preference[\\s\\S]*perform ${escapeRegExp(lockCall)}[\\s\\S]*insert into public\\.capture_improvement_preferences[\\s\\S]*if p_enabled = false then[\\s\\S]*delete from public\\.notification_parse_improvement_samples`
       )
     );
+  });
+
+  it("preserves coarse email source providers when retaining Capture Improvement Samples", () => {
+    const sql = readFileSync(CAPTURE_IMPROVEMENT_SOURCE_PROVIDER_MIGRATION, "utf8").toLowerCase();
+    const compactSql = sql.replace(/\s+/g, " ");
+
+    expect(sql).toContain("p_source_provider text");
+    expect(sql).toContain("p_source_provider not in ('gmail', 'outlook')");
+    expect(compactSql).toContain(
+      "when p_source_channel = 'email' and p_source_provider = 'outlook' then 'email_outlook'"
+    );
+    expect(compactSql).toContain(
+      "when p_source_channel = 'email' and p_source_provider = 'gmail' then 'email_gmail'"
+    );
+    expect(compactSql).toContain(
+      "drop function if exists public.cloud_ledger_retain_capture_improvement_sample(uuid, text, text, text, text, text, text, text, integer)"
+    );
+    expect(compactSql).toContain(
+      "grant execute on function public.cloud_ledger_retain_capture_improvement_sample( uuid, text, text, text, text, text, text, text, text, integer ) to service_role"
+    );
+    expect(sql).not.toContain("sender_domain");
+    expect(sql).not.toContain("raw_text");
+    expect(sql).not.toContain("raw_body");
+    expect(sql).not.toContain("merchant_name");
+    expect(sql).not.toContain("amount_value");
   });
 });
 

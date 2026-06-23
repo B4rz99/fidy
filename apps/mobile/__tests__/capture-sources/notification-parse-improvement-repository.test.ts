@@ -7,9 +7,13 @@ import {
 
 const mockFunctionsInvoke = vi.fn<(...args: any[]) => any>();
 const mockFrom = vi.fn<(...args: any[]) => any>();
+const mockGetSession = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/shared/db", () => ({
   getSupabase: () => ({
+    auth: {
+      getSession: mockGetSession,
+    },
     from: mockFrom,
     functions: {
       invoke: mockFunctionsInvoke,
@@ -20,6 +24,10 @@ vi.mock("@/shared/db", () => ({
 describe("notification parse improvement repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({
+      data: { session: { access_token: "capture-token", user: { id: "user-1" } } },
+      error: null,
+    });
   });
 
   it("retains structural samples through the Remote API Boundary without direct table access", async () => {
@@ -55,6 +63,9 @@ describe("notification parse improvement repository", () => {
           },
         },
       },
+      headers: {
+        Authorization: "Bearer capture-token",
+      },
     });
     expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toMatch(
       /user-1|davibank\.com|sender_domain|rawText|parserTemplate/u
@@ -62,7 +73,7 @@ describe("notification parse improvement repository", () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("maps email sources to safe provider categories before upload", async () => {
+  it("maps email sources to safe provider categories and coarse source providers before upload", async () => {
     mockFunctionsInvoke.mockResolvedValueOnce({
       data: { success: true, data: { code: "accepted" } },
       error: null,
@@ -85,11 +96,70 @@ describe("notification parse improvement repository", () => {
         sample: expect.objectContaining({
           sourceChannel: "email",
           sourceFamily: "email",
+          sourceProvider: "gmail",
           providerCategory: "bank",
         }),
       }),
+      headers: {
+        Authorization: "Bearer capture-token",
+      },
     });
     expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("davibank.com");
+  });
+
+  it("preserves Outlook as a coarse email source provider before upload", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: true, data: { code: "accepted" } },
+      error: null,
+    });
+
+    await insertNotificationParseImprovementSample({
+      userId: "user-1",
+      sample: {
+        template: "Compra por [AMOUNT] en [MERCHANT].",
+        providerCategory: "bank",
+        source: "email_outlook",
+        status: "failed",
+        confidenceBucket: "none",
+        parseMethod: "llm",
+      },
+    });
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith("cloud-ledger-api", {
+      body: expect.objectContaining({
+        sample: expect.objectContaining({
+          sourceChannel: "email",
+          sourceFamily: "email",
+          sourceProvider: "outlook",
+          providerCategory: "bank",
+        }),
+      }),
+      headers: {
+        Authorization: "Bearer capture-token",
+      },
+    });
+  });
+
+  it("does not invoke the boundary when the active auth session no longer matches the queued user", async () => {
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: { access_token: "other-token", user: { id: "user-2" } } },
+      error: null,
+    });
+
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "Compra por [AMOUNT] en [MERCHANT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toThrow("account session");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("throws a privacy failure when the Remote API Boundary rejects the sample as unsafe", async () => {
@@ -144,6 +214,9 @@ describe("notification parse improvement repository", () => {
       body: {
         action: "deleteCaptureImprovementSamples",
       },
+      headers: {
+        Authorization: "Bearer capture-token",
+      },
     });
     expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("user-1");
     expect(mockFrom).not.toHaveBeenCalled();
@@ -161,6 +234,9 @@ describe("notification parse improvement repository", () => {
       body: {
         action: "setCaptureImprovementPreference",
         enabled: true,
+      },
+      headers: {
+        Authorization: "Bearer capture-token",
       },
     });
     expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("user-1");
@@ -292,6 +368,9 @@ describe("notification parse improvement repository", () => {
           templateShape: "Autorizacion [REFERENCE] por [AMOUNT].",
         }),
       }),
+      headers: {
+        Authorization: "Bearer capture-token",
+      },
     });
   });
 

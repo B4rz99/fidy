@@ -5,7 +5,7 @@ import type { AnyDb } from "@/shared/db";
 import { useSubscription } from "@/shared/hooks";
 import { handleRecoverableError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
-import { retryPendingEmailParseImprovementSampleDeletion } from "../parse-improvement.public";
+import { deleteEmailParseImprovementSamplesForUser } from "../parse-improvement.public";
 import { getGmailClientId, getOutlookClientId } from "../schema";
 import { fetchAndProcessEmails, initializeEmailCaptureSession, loadEmailAccounts } from "../store";
 
@@ -17,7 +17,7 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
 
       const retryPendingOptOutDeletion = () => {
         if (useSettingsStore.getState().shareAnonymizedParseSamples) return;
-        void retryPendingEmailParseImprovementSampleDeletion({ db, userId }).catch(
+        void deleteEmailParseImprovementSamplesForUser({ db, userId }).catch(
           handleRecoverableError("Parse improvement deletion retry failed")
         );
       };

@@ -603,6 +603,7 @@ describe("email parse improvement outbox", () => {
     await Promise.resolve();
 
     const optIn = setEmailParseImprovementSharingPreference({
+      db,
       enabled: true,
       userId: USER_ID,
     });
@@ -619,6 +620,37 @@ describe("email parse improvement outbox", () => {
       enabled: true,
       userId: USER_ID,
     });
+    sqlite.close();
+  });
+
+  it("drains a durable opt-out deletion request before re-enabling the remote preference", async () => {
+    const { db, sqlite } = createDb();
+    mockDeleteCaptureParseImprovementSamplesForUser.mockRejectedValueOnce(new Error("network"));
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("network");
+    mockDeleteCaptureParseImprovementSamplesForUser.mockClear();
+
+    await expect(
+      setEmailParseImprovementSharingPreference({
+        db,
+        enabled: true,
+        userId: USER_ID,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledWith({
+      userId: USER_ID,
+    });
+    expect(mockSetCaptureParseImprovementPreference).toHaveBeenCalledWith({
+      enabled: true,
+      userId: USER_ID,
+    });
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([]);
+    expect(
+      mockDeleteCaptureParseImprovementSamplesForUser.mock.invocationCallOrder[0] ?? 0
+    ).toBeLessThan(mockSetCaptureParseImprovementPreference.mock.invocationCallOrder[0] ?? 0);
     sqlite.close();
   });
 

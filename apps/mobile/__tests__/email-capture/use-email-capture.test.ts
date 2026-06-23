@@ -19,6 +19,7 @@ const mockUseSettingsStore = Object.assign(
 const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
 const mockLoadEmailAccounts = vi.fn<(...args: any[]) => any>();
 const mockFetchAndProcessEmails = vi.fn<(...args: any[]) => any>();
+const mockDeleteEmailParseImprovementSamplesForUser = vi.fn<(...args: any[]) => any>();
 const mockRetryPendingEmailParseImprovementSampleDeletion = vi.fn<(...args: any[]) => any>();
 const mockAddEventListener = vi.fn<(...args: any[]) => any>();
 
@@ -37,6 +38,9 @@ describe("useEmailCapture", () => {
     mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValue({
       deleted: 0,
       retried: false,
+    });
+    mockDeleteEmailParseImprovementSamplesForUser.mockResolvedValue({
+      deleted: 0,
     });
     mockAddEventListener.mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
   });
@@ -72,17 +76,18 @@ describe("useEmailCapture", () => {
     );
   });
 
-  it("retries pending opt-out deletion on app open when sharing is disabled", async () => {
+  it("enqueues and retries opt-out deletion on app open when sharing is disabled", async () => {
     const { useEmailCapture } = await loadUseEmailCapture();
     const userId = requireUserId("user-1");
 
     useEmailCapture(mockDb, userId);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(mockRetryPendingEmailParseImprovementSampleDeletion).toHaveBeenCalledWith({
+    expect(mockDeleteEmailParseImprovementSamplesForUser).toHaveBeenCalledWith({
       db: mockDb,
       userId,
     });
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
   });
 });
 
@@ -115,6 +120,8 @@ async function loadUseEmailCapture() {
     loadEmailAccounts: (...args: unknown[]) => mockLoadEmailAccounts(...args),
   }));
   vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
+    deleteEmailParseImprovementSamplesForUser: (...args: unknown[]) =>
+      mockDeleteEmailParseImprovementSamplesForUser(...args),
     retryPendingEmailParseImprovementSampleDeletion: (...args: unknown[]) =>
       mockRetryPendingEmailParseImprovementSampleDeletion(...args),
   }));

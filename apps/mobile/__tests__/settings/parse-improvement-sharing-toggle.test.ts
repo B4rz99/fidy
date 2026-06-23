@@ -159,6 +159,7 @@ describe("applyParseImprovementSharingToggle", () => {
     await flushPromises();
 
     expect(mockSetEmailParseImprovementSharingPreference).toHaveBeenCalledWith({
+      db: {},
       enabled: true,
       userId,
     });

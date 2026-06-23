@@ -97,7 +97,7 @@ export function applyParseImprovementSharingToggle(input: {
     .catch(() => undefined)
     .then(async () => {
       if (!useSettingsStore.getState().shareAnonymizedParseSamples) return;
-      await setEmailParseImprovementSharingPreference({ enabled: true, userId });
+      await setEmailParseImprovementSharingPreference({ db, enabled: true, userId });
       const result = await flushPendingEmailParseImprovementSamples({
         db,
         userId,

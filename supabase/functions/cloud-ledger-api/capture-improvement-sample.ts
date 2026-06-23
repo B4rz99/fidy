@@ -16,6 +16,8 @@ const SOURCE_FAMILIES: ReadonlySet<CaptureImprovementSample["sourceFamily"]> = n
   "android_notification",
   "wallet_notification",
 ]);
+const SOURCE_PROVIDERS: ReadonlySet<NonNullable<CaptureImprovementSample["sourceProvider"]>> =
+  new Set(["gmail", "outlook"]);
 const PROVIDER_CATEGORIES: ReadonlySet<CaptureImprovementSample["providerCategory"]> = new Set([
   "bank",
   "payment_app",
@@ -43,6 +45,7 @@ const SAMPLE_KEYS = new Set([
   "providerCategory",
   "sourceChannel",
   "sourceFamily",
+  "sourceProvider",
   "templateShape",
 ]);
 const EXTRACTOR_KEYS = new Set(["method", "version"]);
@@ -65,6 +68,7 @@ export function readCaptureImprovementSample(body: unknown): CaptureImprovementS
   if (
     !isSetValue(record.sourceChannel, SOURCE_CHANNELS) ||
     !isSetValue(record.sourceFamily, SOURCE_FAMILIES) ||
+    !hasValidSourceProvider(record.sourceChannel, record.sourceProvider) ||
     !isSetValue(record.providerCategory, PROVIDER_CATEGORIES) ||
     !isSafeTemplateShape(record.templateShape) ||
     !isSetValue(record.parseOutcome, PARSE_OUTCOMES) ||
@@ -84,6 +88,13 @@ export function readCaptureImprovementSample(body: unknown): CaptureImprovementS
     sample: {
       sourceChannel: record.sourceChannel,
       sourceFamily: record.sourceFamily,
+      ...(record.sourceChannel === "email"
+        ? {
+            sourceProvider: record.sourceProvider as NonNullable<
+              CaptureImprovementSample["sourceProvider"]
+            >,
+          }
+        : {}),
       providerCategory: record.providerCategory,
       templateShape,
       parseOutcome: record.parseOutcome,
@@ -91,6 +102,15 @@ export function readCaptureImprovementSample(body: unknown): CaptureImprovementS
       extractor,
     },
   };
+}
+
+function hasValidSourceProvider(
+  sourceChannel: unknown,
+  sourceProvider: unknown
+): sourceProvider is NonNullable<CaptureImprovementSample["sourceProvider"]> {
+  return sourceChannel === "email"
+    ? isSetValue(sourceProvider, SOURCE_PROVIDERS)
+    : sourceProvider === undefined;
 }
 
 function readExtractor(value: unknown): CaptureImprovementSample["extractor"] | null {

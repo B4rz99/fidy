@@ -32,6 +32,7 @@ type RetainCaptureImprovementSampleRpcArgs = {
   readonly p_user_id: string;
   readonly p_source_channel: CaptureImprovementSample["sourceChannel"];
   readonly p_source_family: CaptureImprovementSample["sourceFamily"];
+  readonly p_source_provider: CaptureImprovementSample["sourceProvider"] | null;
   readonly p_provider_category: CaptureImprovementSample["providerCategory"];
   readonly p_template_shape: string;
   readonly p_parse_outcome: CaptureImprovementSample["parseOutcome"];
@@ -150,6 +151,7 @@ async function retainCaptureImprovementSample(
     p_provider_category: sample.providerCategory,
     p_source_channel: sample.sourceChannel,
     p_source_family: sample.sourceFamily,
+    p_source_provider: sample.sourceProvider ?? null,
     p_template_shape: sample.templateShape,
     p_user_id: userId,
   });

@@ -103,6 +103,7 @@ export type CloudLedgerCreateTransactionOutcome =
 export type CaptureImprovementSample = {
   readonly sourceChannel: "email" | "notification" | "wallet";
   readonly sourceFamily: "email" | "android_notification" | "wallet_notification";
+  readonly sourceProvider?: "gmail" | "outlook";
   readonly providerCategory: "bank" | "payment_app" | "wallet" | "unknown";
   readonly templateShape: string;
   readonly parseOutcome: "failed" | "needs_review";
