@@ -1,0 +1,45 @@
+apps/mobile/features/cloud-ledger/bootstrap.ts
+  s_a015eeb45038bf::t_bd7c2b5b28abf6 7,13,54-55,57
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_e19a0d2e94a257 606-608
+  s_a015eeb45038bf::t_71d0cd2464b81d 602-605,690-693,696,702
+  s_a015eeb45038bf::t_83466dd525b693 629-632
+  s_a015eeb45038bf::t_fa7cc7272b2996 471-482
+  s_a015eeb45038bf::t_2c4a9a861b8892 587,593-601,609-628,633-670
+  s_a015eeb45038bf::t_b7f3ac8342ee05 61-64,68,71
+  s_a015eeb45038bf::t_a3512fc19a40eb 517-521,525-531,535,538,545-586
+  s_a015eeb45038bf::t_897908fa1f1e03 680
+  s_a015eeb45038bf::t_868f21384029c6 695,697-701,703,705,709-716,718-719,723-730,733-737,744-745,747-762
+apps/mobile/__tests__/cloud-ledger/bootstrap.test.ts
+  s_a015eeb45038bf::t_283de657f7041f 11,15-16,24,29,35,49,55,83-90,98-99
+  s_a015eeb45038bf::t_83466dd525b693 2-5,91-97
+apps/mobile/features/cloud-ledger/runtime.ts
+  s_a015eeb45038bf::t_81adf91518fdeb 5,19
+  s_a015eeb45038bf::t_83466dd525b693 41-44
+  s_a015eeb45038bf::t_0a69a69486fd80 4,6-8,10-18,20,36-40,45-50,53,58
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_83466dd525b693 306
+  s_a015eeb45038bf::t_c98cd3ec56db71 220-250,254,260,269-272,276,288,308,427,429-433
+apps/mobile/features/cloud-ledger/public.ts
+  s_a015eeb45038bf::t_2a01622af362e5 24,29,31
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_d0a1df384e090d 7,11,317-356
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_8f0ef9b1921b4d 4,11,188,196,198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "83a3728bb65d3d26fd853a585cc8ab584ee962c4",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
