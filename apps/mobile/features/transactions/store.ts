@@ -1,12 +1,14 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { AnyDb } from "@/shared/db";
 import {
+  beginCloudLedgerRuntimeCacheWrite,
   type CloudLedgerCreateTransactionCommand,
   createOfflineCloudLedgerTransaction,
   flushPendingCloudLedgerChanges,
   getCloudLedgerRuntimeCache,
   getCloudLedgerOutbox,
   setCloudLedgerRuntimeCache,
+  setCloudLedgerRuntimeCacheIfCurrent,
 } from "@/features/cloud-ledger/public";
 import { getSupabase } from "@/shared/db/supabase";
 import {
@@ -183,6 +185,7 @@ async function recordManualTransactionWithCloudLedger({
 }
 
 async function flushCloudLedgerOutboxAfterCreate(userId: UserId): Promise<void> {
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
   const networkState = await NetInfo.fetch();
   if (networkState.isConnected !== true) return;
 
@@ -190,8 +193,9 @@ async function flushCloudLedgerOutboxAfterCreate(userId: UserId): Promise<void> 
   const sessionResult = await supabase.auth.getSession();
   if (sessionResult.error != null || sessionResult.data.session == null) return;
 
-  setCloudLedgerRuntimeCache(
+  setCloudLedgerRuntimeCacheIfCurrent(
     userId,
+    writeToken,
     await flushPendingCloudLedgerChanges({
       cache: getCloudLedgerRuntimeCache(userId),
       outbox: getCloudLedgerOutbox(userId),

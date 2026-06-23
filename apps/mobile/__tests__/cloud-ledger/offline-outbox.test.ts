@@ -217,16 +217,47 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(JSON.stringify([...secureStore.entries()])).not.toContain("Large offline purchase");
   });
 
+  it("keeps the previous encrypted snapshot readable when a chunked overwrite crashes before manifest flip", async () => {
+    const pendingChanges = createLargePendingChanges();
+    await enqueueCloudLedgerPendingChanges(pendingChanges);
+    const originalChangeIds = pendingChanges.map((pending) => pending.changeId);
+    expect(secureStoreOutboxPayloadChunkKeys().length).toBeGreaterThan(1);
+
+    let failManifestWrite = true;
+    vi.mocked(SecureStore.setItemAsync).mockImplementation((key: string, value: string) => {
+      if (failManifestWrite && key === "cloud-ledger-outbox_user-1") {
+        return Promise.reject(new Error("simulated crash before manifest flip"));
+      }
+      secureStore.set(key, value);
+      return Promise.resolve();
+    });
+
+    await expect(
+      getCloudLedgerOutbox(USER_ID).remove(
+        pendingChanges.slice(1).map((pending) => pending.changeId)
+      )
+    ).rejects.toThrow("simulated crash before manifest flip");
+
+    resetCloudLedgerOutboxInstances();
+    failManifestWrite = false;
+    await expect(getCloudLedgerOutbox(USER_ID).load()).resolves.toEqual(
+      expect.arrayContaining(originalChangeIds.map((id) => expect.objectContaining({ id })))
+    );
+    expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual(
+      originalChangeIds
+    );
+  });
+
   it("removes stale encrypted chunks when a large payload is overwritten with a smaller one", async () => {
     const pendingChanges = createLargePendingChanges();
     await enqueueCloudLedgerPendingChanges(pendingChanges);
-    expect(secureStoreOutboxChunkKeys()).toContain("cloud-ledger-outbox_user-1_chunk_1");
+    expect(secureStoreOutboxPayloadChunkKeys().length).toBeGreaterThan(1);
 
     await getCloudLedgerOutbox(USER_ID).remove(
       pendingChanges.slice(1).map((pending) => pending.changeId)
     );
 
-    expect(secureStoreOutboxChunkKeys()).toEqual(["cloud-ledger-outbox_user-1_chunk_0"]);
+    expect(secureStoreOutboxPayloadChunkKeys()).toHaveLength(1);
     expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual(
       pendingChanges.slice(0, 1).map((pending) => pending.changeId)
     );
@@ -235,11 +266,14 @@ describe("mobile Cloud Ledger offline outbox", () => {
   it("removes stale encrypted payload chunks on logout after a failed smaller overwrite cleanup", async () => {
     const pendingChanges = createLargePendingChanges();
     await enqueueCloudLedgerPendingChanges(pendingChanges);
-    expect(secureStoreOutboxChunkKeys()).toContain("cloud-ledger-outbox_user-1_chunk_1");
+    const staleChunkKey = secureStoreOutboxPayloadChunkKeys().find((key) =>
+      key.endsWith("_chunk_1")
+    );
+    expect(staleChunkKey).toBeDefined();
 
     let failStaleChunkCleanup = true;
     vi.mocked(SecureStore.deleteItemAsync).mockImplementation((key: string) => {
-      if (failStaleChunkCleanup && key === "cloud-ledger-outbox_user-1_chunk_1") {
+      if (failStaleChunkCleanup && key === staleChunkKey) {
         return Promise.reject(new Error("simulated stale chunk cleanup failure"));
       }
       secureStore.delete(key);
@@ -251,7 +285,7 @@ describe("mobile Cloud Ledger offline outbox", () => {
         pendingChanges.slice(1).map((pending) => pending.changeId)
       )
     ).resolves.toBeUndefined();
-    expect(secureStoreOutboxChunkKeys()).toContain("cloud-ledger-outbox_user-1_chunk_1");
+    expect(secureStoreOutboxPayloadChunkKeys()).toContain(staleChunkKey);
 
     failStaleChunkCleanup = false;
     await discardCloudLedgerOutbox(USER_ID);
@@ -269,12 +303,9 @@ describe("mobile Cloud Ledger offline outbox", () => {
     });
 
     expect([...secureStore.keys()]).toEqual(
-      expect.arrayContaining([
-        "cloud-ledger-outbox_user-1",
-        "cloud-ledger-outbox_user-1_chunk_0",
-        "cloud-ledger-outbox-key_user-1",
-      ])
+      expect.arrayContaining(["cloud-ledger-outbox_user-1", "cloud-ledger-outbox-key_user-1"])
     );
+    expect(secureStoreOutboxPayloadChunkKeys()).toHaveLength(1);
     expect([...secureStore.keys()].every((key) => SECURE_STORE_KEY_PATTERN.test(key))).toBe(true);
 
     await discardCloudLedgerOutbox(USER_ID);
@@ -393,9 +424,13 @@ describe("mobile Cloud Ledger offline outbox", () => {
   });
 });
 
-function secureStoreOutboxChunkKeys() {
+function secureStoreOutboxPayloadChunkKeys() {
   return [...secureStore.keys()]
-    .filter((key) => key.startsWith("cloud-ledger-outbox_user-1_chunk_"))
+    .filter(
+      (key) =>
+        key.startsWith("cloud-ledger-outbox_user-1_chunk_") ||
+        key.startsWith("cloud-ledger-outbox_user-1_generation_")
+    )
     .sort();
 }
 

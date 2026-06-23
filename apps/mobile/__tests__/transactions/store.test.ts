@@ -4,9 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
   CloudLedgerOutboxFailure,
+  clearCloudLedgerRuntimeCache,
   createEmptyCloudLedgerCache,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
+  getCloudLedgerRuntimeCache,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
 } from "@/features/cloud-ledger/public";
@@ -310,6 +312,48 @@ describe("transaction boundaries", () => {
       categoryId: "food",
       description: "Groceries",
     });
+  });
+
+  it("does not repopulate Cloud Ledger runtime cache when create flush resolves after logout", async () => {
+    const flushedCache = applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+      cursor: "ledger:stale" as LedgerCursor,
+      categories: [],
+      financialAccounts: [],
+      transactions: [
+        {
+          id: "txn-stale-after-logout" as TransactionId,
+          type: "expense",
+          amount: 4520 as CopAmount,
+          currency: "COP",
+          categoryId: "food" as CategoryId,
+          accountId: "fa-default-user-1" as FinancialAccountId,
+          description: "Late flush",
+          date: "2026-03-04" as IsoDate,
+          updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        },
+      ],
+      tombstones: [],
+    });
+    let resolveFlush!: (cache: typeof flushedCache) => void;
+    const flushPromise = new Promise<typeof flushedCache>((resolve) => {
+      resolveFlush = resolve;
+    });
+    vi.mocked(flushPendingCloudLedgerChanges).mockReturnValueOnce(flushPromise);
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+    expect(result.success).toBe(true);
+    await vi.waitFor(() => {
+      expect(flushPendingCloudLedgerChanges).toHaveBeenCalledTimes(1);
+    });
+
+    clearCloudLedgerRuntimeCache(mockUserId);
+    resolveFlush(flushedCache);
+    await flushPromise;
+
+    expect(getCloudLedgerRuntimeCache(mockUserId).transactions).toEqual([]);
+    expect(getCloudLedgerRuntimeCache(mockUserId).cursor).toBeNull();
   });
 
   it("does not use Local Ledger account writes for manual Cloud Ledger creates", async () => {

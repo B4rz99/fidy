@@ -4,11 +4,13 @@ import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning } from "@/shared/lib";
 import {
+  beginCloudLedgerRuntimeCacheWrite,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   getCloudLedgerRuntimeCache,
   restoreOptimisticCloudLedgerCache,
   setCloudLedgerRuntimeCache,
+  setCloudLedgerRuntimeCacheIfCurrent,
 } from "./public";
 
 export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
@@ -49,8 +51,10 @@ export async function restoreCloudLedgerOptimisticState(
 export async function flushCloudLedgerOutboxForUser(
   userId: AuthenticatedBootstrapContext["userId"]
 ): Promise<void> {
-  setCloudLedgerRuntimeCache(
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+  setCloudLedgerRuntimeCacheIfCurrent(
     userId,
+    writeToken,
     await flushPendingCloudLedgerChanges({
       cache: getCloudLedgerRuntimeCache(userId),
       outbox: getCloudLedgerOutbox(userId),

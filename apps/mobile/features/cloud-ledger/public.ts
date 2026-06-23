@@ -21,11 +21,14 @@ export {
   withTransactionProjection,
 } from "./cache";
 export {
+  beginCloudLedgerRuntimeCacheWrite,
   clearCloudLedgerRuntimeCache,
   getCloudLedgerRuntimeCache,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
+  setCloudLedgerRuntimeCacheIfCurrent,
 } from "./runtime";
+export type { CloudLedgerRuntimeCacheWriteToken } from "./runtime";
 export type {
   CloudLedgerOutboxFailureCode,
   CloudLedgerPendingChange,
