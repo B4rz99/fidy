@@ -1,8 +1,11 @@
+import NetInfo from "@react-native-community/netinfo";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
   CloudLedgerOutboxFailure,
   createEmptyCloudLedgerCache,
+  flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
@@ -26,6 +29,7 @@ import {
 } from "@/features/transactions/store";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type { AnyDb } from "@/shared/db";
+import { getSupabase } from "@/shared/db/supabase";
 import { toIsoDate } from "@/shared/lib";
 import type {
   CategoryId,
@@ -58,6 +62,9 @@ vi.mock("@/features/cloud-ledger/public", async () => {
       cloudLedgerOutboxCalls.push(input);
       return Promise.resolve(input.cache);
     }),
+    flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>((input) =>
+      Promise.resolve(input.cache)
+    ),
     getCloudLedgerOutbox: vi.fn(() => ({
       clear: vi.fn<(...args: any[]) => any>(),
       enqueue: vi.fn<(...args: any[]) => any>(),
@@ -66,6 +73,10 @@ vi.mock("@/features/cloud-ledger/public", async () => {
     })),
   };
 });
+
+vi.mock("@/shared/db/supabase", () => ({
+  getSupabase: vi.fn<(...args: any[]) => any>(),
+}));
 
 const insertedTransactionRows: unknown[] = [];
 let canUseSelectedAccount = true;
@@ -169,9 +180,23 @@ function createMockCloudLedgerOutbox(
   };
 }
 
+function createMockSupabase(): SupabaseClient {
+  const supabase = {
+    auth: {
+      getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+        data: { session: { access_token: "ledger-access-token" } },
+        error: null,
+      }),
+    },
+  };
+  return supabase as unknown as SupabaseClient;
+}
+
 describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(NetInfo.fetch).mockResolvedValue({ isConnected: true } as never);
+    vi.mocked(getSupabase).mockReturnValue(createMockSupabase());
     vi.mocked(getCloudLedgerOutbox).mockImplementation(() => createMockCloudLedgerOutbox());
     insertedTransactionRows.length = 0;
     cloudLedgerOutboxCalls.length = 0;
@@ -253,6 +278,33 @@ describe("transaction boundaries", () => {
     ]);
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
     expect(getSpendingByCategoryAggregate).not.toHaveBeenCalled();
+    expect(useTransactionStore.getState().pages[0]).toMatchObject({
+      amount: 4520,
+      categoryId: "food",
+      description: "Groceries",
+    });
+  });
+
+  it("flushes the encrypted Cloud Ledger outbox after an already-online signed-in create", async () => {
+    const outbox = createMockCloudLedgerOutbox();
+    const supabase = createMockSupabase();
+    vi.mocked(getCloudLedgerOutbox).mockReturnValue(outbox);
+    vi.mocked(getSupabase).mockReturnValue(supabase);
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    useTransactionStore.getState().setDescription("Groceries");
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result.success).toBe(true);
+    expect(cloudLedgerOutboxCalls).toHaveLength(1);
+    await vi.waitFor(() => {
+      expect(flushPendingCloudLedgerChanges).toHaveBeenCalledWith({
+        cache: expect.any(Object),
+        outbox,
+        supabase,
+      });
+    });
     expect(useTransactionStore.getState().pages[0]).toMatchObject({
       amount: 4520,
       categoryId: "food",

@@ -1,11 +1,14 @@
+import NetInfo from "@react-native-community/netinfo";
 import type { AnyDb } from "@/shared/db";
 import {
   type CloudLedgerCreateTransactionCommand,
   createOfflineCloudLedgerTransaction,
+  flushPendingCloudLedgerChanges,
   getCloudLedgerRuntimeCache,
   getCloudLedgerOutbox,
   setCloudLedgerRuntimeCache,
 } from "@/features/cloud-ledger/public";
+import { getSupabase } from "@/shared/db/supabase";
 import {
   captureWarning,
   generateLedgerChangeId,
@@ -162,6 +165,11 @@ async function recordManualTransactionWithCloudLedger({
     outbox: getCloudLedgerOutbox(userId),
   });
   setCloudLedgerRuntimeCache(userId, optimisticCache);
+  void flushCloudLedgerOutboxAfterCreate(userId).catch((error) => {
+    captureWarning("cloud_ledger_outbox_flush_failed", {
+      errorType: getErrorType(error),
+    });
+  });
 
   return {
     success: true,
@@ -172,6 +180,24 @@ async function recordManualTransactionWithCloudLedger({
       now,
     }),
   };
+}
+
+async function flushCloudLedgerOutboxAfterCreate(userId: UserId): Promise<void> {
+  const networkState = await NetInfo.fetch();
+  if (networkState.isConnected !== true) return;
+
+  const supabase = getSupabase();
+  const sessionResult = await supabase.auth.getSession();
+  if (sessionResult.error != null || sessionResult.data.session == null) return;
+
+  setCloudLedgerRuntimeCache(
+    userId,
+    await flushPendingCloudLedgerChanges({
+      cache: getCloudLedgerRuntimeCache(userId),
+      outbox: getCloudLedgerOutbox(userId),
+      supabase,
+    })
+  );
 }
 
 function validateCloudLedgerManualTransaction(
