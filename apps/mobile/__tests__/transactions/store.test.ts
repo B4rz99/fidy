@@ -328,6 +328,44 @@ describe("transaction boundaries", () => {
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });
 
+  it("does not count newly created optimistic Cloud Ledger rows when loading the next committed page", async () => {
+    const committedPages = Array.from({ length: 30 }, (_, index) =>
+      makeStoredTransaction({ id: `tx-committed-${index}` as TransactionId })
+    );
+    const committedRows = Array.from({ length: 35 }, (_, index) =>
+      makeRow({
+        id: `tx-committed-${index}` as TransactionId,
+        createdAt: `2026-03-04T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+        updatedAt: `2026-03-04T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+      })
+    );
+    useTransactionStore.setState({
+      pages: committedPages,
+      offset: committedPages.length,
+      hasMore: true,
+    });
+    vi.mocked(getTransactionsPaginated).mockImplementationOnce(({ limit, offset }) =>
+      committedRows.slice(offset, offset + limit + 1)
+    );
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+    expect(result.success).toBe(true);
+
+    await loadNextTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).toContain(
+      "tx-committed-30"
+    );
+    expect(getTransactionsPaginated).toHaveBeenLastCalledWith({
+      db: mockDb,
+      userId: mockUserId,
+      limit: 30,
+      offset: 30,
+    });
+  });
+
   it("keeps pending Cloud Ledger creates visible when transactions refresh before flush", async () => {
     const loadOutbox = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
     vi.mocked(getCloudLedgerOutbox).mockReturnValue(createMockCloudLedgerOutbox(loadOutbox));
@@ -488,6 +526,49 @@ describe("transaction boundaries", () => {
     });
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("does not count restored optimistic Cloud Ledger rows when loading the next committed page", async () => {
+    const committedRows = Array.from({ length: 35 }, (_, index) =>
+      makeRow({
+        id: `tx-committed-${index}` as TransactionId,
+        createdAt: `2026-03-04T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+        updatedAt: `2026-03-04T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+      })
+    );
+    const pendingTransaction = makeStoredTransaction({
+      id: "tx-pending-cloud-ledger" as TransactionId,
+    });
+    const loadCommittedPage = ({
+      limit,
+      offset,
+    }: {
+      readonly limit: number;
+      readonly offset: number;
+    }) => committedRows.slice(offset, offset + limit + 1);
+    vi.mocked(getTransactionsPaginated)
+      .mockImplementationOnce(loadCommittedPage)
+      .mockImplementationOnce(loadCommittedPage);
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(
+        vi
+          .fn<(...args: any[]) => any>()
+          .mockResolvedValue([pendingCreateFromStoredTransaction(pendingTransaction)])
+      )
+    );
+
+    await loadInitialTransactions(mockDb, mockUserId);
+    await loadNextTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).toContain(
+      "tx-committed-30"
+    );
+    expect(getTransactionsPaginated).toHaveBeenLastCalledWith({
+      db: mockDb,
+      userId: mockUserId,
+      limit: 30,
+      offset: 30,
+    });
   });
 
   it("loads accepted reconciled Cloud Ledger transactions after pending outbox removal", async () => {

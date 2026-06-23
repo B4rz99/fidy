@@ -75,7 +75,7 @@ function prependCloudLedgerTransaction(
     snapshot: {
       ...snapshot,
       pages: [transaction, ...pagesWithoutTransaction],
-      offset: didInsert ? snapshot.offset + 1 : snapshot.offset,
+      offset: snapshot.offset,
     },
     didInsert,
   };

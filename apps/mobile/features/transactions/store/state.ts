@@ -69,7 +69,7 @@ export type TransactionActions = {
   setAggregateSnapshot: (snapshot: TransactionAggregateSnapshot) => void;
   applyRefreshSnapshot: (snapshot: TransactionRefreshSnapshot) => void;
   hydrateEditingTransaction: (id: TransactionId, transaction: StoredTransaction) => void;
-  addToCache: (tx: StoredTransaction) => void;
+  addToCache: (tx: StoredTransaction, options?: { readonly countInPagination?: boolean }) => void;
   removeFromCache: (id: TransactionId) => void;
   resetForm: () => void;
 };

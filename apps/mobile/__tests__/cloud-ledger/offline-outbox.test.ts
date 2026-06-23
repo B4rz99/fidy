@@ -199,25 +199,9 @@ describe("mobile Cloud Ledger offline outbox", () => {
       secureStore.set(key, value);
       return Promise.resolve();
     });
-    const pendingChanges = Array.from({ length: 12 }, (_, index) => ({
-      changeId: requireLedgerChangeId(`change-large-pending-${index}`),
-      command: largeOfflineCommand(index),
-      createdAt: requireIsoDateTime(`2026-06-02T10:${String(index).padStart(2, "0")}:00.000Z`),
-    }));
+    const pendingChanges = createLargePendingChanges();
 
-    await pendingChanges.reduce<Promise<void>>(
-      (previous, pending) =>
-        previous.then(async () => {
-          await createOfflineCloudLedgerTransaction({
-            cache: createSeededLedgerCache(),
-            changeId: pending.changeId,
-            command: pending.command,
-            createdAt: pending.createdAt,
-            outbox: getCloudLedgerOutbox(USER_ID),
-          });
-        }),
-      Promise.resolve()
-    );
+    await enqueueCloudLedgerPendingChanges(pendingChanges);
 
     resetCloudLedgerOutboxInstances();
     const restored = await getCloudLedgerOutbox(USER_ID).load();
@@ -231,6 +215,48 @@ describe("mobile Cloud Ledger offline outbox", () => {
         .every(([, value]) => value.length <= SECURE_STORE_VALUE_LIMIT_BYTES)
     ).toBe(true);
     expect(JSON.stringify([...secureStore.entries()])).not.toContain("Large offline purchase");
+  });
+
+  it("removes stale encrypted chunks when a large payload is overwritten with a smaller one", async () => {
+    const pendingChanges = createLargePendingChanges();
+    await enqueueCloudLedgerPendingChanges(pendingChanges);
+    expect(secureStoreOutboxChunkKeys()).toContain("cloud-ledger-outbox_user-1_chunk_1");
+
+    await getCloudLedgerOutbox(USER_ID).remove(
+      pendingChanges.slice(1).map((pending) => pending.changeId)
+    );
+
+    expect(secureStoreOutboxChunkKeys()).toEqual(["cloud-ledger-outbox_user-1_chunk_0"]);
+    expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual(
+      pendingChanges.slice(0, 1).map((pending) => pending.changeId)
+    );
+  });
+
+  it("removes stale encrypted payload chunks on logout after a failed smaller overwrite cleanup", async () => {
+    const pendingChanges = createLargePendingChanges();
+    await enqueueCloudLedgerPendingChanges(pendingChanges);
+    expect(secureStoreOutboxChunkKeys()).toContain("cloud-ledger-outbox_user-1_chunk_1");
+
+    let failStaleChunkCleanup = true;
+    vi.mocked(SecureStore.deleteItemAsync).mockImplementation((key: string) => {
+      if (failStaleChunkCleanup && key === "cloud-ledger-outbox_user-1_chunk_1") {
+        return Promise.reject(new Error("simulated stale chunk cleanup failure"));
+      }
+      secureStore.delete(key);
+      return Promise.resolve();
+    });
+
+    await expect(
+      getCloudLedgerOutbox(USER_ID).remove(
+        pendingChanges.slice(1).map((pending) => pending.changeId)
+      )
+    ).resolves.toBeUndefined();
+    expect(secureStoreOutboxChunkKeys()).toContain("cloud-ledger-outbox_user-1_chunk_1");
+
+    failStaleChunkCleanup = false;
+    await discardCloudLedgerOutbox(USER_ID);
+
+    expect([...secureStore.keys()]).toEqual([]);
   });
 
   it("discards persisted encrypted outbox state and keys on logout", async () => {
@@ -366,6 +392,38 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(storage.readRaw()).not.toBeNull();
   });
 });
+
+function secureStoreOutboxChunkKeys() {
+  return [...secureStore.keys()]
+    .filter((key) => key.startsWith("cloud-ledger-outbox_user-1_chunk_"))
+    .sort();
+}
+
+function createLargePendingChanges() {
+  return Array.from({ length: 12 }, (_, index) => ({
+    changeId: requireLedgerChangeId(`change-large-pending-${index}`),
+    command: largeOfflineCommand(index),
+    createdAt: requireIsoDateTime(`2026-06-02T10:${String(index).padStart(2, "0")}:00.000Z`),
+  }));
+}
+
+async function enqueueCloudLedgerPendingChanges(
+  pendingChanges: readonly ReturnType<typeof createLargePendingChanges>[number][]
+): Promise<void> {
+  await pendingChanges.reduce<Promise<void>>(
+    (previous, pending) =>
+      previous.then(async () => {
+        await createOfflineCloudLedgerTransaction({
+          cache: createSeededLedgerCache(),
+          changeId: pending.changeId,
+          command: pending.command,
+          createdAt: pending.createdAt,
+          outbox: getCloudLedgerOutbox(USER_ID),
+        });
+      }),
+    Promise.resolve()
+  );
+}
 
 function createMemoryOutboxStorage() {
   let stored: EncryptedCloudLedgerOutboxSnapshot | null = null;

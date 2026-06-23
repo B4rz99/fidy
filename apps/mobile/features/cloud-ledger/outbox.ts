@@ -62,6 +62,7 @@ type ChunkedSecureStoreOutboxManifest = {
   readonly version: typeof CLOUD_LEDGER_OUTBOX_VERSION;
   readonly storage: typeof CHUNKED_SECURE_STORE_OUTBOX_STORAGE;
   readonly chunkCount: number;
+  readonly allocatedChunkCount: number;
 };
 
 const CLOUD_LEDGER_OUTBOX_VERSION = 1;
@@ -498,13 +499,21 @@ function parseChunkedOutboxManifest(value: string | null): ChunkedSecureStoreOut
       return null;
     }
     const chunkCount = requireNumber(record.chunkCount, "chunk count");
+    const allocatedChunkCount =
+      record.allocatedChunkCount === undefined
+        ? chunkCount
+        : requireNumber(record.allocatedChunkCount, "allocated chunk count");
     if (!Number.isInteger(chunkCount) || chunkCount < 0) {
       throw new Error("chunk count must be a non-negative integer");
+    }
+    if (!Number.isInteger(allocatedChunkCount) || allocatedChunkCount < chunkCount) {
+      throw new Error("allocated chunk count must cover active chunks");
     }
     return {
       version: requireOutboxVersion(record.version),
       storage: CHUNKED_SECURE_STORE_OUTBOX_STORAGE,
       chunkCount,
+      allocatedChunkCount,
     };
   } catch {
     return null;
@@ -536,6 +545,7 @@ async function readSecureStoreOutboxPayload(key: string): Promise<string | null>
 async function writeSecureStoreOutboxPayload(key: string, payload: string): Promise<void> {
   const previousManifest = parseChunkedOutboxManifest(await SecureStore.getItemAsync(key));
   const chunks = chunkString(payload);
+  const allocatedChunkCount = Math.max(previousManifest?.allocatedChunkCount ?? 0, chunks.length);
   await Promise.all(
     chunks.map((chunk, index) =>
       SecureStore.setItemAsync(secureStoreOutboxChunkKey(key, index), chunk)
@@ -547,23 +557,32 @@ async function writeSecureStoreOutboxPayload(key: string, payload: string): Prom
       version: CLOUD_LEDGER_OUTBOX_VERSION,
       storage: CHUNKED_SECURE_STORE_OUTBOX_STORAGE,
       chunkCount: chunks.length,
+      allocatedChunkCount,
     } satisfies ChunkedSecureStoreOutboxManifest)
   );
-  await Promise.all(
-    chunkIndexes(Math.max(0, (previousManifest?.chunkCount ?? 0) - chunks.length)).map((offset) =>
-      SecureStore.deleteItemAsync(secureStoreOutboxChunkKey(key, chunks.length + offset))
-    )
-  );
+  await cleanupSecureStoreOutboxChunks(key, chunks.length, allocatedChunkCount);
 }
 
 async function clearSecureStoreOutboxPayload(key: string): Promise<void> {
   const manifest = parseChunkedOutboxManifest(await SecureStore.getItemAsync(key));
   await Promise.all([
     SecureStore.deleteItemAsync(key),
-    ...chunkIndexes(manifest?.chunkCount ?? 0).map((index) =>
+    ...chunkIndexes(manifest?.allocatedChunkCount ?? 0).map((index) =>
       SecureStore.deleteItemAsync(secureStoreOutboxChunkKey(key, index))
     ),
   ]);
+}
+
+async function cleanupSecureStoreOutboxChunks(
+  key: string,
+  activeChunkCount: number,
+  allocatedChunkCount: number
+): Promise<void> {
+  await Promise.all(
+    chunkIndexes(Math.max(0, allocatedChunkCount - activeChunkCount)).map((offset) =>
+      SecureStore.deleteItemAsync(secureStoreOutboxChunkKey(key, activeChunkCount + offset))
+    )
+  ).catch(() => undefined);
 }
 
 function parseEncryptedOutboxSnapshot(

@@ -134,7 +134,7 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
     },
     cacheCommittedTransaction: (transaction) => {
       if (!isActiveTransactionSession(userId, sessionId)) return;
-      useTransactionStore.getState().addToCache(transaction);
+      useTransactionStore.getState().addToCache(transaction, { countInPagination: false });
     },
     refreshAfterSave: false,
     resetForm: () => {

@@ -101,15 +101,16 @@ export function createHydrateEditingTransaction(
 }
 
 export function addTransactionToCache(set: TransactionSetState): TransactionActions["addToCache"] {
-  return function addToCache(transaction) {
+  return function addToCache(transaction, options) {
     const now = new Date();
+    const countInPagination = options?.countInPagination ?? true;
     set((state) => {
       const isMonthlyExpense = isCurrentMonthExpense(transaction, now);
       const isDailyExpense = isRecentDailyExpense(transaction, now);
 
       return {
         pages: [transaction, ...state.pages],
-        offset: state.offset + 1,
+        offset: countInPagination ? state.offset + 1 : state.offset,
         balance: isMonthlyExpense ? state.balance + transaction.amount : state.balance,
         categorySpending: isMonthlyExpense
           ? upsertCategorySpending(state.categorySpending, transaction)
