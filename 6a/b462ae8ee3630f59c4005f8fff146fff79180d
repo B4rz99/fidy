@@ -1,0 +1,36 @@
+apps/mobile/__tests__/capture-sources/capture-improvement-template-shape-policy.test.ts
+  s_d585a7fa922fba::t_bd53113afb9ff7 26-29,34-37
+supabase/functions/cloud-ledger-api/capture-improvement-template-shape-policy.ts
+  s_d585a7fa922fba::t_9431c314198e23 21
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_b8c10f3780b398 21-24,162-187,189-192
+apps/mobile/supabase/migrations/20260623170000_capture_improvement_opt_out_serialization.sql
+  s_d585a7fa922fba::t_3da63f35c43258 1-179
+apps/mobile/__tests__/capture-sources/notification-parse-improvement.test.ts
+  s_d585a7fa922fba::t_649a68c2440fde 135
+  s_d585a7fa922fba::t_ac50551bfd3f91 143
+apps/mobile/features/capture-sources/lib/capture-improvement-template-shape-policy.ts
+  s_d585a7fa922fba::t_fb01273718ec85 21
+apps/mobile/__tests__/capture-sources/notification-parse-improvement-repository.test.ts
+  s_d585a7fa922fba::t_dea69d8f1052b2 243
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_04991ec90cca88 436
+apps/mobile/features/capture-sources/lib/notification-parse-improvement.ts
+  s_d585a7fa922fba::t_fbc644480fd0c5 54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "6ab462ae8ee3630f59c4005f8fff146fff79180d",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
