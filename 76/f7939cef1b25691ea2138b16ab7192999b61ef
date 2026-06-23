@@ -1,0 +1,69 @@
+apps/mobile/features/email-capture/services/parse-email-service.ts
+  s_2ea9ccf55a8cc2::t_e48fbfa7ea6a64 13-18
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_2ea9ccf55a8cc2::t_6988c889d0d4ca 87-91,125-130,176-178,181-184
+  s_2ea9ccf55a8cc2::t_ac849ccec2ec99 99-101,111-112,115
+  s_2ea9ccf55a8cc2::t_78a24fc478230b 110,114
+  s_2ea9ccf55a8cc2::t_a66b7f1e9c4399 136,142-148,155-162,168-174
+  s_2ea9ccf55a8cc2::t_f54e3ac14d59b2 12-14,40-42,134,179
+  s_2ea9ccf55a8cc2::t_2811dc8f36a665 117,120,123,132,137,139-140,149,151-153,163,165-166,180
+  s_2ea9ccf55a8cc2::t_facf352a0eeb17 105-109,113
+  s_2ea9ccf55a8cc2::t_e4aeca7541aedd 98,131,175,192-193
+  s_2ea9ccf55a8cc2::t_0320540ec32dce 102-104
+  s_2ea9ccf55a8cc2::t_8a3fb2eb9ef5e7 133,135,138,141,150,154,164,167
+apps/mobile/features/advisor/financial-context-packet.ts
+  s_2ea9ccf55a8cc2::t_90d179916c962a 172,214-225,231-236
+apps/mobile/features/email-capture/services/create-parse-email-service.ts
+  s_2ea9ccf55a8cc2::t_e48fbfa7ea6a64 195
+  s_2ea9ccf55a8cc2::t_b563ecacc964c5 51-58,159,196-197,199-202
+  s_2ea9ccf55a8cc2::t_a66b7f1e9c4399 160-161
+apps/mobile/__tests__/email-capture/parse-email-service-wiring.test.ts
+  s_2ea9ccf55a8cc2::t_bf45713f6b7b54 23-29,39-43,53-59
+supabase/functions/ai-chat/financial-context-packet.ts
+  s_2ea9ccf55a8cc2::t_7b38184bc72883 153-154
+  s_2ea9ccf55a8cc2::t_6b087119ff4228 131-132
+  s_2ea9ccf55a8cc2::t_37512858ffc466 290,297,302,316,320,325-327,330
+  s_2ea9ccf55a8cc2::t_90d179916c962a 95,288
+apps/mobile/__tests__/advisor/financial-context-packet.test.ts
+  s_2ea9ccf55a8cc2::t_d49432e0bb6910 156-189
+apps/mobile/__tests__/capture-sources/parse-notification-api.test.ts
+  s_2ea9ccf55a8cc2::t_dde67a3f61c388 10
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_2ea9ccf55a8cc2::t_3d734cd250672a 112-115,121,123,125-126,139-140
+apps/mobile/__tests__/edge-functions/ai-chat-context-packet.test.ts
+  s_2ea9ccf55a8cc2::t_1aaf87c0cbb9ff 14-23,298-300
+  s_2ea9ccf55a8cc2::t_0dc5c4209090fe 297,311-315
+  s_2ea9ccf55a8cc2::t_baa36b5e441f4f 25-52,54,56-67,69,71-100,199,211,214
+  s_2ea9ccf55a8cc2::t_b6b02538f5835f 24,53,55,68,70,201-204,206-209,212-213
+  s_2ea9ccf55a8cc2::t_443d17166fb8ba 102,136-147
+  s_2ea9ccf55a8cc2::t_61a2fa92a7e491 160
+  s_2ea9ccf55a8cc2::t_31c4c09070fbb4 216,234-245
+apps/mobile/__tests__/email-capture/parse-email-service.test.ts
+  s_2ea9ccf55a8cc2::t_7d2b6d820c0fb3 186,216
+apps/mobile/features/capture-sources/services/parse-notification-api.ts
+  s_2ea9ccf55a8cc2::t_e48fbfa7ea6a64 4,27
+apps/mobile/features/email-capture/parse-service.public.ts
+  s_2ea9ccf55a8cc2::t_dde67a3f61c388 5
+apps/mobile/__tests__/ai-chat/streaming-service.test.ts
+  s_2ea9ccf55a8cc2::t_f458f324362d6e 228-266
+apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts
+  s_2ea9ccf55a8cc2::t_7b38184bc72883 90-91
+package.json
+  s_2ea9ccf55a8cc2::t_fd33ca72c91307 57-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.10",
+  "base_commit_sha": "76f7939cef1b25691ea2138b16ab7192999b61ef",
+  "prompts": {},
+  "sessions": {
+    "s_2ea9ccf55a8cc2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-65f4-7b42-8583-1ff0c1af5417",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
