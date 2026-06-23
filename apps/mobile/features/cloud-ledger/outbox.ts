@@ -58,11 +58,18 @@ type CloudLedgerOutboxSnapshot = {
   readonly version: typeof CLOUD_LEDGER_OUTBOX_VERSION;
   readonly changes: readonly CloudLedgerPendingChange[];
 };
+type ChunkedSecureStoreOutboxManifest = {
+  readonly version: typeof CLOUD_LEDGER_OUTBOX_VERSION;
+  readonly storage: typeof CHUNKED_SECURE_STORE_OUTBOX_STORAGE;
+  readonly chunkCount: number;
+};
 
 const CLOUD_LEDGER_OUTBOX_VERSION = 1;
 const GCM_NONCE_BYTES = 12;
 const OUTBOX_KEY_BYTES = 32;
 const OUTBOX_KEY_PATTERN = /^[0-9a-f]{64}$/;
+const SECURE_STORE_OUTBOX_CHUNK_SIZE = 1500;
+const CHUNKED_SECURE_STORE_OUTBOX_STORAGE = "chunked-secure-store";
 const outboxesByUserId = new Map<string, EncryptedCloudLedgerOutbox>();
 
 export class CloudLedgerOutboxFailure extends Error {
@@ -157,9 +164,9 @@ export function createSecureStoreCloudLedgerOutboxStorage(
 ): EncryptedCloudLedgerOutboxStorage {
   const key = secureStoreOutboxKey(userId);
   return {
-    clear: async () => SecureStore.deleteItemAsync(key),
-    read: async () => parseEncryptedOutboxSnapshot(await SecureStore.getItemAsync(key)),
-    write: async (snapshot) => SecureStore.setItemAsync(key, JSON.stringify(snapshot)),
+    clear: () => clearSecureStoreOutboxPayload(key),
+    read: async () => parseEncryptedOutboxSnapshot(await readSecureStoreOutboxPayload(key)),
+    write: (snapshot) => writeSecureStoreOutboxPayload(key, JSON.stringify(snapshot)),
   };
 }
 
@@ -440,12 +447,22 @@ function toPlainBufferSource(value: Uint8Array): BufferSource {
   return copy;
 }
 
+function toSecureStoreKeyFragment(value: string): string {
+  return encodeURIComponent(value)
+    .replaceAll("%", "_")
+    .replaceAll(/[^A-Za-z0-9._-]/g, "_");
+}
+
 function secureStoreOutboxKey(userId: UserId): string {
-  return `cloud-ledger-outbox:${encodeURIComponent(userId)}`;
+  return `cloud-ledger-outbox_${toSecureStoreKeyFragment(userId)}`;
 }
 
 function secureStoreOutboxEncryptionKey(userId: UserId): string {
-  return `cloud-ledger-outbox-key:${encodeURIComponent(userId)}`;
+  return `cloud-ledger-outbox-key_${toSecureStoreKeyFragment(userId)}`;
+}
+
+function secureStoreOutboxChunkKey(key: string, index: number): string {
+  return `${key}_chunk_${index}`;
 }
 
 function getOrCreateOutboxEncryptionKey(userId: UserId): Uint8Array {
@@ -458,6 +475,95 @@ function getOrCreateOutboxEncryptionKey(userId: UserId): Uint8Array {
   const bytes = Crypto.getRandomBytes(OUTBOX_KEY_BYTES);
   SecureStore.setItem(key, toHex(bytes));
   return bytes;
+}
+
+function chunkString(value: string): readonly string[] {
+  return Array.from(
+    { length: Math.ceil(value.length / SECURE_STORE_OUTBOX_CHUNK_SIZE) },
+    (_, index) =>
+      value.slice(
+        index * SECURE_STORE_OUTBOX_CHUNK_SIZE,
+        (index + 1) * SECURE_STORE_OUTBOX_CHUNK_SIZE
+      )
+  );
+}
+
+function parseChunkedOutboxManifest(value: string | null): ChunkedSecureStoreOutboxManifest | null {
+  if (value === null) {
+    return null;
+  }
+  try {
+    const record = requireRecord(JSON.parse(value), "chunked outbox manifest");
+    if (record.storage !== CHUNKED_SECURE_STORE_OUTBOX_STORAGE) {
+      return null;
+    }
+    const chunkCount = requireNumber(record.chunkCount, "chunk count");
+    if (!Number.isInteger(chunkCount) || chunkCount < 0) {
+      throw new Error("chunk count must be a non-negative integer");
+    }
+    return {
+      version: requireOutboxVersion(record.version),
+      storage: CHUNKED_SECURE_STORE_OUTBOX_STORAGE,
+      chunkCount,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function chunkIndexes(chunkCount: number): readonly number[] {
+  return Array.from({ length: chunkCount }, (_, index) => index);
+}
+
+async function readSecureStoreOutboxPayload(key: string): Promise<string | null> {
+  const stored = await SecureStore.getItemAsync(key);
+  const manifest = parseChunkedOutboxManifest(stored);
+  if (manifest === null) {
+    return stored;
+  }
+
+  const chunks = await Promise.all(
+    chunkIndexes(manifest.chunkCount).map((index) =>
+      SecureStore.getItemAsync(secureStoreOutboxChunkKey(key, index))
+    )
+  );
+  if (chunks.some((chunk) => chunk === null)) {
+    throw new Error("encrypted outbox chunk is missing");
+  }
+  return chunks.join("");
+}
+
+async function writeSecureStoreOutboxPayload(key: string, payload: string): Promise<void> {
+  const previousManifest = parseChunkedOutboxManifest(await SecureStore.getItemAsync(key));
+  const chunks = chunkString(payload);
+  await Promise.all(
+    chunks.map((chunk, index) =>
+      SecureStore.setItemAsync(secureStoreOutboxChunkKey(key, index), chunk)
+    )
+  );
+  await SecureStore.setItemAsync(
+    key,
+    JSON.stringify({
+      version: CLOUD_LEDGER_OUTBOX_VERSION,
+      storage: CHUNKED_SECURE_STORE_OUTBOX_STORAGE,
+      chunkCount: chunks.length,
+    } satisfies ChunkedSecureStoreOutboxManifest)
+  );
+  await Promise.all(
+    chunkIndexes(Math.max(0, (previousManifest?.chunkCount ?? 0) - chunks.length)).map((offset) =>
+      SecureStore.deleteItemAsync(secureStoreOutboxChunkKey(key, chunks.length + offset))
+    )
+  );
+}
+
+async function clearSecureStoreOutboxPayload(key: string): Promise<void> {
+  const manifest = parseChunkedOutboxManifest(await SecureStore.getItemAsync(key));
+  await Promise.all([
+    SecureStore.deleteItemAsync(key),
+    ...chunkIndexes(manifest?.chunkCount ?? 0).map((index) =>
+      SecureStore.deleteItemAsync(secureStoreOutboxChunkKey(key, index))
+    ),
+  ]);
 }
 
 function parseEncryptedOutboxSnapshot(

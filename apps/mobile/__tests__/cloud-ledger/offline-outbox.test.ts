@@ -31,6 +31,8 @@ import {
 
 const OUTBOX_KEY = new Uint8Array(Array.from({ length: 32 }, (_, index) => index + 1));
 const USER_ID = requireUserId("user-1");
+const SECURE_STORE_KEY_PATTERN = /^[A-Za-z0-9._-]+$/;
+const SECURE_STORE_VALUE_LIMIT_BYTES = 2048;
 const secureStore = new Map<string, string>();
 
 beforeEach(() => {
@@ -165,6 +167,72 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(JSON.stringify([...secureStore.entries()])).not.toContain("txn-20260622-client");
   });
 
+  it("uses SecureStore-compatible key names for encrypted outbox state and key material", async () => {
+    const userId = requireUserId("user:1/with spaces@example.com");
+    vi.mocked(SecureStore.setItem).mockImplementation((key: string, value: string) => {
+      expect(key).toMatch(SECURE_STORE_KEY_PATTERN);
+      secureStore.set(key, value);
+    });
+    vi.mocked(SecureStore.setItemAsync).mockImplementation((key: string, value: string) => {
+      expect(key).toMatch(SECURE_STORE_KEY_PATTERN);
+      secureStore.set(key, value);
+      return Promise.resolve();
+    });
+
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-secure-store-key-safe"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(userId),
+    });
+
+    expect([...secureStore.keys()]).not.toHaveLength(0);
+    expect([...secureStore.keys()].every((key) => SECURE_STORE_KEY_PATTERN.test(key))).toBe(true);
+  });
+
+  it("persists large encrypted pending outbox payloads beyond SecureStore single-value limits", async () => {
+    vi.mocked(SecureStore.setItemAsync).mockImplementation((key: string, value: string) => {
+      if (value.length > SECURE_STORE_VALUE_LIMIT_BYTES) {
+        return Promise.reject(new Error("SecureStore value exceeds native limit"));
+      }
+      secureStore.set(key, value);
+      return Promise.resolve();
+    });
+    const pendingChanges = Array.from({ length: 12 }, (_, index) => ({
+      changeId: requireLedgerChangeId(`change-large-pending-${index}`),
+      command: largeOfflineCommand(index),
+      createdAt: requireIsoDateTime(`2026-06-02T10:${String(index).padStart(2, "0")}:00.000Z`),
+    }));
+
+    await pendingChanges.reduce<Promise<void>>(
+      (previous, pending) =>
+        previous.then(async () => {
+          await createOfflineCloudLedgerTransaction({
+            cache: createSeededLedgerCache(),
+            changeId: pending.changeId,
+            command: pending.command,
+            createdAt: pending.createdAt,
+            outbox: getCloudLedgerOutbox(USER_ID),
+          });
+        }),
+      Promise.resolve()
+    );
+
+    resetCloudLedgerOutboxInstances();
+    const restored = await getCloudLedgerOutbox(USER_ID).load();
+
+    expect(restored.map((change) => change.id)).toEqual(
+      pendingChanges.map((pending) => pending.changeId)
+    );
+    expect(
+      [...secureStore.entries()]
+        .filter(([key]) => key.includes("cloud-ledger-outbox"))
+        .every(([, value]) => value.length <= SECURE_STORE_VALUE_LIMIT_BYTES)
+    ).toBe(true);
+    expect(JSON.stringify([...secureStore.entries()])).not.toContain("Large offline purchase");
+  });
+
   it("discards persisted encrypted outbox state and keys on logout", async () => {
     await createOfflineCloudLedgerTransaction({
       cache: createSeededLedgerCache(),
@@ -175,8 +243,13 @@ describe("mobile Cloud Ledger offline outbox", () => {
     });
 
     expect([...secureStore.keys()]).toEqual(
-      expect.arrayContaining(["cloud-ledger-outbox:user-1", "cloud-ledger-outbox-key:user-1"])
+      expect.arrayContaining([
+        "cloud-ledger-outbox_user-1",
+        "cloud-ledger-outbox_user-1_chunk_0",
+        "cloud-ledger-outbox-key_user-1",
+      ])
     );
+    expect([...secureStore.keys()].every((key) => SECURE_STORE_KEY_PATTERN.test(key))).toBe(true);
 
     await discardCloudLedgerOutbox(USER_ID);
 
@@ -368,6 +441,23 @@ function offlineTaxiCommand() {
       categoryId: requireCategoryId("cat-groceries"),
       accountId: requireFinancialAccountId("acct-cash"),
       description: "Taxi",
+      date: requireIsoDate("2026-06-02"),
+    },
+  } as const;
+}
+
+function largeOfflineCommand(index: number) {
+  const suffix = String(index).padStart(2, "0");
+  return {
+    commandVersion: 1,
+    transaction: {
+      id: requireTransactionId(`txn-large-offline-${suffix}`),
+      type: "expense",
+      amount: requireCopAmount(10_000 + index),
+      currency: "COP",
+      categoryId: requireCategoryId("cat-groceries"),
+      accountId: requireFinancialAccountId("acct-cash"),
+      description: `Large offline purchase ${suffix} ${"x".repeat(150)}`,
       date: requireIsoDate("2026-06-02"),
     },
   } as const;
