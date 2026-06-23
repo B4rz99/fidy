@@ -1,0 +1,28 @@
+supabase/functions/cloud-ledger-api/handler.ts
+  s_d585a7fa922fba::t_922953572a1c2b 50-53,105-107,115-117,121-123,254-259
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_06863fe12f10d6 303-325,556-575
+  s_d585a7fa922fba::t_6e3245ab28a344 511-533,576
+apps/mobile/supabase/migrations/20260622230000_capture_improvement_sender_domain_scrub.sql
+  s_d585a7fa922fba::t_92ac00bd1348ff 1-126
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_2d0566b9956057 17-20,133-134,139,143-144,152-156
+  s_d585a7fa922fba::t_4c6aa6ee6019fe 145
+  s_d585a7fa922fba::t_f13012331f20cb 135-138,140-142,146-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.10",
+  "base_commit_sha": "99282c04298e2fb7f9e59a7a4b66126d2571a56b",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
