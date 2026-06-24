@@ -58,7 +58,7 @@ describe("shareEmailParseImprovementRequests", () => {
     mockFlushPendingEmailParseImprovementSamples.mockResolvedValue({ shared: 1, failed: 0 });
   });
 
-  it("does not enqueue or flush samples when sharing is disabled", async () => {
+  it("does not enqueue, flush, or delete samples when disabled sharing is not authoritative", async () => {
     await shareEmailParseImprovementRequests({
       db,
       enabled: false,
@@ -68,6 +68,7 @@ describe("shareEmailParseImprovementRequests", () => {
 
     expect(mockEnqueueEmailParseImprovementRequests).not.toHaveBeenCalled();
     expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
   });
 
   it("retries account-linked sample deletion when sharing is disabled", async () => {
@@ -76,6 +77,7 @@ describe("shareEmailParseImprovementRequests", () => {
       enabled: false,
       userId,
       requests: [],
+      canDeleteDisabledSamples: () => true,
     });
 
     expect(mockDeleteEmailParseImprovementSamplesForUser).toHaveBeenCalledWith({ db, userId });
@@ -105,6 +107,7 @@ describe("shareEmailParseImprovementRequests", () => {
         enabled: false,
         userId,
         requests: [request],
+        canDeleteDisabledSamples: () => true,
       })
     ).resolves.toBeUndefined();
 

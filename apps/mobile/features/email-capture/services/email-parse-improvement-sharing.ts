@@ -53,7 +53,7 @@ const shouldShareParseImprovements = (input: {
 
 const shouldDeleteDisabledSamples = (input: {
   readonly canDeleteDisabledSamples?: () => boolean;
-}): boolean => (input.canDeleteDisabledSamples ? input.canDeleteDisabledSamples() : true);
+}): boolean => input.canDeleteDisabledSamples?.() === true;
 
 const enqueueParseImprovementRequest = (input: {
   readonly db: AnyDb;

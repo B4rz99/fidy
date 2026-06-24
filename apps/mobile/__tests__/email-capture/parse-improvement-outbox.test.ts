@@ -467,6 +467,53 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("classifies migrated Google Pay samples as wallet samples", () => {
+    const sqlite = new Database(":memory:");
+    sqlite.exec(`
+      CREATE TABLE email_parse_improvement_samples (
+        id text PRIMARY KEY NOT NULL,
+        user_id text NOT NULL,
+        template text NOT NULL,
+        sender_domain text,
+        source text NOT NULL,
+        status text NOT NULL,
+        confidence real,
+        parse_method text NOT NULL,
+        created_at text NOT NULL,
+        shared_at text,
+        deleted_at text
+      );
+      CREATE UNIQUE INDEX uq_email_parse_improvement_sample
+        ON email_parse_improvement_samples (
+          user_id,
+          source,
+          status,
+          parse_method,
+          coalesce(sender_domain, ''),
+          template
+        );
+      INSERT INTO email_parse_improvement_samples VALUES
+        ('google-pay-sample', '${USER_ID}', 'Pago por [AMOUNT]', null, 'google_pay', 'failed', null, 'regex', '2026-05-19T10:00:00.000Z', null, null);
+    `);
+
+    runDrizzleSqlMigration(sqlite, "0035_capture_improvement_provider_category.sql");
+
+    expect(
+      sqlite
+        .prepare(
+          "select id, provider_category as providerCategory, sender_domain as senderDomain from email_parse_improvement_samples"
+        )
+        .all()
+    ).toEqual([
+      {
+        id: "google-pay-sample",
+        providerCategory: "wallet",
+        senderDomain: null,
+      },
+    ]);
+    sqlite.close();
+  });
+
   it("flushes pending templates in bounded batches", async () => {
     const { db, sqlite } = createDb();
     const requests = Array.from({ length: 11 }, (_, index) => ({

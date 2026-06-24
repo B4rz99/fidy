@@ -2,6 +2,8 @@ ALTER TABLE `email_parse_improvement_samples` ADD COLUMN `provider_category` tex
 --> statement-breakpoint
 UPDATE `email_parse_improvement_samples`
 SET `provider_category` = CASE
+  WHEN lower(`source`) = 'google_pay'
+  THEN 'wallet'
   WHEN lower(coalesce(`sender_domain`, '')) LIKE '%banco%'
     OR lower(coalesce(`sender_domain`, '')) LIKE '%bank%'
     OR lower(coalesce(`sender_domain`, '')) LIKE '%bbva%'
