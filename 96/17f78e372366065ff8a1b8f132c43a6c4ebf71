@@ -1,0 +1,22 @@
+apps/mobile/__tests__/capture-sources/use-notification-capture.test.ts
+  s_d585a7fa922fba::t_5251aa88c2896e 17,27,47,72-90,93,119-121,123-126
+apps/mobile/features/capture-sources/hooks/useNotificationCapture.ts
+  s_d585a7fa922fba::t_db78169f909f5c 6-9,21,35,44,52
+  s_d585a7fa922fba::t_dc5efdf4526e90 36-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "9617f78e372366065ff8a1b8f132c43a6c4ebf71",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
