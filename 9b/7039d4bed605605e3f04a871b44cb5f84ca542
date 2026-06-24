@@ -1,0 +1,61 @@
+apps/mobile/features/transactions/lib/mutation-service.ts
+  s_a015eeb45038bf::t_a904c5a7234b6c 19,43-46,140-142
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_a015eeb45038bf::t_d0721315c4061c 239,241-268
+  s_a015eeb45038bf::t_cfb5d8a578e8b7 240
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_a015eeb45038bf::t_8f0132f76f2c4a 54-59
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_eb6cd517f71d4c 35
+  s_a015eeb45038bf::t_1bdad80f9f2820 287-294,468,479-481,486,507-517,528
+  s_a015eeb45038bf::t_0d507220348bce 368-369,379
+  s_a015eeb45038bf::t_01c3ae5de4cdb8 116,354-367,370-378,380-381
+  s_a015eeb45038bf::t_8447f38cc421a0 332-353
+  s_a015eeb45038bf::t_42be00eca37b76 382,629-639
+plans/lizard-complexity-debt.json
+  s_a015eeb45038bf::t_d757fd97b435aa 14-33
+apps/mobile/__tests__/transactions/mutation-service.test.ts
+  s_a015eeb45038bf::t_82727dd4a6f5b1 189-190
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_a015eeb45038bf::t_b080f2adaba1d5 5,77
+  s_a015eeb45038bf::t_01f8eb8d87eb9e 65,89
+apps/mobile/features/cloud-ledger/bootstrap.ts
+  s_a015eeb45038bf::t_2b5fd75a584f06 15
+  s_a015eeb45038bf::t_72b72f2679897b 4,20-25
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_a015eeb45038bf::t_6d1e92056c4804 144-189,457-463
+apps/mobile/features/transactions/store/page-actions.ts
+  s_a015eeb45038bf::t_1aba194c6bf814 3,113
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_a015eeb45038bf::t_a913201cc9c22f 192-209
+apps/mobile/supabase/migrations/20260622100000_cloud_ledger_transaction_create.sql
+  s_a015eeb45038bf::t_de089ed4e110b3 188-195,203-243,254-260,262-292
+apps/mobile/features/transactions/lib/transaction-order.ts
+  s_a015eeb45038bf::t_c4b26287e3dbdd 1-21
+dependency-policy.json
+  s_a015eeb45038bf::t_f2f08345a93460 3-7,193-202
+apps/mobile/__tests__/activity/query-service.test.ts
+  s_a015eeb45038bf::t_27d247f20bd33a 168-176,188-189,192,195-198,202
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_4731a16a9a5c99 154-155,179-182,194,199-213,215-218,220-228
+  s_a015eeb45038bf::t_3edb3f07df774a 214,219
+  s_a015eeb45038bf::t_2364ec9919702a 45,237-239
+  s_a015eeb45038bf::t_35f740a0f65aa4 110-111,135,137-139
+  s_a015eeb45038bf::t_46e6f2dd40c4ce 2,63-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "9b7039d4bed605605e3f04a871b44cb5f84ca542",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
