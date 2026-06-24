@@ -2,6 +2,7 @@ export {
   deleteTransaction,
   getStoredTransactionById,
   initializeTransactionSession,
+  invalidateTransactionSession,
   loadInitialTransactions,
   loadNextTransactions,
   loadTransactionAggregates,

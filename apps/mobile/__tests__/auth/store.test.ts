@@ -10,6 +10,7 @@ const {
   mockClearCloudLedgerRuntimeCache,
   mockCleanupCurrentPushToken,
   mockDiscardCloudLedgerOutbox,
+  mockInvalidateTransactionSession,
   mockResumeCloudLedgerRuntimeCacheWrites,
   mockSuspendCloudLedgerRuntimeCacheWrites,
   mockLoadLocalQaSession,
@@ -21,6 +22,7 @@ const {
   const mockClearCloudLedgerRuntimeCache = vi.fn<(...args: any[]) => any>();
   const mockCleanupCurrentPushToken = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockDiscardCloudLedgerOutbox = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+  const mockInvalidateTransactionSession = vi.fn<(...args: any[]) => any>();
   const mockResumeCloudLedgerRuntimeCacheWrites = vi.fn<(...args: any[]) => any>();
   const mockSuspendCloudLedgerRuntimeCacheWrites = vi.fn<(...args: any[]) => any>();
   const mockLoadLocalQaSession = vi.fn<
@@ -50,6 +52,7 @@ const {
     mockClearCloudLedgerRuntimeCache,
     mockCleanupCurrentPushToken,
     mockDiscardCloudLedgerOutbox,
+    mockInvalidateTransactionSession,
     mockResumeCloudLedgerRuntimeCacheWrites,
     mockSuspendCloudLedgerRuntimeCacheWrites,
     mockLoadLocalQaSession,
@@ -133,6 +136,10 @@ vi.mock("@/features/cloud-ledger/public", () => ({
   discardCloudLedgerOutbox: mockDiscardCloudLedgerOutbox,
   resumeCloudLedgerRuntimeCacheWrites: mockResumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites: mockSuspendCloudLedgerRuntimeCacheWrites,
+}));
+
+vi.mock("@/features/transactions/store.public", () => ({
+  invalidateTransactionSession: mockInvalidateTransactionSession,
 }));
 
 vi.mock("@/features/qa/local-session", () => ({
@@ -477,10 +484,14 @@ describe("useAuthStore", () => {
 
     await useAuthStore.getState().signOut();
 
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
+    expect(mockInvalidateTransactionSession.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!
+    );
     expect(mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!).toBeLessThan(
       mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!
     );

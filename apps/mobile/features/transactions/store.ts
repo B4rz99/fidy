@@ -234,6 +234,11 @@ export function initializeTransactionSession(userId: UserId): void {
   useTransactionStore.getState().beginSession(userId);
 }
 
+export function invalidateTransactionSession(): void {
+  transactionsSessionId += 1;
+  loadTransactionsRequestId += 1;
+}
+
 export async function loadInitialTransactions(db: AnyDb, userId: UserId): Promise<void> {
   const requestId = ++loadTransactionsRequestId;
   const sessionId = transactionsSessionId;

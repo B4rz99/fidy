@@ -14,6 +14,7 @@ import {
   type LocalQaSession,
   loadLocalQaSession,
 } from "@/features/qa/session.public";
+import { invalidateTransactionSession } from "@/features/transactions/store.public";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 import { requireUserId } from "@/shared/types/assertions";
@@ -196,6 +197,7 @@ async function discardCloudLedgerStateBeforeSignOut(): Promise<void> {
   }
 
   try {
+    invalidateTransactionSession();
     suspendCloudLedgerRuntimeCacheWrites(userId);
     await discardCloudLedgerOutbox(userId);
     clearCloudLedgerRuntimeCache(userId);

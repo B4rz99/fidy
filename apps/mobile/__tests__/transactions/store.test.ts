@@ -20,6 +20,7 @@ import {
 import {
   getStoredTransactionById,
   initializeTransactionSession,
+  invalidateTransactionSession,
   loadInitialTransactions,
   loadNextTransactions,
   loadTransactionAggregates,
@@ -619,6 +620,40 @@ describe("transaction boundaries", () => {
     });
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("does not apply a delayed initial optimistic load after the transaction session is invalidated", async () => {
+    const delayedPendingTransaction = makeStoredTransaction({
+      id: "tx-delayed-discarded-pending" as TransactionId,
+    });
+    type PendingCreateChange = ReturnType<typeof pendingCreateFromStoredTransaction>;
+    let resolveOutboxLoad!: (changes: readonly PendingCreateChange[]) => void;
+    const delayedOutboxLoad = vi.fn<(...args: any[]) => any>(
+      () =>
+        new Promise<readonly PendingCreateChange[]>((resolve) => {
+          resolveOutboxLoad = resolve;
+        })
+    );
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(delayedOutboxLoad)
+    );
+
+    const loadPromise = loadInitialTransactions(mockDb, mockUserId);
+    await vi.waitFor(() => {
+      expect(delayedOutboxLoad).toHaveBeenCalledTimes(1);
+    });
+
+    invalidateTransactionSession();
+    resolveOutboxLoad([pendingCreateFromStoredTransaction(delayedPendingTransaction)]);
+    await loadPromise;
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      pages: [],
+      offset: 0,
+      balance: 0,
+      categorySpending: [],
+      dailySpending: [],
+    });
   });
 
   it("does not count restored optimistic Cloud Ledger rows when loading the next committed page", async () => {
