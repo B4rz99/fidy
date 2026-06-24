@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, isNull, or } from "drizzle-orm";
+import { and, asc, count, eq, gt, isNull, lte, or } from "drizzle-orm";
 import {
   buildNotificationParseImprovementSample,
   deleteCaptureParseImprovementSamplesForUser,
@@ -92,6 +92,7 @@ async function runCaptureImprovementRemoteOperation<T>(
 
 async function performPendingEmailParseImprovementSampleDeletion(input: {
   readonly db: AnyDb;
+  readonly requestedAt: IsoDateTime;
   readonly userId: UserId;
   readonly now?: Date;
 }): Promise<{ readonly deleted: number; readonly retried: true }> {
@@ -107,6 +108,7 @@ async function performPendingEmailParseImprovementSampleDeletion(input: {
     .where(
       and(
         eq(emailParseImprovementSamples.userId, input.userId),
+        lte(emailParseImprovementSamples.createdAt, input.requestedAt),
         isNull(emailParseImprovementSamples.deletedAt)
       )
     )
@@ -168,7 +170,10 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
   }
 
   return await runCaptureImprovementRemoteOperation(input.userId, () =>
-    performPendingEmailParseImprovementSampleDeletion(input)
+    performPendingEmailParseImprovementSampleDeletion({
+      ...input,
+      requestedAt: pendingRequest.requestedAt,
+    })
   );
 }
 
@@ -178,8 +183,12 @@ export async function setEmailParseImprovementSharingPreference(input: {
   readonly enabled: boolean;
 }): Promise<void> {
   await runCaptureImprovementRemoteOperation(input.userId, async () => {
-    if (input.enabled && getCaptureImprovementDeletionRequest(input) !== null) {
-      await performPendingEmailParseImprovementSampleDeletion(input);
+    const pendingRequest = getCaptureImprovementDeletionRequest(input);
+    if (input.enabled && pendingRequest !== null) {
+      await performPendingEmailParseImprovementSampleDeletion({
+        ...input,
+        requestedAt: pendingRequest.requestedAt,
+      });
     }
     await setCaptureParseImprovementPreference({
       enabled: input.enabled,

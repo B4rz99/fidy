@@ -300,6 +300,34 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
   });
 
+  it("rejects inconsistent Capture Improvement Sample source metadata", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            sourceChannel: "wallet",
+            sourceFamily: "email",
+            sourceProvider: undefined,
+            providerCategory: "bank",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
   it("rejects Capture Improvement Sample retention when the account has opted out", async () => {
     const api = createCloudLedgerApiDeps({
       retainCaptureImprovementResult: { code: "capture_improvement_opted_out" },

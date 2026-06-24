@@ -235,6 +235,17 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).not.toContain("merchant_name");
     expect(sql).not.toContain("amount_value");
   });
+
+  it("rejects NULL Capture Improvement Sample enum fields in the retain RPC", () => {
+    const sql = readFileSync(CAPTURE_IMPROVEMENT_SOURCE_PROVIDER_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("p_source_channel is null");
+    expect(sql).toContain("p_source_family is null");
+    expect(sql).toContain("p_provider_category is null");
+    expect(sql).toContain("p_parse_outcome is null");
+    expect(sql).toContain("p_confidence_bucket is null");
+    expect(sql).toContain("p_extractor_method is null");
+  });
 });
 
 function escapeRegExp(value: string): string {

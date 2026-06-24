@@ -21,16 +21,22 @@ declare
   v_source text;
 begin
   if p_user_id is null
+    or p_source_channel is null
     or p_source_channel not in ('email', 'notification', 'wallet')
+    or p_source_family is null
     or p_source_family not in ('email', 'android_notification', 'wallet_notification')
     or (p_source_channel = 'email' and (p_source_provider is null or p_source_provider not in ('gmail', 'outlook')))
     or (p_source_channel <> 'email' and p_source_provider is not null)
+    or p_provider_category is null
     or p_provider_category not in ('bank', 'payment_app', 'wallet', 'unknown')
     or p_template_shape is null
     or length(trim(p_template_shape)) = 0
     or length(p_template_shape) > 1000
+    or p_parse_outcome is null
     or p_parse_outcome not in ('failed', 'needs_review')
+    or p_confidence_bucket is null
     or p_confidence_bucket not in ('none', 'low', 'medium', 'high')
+    or p_extractor_method is null
     or p_extractor_method not in ('regex', 'llm')
     or p_extractor_version is distinct from 1
   then

@@ -70,6 +70,11 @@ export function readCaptureImprovementSample(body: unknown): CaptureImprovementS
     !isSetValue(record.sourceFamily, SOURCE_FAMILIES) ||
     !hasValidSourceProvider(record.sourceChannel, record.sourceProvider) ||
     !isSetValue(record.providerCategory, PROVIDER_CATEGORIES) ||
+    !hasConsistentSourceMetadata(
+      record.sourceChannel,
+      record.sourceFamily,
+      record.providerCategory
+    ) ||
     !isSafeTemplateShape(record.templateShape) ||
     !isSetValue(record.parseOutcome, PARSE_OUTCOMES) ||
     !isSetValue(record.confidenceBucket, CONFIDENCE_BUCKETS) ||
@@ -111,6 +116,20 @@ function hasValidSourceProvider(
   return sourceChannel === "email"
     ? isSetValue(sourceProvider, SOURCE_PROVIDERS)
     : sourceProvider === undefined;
+}
+
+function hasConsistentSourceMetadata(
+  sourceChannel: CaptureImprovementSample["sourceChannel"],
+  sourceFamily: CaptureImprovementSample["sourceFamily"],
+  providerCategory: CaptureImprovementSample["providerCategory"]
+): boolean {
+  if (sourceChannel === "email") {
+    return sourceFamily === "email";
+  }
+  if (sourceChannel === "wallet") {
+    return sourceFamily === "wallet_notification" && providerCategory === "wallet";
+  }
+  return sourceFamily === "android_notification" && providerCategory !== "wallet";
 }
 
 function readExtractor(value: unknown): CaptureImprovementSample["extractor"] | null {
