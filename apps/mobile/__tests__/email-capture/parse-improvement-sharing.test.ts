@@ -81,6 +81,20 @@ describe("shareEmailParseImprovementRequests", () => {
     expect(mockDeleteEmailParseImprovementSamplesForUser).toHaveBeenCalledWith({ db, userId });
   });
 
+  it("does not delete samples when disabled sharing is not authoritative yet", async () => {
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: false,
+      userId,
+      requests: [request],
+      canDeleteDisabledSamples: () => false,
+    });
+
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockEnqueueEmailParseImprovementRequests).not.toHaveBeenCalled();
+    expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
+  });
+
   it("captures disabled deletion retry failures without rejecting the email sync", async () => {
     const error = new Error("delete failed");
     mockDeleteEmailParseImprovementSamplesForUser.mockRejectedValueOnce(error);

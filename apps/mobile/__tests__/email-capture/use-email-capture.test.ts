@@ -5,15 +5,16 @@ import { requireUserId } from "@/shared/types/assertions";
 const mockDb = {} as any;
 const mockRefreshTransactions = vi.fn<(...args: any[]) => any>();
 const mockHydrateSettings = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+const defaultSettingsState = {
+  hydrate: mockHydrateSettings,
+  isHydrated: true,
+  shareAnonymizedParseSamples: false,
+};
+let settingsState = defaultSettingsState;
 const mockUseSettingsStore = Object.assign(
-  vi.fn<(...args: any[]) => any>((selector: any) =>
-    selector({ shareAnonymizedParseSamples: false })
-  ),
+  vi.fn<(...args: any[]) => any>((selector: any) => selector(settingsState)),
   {
-    getState: () => ({
-      hydrate: mockHydrateSettings,
-      shareAnonymizedParseSamples: false,
-    }),
+    getState: () => settingsState,
   }
 );
 const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
@@ -27,6 +28,7 @@ describe("useEmailCapture", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    settingsState = defaultSettingsState;
     mockLoadEmailAccounts.mockResolvedValue(undefined);
     mockHydrateSettings.mockResolvedValue(undefined);
     mockFetchAndProcessEmails.mockResolvedValue({
@@ -72,8 +74,31 @@ describe("useEmailCapture", () => {
       {
         shareParseImprovementSamples: false,
         isShareParseImprovementSamplesEnabled: expect.any(Function),
+        canDeleteDisabledParseImprovementSamples: expect.any(Function),
       }
     );
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.shareParseImprovementSamples).toBe(false);
+    expect(options.isShareParseImprovementSamplesEnabled()).toBe(false);
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(true);
+  });
+
+  it("does not treat pre-hydration sharing false as an opt-out", async () => {
+    settingsState = {
+      ...defaultSettingsState,
+      isHydrated: false,
+      shareAnonymizedParseSamples: false,
+    };
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockInitializeEmailCaptureSession).not.toHaveBeenCalled();
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockFetchAndProcessEmails).not.toHaveBeenCalled();
   });
 
   it("retries durable opt-out deletion on app open when sharing is disabled", async () => {

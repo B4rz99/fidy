@@ -9,14 +9,25 @@ import { retryPendingEmailParseImprovementSampleDeletion } from "../parse-improv
 import { getGmailClientId, getOutlookClientId } from "../schema";
 import { fetchAndProcessEmails, initializeEmailCaptureSession, loadEmailAccounts } from "../store";
 
+const readParseImprovementSharingSettings = () => {
+  const state = useSettingsStore.getState();
+  return {
+    enabled: state.shareAnonymizedParseSamples,
+    isHydrated: state.isHydrated,
+  };
+};
+
 export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
+  const settingsHydrated = useSettingsStore((state) => state.isHydrated);
+
   useSubscription(
     () => {
       if (!db || !userId) return;
       initializeEmailCaptureSession(userId);
 
       const retryPendingOptOutDeletion = () => {
-        if (useSettingsStore.getState().shareAnonymizedParseSamples) return;
+        const settings = readParseImprovementSharingSettings();
+        if (!settings.isHydrated || settings.enabled) return;
         void retryPendingEmailParseImprovementSampleDeletion({ db, userId }).catch(
           handleRecoverableError("Parse improvement deletion retry failed")
         );
@@ -32,9 +43,18 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
           getOutlookClientId(),
           () => refreshTransactions(db, userId),
           {
-            shareParseImprovementSamples: useSettingsStore.getState().shareAnonymizedParseSamples,
-            isShareParseImprovementSamplesEnabled: () =>
-              useSettingsStore.getState().shareAnonymizedParseSamples,
+            shareParseImprovementSamples: (() => {
+              const settings = readParseImprovementSharingSettings();
+              return settings.isHydrated && settings.enabled;
+            })(),
+            isShareParseImprovementSamplesEnabled: () => {
+              const settings = readParseImprovementSharingSettings();
+              return settings.isHydrated && settings.enabled;
+            },
+            canDeleteDisabledParseImprovementSamples: () => {
+              const settings = readParseImprovementSharingSettings();
+              return settings.isHydrated && !settings.enabled;
+            },
           }
         ).catch(handleRecoverableError("Email sync failed"));
       };
@@ -53,7 +73,7 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
         subscription.remove();
       };
     },
-    [db, userId],
-    db != null && userId != null
+    [db, userId, settingsHydrated],
+    db != null && userId != null && settingsHydrated
   );
 }

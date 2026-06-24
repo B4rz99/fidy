@@ -142,6 +142,7 @@ export async function fetchAndProcessEmails(
     readonly parseProfile?: EmailCaptureParseProfile;
     readonly shareParseImprovementSamples?: boolean;
     readonly isShareParseImprovementSamplesEnabled?: () => boolean;
+    readonly canDeleteDisabledParseImprovementSamples?: () => boolean;
   } = {}
 ): Promise<EmailCaptureFetchOutcome> {
   const fetchStart = beginEmailCaptureFetchRun(userId);
@@ -197,6 +198,7 @@ export async function fetchAndProcessEmails(
       userId,
       requests: processingResult.parseImprovementRequests,
       isSharingEnabled: options.isShareParseImprovementSamplesEnabled,
+      canDeleteDisabledSamples: options.canDeleteDisabledParseImprovementSamples,
     });
     await refreshEmailCaptureQueuesAndOutcome({
       db,

@@ -51,6 +51,10 @@ const shouldShareParseImprovements = (input: {
   readonly isSharingEnabled?: () => boolean;
 }): boolean => input.enabled && (!input.isSharingEnabled || input.isSharingEnabled());
 
+const shouldDeleteDisabledSamples = (input: {
+  readonly canDeleteDisabledSamples?: () => boolean;
+}): boolean => (input.canDeleteDisabledSamples ? input.canDeleteDisabledSamples() : true);
+
 const enqueueParseImprovementRequest = (input: {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -94,9 +98,12 @@ export async function shareEmailParseImprovementRequests(input: {
   readonly userId: UserId;
   readonly requests: readonly EmailParseImprovementRequest[];
   readonly isSharingEnabled?: () => boolean;
+  readonly canDeleteDisabledSamples?: () => boolean;
 }): Promise<void> {
   if (!shouldShareParseImprovements(input)) {
-    await retryDisabledParseImprovementDeletion({ db: input.db, userId: input.userId });
+    if (shouldDeleteDisabledSamples(input)) {
+      await retryDisabledParseImprovementDeletion({ db: input.db, userId: input.userId });
+    }
     logDisabledParseImprovementSharing(input.requests.length);
     return;
   }
