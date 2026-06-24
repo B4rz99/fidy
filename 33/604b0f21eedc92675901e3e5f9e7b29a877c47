@@ -1,0 +1,38 @@
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_57276d19c05eb5::t_679b9dab77cff7 1-2,5,9-10,67-107,169-171,173-214
+  s_57276d19c05eb5::t_329df39c134b58 3-4,6-8,11-33,35-38,40-66,152-168,172,292
+  s_57276d19c05eb5::t_d3f2cf1449c136 123,145-146,215-243
+  s_57276d19c05eb5::t_47eec2eebd80af 34,39
+  s_57276d19c05eb5::t_566ec44afef768 108-122,124-144,147-151,244-291
+apps/mobile/shared/types/branded.ts
+  s_57276d19c05eb5::t_5f5eea6fed3f05 32
+apps/mobile/shared/types/assertions.ts
+  s_57276d19c05eb5::t_9ef9a81687c803 11,170-173,252-254
+apps/mobile/shared/lib/generate-id.ts
+  s_57276d19c05eb5::t_0eae58fa867ab7 17,46-47
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_57276d19c05eb5::t_3d6d53b471cc36 180-184
+  s_57276d19c05eb5::t_c15e63b90f3dc3 372-374
+  s_57276d19c05eb5::t_b68f3c956a3c7e 1-179,185-317,319-344,346-371,375
+  s_57276d19c05eb5::t_0d5cfd73b44d6b 318,345
+apps/mobile/features/cloud-ledger/public.ts
+  s_57276d19c05eb5::t_20e5a06a98f3b3 18-33
+apps/mobile/shared/lib/index.ts
+  s_57276d19c05eb5::t_1bd4b345c604d9 58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "33604b0f21eedc92675901e3e5f9e7b29a877c47",
+  "prompts": {},
+  "sessions": {
+    "s_57276d19c05eb5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5c-e170-7570-a5cb-c6a32e822669",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+apps/mobile/__tests__/activity/query-service.test.ts
+  s_a015eeb45038bf::t_365d124527ce6e 346-376
+apps/mobile/features/activity/services/create-activity-query-service.ts
+  s_a015eeb45038bf::t_c74106ddb974e4 5,30,67-84,87,103-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.10",
+  "base_commit_sha": "066d860b940472bba6cf5d958d25a8cadf795c99",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

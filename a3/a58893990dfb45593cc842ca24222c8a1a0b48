@@ -1,0 +1,28 @@
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_262a675743388c 23,625-628,631-632,634-656
+  s_a015eeb45038bf::t_a2d0671e8b040c 629-630,633
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_82e3cde828d677 237-241
+apps/mobile/features/auth/store.ts
+  s_a015eeb45038bf::t_5176ddc3206983 17,200
+apps/mobile/features/transactions/store.public.ts
+  s_a015eeb45038bf::t_585deb478633c1 5
+apps/mobile/__tests__/auth/store.test.ts
+  s_a015eeb45038bf::t_35f6861234cee4 13,25,55,141-144,487,492-494
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "a3a58893990dfb45593cc842ca24222c8a1a0b48",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

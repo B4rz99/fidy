@@ -1,0 +1,77 @@
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-source.test.ts
+  s_57276d19c05eb5::t_5b8aa249317154 1-19
+apps/mobile/features/cloud-ledger/public.ts
+  s_57276d19c05eb5::t_a0c21a783d1c58 47-52,54
+  s_57276d19c05eb5::t_ac8b604677371b 40,43-44
+  s_57276d19c05eb5::t_79125b927f2c09 7-8,13,19,21
+  s_57276d19c05eb5::t_c4aa73b90bdc85 23-27
+apps/mobile/__tests__/cloud-ledger/mobile-bootstrap.test.ts
+  s_57276d19c05eb5::t_cbd57ddc26d8cd 60-65
+apps/mobile/__tests__/cloud-ledger/bootstrap.test.ts
+  s_57276d19c05eb5::t_d56e60ae5f500d 1-72
+apps/mobile/features/transactions/lib/mutation-service.ts
+  s_57276d19c05eb5::t_0adc0b052ad487 39,132-134
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_57276d19c05eb5::t_e2973c50d97e09 29-40,227-262,563,600-604
+supabase/functions/cloud-ledger-api/apply-pending-changes-command.ts
+  s_57276d19c05eb5::t_afb2708ebacf64 11-17,42,47,75-80
+  s_57276d19c05eb5::t_5ac787e4f8bed5 1-10,18-41,43-46,48-74,81
+apps/mobile/features/cloud-ledger/bootstrap.ts
+  s_57276d19c05eb5::t_0aba2d871e385a 21,33,60-65
+  s_57276d19c05eb5::t_d237e9f1992537 1-20,22-32,34-59,66
+supabase/functions/cloud-ledger-api/model.ts
+  s_57276d19c05eb5::t_f7a7355bc20336 89-106,121-122,140
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_57276d19c05eb5::t_df36b26a460e6a 184,226
+  s_57276d19c05eb5::t_5996b758465ff1 87-92
+  s_57276d19c05eb5::t_01adc5f37c23ec 334,336-343
+  s_57276d19c05eb5::t_f2254cc25f7ce9 365-369,373-374,379-380
+  s_57276d19c05eb5::t_7c8e19292d9e7f 164,209-225,227-249,361
+  s_57276d19c05eb5::t_d29951a46628fd 2-3,11,13,27,31-52,142-163
+apps/mobile/features/cloud-ledger/runtime.ts
+  s_57276d19c05eb5::t_5f86a9eb00745f 1-22
+apps/mobile/bootstrap/authenticated-shell.ts
+  s_57276d19c05eb5::t_e97c61403c06f3 18-20,46,57
+supabase/functions/cloud-ledger-api/store.ts
+  s_57276d19c05eb5::t_78c7e7216fd0c7 2-3,51-52,97-129
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_57276d19c05eb5::t_7237f5c2df6ca7 8,12,96-101,106-127,230-262,291-309
+supabase/functions/cloud-ledger-api/handler.ts
+  s_57276d19c05eb5::t_fb944860d2e9e6 2-3,12-15,41-44,97-99,148-170
+apps/mobile/features/cloud-ledger/cache.ts
+  s_57276d19c05eb5::t_f1facf1b195d01 213-216,218-220,227,229-230,232,234
+  s_57276d19c05eb5::t_f8614ca429fd06 201-203
+  s_57276d19c05eb5::t_b29995c8bd5e3a 145-147,165-167
+  s_57276d19c05eb5::t_80cd4b53ac0761 2,217,231
+  s_57276d19c05eb5::t_e479482ff9469a 50-66,100,109,148-164,168-176,199-200,204-212,221-226,228,233,235
+apps/mobile/__tests__/transactions/store.test.ts
+  s_57276d19c05eb5::t_bcdada2913bb4e 31-32,41,45-59,136,200-201,203-209,212-218
+  s_57276d19c05eb5::t_b29995c8bd5e3a 42-44
+  s_57276d19c05eb5::t_6acea1c5bd39c7 221,228-231,233
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_57276d19c05eb5::t_99e1d7b5c73e6c 14,195-202,205-207
+  s_57276d19c05eb5::t_e006c1fd87c4ad 138-139,417-474
+  s_57276d19c05eb5::t_4ce316dfe872fe 172,175
+  s_57276d19c05eb5::t_4510690add1ecb 2-3,13,64-66,112-137
+  s_57276d19c05eb5::t_1082354de16fbb 17,187
+apps/mobile/features/transactions/store.ts
+  s_57276d19c05eb5::t_50b6679a4cb139 5,7,153-154,160
+  s_57276d19c05eb5::t_19685e7ee48880 4,6,8,11,13-15,23-26,28-30,58-69,104,132,144-149,152,155,158-159,185-189,191-193,195,215,242-243
+  s_57276d19c05eb5::t_81b23b185c7d1c 3,27,70-82,150-151,156-157,161-184,190,194,196-214,216-241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "46e09bd18110c90c5db084ec89ca543c43ee7b6b",
+  "prompts": {},
+  "sessions": {
+    "s_57276d19c05eb5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5c-e170-7570-a5cb-c6a32e822669",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

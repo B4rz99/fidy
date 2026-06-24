@@ -1,0 +1,38 @@
+apps/mobile/__tests__/transactions/store.test.ts
+  s_4796ddced78425::t_8f4b59e8213b66 4,310-348
+  s_4796ddced78425::t_1c9d0f0d794bf1 349,351-366
+apps/mobile/features/transactions/store.ts
+  s_4796ddced78425::t_15e149a79795ce 269,271-275
+  s_4796ddced78425::t_ba5abfbb69e7ad 258,260,262
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_4796ddced78425::t_fdd29eeb212693 1-148,151-159,161-177
+  s_4796ddced78425::t_ce8649b8a4e27b 149-150,160
+apps/mobile/features/transactions/bootstrap.ts
+  s_4796ddced78425::t_c55f2835eeb9bf 4,11-13,22-26
+apps/mobile/features/auth/store.ts
+  s_4796ddced78425::t_50afc50fc4f93b 198,201
+apps/mobile/bootstrap/authenticated-shell.ts
+  s_4796ddced78425::t_f2a07156607d40 40
+apps/mobile/__tests__/auth/store.test.ts
+  s_4796ddced78425::t_9db574d5df0195 464-478
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_4796ddced78425::t_8517cf9044cdfb 178-180
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-source.test.ts
+  s_4796ddced78425::t_af9689df544845 11,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "2bdb6b086a55b9e639ac0407a06cc64c95d39932",
+  "prompts": {},
+  "sessions": {
+    "s_4796ddced78425": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0a6-4756-79b2-ae1c-dbc2848fbe9e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

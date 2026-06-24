@@ -1,0 +1,55 @@
+apps/mobile/__tests__/cloud-ledger/runtime.test.ts
+  s_a015eeb45038bf::t_a73020e3720287 1-33
+apps/mobile/features/cloud-ledger/public.ts
+  s_a015eeb45038bf::t_50ad87ffbb1510 27
+  s_a015eeb45038bf::t_f378204537ae49 29,32
+apps/mobile/features/cloud-ledger/bootstrap.ts
+  s_a015eeb45038bf::t_5b1b9f000e39e7 11,44-45,47,59-61
+  s_a015eeb45038bf::t_f4f2f8f6e03e4a 69
+  s_a015eeb45038bf::t_9a37c49410d104 13,43
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_a015eeb45038bf::t_4aa581bf608cb3 65-70
+  s_a015eeb45038bf::t_2f0ac6568a5e47 61,136
+  s_a015eeb45038bf::t_6cf5a2f9bbfd69 37,51,54,59,130,134,138,163-164
+apps/mobile/features/auth/store.ts
+  s_a015eeb45038bf::t_8e8519d7e28efb 6,203
+  s_a015eeb45038bf::t_9c4abccedc9b2c 7,199
+apps/mobile/features/cloud-ledger/runtime.ts
+  s_a015eeb45038bf::t_5cb2223387a61a 39-43,45-49,69
+  s_a015eeb45038bf::t_01291aea7fab73 18-20,78
+  s_a015eeb45038bf::t_cd22d0684592a2 11,17,21-32,44,84
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_28e93ffde25f1b 10,12,163,171-175,177-183,187,191-195,198,203,212
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_98b0648f1aef37 9,363-429
+  s_a015eeb45038bf::t_3d1c5cca7c3b83 305-312
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_9423b6b5517d14 208,211-213,215-217,219-221
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_42b5b85956f494 385-431
+apps/mobile/__tests__/cloud-ledger/bootstrap.test.ts
+  s_a015eeb45038bf::t_2f3f6f85fc1d39 5,23,36,60,82-88,94-122
+  s_a015eeb45038bf::t_2384e20a702869 25,38
+apps/mobile/__tests__/auth/store.test.ts
+  s_a015eeb45038bf::t_6cf9b59601ed7e 13,24,53,134,483,503
+  s_a015eeb45038bf::t_6b5ee14ac805a8 485,487-488
+  s_a015eeb45038bf::t_454fc7acb3abb7 14,25,54,135,472,480,484,501
+  s_a015eeb45038bf::t_d05952d22b8cdf 486
+  s_a015eeb45038bf::t_196f5b41d1ade9 473-479,481-482,489-491
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "7be1a4925076c9b824397bef40e33143be0d3208",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

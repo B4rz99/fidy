@@ -1,0 +1,27 @@
+apps/mobile/features/transactions/lib/mutation-service.ts
+  s_a015eeb45038bf::t_25deca7cb18d63 15-19,135-137
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_46d4666fa411b2 177-191,532-534
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_49354a432f253d 177-182,192
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_7682250261b765 15,323-324
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_ac1fde0e13ff07 15,410-451
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "607c2bedb7e75e7c66aeeb388fc5831c8d68502c",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
