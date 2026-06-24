@@ -21,7 +21,7 @@ export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapConte
     if (!enableRemoteEffects) {
       return;
     }
-    await flushCloudLedgerOutboxForUser(userId).catch(captureCloudLedgerOutboxFlushFailure);
+    void flushCloudLedgerOutboxForUser(userId).catch(captureCloudLedgerOutboxFlushFailure);
   },
 };
 

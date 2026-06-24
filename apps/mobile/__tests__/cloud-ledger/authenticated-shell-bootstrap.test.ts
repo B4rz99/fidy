@@ -21,6 +21,17 @@ const mocks = vi.hoisted(() => {
     date: "2026-06-20",
     updatedAt: "2026-06-20T10:04:00.000Z",
   };
+  const restoredPendingTransaction = {
+    id: "txn-restored-pending-restart",
+    type: "expense",
+    amount: 23000,
+    currency: "COP",
+    categoryId: "food",
+    accountId: "fa-default-user-1",
+    description: "Restored pending offline lunch",
+    date: "2026-06-20",
+    updatedAt: "2026-06-20T10:05:00.000Z",
+  };
   const createEmptyCache = () => ({
     cursor: null,
     categories: [],
@@ -46,6 +57,7 @@ const mocks = vi.hoisted(() => {
 
   return {
     acceptedTransaction,
+    restoredPendingTransaction,
     createEmptyCache,
     state,
     writeToken,
@@ -153,6 +165,7 @@ vi.mock("@/shared/db/supabase", () => ({
 describe("authenticated shell Cloud Ledger bootstrap", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useTransactionStore.getState().beginSession("user-reset" as UserId);
     mocks.state.runtimeCache = mocks.createEmptyCache();
     mocks.getCloudLedgerOutbox.mockReturnValue({
       clear: vi.fn<(...args: any[]) => any>(),
@@ -191,4 +204,52 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
   });
+
+  it("makes restored pending Cloud Ledger transactions visible before an offline flush completes", async () => {
+    mocks.restoreOptimisticCloudLedgerCache.mockImplementationOnce(async ({ cache }) => ({
+      ...cache,
+      transactions: [mocks.restoredPendingTransaction],
+    }));
+    mocks.flushPendingCloudLedgerChanges.mockReturnValueOnce(new Promise(() => {}));
+
+    const bootstrap = runAuthenticatedBootstrap({
+      db: {} as never,
+      enableRemoteEffects: true,
+      userId: "user-1" as UserId,
+    });
+
+    await expect(
+      Promise.race([bootstrap.then(() => "resolved"), flushMicrotasks().then(() => "pending")])
+    ).resolves.toBe("resolved");
+    await flushMicrotasks();
+
+    expect(mocks.flushPendingCloudLedgerChanges).toHaveBeenCalled();
+    expect(useTransactionStore.getState().pages).toEqual([
+      expect.objectContaining({
+        id: "txn-restored-pending-restart" as TransactionId,
+        amount: 23000 as CopAmount,
+        categoryId: "food" as CategoryId,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        description: "Restored pending offline lunch",
+      }),
+    ]);
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 23000,
+      categorySpending: [
+        {
+          categoryId: "food" as CategoryId,
+          total: 23000 as CopAmount,
+        },
+      ],
+    });
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
 });
+
+async function flushMicrotasks(): Promise<void> {
+  await Array.from({ length: 20 }).reduce<Promise<void>>(
+    (promise) => promise.then(() => undefined),
+    Promise.resolve()
+  );
+}
