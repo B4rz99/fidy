@@ -8,7 +8,11 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture/public";
-import { useSettingsStore } from "@/features/settings/hooks.public";
+import {
+  isAuthoritativeParseImprovementOptOut,
+  isExplicitParseImprovementOptIn,
+  useSettingsStore,
+} from "@/features/settings/hooks.public";
 import { refreshTransactions, useTransactionStore } from "@/features/transactions/store.public";
 import { Button } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
@@ -180,6 +184,10 @@ export function SyncProgressStep() {
             shareParseImprovementSamples: shareAnonymizedParseSamples,
             isShareParseImprovementSamplesEnabled: () =>
               useSettingsStore.getState().shareAnonymizedParseSamples,
+            canDeleteDisabledParseImprovementSamples: () =>
+              isAuthoritativeParseImprovementOptOut(useSettingsStore.getState()),
+            canEnableRemoteParseImprovementPreference: () =>
+              isExplicitParseImprovementOptIn(useSettingsStore.getState()),
           }
         );
 

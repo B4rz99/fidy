@@ -8,6 +8,7 @@ const mockHydrateSettings = vi.fn<() => Promise<void>>().mockResolvedValue(undef
 const defaultSettingsState = {
   hydrate: mockHydrateSettings,
   isHydrated: true,
+  parseImprovementSharingPreferenceState: "explicit_disabled",
   shareAnonymizedParseSamples: false,
 };
 let settingsState = defaultSettingsState;
@@ -75,12 +76,14 @@ describe("useEmailCapture", () => {
         shareParseImprovementSamples: false,
         isShareParseImprovementSamplesEnabled: expect.any(Function),
         canDeleteDisabledParseImprovementSamples: expect.any(Function),
+        canEnableRemoteParseImprovementPreference: expect.any(Function),
       }
     );
     const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
     expect(options.shareParseImprovementSamples).toBe(false);
     expect(options.isShareParseImprovementSamplesEnabled()).toBe(false);
     expect(options.canDeleteDisabledParseImprovementSamples()).toBe(true);
+    expect(options.canEnableRemoteParseImprovementPreference()).toBe(false);
   });
 
   it("does not treat pre-hydration sharing false as an opt-out", async () => {
@@ -99,6 +102,44 @@ describe("useEmailCapture", () => {
     expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
     expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
     expect(mockFetchAndProcessEmails).not.toHaveBeenCalled();
+  });
+
+  it("does not treat unavailable hydrated sharing state as an opt-out", async () => {
+    settingsState = {
+      ...defaultSettingsState,
+      isHydrated: true,
+      parseImprovementSharingPreferenceState: "unavailable",
+      shareAnonymizedParseSamples: false,
+    };
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(false);
+  });
+
+  it("does not treat default-enabled sharing as an explicit remote opt-in", async () => {
+    settingsState = {
+      ...defaultSettingsState,
+      isHydrated: true,
+      parseImprovementSharingPreferenceState: "default_enabled",
+      shareAnonymizedParseSamples: true,
+    };
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.shareParseImprovementSamples).toBe(true);
+    expect(options.isShareParseImprovementSamplesEnabled()).toBe(true);
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(false);
+    expect(options.canEnableRemoteParseImprovementPreference()).toBe(false);
   });
 
   it("retries durable opt-out deletion on app open when sharing is disabled", async () => {
@@ -121,6 +162,12 @@ async function loadUseEmailCapture() {
     refreshTransactions: (...args: unknown[]) => mockRefreshTransactions(...args),
   }));
   vi.doMock("@/features/settings/hooks.public", () => ({
+    isAuthoritativeParseImprovementOptOut: (state: {
+      readonly parseImprovementSharingPreferenceState: string;
+    }) => state.parseImprovementSharingPreferenceState === "explicit_disabled",
+    isExplicitParseImprovementOptIn: (state: {
+      readonly parseImprovementSharingPreferenceState: string;
+    }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
     useSettingsStore: mockUseSettingsStore,
   }));
   vi.doMock("@/shared/components/rn", () => ({

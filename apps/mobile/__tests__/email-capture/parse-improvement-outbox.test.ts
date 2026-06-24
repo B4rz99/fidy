@@ -278,6 +278,29 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("retains default-enabled samples without overriding an account opt-out preference", async () => {
+    const { db, sqlite } = createDb();
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({
+        db,
+        userId: USER_ID,
+        now: NOW,
+        canEnableRemotePreference: () => false,
+      })
+    ).resolves.toMatchObject({ shared: 1, failed: 0 });
+
+    expect(mockSetCaptureParseImprovementPreference).not.toHaveBeenCalled();
+    expect(mockShareCaptureParseImprovementSample).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parserTemplate: "Compra en [MERCHANT] por [AMOUNT]",
+        userId: USER_ID,
+      })
+    );
+    sqlite.close();
+  });
+
   it("releases the per-user flush guard when startup counting fails", async () => {
     const { db, sqlite } = createDb();
     enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });

@@ -240,6 +240,7 @@ export async function flushPendingEmailParseImprovementSamples(input: {
   readonly userId: UserId;
   readonly now?: Date;
   readonly isSharingEnabled?: () => boolean;
+  readonly canEnableRemotePreference?: () => boolean;
 }): Promise<FlushResult> {
   const activeFlush = activeFlushesByUserId.get(input.userId);
   if (activeFlush) return activeFlush;
@@ -252,11 +253,13 @@ export async function flushPendingEmailParseImprovementSamples(input: {
     const pendingCount = countPendingEmailParseImprovementSamples(input);
     if (pendingCount === 0) return { shared: 0, failed: 0 };
 
-    await setEmailParseImprovementSharingPreference({
-      db: input.db,
-      enabled: true,
-      userId: input.userId,
-    });
+    if (input.canEnableRemotePreference?.() !== false) {
+      await setEmailParseImprovementSharingPreference({
+        db: input.db,
+        enabled: true,
+        userId: input.userId,
+      });
+    }
 
     if (isEmailCaptureDebugEnabled()) {
       logParseImprovementOutboxForDebug("flush.start", {

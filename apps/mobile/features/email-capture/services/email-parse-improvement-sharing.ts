@@ -79,11 +79,15 @@ const flushParseImprovementRequests = (input: {
   readonly db: AnyDb;
   readonly userId: UserId;
   readonly isSharingEnabled?: () => boolean;
+  readonly canEnableRemotePreference?: () => boolean;
 }) =>
   flushPendingEmailParseImprovementSamples({
     db: input.db,
     userId: input.userId,
     ...(input.isSharingEnabled ? { isSharingEnabled: input.isSharingEnabled } : {}),
+    ...(input.canEnableRemotePreference
+      ? { canEnableRemotePreference: input.canEnableRemotePreference }
+      : {}),
   }).catch((error) => {
     captureError(error);
     captureWarning("email_parse_improvement_sample_share_failed", {
@@ -99,6 +103,7 @@ export async function shareEmailParseImprovementRequests(input: {
   readonly requests: readonly EmailParseImprovementRequest[];
   readonly isSharingEnabled?: () => boolean;
   readonly canDeleteDisabledSamples?: () => boolean;
+  readonly canEnableRemotePreference?: () => boolean;
 }): Promise<void> {
   if (!shouldShareParseImprovements(input)) {
     if (shouldDeleteDisabledSamples(input)) {

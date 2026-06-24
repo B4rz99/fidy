@@ -1,5 +1,9 @@
 import { refreshTransactions } from "@/features/transactions/store.public";
-import { useSettingsStore } from "@/features/settings/hooks.public";
+import {
+  isAuthoritativeParseImprovementOptOut,
+  isExplicitParseImprovementOptIn,
+  useSettingsStore,
+} from "@/features/settings/hooks.public";
 import { AppState } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import { useSubscription } from "@/shared/hooks";
@@ -12,6 +16,8 @@ import { fetchAndProcessEmails, initializeEmailCaptureSession, loadEmailAccounts
 const readParseImprovementSharingSettings = () => {
   const state = useSettingsStore.getState();
   return {
+    canDeleteDisabledSamples: state.isHydrated && isAuthoritativeParseImprovementOptOut(state),
+    canEnableRemotePreference: state.isHydrated && isExplicitParseImprovementOptIn(state),
     enabled: state.shareAnonymizedParseSamples,
     isHydrated: state.isHydrated,
   };
@@ -27,7 +33,7 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
 
       const retryPendingOptOutDeletion = () => {
         const settings = readParseImprovementSharingSettings();
-        if (!settings.isHydrated || settings.enabled) return;
+        if (!settings.canDeleteDisabledSamples) return;
         void retryPendingEmailParseImprovementSampleDeletion({ db, userId }).catch(
           handleRecoverableError("Parse improvement deletion retry failed")
         );
@@ -53,7 +59,11 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
             },
             canDeleteDisabledParseImprovementSamples: () => {
               const settings = readParseImprovementSharingSettings();
-              return settings.isHydrated && !settings.enabled;
+              return settings.canDeleteDisabledSamples;
+            },
+            canEnableRemoteParseImprovementPreference: () => {
+              const settings = readParseImprovementSharingSettings();
+              return settings.canEnableRemotePreference;
             },
           }
         ).catch(handleRecoverableError("Email sync failed"));

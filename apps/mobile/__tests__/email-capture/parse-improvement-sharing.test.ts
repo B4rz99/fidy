@@ -174,6 +174,24 @@ describe("shareEmailParseImprovementRequests", () => {
     });
   });
 
+  it("passes explicit opt-in authority through to the outbox flush", async () => {
+    const canEnableRemotePreference = () => false;
+
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: true,
+      userId,
+      requests: [request],
+      canEnableRemotePreference,
+    });
+
+    expect(mockFlushPendingEmailParseImprovementSamples).toHaveBeenCalledWith({
+      db,
+      userId,
+      canEnableRemotePreference,
+    });
+  });
+
   it("does not enqueue samples when live sharing consent has already been revoked", async () => {
     await shareEmailParseImprovementRequests({
       db,
