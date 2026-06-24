@@ -1,5 +1,6 @@
 import { toIsoDate, toMonth } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
+import { upsertStoredTransactionByRepositoryOrder } from "../lib/transaction-order";
 import type { StoredTransaction } from "../schema";
 import type { TransactionActions, TransactionSetState, TransactionState } from "./state";
 
@@ -109,7 +110,7 @@ export function addTransactionToCache(set: TransactionSetState): TransactionActi
       const isDailyExpense = isRecentDailyExpense(transaction, now);
 
       return {
-        pages: [transaction, ...state.pages],
+        pages: upsertStoredTransactionByRepositoryOrder(state.pages, transaction),
         offset: countInPagination ? state.offset + 1 : state.offset,
         balance: isMonthlyExpense ? state.balance + transaction.amount : state.balance,
         categorySpending: isMonthlyExpense

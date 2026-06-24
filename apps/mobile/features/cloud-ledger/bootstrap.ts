@@ -1,6 +1,7 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { BootstrapTask, SubscriptionTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
+import { refreshTransactions } from "@/features/transactions/store.public";
 import { captureWarning } from "@/shared/lib";
 import {
   flushCloudLedgerOutboxForUser,
@@ -11,12 +12,17 @@ export { flushCloudLedgerOutboxForUser };
 
 export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "cloud-ledger",
-  run: async ({ enableRemoteEffects, userId }) => {
+  run: async ({ db, enableRemoteEffects, userId }) => {
     await restoreCloudLedgerOptimisticState(userId);
     if (!enableRemoteEffects) {
       return;
     }
-    void flushCloudLedgerOutboxForUser(userId).catch(captureCloudLedgerOutboxFlushFailure);
+    void flushCloudLedgerOutboxForUser(userId)
+      .then((didWriteRuntimeCache) => {
+        if (!didWriteRuntimeCache) return;
+        return refreshTransactions(db, userId);
+      })
+      .catch(captureCloudLedgerOutboxFlushFailure);
   },
 };
 

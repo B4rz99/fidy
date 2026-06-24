@@ -189,6 +189,24 @@ describe("Cloud Ledger runtime mutations", () => {
     expect(NetInfo.fetch).not.toHaveBeenCalled();
     expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
   });
+
+  it("does not enqueue optimistic create when runtime writes are already suspended", async () => {
+    mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValueOnce(false);
+
+    const result = await enqueueCloudLedgerOptimisticCreate({
+      userId,
+      changeId: "ledger-change-1" as LedgerChangeId,
+      command: makeCreateCommand(),
+      createdAt: "2026-06-20T10:00:00.000Z" as IsoDateTime,
+    });
+    await result.flushIfOnline();
+
+    expect(result.didWriteRuntimeCache).toBe(false);
+    expect(mocks.createOfflineCloudLedgerTransaction).not.toHaveBeenCalled();
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).not.toHaveBeenCalled();
+    expect(NetInfo.fetch).not.toHaveBeenCalled();
+    expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
+  });
 });
 
 function makeCreateCommand() {

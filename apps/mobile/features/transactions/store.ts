@@ -1,4 +1,5 @@
 import type { AnyDb } from "@/shared/db";
+import { transactions } from "@/shared/db/schema";
 import {
   type CloudLedgerCreateTransactionCommand,
   enqueueCloudLedgerOptimisticCreate,
@@ -41,6 +42,7 @@ import { toTransactionFormInput } from "./store/form-input";
 import { useTransactionStore } from "./store/state";
 
 const PAGE_SIZE = 30;
+const CLOUD_LEDGER_MAX_COP_AMOUNT = 2_147_483_647;
 
 let transactionsSessionId = 0;
 let loadTransactionsRequestId = 0;
@@ -58,6 +60,8 @@ type UpdateTransactionDirectInput = {
   };
 };
 type RecordCloudLedgerManualTransactionInput = {
+  readonly db: AnyDb;
+  readonly sessionId: number;
   readonly userId: UserId;
   readonly transactionId: TransactionId;
   readonly input: {
@@ -103,7 +107,8 @@ const getErrorType = (error: unknown): string =>
 function createLiveTransactionMutationService(db: AnyDb, userId: UserId, sessionId: number) {
   return createTransactionMutationService({
     getUserId: () => userId,
-    recordManualTransaction: recordManualTransactionWithCloudLedger,
+    recordManualTransaction: (input) =>
+      recordManualTransactionWithCloudLedger({ ...input, db, sessionId }),
     amendManualTransaction: async (input) => {
       const result = await amendManualTransactionWithLocalLedger({
         db,
@@ -127,9 +132,11 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
       if (!isActiveTransactionSession(userId, sessionId)) return;
       await refreshTransactions(db, userId);
     },
-    cacheCommittedTransaction: (transaction) => {
+    cacheCommittedTransaction: (transaction, options) => {
       if (!isActiveTransactionSession(userId, sessionId)) return;
-      useTransactionStore.getState().addToCache(transaction, { countInPagination: false });
+      useTransactionStore
+        .getState()
+        .addToCache(transaction, { countInPagination: options?.countInPagination ?? true });
     },
     refreshAfterSave: false,
     resetForm: () => {
@@ -144,6 +151,8 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
 export { useTransactionStore };
 
 async function recordManualTransactionWithCloudLedger({
+  db,
+  sessionId,
   userId,
   transactionId,
   input,
@@ -167,6 +176,10 @@ async function recordManualTransactionWithCloudLedger({
   if (transaction === null) {
     return { success: false, error: "missingCategory" };
   }
+  const didPersistShadow =
+    optimisticCreate.didWriteRuntimeCache &&
+    isActiveTransactionSession(userId, sessionId) &&
+    persistCloudLedgerTransactionShadow(db, transaction);
   if (optimisticCreate.didWriteRuntimeCache) {
     void optimisticCreate.flushIfOnline().catch((error) => {
       captureWarning("cloud_ledger_outbox_flush_failed", {
@@ -178,8 +191,41 @@ async function recordManualTransactionWithCloudLedger({
   return {
     success: true,
     cacheCommittedTransaction: optimisticCreate.didWriteRuntimeCache,
+    countCachedTransactionInPagination: didPersistShadow,
     transaction,
   };
+}
+
+function persistCloudLedgerTransactionShadow(db: AnyDb, transaction: StoredTransaction): boolean {
+  try {
+    db.insert(transactions)
+      .values({
+        accountAttributionState: transaction.accountAttributionState,
+        accountId: transaction.accountId,
+        amount: transaction.amount,
+        categoryId: transaction.categoryId,
+        counterpartyName: transaction.counterpartyName,
+        createdAt: toIsoDateTime(transaction.createdAt),
+        date: toIsoDate(transaction.date),
+        description: transaction.description,
+        id: transaction.id,
+        source: transaction.source ?? "manual",
+        supersededAt:
+          transaction.supersededAt == null ? null : toIsoDateTime(transaction.supersededAt),
+        supersededByTransferId: transaction.supersededByTransferId,
+        type: transaction.type,
+        updatedAt: toIsoDateTime(transaction.updatedAt),
+        userId: transaction.userId,
+        voidedAt: transaction.voidedAt == null ? null : toIsoDateTime(transaction.voidedAt),
+      })
+      .run();
+    return true;
+  } catch (error) {
+    captureWarning("cloud_ledger_shadow_transaction_write_failed", {
+      errorType: getErrorType(error),
+    });
+    return false;
+  }
 }
 
 function validateCloudLedgerManualTransaction(
@@ -188,6 +234,9 @@ function validateCloudLedgerManualTransaction(
 ): CloudLedgerManualTransactionValidation {
   const amount = parseDigitsToAmount(input.digits);
   if (amount <= 0) return { success: false, error: "amountNotPositive" };
+  if (amount > CLOUD_LEDGER_MAX_COP_AMOUNT) {
+    return { success: false, error: "amountTooLarge" };
+  }
   if (input.accountId === null) return { success: false, error: "missingAccount" };
   if (input.categoryId === null) return { success: false, error: "missingCategory" };
   if (toIsoDate(input.date) > toIsoDate(now)) {

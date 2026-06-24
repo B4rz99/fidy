@@ -236,6 +236,44 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
   });
 
+  it("refreshes ordinary transactions when the async Cloud Ledger bootstrap flush resolves later", async () => {
+    let resolveFlush!: (cache: unknown) => void;
+    mocks.flushPendingCloudLedgerChanges.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFlush = resolve;
+        })
+    );
+
+    await runAuthenticatedBootstrap({
+      db: {} as never,
+      enableRemoteEffects: true,
+      userId: "user-1" as UserId,
+    });
+    await flushMicrotasks();
+
+    expect(mocks.flushPendingCloudLedgerChanges).toHaveBeenCalled();
+    expect(useTransactionStore.getState().pages).toEqual([]);
+
+    resolveFlush({
+      ...mocks.createEmptyCache(),
+      transactions: [mocks.acceptedTransaction],
+    });
+    await flushMicrotasks();
+
+    expect(useTransactionStore.getState().pages).toEqual([
+      expect.objectContaining({
+        id: "txn-accepted-restart" as TransactionId,
+        amount: 18000 as CopAmount,
+        categoryId: "food" as CategoryId,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        description: "Accepted restart coffee",
+      }),
+    ]);
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
+    expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
   it("makes restored pending Cloud Ledger transactions visible before an offline flush completes", async () => {
     mocks.restoreOptimisticCloudLedgerCache.mockImplementationOnce(async ({ cache }) => ({
       ...cache,

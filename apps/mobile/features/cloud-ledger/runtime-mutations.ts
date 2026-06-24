@@ -51,6 +51,12 @@ export async function enqueueCloudLedgerOptimisticCreate(input: {
   readonly createdAt: IsoDateTime;
 }): Promise<CloudLedgerOptimisticCreateResult> {
   const writeToken = beginCloudLedgerRuntimeCacheWrite(input.userId);
+  if (!isCloudLedgerRuntimeCacheWriteCurrent(input.userId, writeToken)) {
+    return {
+      didWriteRuntimeCache: false,
+      flushIfOnline: async () => undefined,
+    };
+  }
   const optimisticCache = await createOfflineCloudLedgerTransaction({
     cache: getCloudLedgerRuntimeCache(input.userId),
     changeId: input.changeId,

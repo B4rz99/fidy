@@ -2,6 +2,7 @@ import { getCloudLedgerOutbox, getCloudLedgerRuntimeCache } from "@/features/clo
 import { toIsoDate, toMonth } from "@/shared/lib";
 import { requireCopAmount } from "@/shared/types/assertions";
 import type { CopAmount, UserId } from "@/shared/types/branded";
+import { upsertStoredTransactionByRepositoryOrder } from "../lib/transaction-order";
 import type { StoredTransaction } from "../schema";
 import {
   cloudLedgerTransactionToStoredTransactions,
@@ -61,7 +62,7 @@ function upsertDailySpending(
   return nextItems.slice().sort((left, right) => left.date.localeCompare(right.date));
 }
 
-function prependCloudLedgerTransaction(
+function upsertCloudLedgerTransaction(
   snapshot: TransactionSnapshot,
   transaction: StoredTransaction
 ): {
@@ -73,7 +74,7 @@ function prependCloudLedgerTransaction(
   return {
     snapshot: {
       ...snapshot,
-      pages: [transaction, ...pagesWithoutTransaction],
+      pages: upsertStoredTransactionByRepositoryOrder(snapshot.pages, transaction),
       offset: snapshot.offset,
     },
     didInsert,
@@ -85,7 +86,7 @@ function addCloudLedgerTransactionToSnapshot(
   transaction: StoredTransaction,
   now: Date
 ): TransactionSnapshot {
-  const cloudLedgerSnapshot = prependCloudLedgerTransaction(snapshot, transaction);
+  const cloudLedgerSnapshot = upsertCloudLedgerTransaction(snapshot, transaction);
   if (!cloudLedgerSnapshot.didInsert) {
     return cloudLedgerSnapshot.snapshot;
   }

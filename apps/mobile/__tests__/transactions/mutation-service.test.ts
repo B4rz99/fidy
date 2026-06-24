@@ -186,7 +186,8 @@ describe("transaction mutation service", () => {
       now,
     });
     expect(cacheCommittedTransactionMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "txn-1", amount: 1200 })
+      expect.objectContaining({ id: "txn-1", amount: 1200 }),
+      { countInPagination: true }
     );
     expect(refreshMock).toHaveBeenCalledOnce();
     expect(cacheCommittedTransactionMock.mock.invocationCallOrder[0]).toBeLessThan(

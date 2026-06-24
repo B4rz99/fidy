@@ -32,7 +32,7 @@ import {
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type { AnyDb } from "@/shared/db";
 import { getSupabase } from "@/shared/db/supabase";
-import { toIsoDate } from "@/shared/lib";
+import { toIsoDate, toIsoDateTime } from "@/shared/lib";
 import type {
   CategoryId,
   CopAmount,
@@ -113,7 +113,7 @@ const mockDb = {
 } as unknown as AnyDb;
 const mockUserId = "user-1" as UserId;
 
-function makeStoredTransaction(overrides: Partial<{ id: TransactionId; updatedAt: Date }> = {}) {
+function makeStoredTransaction(overrides: Partial<StoredTransaction> = {}) {
   return {
     id: "tx-1" as TransactionId,
     userId: mockUserId,
@@ -284,7 +284,14 @@ describe("transaction boundaries", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.amount).toBe(4520);
-    expect(insertedTransactionRows).toEqual([]);
+    expect(insertedTransactionRows).toEqual([
+      expect.objectContaining({
+        id: result.transaction.id,
+        amount: 4520,
+        categoryId: "food",
+        description: "Groceries",
+      }),
+    ]);
     expect(cloudLedgerOutboxCalls).toEqual([
       expect.objectContaining({
         command: expect.objectContaining({
@@ -320,6 +327,58 @@ describe("transaction boundaries", () => {
       categoryId: "food",
       description: "Groceries",
     });
+  });
+
+  it("persists a local ordinary row for Cloud Ledger creates so edit and delete routes can load it", async () => {
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    useTransactionStore.getState().setDescription("Groceries");
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(insertedTransactionRows).toEqual([
+      expect.objectContaining({
+        id: result.transaction.id,
+        userId: mockUserId,
+        amount: 4520,
+        categoryId: "food",
+        accountId: "fa-default-user-1",
+        description: "Groceries",
+        source: "manual",
+      }),
+    ]);
+  });
+
+  it("inserts backdated optimistic Cloud Ledger creates after newer cached transactions", async () => {
+    const newerTransaction = makeStoredTransaction({
+      id: "tx-newer-visible" as TransactionId,
+      date: new Date("2026-06-20T00:00:00.000Z"),
+      createdAt: new Date("2026-06-20T10:00:00.000Z"),
+      updatedAt: new Date("2026-06-20T10:00:00.000Z"),
+    });
+    useTransactionStore.setState({
+      pages: [newerTransaction],
+      offset: 1,
+      hasMore: false,
+    });
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    const backdatedCalendarDate = new Date(2026, 2, 4);
+    useTransactionStore.getState().setDate(backdatedCalendarDate);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result.success).toBe(true);
+    expect(useTransactionStore.getState().pages).toEqual([
+      newerTransaction,
+      expect.objectContaining({
+        amount: 4520,
+        categoryId: "food",
+        date: backdatedCalendarDate,
+      }),
+    ]);
   });
 
   it("does not ask for an online flush when the optimistic runtime write was stale", async () => {
@@ -406,7 +465,7 @@ describe("transaction boundaries", () => {
     expect(cloudLedgerFlushIfOnline).toHaveBeenCalledTimes(1);
   });
 
-  it("does not use Local Ledger account writes for manual Cloud Ledger creates", async () => {
+  it("persists manual Cloud Ledger creates without requiring Local Ledger account usability checks", async () => {
     canUseSelectedAccount = false;
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
@@ -417,12 +476,14 @@ describe("transaction boundaries", () => {
       success: true,
       transaction: expect.objectContaining({ amount: 4520, categoryId: "food" }),
     });
-    expect(insertedTransactionRows).toEqual([]);
+    expect(insertedTransactionRows).toEqual([
+      expect.objectContaining({ amount: 4520, categoryId: "food" }),
+    ]);
     expect(cloudLedgerOutboxCalls).toHaveLength(1);
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });
 
-  it("does not count newly created optimistic Cloud Ledger rows when loading the next committed page", async () => {
+  it("counts newly created local Cloud Ledger shadow rows when loading the next committed page", async () => {
     const committedPages = Array.from({ length: 30 }, (_, index) =>
       makeStoredTransaction({ id: `tx-committed-${index}` as TransactionId })
     );
@@ -438,14 +499,22 @@ describe("transaction boundaries", () => {
       offset: committedPages.length,
       hasMore: true,
     });
-    vi.mocked(getTransactionsPaginated).mockImplementationOnce(({ limit, offset }) =>
-      committedRows.slice(offset, offset + limit + 1)
-    );
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
 
     const result = await saveCurrentTransaction(mockDb, mockUserId);
     expect(result.success).toBe(true);
+    if (!result.success) return;
+    vi.mocked(getTransactionsPaginated).mockImplementationOnce(({ limit, offset }) =>
+      [
+        makeRow({
+          id: result.transaction.id,
+          createdAt: toIsoDateTime(result.transaction.createdAt),
+          updatedAt: toIsoDateTime(result.transaction.updatedAt),
+        }),
+        ...committedRows,
+      ].slice(offset, offset + limit + 1)
+    );
 
     await loadNextTransactions(mockDb, mockUserId);
 
@@ -456,7 +525,7 @@ describe("transaction boundaries", () => {
       db: mockDb,
       userId: mockUserId,
       limit: 30,
-      offset: 30,
+      offset: 31,
     });
   });
 
@@ -555,6 +624,17 @@ describe("transaction boundaries", () => {
 
     expect(result).toEqual({ success: false, error: "missingCategory" });
     expect(insertedTransactionRows).toEqual([]);
+  });
+
+  it("rejects manual Cloud Ledger saves above the remote integer amount limit", async () => {
+    useTransactionStore.getState().setDigits("2147483648");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result).toEqual({ success: false, error: "amountTooLarge" });
+    expect(cloudLedgerOutboxCalls).toEqual([]);
+    expect(useTransactionStore.getState().pages).toEqual([]);
   });
 
   it("loads the initial transaction snapshot with aggregates", async () => {

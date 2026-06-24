@@ -165,6 +165,15 @@ function createActivityServiceHarness(input: ActivityServiceHarnessInput) {
   };
 }
 
+const CLOUD_LEDGER_STORED_TRANSACTION_DEFAULTS = {
+  id: "tx-cloud-pending" as TransactionId,
+  amount: 85_000 as CopAmount,
+  categoryId: "food" as CategoryId,
+  description: "Offline groceries",
+  date: "2026-04-20" as IsoDate,
+  createdAt: "2026-04-20T12:00:00.000Z" as IsoDateTime,
+} as const;
+
 function makeCloudLedgerStoredTransaction(
   overrides: Partial<{
     id: TransactionId;
@@ -176,22 +185,21 @@ function makeCloudLedgerStoredTransaction(
     updatedAt: IsoDateTime;
   }> = {}
 ): StoredTransaction {
-  const date = overrides.date ?? ("2026-04-20" as IsoDate);
-  const createdAt = overrides.createdAt ?? ("2026-04-20T12:00:00.000Z" as IsoDateTime);
-  const updatedAt = overrides.updatedAt ?? createdAt;
+  const values = { ...CLOUD_LEDGER_STORED_TRANSACTION_DEFAULTS, ...overrides };
+  const updatedAt = overrides.updatedAt ?? values.createdAt;
 
   return {
-    id: overrides.id ?? ("tx-cloud-pending" as TransactionId),
+    id: values.id,
     userId: USER_ID,
     type: "expense",
-    amount: overrides.amount ?? (85_000 as CopAmount),
-    categoryId: overrides.categoryId ?? ("food" as CategoryId),
-    description: overrides.description ?? "Offline groceries",
-    date: new Date(`${date}T00:00:00.000Z`),
+    amount: values.amount,
+    categoryId: values.categoryId,
+    description: values.description,
+    date: new Date(`${values.date}T00:00:00.000Z`),
     accountId: "fa-checking" as FinancialAccountId,
     accountAttributionState: "confirmed",
     counterpartyName: "",
-    createdAt: new Date(createdAt),
+    createdAt: new Date(values.createdAt),
     updatedAt: new Date(updatedAt),
     source: "manual",
     supersededAt: null,

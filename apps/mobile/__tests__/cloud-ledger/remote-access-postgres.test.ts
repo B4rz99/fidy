@@ -141,6 +141,52 @@ describe("Cloud Ledger Postgres access boundary", () => {
     expect(readCreatedTransactionRowCount(postgres)).toBe("1");
   });
 
+  postgresIt("seeds local-only ledger references before accepting transaction creates", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-local-only-refs",
+        accountId: "acct-local-only",
+        categoryId: "cat-local-only",
+      })
+    ).toMatchObject({
+      code: "accepted",
+      transaction: {
+        id: "txn-local-only-refs",
+        accountId: "acct-local-only",
+        categoryId: "cat-local-only",
+      },
+      cursor: "ledger:7",
+    });
+
+    expect(readLedgerCursorSequence(postgres)).toBe("7");
+    expect(readRefreshAfterInitialSeed(postgres)).toMatchObject({
+      cursor: "ledger:7",
+      categories: [
+        {
+          id: "cat-local-only",
+          name: "cat-local-only",
+        },
+      ],
+      financialAccounts: [
+        {
+          id: "acct-local-only",
+          name: "acct-local-only",
+          type: "cash",
+          currency: "COP",
+        },
+      ],
+      transactions: [
+        {
+          id: "txn-local-only-refs",
+          accountId: "acct-local-only",
+          categoryId: "cat-local-only",
+        },
+      ],
+    });
+  });
+
   postgresIt("rebuilds monthly projections for valid totals above integer range", () => {
     const postgres = setupSeededPostgres();
 
@@ -406,6 +452,15 @@ function expectServiceRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) {
   });
   expect(JSON.stringify(payload)).not.toContain("txn-other");
   expect(JSON.stringify(payload)).not.toContain("acct-other");
+}
+
+function readRefreshAfterInitialSeed(postgres: PostgresHarness) {
+  return JSON.parse(
+    psqlScalar(
+      postgres,
+      `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 4::bigint)::text;`
+    )
+  );
 }
 
 function startPostgres(): PostgresHarness {
