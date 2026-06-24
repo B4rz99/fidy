@@ -1,17 +1,8 @@
-import NetInfo from "@react-native-community/netinfo";
 import type { AnyDb } from "@/shared/db";
 import {
-  beginCloudLedgerRuntimeCacheWrite,
   type CloudLedgerCreateTransactionCommand,
-  createOfflineCloudLedgerTransaction,
-  flushPendingCloudLedgerChanges,
-  getCloudLedgerRuntimeCache,
-  getCloudLedgerOutbox,
-  isCloudLedgerRuntimeCacheWriteCurrent,
-  setCloudLedgerRuntimeCacheIfCurrent,
-  type CloudLedgerRuntimeCacheWriteToken,
+  enqueueCloudLedgerOptimisticCreate,
 } from "@/features/cloud-ledger/public";
-import { getSupabase } from "@/shared/db/supabase";
 import {
   captureWarning,
   generateLedgerChangeId,
@@ -40,6 +31,7 @@ import {
 } from "./lib/mutation-service";
 import { toStoredTransaction } from "./lib/build-transaction";
 import type { StoredTransaction, TransactionType } from "./schema";
+import { cloudLedgerCreateCommandToStoredTransaction } from "./services/cloud-ledger-transaction-adapter";
 import {
   applyCloudLedgerOptimisticView,
   applyRuntimeCloudLedgerTransactions,
@@ -160,27 +152,23 @@ async function recordManualTransactionWithCloudLedger({
   const validation = validateCloudLedgerManualTransaction(input, now);
   if (!validation.success) return validation;
 
-  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
-  const optimisticCache = await createOfflineCloudLedgerTransaction({
-    cache: getCloudLedgerRuntimeCache(userId),
+  const command = toCloudLedgerCreateTransactionCommand(transactionId, validation.transaction);
+  const optimisticCreate = await enqueueCloudLedgerOptimisticCreate({
+    userId,
     changeId: generateLedgerChangeId(),
-    command: toCloudLedgerCreateTransactionCommand(transactionId, validation.transaction),
+    command,
     createdAt: toIsoDateTime(now),
-    outbox: getCloudLedgerOutbox(userId),
   });
-  const transaction = toOptimisticStoredTransaction({
-    transactionId,
-    transaction: validation.transaction,
+  const transaction = cloudLedgerCreateCommandToStoredTransaction({
     userId,
-    now,
+    command,
+    createdAt: now,
   });
-  const didWriteRuntimeCache = setCloudLedgerRuntimeCacheIfCurrent(
-    userId,
-    writeToken,
-    optimisticCache
-  );
-  if (didWriteRuntimeCache) {
-    void flushCloudLedgerOutboxAfterCreate(userId, writeToken).catch((error) => {
+  if (transaction === null) {
+    return { success: false, error: "missingCategory" };
+  }
+  if (optimisticCreate.didWriteRuntimeCache) {
+    void optimisticCreate.flushIfOnline().catch((error) => {
       captureWarning("cloud_ledger_outbox_flush_failed", {
         errorType: getErrorType(error),
       });
@@ -189,35 +177,9 @@ async function recordManualTransactionWithCloudLedger({
 
   return {
     success: true,
-    cacheCommittedTransaction: didWriteRuntimeCache,
+    cacheCommittedTransaction: optimisticCreate.didWriteRuntimeCache,
     transaction,
   };
-}
-
-async function flushCloudLedgerOutboxAfterCreate(
-  userId: UserId,
-  writeToken: CloudLedgerRuntimeCacheWriteToken
-): Promise<void> {
-  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
-  const networkState = await NetInfo.fetch();
-  if (networkState.isConnected !== true) return;
-  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
-
-  const supabase = getSupabase();
-  const sessionResult = await supabase.auth.getSession();
-  if (sessionResult.error != null || sessionResult.data.session == null) return;
-  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
-
-  setCloudLedgerRuntimeCacheIfCurrent(
-    userId,
-    writeToken,
-    await flushPendingCloudLedgerChanges({
-      cache: getCloudLedgerRuntimeCache(userId),
-      outbox: getCloudLedgerOutbox(userId),
-      supabase,
-      shouldContinue: () => isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken),
-    })
-  );
 }
 
 function validateCloudLedgerManualTransaction(
@@ -263,32 +225,6 @@ function toCloudLedgerCreateTransactionCommand(
       id: transactionId,
       type: transaction.type,
     },
-  };
-}
-
-function toOptimisticStoredTransaction(input: {
-  readonly transactionId: TransactionId;
-  readonly transaction: ValidCloudLedgerManualTransaction;
-  readonly userId: UserId;
-  readonly now: Date;
-}): StoredTransaction {
-  return {
-    accountAttributionState: "confirmed",
-    accountId: input.transaction.accountId,
-    amount: input.transaction.amount,
-    categoryId: input.transaction.categoryId,
-    counterpartyName: "",
-    createdAt: input.now,
-    date: input.transaction.date,
-    description: input.transaction.description,
-    id: input.transactionId,
-    source: "manual",
-    supersededAt: null,
-    supersededByTransferId: null,
-    type: input.transaction.type,
-    updatedAt: input.now,
-    userId: input.userId,
-    voidedAt: null,
   };
 }
 

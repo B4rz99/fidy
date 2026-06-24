@@ -1,18 +1,13 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { BootstrapTask, SubscriptionTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
-import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning } from "@/shared/lib";
 import {
-  beginCloudLedgerRuntimeCacheWrite,
-  flushPendingCloudLedgerChanges,
-  getCloudLedgerOutbox,
-  getCloudLedgerRuntimeCache,
-  isCloudLedgerRuntimeCacheWriteCurrent,
-  restoreOptimisticCloudLedgerCache,
-  resumeCloudLedgerRuntimeCacheWrites,
-  setCloudLedgerRuntimeCacheIfCurrent,
-} from "./public";
+  flushCloudLedgerOutboxForUser,
+  restoreCloudLedgerOptimisticRuntimeState,
+} from "./runtime-mutations";
+
+export { flushCloudLedgerOutboxForUser };
 
 export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "cloud-ledger",
@@ -40,35 +35,7 @@ export const cloudLedgerReconnectFlushTask: SubscriptionTask<AuthenticatedBootst
 export async function restoreCloudLedgerOptimisticState(
   userId: AuthenticatedBootstrapContext["userId"]
 ): Promise<void> {
-  resumeCloudLedgerRuntimeCacheWrites(userId);
-  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
-  setCloudLedgerRuntimeCacheIfCurrent(
-    userId,
-    writeToken,
-    await restoreOptimisticCloudLedgerCache({
-      cache: getCloudLedgerRuntimeCache(userId),
-      outbox: getCloudLedgerOutbox(userId),
-    })
-  );
-}
-
-export async function flushCloudLedgerOutboxForUser(
-  userId: AuthenticatedBootstrapContext["userId"]
-): Promise<void> {
-  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
-  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
-    return;
-  }
-  setCloudLedgerRuntimeCacheIfCurrent(
-    userId,
-    writeToken,
-    await flushPendingCloudLedgerChanges({
-      cache: getCloudLedgerRuntimeCache(userId),
-      outbox: getCloudLedgerOutbox(userId),
-      supabase: getSupabase(),
-      shouldContinue: () => isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken),
-    })
-  );
+  await restoreCloudLedgerOptimisticRuntimeState(userId);
 }
 
 function captureCloudLedgerOutboxFlushFailure(error: unknown): void {

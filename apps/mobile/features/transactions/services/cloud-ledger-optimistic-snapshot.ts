@@ -1,13 +1,12 @@
-import {
-  type CloudLedgerPendingChange,
-  type CloudLedgerTransaction,
-  getCloudLedgerOutbox,
-  getCloudLedgerRuntimeCache,
-} from "@/features/cloud-ledger/public";
-import { parseIsoDate, toIsoDate, toMonth } from "@/shared/lib";
+import { getCloudLedgerOutbox, getCloudLedgerRuntimeCache } from "@/features/cloud-ledger/public";
+import { toIsoDate, toMonth } from "@/shared/lib";
 import { requireCopAmount } from "@/shared/types/assertions";
 import type { CopAmount, UserId } from "@/shared/types/branded";
 import type { StoredTransaction } from "../schema";
+import {
+  cloudLedgerTransactionToStoredTransactions,
+  pendingCloudLedgerChangeToStoredTransactions,
+} from "./cloud-ledger-transaction-adapter";
 import type {
   CategorySpendingItem,
   DailySpendingItem,
@@ -106,69 +105,9 @@ function addCloudLedgerTransactionToSnapshot(
   };
 }
 
-function toCloudLedgerStoredTransaction(
-  userId: UserId,
-  transaction: CloudLedgerTransaction
-): readonly StoredTransaction[] {
-  if (transaction.categoryId === null) {
-    return [];
-  }
-  const updatedAt = new Date(transaction.updatedAt);
-  return [
-    {
-      accountAttributionState: "confirmed",
-      accountId: transaction.accountId,
-      amount: transaction.amount,
-      categoryId: transaction.categoryId,
-      counterpartyName: "",
-      createdAt: updatedAt,
-      date: parseIsoDate(transaction.date),
-      description: transaction.description ?? "",
-      id: transaction.id,
-      source: "manual",
-      supersededAt: null,
-      supersededByTransferId: null,
-      type: transaction.type,
-      updatedAt,
-      userId,
-      voidedAt: null,
-    },
-  ];
-}
-
-function toPendingStoredTransaction(
-  userId: UserId,
-  change: CloudLedgerPendingChange
-): readonly StoredTransaction[] {
-  if (change.kind !== "createTransaction" || change.transaction.categoryId === null) {
-    return [];
-  }
-  const createdAt = new Date(change.createdAt);
-  return [
-    {
-      accountAttributionState: "confirmed",
-      accountId: change.transaction.accountId,
-      amount: change.transaction.amount,
-      categoryId: change.transaction.categoryId,
-      counterpartyName: "",
-      createdAt,
-      date: parseIsoDate(change.transaction.date),
-      description: change.transaction.description ?? "",
-      id: change.transaction.id,
-      source: "manual",
-      supersededAt: null,
-      supersededByTransferId: null,
-      type: change.transaction.type,
-      updatedAt: createdAt,
-      userId,
-      voidedAt: null,
-    },
-  ];
-}
-
 export function loadRuntimeCloudLedgerTransactions(userId: UserId): readonly StoredTransaction[] {
   return getCloudLedgerRuntimeCache(userId).transactions.flatMap((transaction) =>
-    toCloudLedgerStoredTransaction(userId, transaction)
+    cloudLedgerTransactionToStoredTransactions(userId, transaction)
   );
 }
 
@@ -176,7 +115,7 @@ export async function loadRestoredCloudLedgerPendingTransactions(
   userId: UserId
 ): Promise<readonly StoredTransaction[]> {
   return (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
-    toPendingStoredTransaction(userId, change)
+    pendingCloudLedgerChangeToStoredTransactions(userId, change)
   );
 }
 

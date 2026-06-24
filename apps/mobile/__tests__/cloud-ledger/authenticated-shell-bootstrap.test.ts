@@ -150,6 +150,37 @@ vi.mock("@/features/cloud-ledger/public", () => ({
   setCloudLedgerRuntimeCacheIfCurrent: mocks.setCloudLedgerRuntimeCacheIfCurrent,
 }));
 
+vi.mock("@/features/cloud-ledger/runtime-mutations", () => ({
+  flushCloudLedgerOutboxForUser: async (userId: UserId) => {
+    const writeToken = mocks.beginCloudLedgerRuntimeCacheWrite(userId);
+    if (!mocks.isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    return mocks.setCloudLedgerRuntimeCacheIfCurrent(
+      userId,
+      writeToken,
+      await mocks.flushPendingCloudLedgerChanges({
+        cache: mocks.getCloudLedgerRuntimeCache(userId),
+        outbox: mocks.getCloudLedgerOutbox(userId),
+        supabase: mocks.getSupabase(),
+        shouldContinue: () => mocks.isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken),
+      })
+    );
+  },
+  restoreCloudLedgerOptimisticRuntimeState: async (userId: UserId) => {
+    mocks.resumeCloudLedgerRuntimeCacheWrites(userId);
+    const writeToken = mocks.beginCloudLedgerRuntimeCacheWrite(userId);
+    return mocks.setCloudLedgerRuntimeCacheIfCurrent(
+      userId,
+      writeToken,
+      await mocks.restoreOptimisticCloudLedgerCache({
+        cache: mocks.getCloudLedgerRuntimeCache(userId),
+        outbox: mocks.getCloudLedgerOutbox(userId),
+      })
+    );
+  },
+}));
+
 vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
   getSpendingByCategoryAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),

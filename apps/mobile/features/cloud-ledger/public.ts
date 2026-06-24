@@ -32,6 +32,12 @@ export {
   suspendCloudLedgerRuntimeCacheWrites,
 } from "./runtime";
 export type { CloudLedgerRuntimeCacheWriteToken } from "./runtime";
+export type { CloudLedgerOptimisticCreateResult } from "./runtime-mutations";
+export {
+  enqueueCloudLedgerOptimisticCreate,
+  flushCloudLedgerOutboxForUser,
+  restoreCloudLedgerOptimisticRuntimeState,
+} from "./runtime-mutations";
 export type {
   CloudLedgerOutboxFailureCode,
   CloudLedgerPendingChange,

@@ -1,4 +1,3 @@
-import NetInfo from "@react-native-community/netinfo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -6,10 +5,8 @@ import {
   CloudLedgerOutboxFailure,
   clearCloudLedgerRuntimeCache,
   createEmptyCloudLedgerCache,
-  createOfflineCloudLedgerTransaction,
-  flushPendingCloudLedgerChanges,
+  enqueueCloudLedgerOptimisticCreate,
   getCloudLedgerOutbox,
-  getCloudLedgerRuntimeCache,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
   suspendCloudLedgerRuntimeCacheWrites,
@@ -47,6 +44,9 @@ import type {
 } from "@/shared/types/branded";
 
 const cloudLedgerOutboxCalls: unknown[] = [];
+const cloudLedgerFlushIfOnline = vi.hoisted(() =>
+  vi.fn<(...args: any[]) => any>(() => Promise.resolve())
+);
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
@@ -65,6 +65,13 @@ vi.mock("@/features/cloud-ledger/public", async () => {
     createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>((input) => {
       cloudLedgerOutboxCalls.push(input);
       return Promise.resolve(input.cache);
+    }),
+    enqueueCloudLedgerOptimisticCreate: vi.fn<(...args: any[]) => any>((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return Promise.resolve({
+        didWriteRuntimeCache: true,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      });
     }),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>((input) =>
       Promise.resolve(input.cache)
@@ -199,9 +206,17 @@ function createMockSupabase(): SupabaseClient {
 describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(NetInfo.fetch).mockResolvedValue({ isConnected: true } as never);
     vi.mocked(getSupabase).mockReturnValue(createMockSupabase());
     vi.mocked(getCloudLedgerOutbox).mockImplementation(() => createMockCloudLedgerOutbox());
+    vi.mocked(enqueueCloudLedgerOptimisticCreate).mockImplementation((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return Promise.resolve({
+        didWriteRuntimeCache: true,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      });
+    });
+    cloudLedgerFlushIfOnline.mockReset();
+    cloudLedgerFlushIfOnline.mockResolvedValue(undefined);
     insertedTransactionRows.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
@@ -290,10 +305,6 @@ describe("transaction boundaries", () => {
   });
 
   it("flushes the encrypted Cloud Ledger outbox after an already-online signed-in create", async () => {
-    const outbox = createMockCloudLedgerOutbox();
-    const supabase = createMockSupabase();
-    vi.mocked(getCloudLedgerOutbox).mockReturnValue(outbox);
-    vi.mocked(getSupabase).mockReturnValue(supabase);
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
     useTransactionStore.getState().setDescription("Groceries");
@@ -302,16 +313,7 @@ describe("transaction boundaries", () => {
 
     expect(result.success).toBe(true);
     expect(cloudLedgerOutboxCalls).toHaveLength(1);
-    await vi.waitFor(() => {
-      expect(flushPendingCloudLedgerChanges).toHaveBeenCalledWith(
-        expect.objectContaining({
-          cache: expect.any(Object),
-          outbox,
-          shouldContinue: expect.any(Function),
-          supabase,
-        })
-      );
-    });
+    expect(cloudLedgerFlushIfOnline).toHaveBeenCalledTimes(1);
     expect(useTransactionStore.getState().pages[0]).toMatchObject({
       amount: 4520,
       categoryId: "food",
@@ -319,158 +321,88 @@ describe("transaction boundaries", () => {
     });
   });
 
-  it("does not repopulate Cloud Ledger runtime cache when create flush resolves after logout", async () => {
-    const flushedCache = applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
-      cursor: "ledger:stale" as LedgerCursor,
-      categories: [],
-      financialAccounts: [],
-      transactions: [
-        {
-          id: "txn-stale-after-logout" as TransactionId,
-          type: "expense",
-          amount: 4520 as CopAmount,
-          currency: "COP",
-          categoryId: "food" as CategoryId,
-          accountId: "fa-default-user-1" as FinancialAccountId,
-          description: "Late flush",
-          date: "2026-03-04" as IsoDate,
-          updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
-        },
-      ],
-      tombstones: [],
+  it("does not ask for an online flush when the optimistic runtime write was stale", async () => {
+    vi.mocked(enqueueCloudLedgerOptimisticCreate).mockResolvedValueOnce({
+      didWriteRuntimeCache: false,
+      flushIfOnline: cloudLedgerFlushIfOnline,
     });
-    let resolveFlush!: (cache: typeof flushedCache) => void;
-    const flushPromise = new Promise<typeof flushedCache>((resolve) => {
-      resolveFlush = resolve;
-    });
-    vi.mocked(flushPendingCloudLedgerChanges).mockReturnValueOnce(flushPromise);
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
 
     const result = await saveCurrentTransaction(mockDb, mockUserId);
     expect(result.success).toBe(true);
-    await vi.waitFor(() => {
-      expect(flushPendingCloudLedgerChanges).toHaveBeenCalledTimes(1);
-    });
 
-    clearCloudLedgerRuntimeCache(mockUserId);
-    resolveFlush(flushedCache);
-    await flushPromise;
-
-    expect(getCloudLedgerRuntimeCache(mockUserId).transactions).toEqual([]);
-    expect(getCloudLedgerRuntimeCache(mockUserId).cursor).toBeNull();
+    expect(cloudLedgerFlushIfOnline).not.toHaveBeenCalled();
+    expect(useTransactionStore.getState().pages).toEqual([]);
   });
 
   it("does not write optimistic runtime cache when manual create enqueue resolves after logout", async () => {
-    const optimisticCache = applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
-      cursor: "ledger:optimistic" as LedgerCursor,
-      categories: [],
-      financialAccounts: [],
-      transactions: [
-        {
-          id: "txn-optimistic-after-logout" as TransactionId,
-          type: "expense",
-          amount: 4520 as CopAmount,
-          currency: "COP",
-          categoryId: "food" as CategoryId,
-          accountId: "fa-default-user-1" as FinancialAccountId,
-          description: "Late optimistic enqueue",
-          date: "2026-03-04" as IsoDate,
-          updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
-        },
-      ],
-      tombstones: [],
-    });
-    let resolveCreate!: (cache: typeof optimisticCache) => void;
-    const createPromise = new Promise<typeof optimisticCache>((resolve) => {
+    let resolveCreate!: () => void;
+    const createPromise = new Promise<void>((resolve) => {
       resolveCreate = resolve;
     });
-    vi.mocked(createOfflineCloudLedgerTransaction).mockImplementationOnce((input) => {
+    vi.mocked(enqueueCloudLedgerOptimisticCreate).mockImplementationOnce((input) => {
       cloudLedgerOutboxCalls.push(input);
-      return createPromise;
+      return createPromise.then(() => ({
+        didWriteRuntimeCache: false,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      }));
     });
-    vi.mocked(NetInfo.fetch).mockResolvedValueOnce({ isConnected: false } as never);
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
 
     const savePromise = saveCurrentTransaction(mockDb, mockUserId);
     await vi.waitFor(() => {
-      expect(createOfflineCloudLedgerTransaction).toHaveBeenCalledTimes(1);
+      expect(enqueueCloudLedgerOptimisticCreate).toHaveBeenCalledTimes(1);
     });
 
     clearCloudLedgerRuntimeCache(mockUserId);
-    resolveCreate(optimisticCache);
+    resolveCreate();
     const result = await savePromise;
 
     expect(result.success).toBe(true);
-    expect(getCloudLedgerRuntimeCache(mockUserId).transactions).toEqual([]);
-    expect(getCloudLedgerRuntimeCache(mockUserId).cursor).toBeNull();
+    expect(useTransactionStore.getState().pages).toEqual([]);
+    expect(cloudLedgerFlushIfOnline).not.toHaveBeenCalled();
   });
 
   it("does not cache stale manual Cloud Ledger creates in ordinary transaction pages after logout starts", async () => {
-    const optimisticCache = applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
-      cursor: "ledger:optimistic" as LedgerCursor,
-      categories: [],
-      financialAccounts: [],
-      transactions: [
-        {
-          id: "txn-stale-ordinary-cache" as TransactionId,
-          type: "expense",
-          amount: 4520 as CopAmount,
-          currency: "COP",
-          categoryId: "food" as CategoryId,
-          accountId: "fa-default-user-1" as FinancialAccountId,
-          description: "Late ordinary cache",
-          date: "2026-03-04" as IsoDate,
-          updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
-        },
-      ],
-      tombstones: [],
-    });
-    let resolveCreate!: (cache: typeof optimisticCache) => void;
-    const createPromise = new Promise<typeof optimisticCache>((resolve) => {
+    let resolveCreate!: () => void;
+    const createPromise = new Promise<void>((resolve) => {
       resolveCreate = resolve;
     });
-    vi.mocked(createOfflineCloudLedgerTransaction).mockImplementationOnce((input) => {
+    vi.mocked(enqueueCloudLedgerOptimisticCreate).mockImplementationOnce((input) => {
       cloudLedgerOutboxCalls.push(input);
-      return createPromise;
+      return createPromise.then(() => ({
+        didWriteRuntimeCache: false,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      }));
     });
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
 
     const savePromise = saveCurrentTransaction(mockDb, mockUserId);
     await vi.waitFor(() => {
-      expect(createOfflineCloudLedgerTransaction).toHaveBeenCalledTimes(1);
+      expect(enqueueCloudLedgerOptimisticCreate).toHaveBeenCalledTimes(1);
     });
 
     suspendCloudLedgerRuntimeCacheWrites(mockUserId);
-    resolveCreate(optimisticCache);
+    resolveCreate();
     const result = await savePromise;
 
     expect(result.success).toBe(true);
     expect(useTransactionStore.getState().pages).toEqual([]);
   });
 
-  it("does not start create flush when logout happens before the network check completes", async () => {
-    let resolveNetwork!: (state: { readonly isConnected: boolean }) => void;
-    const networkPromise = new Promise<{ readonly isConnected: boolean }>((resolve) => {
-      resolveNetwork = resolve;
-    });
-    vi.mocked(NetInfo.fetch).mockReturnValueOnce(networkPromise as never);
+  it("does not reject manual create when the best-effort flush callback fails", async () => {
+    cloudLedgerFlushIfOnline.mockRejectedValueOnce(new Error("offline"));
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
 
     const result = await saveCurrentTransaction(mockDb, mockUserId);
     expect(result.success).toBe(true);
-    await vi.waitFor(() => {
-      expect(NetInfo.fetch).toHaveBeenCalledTimes(1);
-    });
-
-    clearCloudLedgerRuntimeCache(mockUserId);
-    resolveNetwork({ isConnected: true });
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
+    expect(cloudLedgerFlushIfOnline).toHaveBeenCalledTimes(1);
   });
 
   it("does not use Local Ledger account writes for manual Cloud Ledger creates", async () => {
