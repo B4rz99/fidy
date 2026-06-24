@@ -157,9 +157,20 @@ export function resetCloudLedgerOutboxInstances(): void {
 }
 
 export async function discardCloudLedgerOutbox(userId: UserId): Promise<void> {
-  await getCloudLedgerOutbox(userId).clear();
-  await SecureStore.deleteItemAsync(secureStoreOutboxEncryptionKey(userId));
-  outboxesByUserId.delete(userId);
+  const outbox = outboxesByUserId.get(userId);
+  const payloadKey = secureStoreOutboxKey(userId);
+  const encryptionKeyName = secureStoreOutboxEncryptionKey(userId);
+  const encryptionKey = SecureStore.getItem(encryptionKeyName);
+  try {
+    await SecureStore.deleteItemAsync(encryptionKeyName);
+    await (outbox?.clear() ?? clearSecureStoreOutboxPayload(payloadKey));
+    outboxesByUserId.delete(userId);
+  } catch (error) {
+    if (encryptionKey !== null) {
+      SecureStore.setItem(encryptionKeyName, encryptionKey);
+    }
+    throw error;
+  }
 }
 
 export async function hasPendingCloudLedgerOutboxChanges(userId: UserId): Promise<boolean> {
@@ -730,6 +741,7 @@ async function writeSecureStoreOutboxPayload(key: string, payload: string): Prom
 }
 
 async function clearSecureStoreOutboxPayload(key: string): Promise<void> {
+  const payload = await readSecureStoreOutboxPayload(key);
   const [manifest, stagedAllocation] = await Promise.all([
     SecureStore.getItemAsync(key).then(parseChunkedOutboxManifest),
     SecureStore.getItemAsync(secureStoreOutboxStagedKey(key)).then(parseStagedChunkAllocation),
@@ -738,7 +750,7 @@ async function clearSecureStoreOutboxPayload(key: string): Promise<void> {
     ...(manifest?.allocatedGenerations ?? []),
     ...(stagedAllocation === null ? [] : [stagedAllocation]),
   ]);
-  await Promise.all([
+  const deleteResults = await Promise.allSettled([
     SecureStore.deleteItemAsync(key),
     SecureStore.deleteItemAsync(secureStoreOutboxStagedKey(key)),
     ...allocations.flatMap((allocation) =>
@@ -747,6 +759,16 @@ async function clearSecureStoreOutboxPayload(key: string): Promise<void> {
       )
     ),
   ]);
+  const failedDelete = deleteResults.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected"
+  );
+  if (failedDelete === undefined) {
+    return;
+  }
+  if (payload !== null) {
+    await writeSecureStoreOutboxPayload(key, payload);
+  }
+  throw failedDelete.reason;
 }
 
 async function cleanupSecureStoreOutboxChunks(

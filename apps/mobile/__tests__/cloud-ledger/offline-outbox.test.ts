@@ -313,6 +313,64 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect([...secureStore.keys()]).toEqual([]);
   });
 
+  it("does not create encrypted outbox keys when logout discard has no stored outbox", async () => {
+    await discardCloudLedgerOutbox(USER_ID);
+
+    expect([...secureStore.keys()]).toEqual([]);
+  });
+
+  it("keeps pending encrypted outbox usable when logout discard cannot delete the encryption key", async () => {
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+    vi.mocked(SecureStore.deleteItemAsync).mockImplementation((key: string) => {
+      if (key === "cloud-ledger-outbox-key_user-1") {
+        return Promise.reject(new Error("simulated key delete failure"));
+      }
+      secureStore.delete(key);
+      return Promise.resolve();
+    });
+
+    await expect(discardCloudLedgerOutbox(USER_ID)).rejects.toThrow("simulated key delete failure");
+
+    resetCloudLedgerOutboxInstances();
+    expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual([
+      "change-offline-coffee",
+    ]);
+  });
+
+  it("keeps pending encrypted outbox usable when logout discard cannot delete a payload chunk", async () => {
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+    const activeChunkKey = secureStoreOutboxPayloadChunkKeys()[0];
+    expect(activeChunkKey).toBeDefined();
+    vi.mocked(SecureStore.deleteItemAsync).mockImplementation((key: string) => {
+      if (key === activeChunkKey) {
+        return Promise.reject(new Error("simulated payload chunk delete failure"));
+      }
+      secureStore.delete(key);
+      return Promise.resolve();
+    });
+
+    await expect(discardCloudLedgerOutbox(USER_ID)).rejects.toThrow(
+      "simulated payload chunk delete failure"
+    );
+
+    resetCloudLedgerOutboxInstances();
+    expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual([
+      "change-offline-coffee",
+    ]);
+  });
+
   it("preserves concurrent pending creates enqueued for the same encrypted outbox", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
