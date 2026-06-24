@@ -174,7 +174,12 @@ async function recordManualTransactionWithCloudLedger({
     userId,
     now,
   });
-  if (setCloudLedgerRuntimeCacheIfCurrent(userId, writeToken, optimisticCache)) {
+  const didWriteRuntimeCache = setCloudLedgerRuntimeCacheIfCurrent(
+    userId,
+    writeToken,
+    optimisticCache
+  );
+  if (didWriteRuntimeCache) {
     void flushCloudLedgerOutboxAfterCreate(userId, writeToken).catch((error) => {
       captureWarning("cloud_ledger_outbox_flush_failed", {
         errorType: getErrorType(error),
@@ -184,6 +189,7 @@ async function recordManualTransactionWithCloudLedger({
 
   return {
     success: true,
+    cacheCommittedTransaction: didWriteRuntimeCache,
     transaction,
   };
 }

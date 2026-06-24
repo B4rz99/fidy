@@ -174,7 +174,21 @@ export async function discardCloudLedgerOutbox(userId: UserId): Promise<void> {
 }
 
 export async function hasPendingCloudLedgerOutboxChanges(userId: UserId): Promise<boolean> {
-  return (await getCloudLedgerOutbox(userId).load()).length > 0;
+  const existing = outboxesByUserId.get(userId);
+  if (existing !== undefined) {
+    return (await existing.load()).length > 0;
+  }
+
+  const encryptionKey = getExistingOutboxEncryptionKey(userId);
+  if (encryptionKey === null) {
+    return false;
+  }
+  const outbox = createEncryptedCloudLedgerOutbox({
+    encryptionKey,
+    storage: createSecureStoreCloudLedgerOutboxStorage(userId),
+  });
+  outboxesByUserId.set(userId, outbox);
+  return (await outbox.load()).length > 0;
 }
 
 export function createSecureStoreCloudLedgerOutboxStorage(
@@ -513,6 +527,11 @@ function getOrCreateOutboxEncryptionKey(userId: UserId): Uint8Array {
   const bytes = Crypto.getRandomBytes(OUTBOX_KEY_BYTES);
   SecureStore.setItem(key, toHex(bytes));
   return bytes;
+}
+
+function getExistingOutboxEncryptionKey(userId: UserId): Uint8Array | null {
+  const existing = SecureStore.getItem(secureStoreOutboxEncryptionKey(userId));
+  return existing !== null && OUTBOX_KEY_PATTERN.test(existing) ? fromHex(existing) : null;
 }
 
 function chunkString(value: string): readonly string[] {

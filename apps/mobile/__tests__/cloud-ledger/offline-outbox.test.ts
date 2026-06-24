@@ -12,6 +12,7 @@ import {
   discardCloudLedgerOutbox,
   getCloudLedgerOutbox,
   flushPendingCloudLedgerChanges,
+  hasPendingCloudLedgerOutboxChanges,
   resetCloudLedgerOutboxInstances,
   restoreOptimisticCloudLedgerCache,
   type EncryptedCloudLedgerOutboxSnapshot,
@@ -315,6 +316,12 @@ describe("mobile Cloud Ledger offline outbox", () => {
 
   it("does not create encrypted outbox keys when logout discard has no stored outbox", async () => {
     await discardCloudLedgerOutbox(USER_ID);
+
+    expect([...secureStore.keys()]).toEqual([]);
+  });
+
+  it("checks for pending encrypted outbox changes without creating outbox keys", async () => {
+    await expect(hasPendingCloudLedgerOutboxChanges(USER_ID)).resolves.toBe(false);
 
     expect([...secureStore.keys()]).toEqual([]);
   });

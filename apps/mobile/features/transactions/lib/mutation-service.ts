@@ -12,7 +12,11 @@ export type TransactionFormInput = {
 };
 
 export type TransactionMutationResult =
-  | { success: true; transaction: StoredTransaction }
+  | {
+      success: true;
+      transaction: StoredTransaction;
+      cacheCommittedTransaction?: boolean;
+    }
   | { success: false; error: string };
 
 type CreateTransactionMutationServiceDeps = {
@@ -128,7 +132,9 @@ export function createTransactionMutationService(
         return result;
       }
 
-      deps.cacheCommittedTransaction?.(result.transaction);
+      if (result.cacheCommittedTransaction !== false) {
+        deps.cacheCommittedTransaction?.(result.transaction);
+      }
       if (deps.refreshAfterSave ?? true) {
         await deps.refresh();
       }

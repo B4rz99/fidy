@@ -12,6 +12,7 @@ import {
   getCloudLedgerRuntimeCache,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
+  suspendCloudLedgerRuntimeCacheWrites,
 } from "@/features/cloud-ledger/public";
 import {
   getDailySpendingAggregate,
@@ -404,6 +405,50 @@ describe("transaction boundaries", () => {
     expect(result.success).toBe(true);
     expect(getCloudLedgerRuntimeCache(mockUserId).transactions).toEqual([]);
     expect(getCloudLedgerRuntimeCache(mockUserId).cursor).toBeNull();
+  });
+
+  it("does not cache stale manual Cloud Ledger creates in ordinary transaction pages after logout starts", async () => {
+    const optimisticCache = applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+      cursor: "ledger:optimistic" as LedgerCursor,
+      categories: [],
+      financialAccounts: [],
+      transactions: [
+        {
+          id: "txn-stale-ordinary-cache" as TransactionId,
+          type: "expense",
+          amount: 4520 as CopAmount,
+          currency: "COP",
+          categoryId: "food" as CategoryId,
+          accountId: "fa-default-user-1" as FinancialAccountId,
+          description: "Late ordinary cache",
+          date: "2026-03-04" as IsoDate,
+          updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        },
+      ],
+      tombstones: [],
+    });
+    let resolveCreate!: (cache: typeof optimisticCache) => void;
+    const createPromise = new Promise<typeof optimisticCache>((resolve) => {
+      resolveCreate = resolve;
+    });
+    vi.mocked(createOfflineCloudLedgerTransaction).mockImplementationOnce((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return createPromise;
+    });
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    const savePromise = saveCurrentTransaction(mockDb, mockUserId);
+    await vi.waitFor(() => {
+      expect(createOfflineCloudLedgerTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    suspendCloudLedgerRuntimeCacheWrites(mockUserId);
+    resolveCreate(optimisticCache);
+    const result = await savePromise;
+
+    expect(result.success).toBe(true);
+    expect(useTransactionStore.getState().pages).toEqual([]);
   });
 
   it("does not start create flush when logout happens before the network check completes", async () => {
