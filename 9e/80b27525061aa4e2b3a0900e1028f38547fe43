@@ -1,0 +1,25 @@
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_d585a7fa922fba::t_449f5d0985412e 61,71,80,110
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_d585a7fa922fba::t_6230c013b32201 56
+apps/mobile/drizzle/0035_capture_improvement_provider_category.sql
+  s_d585a7fa922fba::t_26438358fccd70 5-6
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_8fb10680dbd617 470-516
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "9e80b27525061aa4e2b3a0900e1028f38547fe43",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
