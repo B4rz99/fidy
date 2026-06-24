@@ -1,0 +1,50 @@
+apps/mobile/supabase/migrations/20260623223000_capture_improvement_source_provider.sql
+  s_d585a7fa922fba::t_878250f71c354e 26
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_6d6a124a4277d9 5,413-469,833-840
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_93fbe07fd048b3 28-34
+apps/mobile/supabase/migrations/20260623170000_capture_improvement_opt_out_serialization.sql
+  s_d585a7fa922fba::t_b375f9b15d7c78 164,177
+  s_d585a7fa922fba::t_56f0bee7802571 52-53
+  s_d585a7fa922fba::t_4e2c16079f00aa 1-2,7
+  s_d585a7fa922fba::t_a3539dafd9b91c 26-27
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_d585a7fa922fba::t_4871c172de8152 79,86,90
+apps/mobile/features/capture-sources/lib/notification-parse-improvement-repository.ts
+  s_d585a7fa922fba::t_358d531037a7a6 222-223,229,236-258
+dependency-policy.json
+  s_d585a7fa922fba::t_c44bac30a16366 28-32,38-47
+apps/mobile/__tests__/capture-sources/use-notification-capture.test.ts
+  s_d585a7fa922fba::t_87c10334e4db9d 10-12,26-27,36,40,50,53-57,64-84,99-102,125-128
+apps/mobile/features/capture-sources/hooks/useNotificationCapture.ts
+  s_d585a7fa922fba::t_549677dd8e3d58 5,31-37
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_d585a7fa922fba::t_1fa168c5c961bf 84-103,359-377
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_cc7ab652a7bd5d 217-219
+  s_d585a7fa922fba::t_b13fc5df7ffbd6 193-211
+apps/mobile/drizzle/0035_capture_improvement_provider_category.sql
+  s_d585a7fa922fba::t_8066976bdf6593 19-30
+apps/mobile/features/email-capture/hooks/useEmailCapture.ts
+  s_d585a7fa922fba::t_32734c31d1606b 8,20
+apps/mobile/__tests__/capture-sources/notification-parse-improvement-repository.test.ts
+  s_d585a7fa922fba::t_f485a826136a11 276-288,310-321
+  s_d585a7fa922fba::t_916e739ced860b 205-255
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "8f7ec255d943fef18a951fd011f42870aa855309",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
