@@ -219,26 +219,41 @@ const captureImprovementBoundaryAuth = async (
 };
 
 const throwIfKnownFailureResponse = (data: CaptureImprovementApiResponse | null): void => {
-  if (data?.success === false && data.error === "unsafe_capture_improvement_sample") {
-    throw new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
-  }
-  if (data?.success === false && data.error === "capture_improvement_opted_out") {
-    throw new ParseImprovementSampleOptOutError();
-  }
+  if (data?.success !== false) return;
+  throwCaptureImprovementBoundaryFailure(data.error);
 };
 
 const throwIfRemoteBoundaryError = async (error: RemoteErrorLike | null): Promise<void> => {
   if (error != null) {
     const remoteFailure = await readRemoteError(error);
-    if (remoteFailure === "unsafe_capture_improvement_sample") {
-      throw new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
-    }
-    if (remoteFailure === "capture_improvement_opted_out") {
-      throw new ParseImprovementSampleOptOutError();
-    }
+    throwCaptureImprovementBoundaryFailure(remoteFailure);
     throw new ParseImprovementSampleInsertError({
       details: error.message,
     });
+  }
+};
+
+const throwCaptureImprovementBoundaryFailure = (
+  failure: CaptureImprovementApiFailureCode | null
+): void => {
+  const error = captureImprovementBoundaryFailureError(failure);
+  if (error !== null) throw error;
+};
+
+const captureImprovementBoundaryFailureError = (
+  failure: CaptureImprovementApiFailureCode | null
+): Error | null => {
+  switch (failure) {
+    case "unsafe_capture_improvement_sample":
+      return new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
+    case "capture_improvement_opted_out":
+      return new ParseImprovementSampleOptOutError();
+    case "invalid_capture_improvement_sample":
+      return new ParseImprovementSampleInsertError({
+        code: "invalid_capture_improvement_sample",
+      });
+    default:
+      return null;
   }
 };
 

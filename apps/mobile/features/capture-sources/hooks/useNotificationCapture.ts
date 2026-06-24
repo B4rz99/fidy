@@ -2,6 +2,7 @@ import {
   shareNotificationParseImprovementSample,
   type ShareParseImprovementInput,
 } from "@/features/capture-sources/diagnostics.public";
+import { setEmailParseImprovementSharingPreference } from "@/features/email-capture/parse-improvement.public";
 import { useSettingsStore } from "@/features/settings/hooks.public";
 import { Platform } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
@@ -27,7 +28,13 @@ export function useNotificationCapture(db: AnyDb | null, userId: UserId | null) 
           };
 
           if (shareAnonymizedParseSamples) {
-            void shareNotificationParseImprovementSample(shareInput).catch(captureError);
+            void setEmailParseImprovementSharingPreference({
+              db,
+              enabled: true,
+              userId,
+            })
+              .then(() => shareNotificationParseImprovementSample(shareInput))
+              .catch(captureError);
           }
         },
       }).catch((error) => {

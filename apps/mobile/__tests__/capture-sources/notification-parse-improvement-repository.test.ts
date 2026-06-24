@@ -202,6 +202,57 @@ describe("notification parse improvement repository", () => {
     ).rejects.toMatchObject({ name: "ParseImprovementSampleOptOutError" });
   });
 
+  it("throws a permanent insert failure when the Remote API Boundary rejects an invalid sample", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: { success: false, error: "invalid_capture_improvement_sample" },
+      error: null,
+    });
+
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "Compra por [AMOUNT] en [MERCHANT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toMatchObject({
+      name: "ParseImprovementSampleInsertError",
+      code: "invalid_capture_improvement_sample",
+    });
+  });
+
+  it("throws a permanent insert failure when the Remote API Boundary error context is invalid sample", async () => {
+    mockFunctionsInvoke.mockResolvedValueOnce({
+      data: null,
+      error: {
+        message: "bad request",
+        context: {
+          json: async () => ({ success: false, error: "invalid_capture_improvement_sample" }),
+        },
+      },
+    });
+
+    await expect(
+      insertNotificationParseImprovementSample({
+        userId: "user-1",
+        sample: {
+          template: "Compra por [AMOUNT] en [MERCHANT].",
+          source: "notification_android",
+          status: "failed",
+          confidenceBucket: "none",
+          parseMethod: "llm",
+        },
+      })
+    ).rejects.toMatchObject({
+      name: "ParseImprovementSampleInsertError",
+      code: "invalid_capture_improvement_sample",
+    });
+  });
+
   it("deletes user-linked samples through the Remote API Boundary", async () => {
     mockFunctionsInvoke.mockResolvedValueOnce({
       data: { success: true, data: { code: "accepted" } },
@@ -220,6 +271,19 @@ describe("notification parse improvement repository", () => {
     });
     expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("user-1");
     expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("does not delete samples when the active auth session no longer matches the queued user", async () => {
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: { access_token: "other-token", user: { id: "user-2" } } },
+      error: null,
+    });
+
+    await expect(
+      deleteNotificationParseImprovementSamplesForUser({ userId: "user-1" })
+    ).rejects.toThrow("account session");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("updates Capture Improvement Preference through the Remote API Boundary", async () => {
@@ -241,6 +305,19 @@ describe("notification parse improvement repository", () => {
     });
     expect(JSON.stringify(mockFunctionsInvoke.mock.calls)).not.toContain("user-1");
     expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("does not update preference when the active auth session no longer matches the queued user", async () => {
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: { access_token: "other-token", user: { id: "user-2" } } },
+      error: null,
+    });
+
+    await expect(
+      setNotificationParseImprovementPreference({ userId: "user-1", enabled: true })
+    ).rejects.toThrow("account session");
+
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 
   it("rejects templates that still contain sensitive values before inserting", async () => {

@@ -16,10 +16,18 @@ END;
 DROP INDEX `uq_email_parse_improvement_sample`;
 --> statement-breakpoint
 DELETE FROM `email_parse_improvement_samples`
-WHERE rowid NOT IN (
-  SELECT min(rowid)
-  FROM `email_parse_improvement_samples`
-  GROUP BY `user_id`, `source`, `status`, `parse_method`, `provider_category`, `template`
+WHERE rowid IN (
+  SELECT rowid
+  FROM (
+    SELECT
+      rowid,
+      row_number() OVER (
+        PARTITION BY `user_id`, `source`, `status`, `parse_method`, `provider_category`, `template`
+        ORDER BY CASE WHEN `deleted_at` IS NULL THEN 0 ELSE 1 END, rowid
+      ) AS duplicate_rank
+    FROM `email_parse_improvement_samples`
+  )
+  WHERE duplicate_rank > 1
 );
 --> statement-breakpoint
 UPDATE `email_parse_improvement_samples` SET `sender_domain` = NULL;

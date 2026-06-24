@@ -1,7 +1,10 @@
+drop function if exists public.cloud_ledger_retain_capture_improvement_sample(uuid, text, text, text, text, text, text, text, integer);
+
 create or replace function public.cloud_ledger_retain_capture_improvement_sample(
   p_user_id uuid,
   p_source_channel text,
   p_source_family text,
+  p_source_provider text,
   p_provider_category text,
   p_template_shape text,
   p_parse_outcome text,
@@ -20,6 +23,8 @@ begin
   if p_user_id is null
     or p_source_channel not in ('email', 'notification', 'wallet')
     or p_source_family not in ('email', 'android_notification', 'wallet_notification')
+    or (p_source_channel = 'email' and (p_source_provider is null or p_source_provider not in ('gmail', 'outlook')))
+    or (p_source_channel <> 'email' and p_source_provider is not null)
     or p_provider_category not in ('bank', 'payment_app', 'wallet', 'unknown')
     or p_template_shape is null
     or length(trim(p_template_shape)) = 0
@@ -44,7 +49,8 @@ begin
   end if;
 
   v_source := case
-    when p_source_channel = 'email' then 'email_gmail'
+    when p_source_channel = 'email' and p_source_provider = 'outlook' then 'email_outlook'
+    when p_source_channel = 'email' and p_source_provider = 'gmail' then 'email_gmail'
     when p_source_channel = 'wallet' then 'google_pay'
     else 'notification_android'
   end;
@@ -155,11 +161,13 @@ revoke execute on function public.cloud_ledger_retain_capture_improvement_sample
   text,
   text,
   text,
+  text,
   integer
 ) from public, anon, authenticated;
 
 grant execute on function public.cloud_ledger_retain_capture_improvement_sample(
   uuid,
+  text,
   text,
   text,
   text,

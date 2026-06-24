@@ -190,12 +190,33 @@ describe("Cloud Ledger remote schema", () => {
     );
   });
 
+  it("preserves coarse email source providers in the serialized retain RPC", () => {
+    const sql = readFileSync(
+      CAPTURE_IMPROVEMENT_OPT_OUT_SERIALIZATION_MIGRATION,
+      "utf8"
+    ).toLowerCase();
+    const compactSql = sql.replace(/\s+/g, " ");
+
+    expect(sql).toContain("p_source_provider text");
+    expect(compactSql).toContain(
+      "drop function if exists public.cloud_ledger_retain_capture_improvement_sample(uuid, text, text, text, text, text, text, text, integer)"
+    );
+    expect(compactSql).toContain(
+      "when p_source_channel = 'email' and p_source_provider = 'outlook' then 'email_outlook'"
+    );
+    expect(compactSql).toContain(
+      "when p_source_channel = 'email' and p_source_provider = 'gmail' then 'email_gmail'"
+    );
+  });
+
   it("preserves coarse email source providers when retaining Capture Improvement Samples", () => {
     const sql = readFileSync(CAPTURE_IMPROVEMENT_SOURCE_PROVIDER_MIGRATION, "utf8").toLowerCase();
     const compactSql = sql.replace(/\s+/g, " ");
 
     expect(sql).toContain("p_source_provider text");
-    expect(sql).toContain("p_source_provider not in ('gmail', 'outlook')");
+    expect(sql).toContain(
+      "p_source_provider is null or p_source_provider not in ('gmail', 'outlook')"
+    );
     expect(compactSql).toContain(
       "when p_source_channel = 'email' and p_source_provider = 'outlook' then 'email_outlook'"
     );

@@ -23,7 +23,7 @@ begin
   if p_user_id is null
     or p_source_channel not in ('email', 'notification', 'wallet')
     or p_source_family not in ('email', 'android_notification', 'wallet_notification')
-    or (p_source_channel = 'email' and p_source_provider not in ('gmail', 'outlook'))
+    or (p_source_channel = 'email' and (p_source_provider is null or p_source_provider not in ('gmail', 'outlook')))
     or (p_source_channel <> 'email' and p_source_provider is not null)
     or p_provider_category not in ('bank', 'payment_app', 'wallet', 'unknown')
     or p_template_shape is null

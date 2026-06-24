@@ -25,7 +25,13 @@ export { pruneStaleFailedEmailSourceEvents } from "./email-parse-improvement-pru
 import type { EmailParseImprovementRequest } from "./email-pipeline-service/types";
 
 const FLUSH_BATCH_SIZE = 10;
-const PERMANENT_INSERT_ERROR_CODES = new Set(["22P02", "23502", "23505", "23514"]);
+const PERMANENT_INSERT_ERROR_CODES = new Set([
+  "22P02",
+  "23502",
+  "23505",
+  "23514",
+  "invalid_capture_improvement_sample",
+]);
 const activeFlushesByUserId = new Map<UserId, Promise<FlushResult>>();
 const activeRemoteOperationsByUserId = new Map<UserId, Promise<unknown>>();
 

@@ -81,6 +81,26 @@ describe("shareEmailParseImprovementRequests", () => {
     expect(mockDeleteEmailParseImprovementSamplesForUser).toHaveBeenCalledWith({ db, userId });
   });
 
+  it("captures disabled deletion retry failures without rejecting the email sync", async () => {
+    const error = new Error("delete failed");
+    mockDeleteEmailParseImprovementSamplesForUser.mockRejectedValueOnce(error);
+
+    await expect(
+      shareEmailParseImprovementRequests({
+        db,
+        enabled: false,
+        userId,
+        requests: [request],
+      })
+    ).resolves.toBeUndefined();
+
+    expect(mockCaptureError).toHaveBeenCalledWith(error);
+    expect(mockCaptureWarning).toHaveBeenCalledWith(
+      "email_parse_improvement_sample_delete_failed",
+      { errorType: "Error" }
+    );
+  });
+
   it("logs disabled sharing summaries when debug logging is enabled", async () => {
     const consoleLog = vi.spyOn(console, "log").mockImplementation(() => undefined);
     vi.stubEnv("EXPO_PUBLIC_EMAIL_CAPTURE_DEBUG", "1");
@@ -334,6 +354,25 @@ describe("shareEmailParseImprovementRequests", () => {
 
     expect(mockCaptureWarning).toHaveBeenCalledWith("email_parse_improvement_sample_share_failed", {
       errorType: "unknown",
+    });
+  });
+
+  it("preserves outbox failure types when individual pending samples fail to flush", async () => {
+    mockFlushPendingEmailParseImprovementSamples.mockResolvedValueOnce({
+      shared: 0,
+      failed: 2,
+      failureTypes: ["ParseImprovementSampleInsertError", "ParseImprovementSampleOptOutError"],
+    } as never);
+
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: true,
+      userId,
+      requests: [request],
+    });
+
+    expect(mockCaptureWarning).toHaveBeenCalledWith("email_parse_improvement_sample_share_failed", {
+      errorType: "ParseImprovementSampleInsertError,ParseImprovementSampleOptOutError",
     });
   });
 });

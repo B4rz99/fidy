@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { eq } from "drizzle-orm";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -409,6 +410,63 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("dead-letters invalid boundary samples instead of retrying the same local row", async () => {
+    const { db, sqlite } = createDb();
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+    const error = new Error("invalid sample");
+    error.name = "ParseImprovementSampleInsertError";
+    Object.assign(error, { code: "invalid_capture_improvement_sample" });
+    mockShareCaptureParseImprovementSample.mockRejectedValueOnce(error);
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({ db, userId: USER_ID, now: NOW })
+    ).resolves.toMatchObject({ shared: 0, failed: 1 });
+
+    expect(db.select().from(emailParseImprovementSamples).all()[0]?.deletedAt).toBe(
+      "2026-05-19T10:00:00.000Z"
+    );
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(0);
+    sqlite.close();
+  });
+
+  it("preserves active rows over tombstones when the provider migration deduplicates", () => {
+    const sqlite = new Database(":memory:");
+    sqlite.exec(`
+      CREATE TABLE email_parse_improvement_samples (
+        id text PRIMARY KEY NOT NULL,
+        user_id text NOT NULL,
+        template text NOT NULL,
+        sender_domain text,
+        source text NOT NULL,
+        status text NOT NULL,
+        confidence real,
+        parse_method text NOT NULL,
+        created_at text NOT NULL,
+        shared_at text,
+        deleted_at text
+      );
+      CREATE UNIQUE INDEX uq_email_parse_improvement_sample
+        ON email_parse_improvement_samples (
+          user_id,
+          source,
+          status,
+          parse_method,
+          coalesce(sender_domain, ''),
+          template
+        );
+      INSERT INTO email_parse_improvement_samples VALUES
+        ('deleted-sample', '${USER_ID}', 'Compra en [MERCHANT]', 'davibank.com', 'email_gmail', 'failed', null, 'regex', '2026-05-19T09:00:00.000Z', null, '2026-05-19T09:05:00.000Z'),
+        ('active-sample', '${USER_ID}', 'Compra en [MERCHANT]', 'bbva.com', 'email_gmail', 'failed', null, 'regex', '2026-05-19T10:00:00.000Z', null, null);
+    `);
+
+    runDrizzleSqlMigration(sqlite, "0035_capture_improvement_provider_category.sql");
+
+    expect(sqlite.prepare("select id from email_parse_improvement_samples").all()).toEqual([
+      { id: "active-sample" },
+    ]);
+    sqlite.close();
+  });
+
   it("flushes pending templates in bounded batches", async () => {
     const { db, sqlite } = createDb();
     const requests = Array.from({ length: 11 }, (_, index) => ({
@@ -771,4 +829,13 @@ function sourceEventInput(
     receivedAt: updatedAt,
     processedAt: updatedAt,
   };
+}
+
+function runDrizzleSqlMigration(sqlite: Database.Database, fileName: string): void {
+  const sql = readFileSync(resolve(__dirname, "../../drizzle", fileName), "utf8");
+  sql
+    .split("--> statement-breakpoint")
+    .map((statement) => statement.trim())
+    .filter(Boolean)
+    .forEach((statement) => sqlite.exec(statement));
 }

@@ -76,18 +76,18 @@ describe("useEmailCapture", () => {
     );
   });
 
-  it("enqueues and retries opt-out deletion on app open when sharing is disabled", async () => {
+  it("retries durable opt-out deletion on app open when sharing is disabled", async () => {
     const { useEmailCapture } = await loadUseEmailCapture();
     const userId = requireUserId("user-1");
 
     useEmailCapture(mockDb, userId);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(mockDeleteEmailParseImprovementSamplesForUser).toHaveBeenCalledWith({
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).toHaveBeenCalledWith({
       db: mockDb,
       userId,
     });
-    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
   });
 });
 
