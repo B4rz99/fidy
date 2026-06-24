@@ -1,0 +1,57 @@
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_6c070d47258744::t_0f7b49f6bc5de7 153-183
+apps/mobile/__tests__/cloud-ledger/bootstrap.test.ts
+  s_6c070d47258744::t_1f47cc76bee8ce 12-13,17-19,29-30,37,47-48,54,56-58,62-63,66,69,72-73
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_29616b40f9db0f::t_5bc8ab292ba33d 1-113
+apps/mobile/features/cloud-ledger/bootstrap.ts
+  s_29616b40f9db0f::t_5bc8ab292ba33d 6-8,38
+  s_29616b40f9db0f::t_26039d882ff83f 10
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_a015eeb45038bf::t_af883565a87344 1
+  s_29616b40f9db0f::t_0a3e32cc250f25 2,6-9,110,118
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_6c070d47258744::t_aefcf3ffeb6795 1-208
+apps/mobile/features/transactions/store.ts
+  s_29616b40f9db0f::t_0a3e32cc250f25 4,34,155-157,159,162,164-165,167-171,180
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_35e38ab51d2d4f 396-397,405
+  s_6c070d47258744::t_c6bdfc39cafb28 8,47-49,69-75,211-219
+  s_6c070d47258744::t_ac6eb319c240f5 316,324-327,335-336,340-341,344,346-349,356,360,364-365,369-370,373,375-378,385,389
+apps/mobile/features/cloud-ledger/public.ts
+  s_29616b40f9db0f::t_5bc8ab292ba33d 35-40
+apps/mobile/features/transactions/services/cloud-ledger-transaction-adapter.ts
+  s_29616b40f9db0f::t_0a3e32cc250f25 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "55aa659321ad0524ea306e3bb22248d7b2ee61f5",
+  "prompts": {},
+  "sessions": {
+    "s_29616b40f9db0f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef7ff-9c99-74e0-bb80-e01ce3200b4d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
