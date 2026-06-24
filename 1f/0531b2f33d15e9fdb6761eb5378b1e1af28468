@@ -1,0 +1,29 @@
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_315c8c1cbc9a28 238-248
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_824dd7bb12e2ab 1,95,111,173-176,186-191
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_6d8f9cb077202b 303-330
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_732aa7209058d7 842-892
+apps/mobile/supabase/migrations/20260623223000_capture_improvement_source_provider.sql
+  s_d585a7fa922fba::t_d3ce476a5efc72 24,26,30,35,37,39
+supabase/functions/cloud-ledger-api/capture-improvement-sample.ts
+  s_d585a7fa922fba::t_7e9ef6530cac2a 73-77,121-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "1f0531b2f33d15e9fdb6761eb5378b1e1af28468",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
