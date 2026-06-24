@@ -14,6 +14,7 @@ const mockSetupNotificationCapture = vi.fn<(...args: any[]) => any>(() =>
   Promise.resolve(() => undefined)
 );
 let mockShareAnonymizedParseSamples = false;
+let mockParseImprovementSharingPreferenceState = "explicit_disabled";
 
 const mockPackages = ["com.todo1.mobile.co.bancolombia"];
 const mockDb = {} as any;
@@ -23,6 +24,7 @@ describe("useNotificationCapture", () => {
     vi.resetModules();
     vi.clearAllMocks();
     mockShareAnonymizedParseSamples = false;
+    mockParseImprovementSharingPreferenceState = "explicit_disabled";
     mockSetEmailParseImprovementSharingPreference.mockResolvedValue(undefined);
     mockShareSample.mockResolvedValue(undefined);
   });
@@ -42,6 +44,7 @@ describe("useNotificationCapture", () => {
 
   it("shares automatically without prompting when the global preference is enabled", async () => {
     mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "explicit_enabled";
     const { useNotificationCapture } = await loadUseNotificationCapture();
     const userId = requireUserId("user-1");
 
@@ -66,8 +69,28 @@ describe("useNotificationCapture", () => {
     ).toBeLessThan(mockShareSample.mock.invocationCallOrder[0] ?? 0);
   });
 
+  it("does not rewrite remote opt-outs when notification sharing is default-enabled", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "default_enabled";
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
+    useNotificationCapture(mockDb, userId);
+    triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockSetEmailParseImprovementSharingPreference).not.toHaveBeenCalled();
+    expect(mockShareSample).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consent: true,
+        userId,
+      })
+    );
+  });
+
   it("does not retain notification samples when the remote opt-in retry fails", async () => {
     mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "explicit_enabled";
     mockSetEmailParseImprovementSharingPreference.mockRejectedValueOnce(new Error("offline"));
     const { useNotificationCapture } = await loadUseNotificationCapture();
     const userId = requireUserId("user-1");
@@ -93,8 +116,14 @@ async function loadUseNotificationCapture() {
       (mockShareSample as (...args: unknown[]) => unknown)(...args),
   }));
   vi.doMock("@/features/settings/hooks.public", () => ({
+    isExplicitParseImprovementOptIn: (state: {
+      readonly parseImprovementSharingPreferenceState: string;
+    }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
     useSettingsStore: (selector: any) =>
-      selector({ shareAnonymizedParseSamples: mockShareAnonymizedParseSamples }),
+      selector({
+        parseImprovementSharingPreferenceState: mockParseImprovementSharingPreferenceState,
+        shareAnonymizedParseSamples: mockShareAnonymizedParseSamples,
+      }),
   }));
   vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
     setEmailParseImprovementSharingPreference: (...args: unknown[]) =>
