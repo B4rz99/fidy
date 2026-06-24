@@ -1,0 +1,25 @@
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_a015eeb45038bf::t_2357275f1cf9b6 168
+  s_a015eeb45038bf::t_1010cbe1b2a954 215,220-223
+  s_a015eeb45038bf::t_1299d43cb85d14 24-34,60,207-214,216-219,225-244
+  s_a015eeb45038bf::t_dd2257d23ad97e 224,249-250,255
+  s_a015eeb45038bf::t_a092595f407a09 251-254
+apps/mobile/features/cloud-ledger/bootstrap.ts
+  s_a015eeb45038bf::t_dde45dba30fc51 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "8fb1d0534affa042a07c26d367ca3fe1f75bd75d",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
