@@ -1,0 +1,47 @@
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_d585a7fa922fba::t_a0ad7a19c44f40 125-144
+  s_d585a7fa922fba::t_e49066bb29ba33 11,107-124,165-170
+  s_d585a7fa922fba::t_8dd021ef4f809d 79,86
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_d585a7fa922fba::t_7ecb8f34abe6be 177-194
+apps/mobile/features/settings/hooks.public.ts
+  s_d585a7fa922fba::t_e13dff570e0156 3-12
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_d585a7fa922fba::t_3c1fc984c77b7d 82,88-90,106
+apps/mobile/features/onboarding/components/SyncProgressStep.tsx
+  s_d585a7fa922fba::t_f7ca72c1115d52 11-15,187-190
+apps/mobile/features/background-fetch/task.ts
+  s_d585a7fa922fba::t_9eb235402fb242 10-14,38-41
+apps/mobile/features/email-capture/store.ts
+  s_d585a7fa922fba::t_8b55a658b07317 146,203
+apps/mobile/features/settings/store.ts
+  s_d585a7fa922fba::t_27044b8557369b 24-30,44,157-178,187,230-233,280-282,284-285,290-294
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_c1e93a7c351185 281-303
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_479c1fcc2e5e28 243,256-262
+apps/mobile/__tests__/background-fetch/task.test.ts
+  s_d585a7fa922fba::t_122a550da6628c 22,28,51,53,56-77,102-107
+apps/mobile/features/email-capture/hooks/useEmailCapture.ts
+  s_d585a7fa922fba::t_ddd06e6aa09d25 2-6,20,62-66
+  s_d585a7fa922fba::t_262023afd946f5 19
+  s_d585a7fa922fba::t_40845b83b156b7 36
+apps/mobile/__tests__/settings/store.test.ts
+  s_d585a7fa922fba::t_16dfb61b4e3494 3-7,37,67-70,82-85,96-99,102,108-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "167e0dbfd6bfcaeb9dceecf4d375a1e32600dc39",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
