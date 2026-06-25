@@ -1,8 +1,11 @@
-import { act } from "react";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, useEffect } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderFidy } from "@/__tests__/helpers/render";
 import type { StoredActivityItem } from "@/features/activity/query.public";
-import type { HomeActivityFeedModel } from "@/features/dashboard/components/home-screen/useHomeActivityFeed";
+import {
+  useHomeActivityFeed,
+  type HomeActivityFeedModel,
+} from "@/features/dashboard/components/home-screen/useHomeActivityFeed";
 import type { AnyDb } from "@/shared/db";
 import type {
   CategoryId,
@@ -17,11 +20,16 @@ type UseHomeActivityFeedInput = {
   readonly db: AnyDb | null;
   readonly userId: UserId | null;
 };
-type UseHomeActivityFeed = (input: UseHomeActivityFeedInput) => HomeActivityFeedModel;
-
 const loadPageWithCloudLedgerOptimisticView = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
 const push = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
 const deleteTransaction = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
+
+vi.mock("expo-router", () => ({
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    useEffect(effect, [effect]);
+  },
+  useRouter: () => ({ push }),
+}));
 
 vi.mock("@/features/activity/query.public", () => ({
   appendUniqueActivityItems: (
@@ -48,29 +56,12 @@ vi.mock("@/features/dashboard/lib/get-activity-account-names", () => ({
   getActivityAccountNames: () => ({}),
 }));
 
+vi.mock("@/shared/hooks", () => ({
+  useSubscription: () => undefined,
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 describe("home activity feed", () => {
-  let useHomeActivityFeed: UseHomeActivityFeed;
-
-  beforeAll(async () => {
-    vi.doMock("expo-router", async () => {
-      const React = await import("react");
-      return {
-        useFocusEffect: (effect: () => void | (() => void)) => {
-          React.useEffect(effect, [effect]);
-        },
-        useRouter: () => ({ push }),
-      };
-    });
-    vi.doMock("@/shared/hooks", async () => {
-      return {
-        useSubscription: () => undefined,
-        useTranslation: () => ({ t: (key: string) => key }),
-      };
-    });
-    ({ useHomeActivityFeed } =
-      await import("@/features/dashboard/components/home-screen/useHomeActivityFeed"));
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -108,7 +99,6 @@ describe("home activity feed", () => {
         onModel={(model) => {
           modelRef.current = model;
         }}
-        useHomeActivityFeed={useHomeActivityFeed}
         userId={"user-1" as UserId}
       />
     );
@@ -123,7 +113,6 @@ describe("home activity feed", () => {
         onModel={(model) => {
           modelRef.current = model;
         }}
-        useHomeActivityFeed={useHomeActivityFeed}
         userId={"user-2" as UserId}
       />
     );
@@ -155,11 +144,9 @@ describe("home activity feed", () => {
 
 function HomeActivityFeedProbe({
   onModel,
-  useHomeActivityFeed,
   ...input
 }: UseHomeActivityFeedInput & {
   readonly onModel: (model: HomeActivityFeedModel) => void;
-  readonly useHomeActivityFeed: UseHomeActivityFeed;
 }) {
   onModel(useHomeActivityFeed(input));
   return null;
