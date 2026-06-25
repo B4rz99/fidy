@@ -22,6 +22,7 @@ const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
 const mockLoadEmailAccounts = vi.fn<(...args: any[]) => any>();
 const mockFetchAndProcessEmails = vi.fn<(...args: any[]) => any>();
 const mockDeleteEmailParseImprovementSamplesForUser = vi.fn<(...args: any[]) => any>();
+const mockEnsureEmailParseImprovementSamplesDeletedForUser = vi.fn<(...args: any[]) => any>();
 const mockRetryPendingEmailParseImprovementSampleDeletion = vi.fn<(...args: any[]) => any>();
 const mockAddEventListener = vi.fn<(...args: any[]) => any>();
 
@@ -44,6 +45,10 @@ describe("useEmailCapture", () => {
     });
     mockDeleteEmailParseImprovementSamplesForUser.mockResolvedValue({
       deleted: 0,
+    });
+    mockEnsureEmailParseImprovementSamplesDeletedForUser.mockResolvedValue({
+      deleted: 0,
+      retried: false,
     });
     mockAddEventListener.mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
   });
@@ -100,6 +105,7 @@ describe("useEmailCapture", () => {
 
     expect(mockInitializeEmailCaptureSession).not.toHaveBeenCalled();
     expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
     expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
     expect(mockFetchAndProcessEmails).not.toHaveBeenCalled();
   });
@@ -117,6 +123,7 @@ describe("useEmailCapture", () => {
     useEmailCapture(mockDb, userId);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
     expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
     const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
     expect(options.canDeleteDisabledParseImprovementSamples()).toBe(false);
@@ -142,17 +149,18 @@ describe("useEmailCapture", () => {
     expect(options.canEnableRemoteParseImprovementPreference()).toBe(false);
   });
 
-  it("retries durable opt-out deletion on app open when sharing is disabled", async () => {
+  it("ensures remote opt-out deletion on app open when sharing is disabled", async () => {
     const { useEmailCapture } = await loadUseEmailCapture();
     const userId = requireUserId("user-1");
 
     useEmailCapture(mockDb, userId);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(mockRetryPendingEmailParseImprovementSampleDeletion).toHaveBeenCalledWith({
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).toHaveBeenCalledWith({
       db: mockDb,
       userId,
     });
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
     expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
   });
 });
@@ -194,6 +202,8 @@ async function loadUseEmailCapture() {
   vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
     deleteEmailParseImprovementSamplesForUser: (...args: unknown[]) =>
       mockDeleteEmailParseImprovementSamplesForUser(...args),
+    ensureEmailParseImprovementSamplesDeletedForUser: (...args: unknown[]) =>
+      mockEnsureEmailParseImprovementSamplesDeletedForUser(...args),
     retryPendingEmailParseImprovementSampleDeletion: (...args: unknown[]) =>
       mockRetryPendingEmailParseImprovementSampleDeletion(...args),
   }));

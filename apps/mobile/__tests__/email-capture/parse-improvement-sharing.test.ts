@@ -8,6 +8,7 @@ const {
   mockCaptureWarning,
   mockDeleteEmailParseImprovementSamplesForUser,
   mockEnqueueEmailParseImprovementRequests,
+  mockEnsureEmailParseImprovementSamplesDeletedForUser,
   mockFlushPendingEmailParseImprovementSamples,
   mockRetryPendingEmailParseImprovementSampleDeletion,
 } = vi.hoisted(() => ({
@@ -19,6 +20,9 @@ const {
     Promise.resolve({ deleted: 0 })
   ),
   mockEnqueueEmailParseImprovementRequests: vi.fn<(input: unknown) => number>(() => 1),
+  mockEnsureEmailParseImprovementSamplesDeletedForUser: vi.fn<(input: unknown) => Promise<unknown>>(
+    () => Promise.resolve({ deleted: 0, retried: false })
+  ),
   mockFlushPendingEmailParseImprovementSamples: vi.fn<
     (input: unknown) => Promise<{ readonly shared: number; readonly failed: number }>
   >(() => Promise.resolve({ shared: 1, failed: 0 })),
@@ -32,6 +36,8 @@ vi.mock("@/features/email-capture/services/email-parse-improvement-outbox", () =
     mockDeleteEmailParseImprovementSamplesForUser(input),
   enqueueEmailParseImprovementRequests: (input: unknown) =>
     mockEnqueueEmailParseImprovementRequests(input),
+  ensureEmailParseImprovementSamplesDeletedForUser: (input: unknown) =>
+    mockEnsureEmailParseImprovementSamplesDeletedForUser(input),
   flushPendingEmailParseImprovementSamples: (input: unknown) =>
     mockFlushPendingEmailParseImprovementSamples(input),
   retryPendingEmailParseImprovementSampleDeletion: (input: unknown) =>
@@ -61,6 +67,10 @@ describe("shareEmailParseImprovementRequests", () => {
     vi.unstubAllEnvs();
     mockEnqueueEmailParseImprovementRequests.mockReturnValue(1);
     mockDeleteEmailParseImprovementSamplesForUser.mockResolvedValue({ deleted: 0 });
+    mockEnsureEmailParseImprovementSamplesDeletedForUser.mockResolvedValue({
+      deleted: 0,
+      retried: false,
+    });
     mockFlushPendingEmailParseImprovementSamples.mockResolvedValue({ shared: 1, failed: 0 });
     mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValue({
       deleted: 0,
@@ -79,9 +89,10 @@ describe("shareEmailParseImprovementRequests", () => {
     expect(mockEnqueueEmailParseImprovementRequests).not.toHaveBeenCalled();
     expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
     expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
   });
 
-  it("retries pending account-linked sample deletion when sharing is disabled", async () => {
+  it("ensures account-linked sample deletion when sharing is authoritatively disabled", async () => {
     await shareEmailParseImprovementRequests({
       db,
       enabled: false,
@@ -90,10 +101,11 @@ describe("shareEmailParseImprovementRequests", () => {
       canDeleteDisabledSamples: () => true,
     });
 
-    expect(mockRetryPendingEmailParseImprovementSampleDeletion).toHaveBeenCalledWith({
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).toHaveBeenCalledWith({
       db,
       userId,
     });
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
     expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
   });
 
@@ -107,13 +119,14 @@ describe("shareEmailParseImprovementRequests", () => {
     });
 
     expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
     expect(mockEnqueueEmailParseImprovementRequests).not.toHaveBeenCalled();
     expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
   });
 
   it("captures disabled deletion retry failures without rejecting the email sync", async () => {
     const error = new Error("delete failed");
-    mockRetryPendingEmailParseImprovementSampleDeletion.mockRejectedValueOnce(error);
+    mockEnsureEmailParseImprovementSamplesDeletedForUser.mockRejectedValueOnce(error);
 
     await expect(
       shareEmailParseImprovementRequests({
@@ -126,6 +139,7 @@ describe("shareEmailParseImprovementRequests", () => {
     ).resolves.toBeUndefined();
 
     expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
     expect(mockCaptureError).toHaveBeenCalledWith(error);
     expect(mockCaptureWarning).toHaveBeenCalledWith(
       "email_parse_improvement_sample_delete_failed",

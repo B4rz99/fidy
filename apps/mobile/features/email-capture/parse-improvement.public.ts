@@ -1,6 +1,7 @@
 export {
   countPendingEmailParseImprovementSamples,
   deleteEmailParseImprovementSamplesForUser,
+  ensureEmailParseImprovementSamplesDeletedForUser,
   flushPendingEmailParseImprovementSamples,
   retryPendingEmailParseImprovementSampleDeletion,
   setEmailParseImprovementSharingPreference,

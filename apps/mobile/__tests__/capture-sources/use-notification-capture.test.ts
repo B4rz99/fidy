@@ -10,6 +10,9 @@ const mockShareSample = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 const mockSetEmailParseImprovementSharingPreference = vi.fn<(...args: any[]) => any>(() =>
   Promise.resolve()
 );
+const mockRetryPendingEmailParseImprovementSampleDeletion = vi.fn<(...args: any[]) => any>(() =>
+  Promise.resolve({ deleted: 0, retried: false })
+);
 const mockSetupNotificationCapture = vi.fn<(...args: any[]) => any>(() =>
   Promise.resolve(() => undefined)
 );
@@ -26,6 +29,10 @@ describe("useNotificationCapture", () => {
     mockShareAnonymizedParseSamples = false;
     mockParseImprovementSharingPreferenceState = "explicit_disabled";
     mockSetEmailParseImprovementSharingPreference.mockResolvedValue(undefined);
+    mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValue({
+      deleted: 0,
+      retried: false,
+    });
     mockShareSample.mockResolvedValue(undefined);
   });
 
@@ -88,6 +95,28 @@ describe("useNotificationCapture", () => {
     );
   });
 
+  it("drains pending opt-out deletion before default-enabled notification sharing", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "default_enabled";
+    mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValueOnce({
+      deleted: 0,
+      retried: true,
+    });
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
+    useNotificationCapture(mockDb, userId);
+    triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).toHaveBeenCalledWith({
+      db: mockDb,
+      userId,
+    });
+    expect(mockSetEmailParseImprovementSharingPreference).not.toHaveBeenCalled();
+    expect(mockShareSample).not.toHaveBeenCalled();
+  });
+
   it("does not retain notification samples when the remote opt-in retry fails", async () => {
     mockShareAnonymizedParseSamples = true;
     mockParseImprovementSharingPreferenceState = "explicit_enabled";
@@ -147,6 +176,10 @@ async function loadUseNotificationCapture() {
     };
   });
   vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
+    retryPendingEmailParseImprovementSampleDeletion: (...args: unknown[]) =>
+      (mockRetryPendingEmailParseImprovementSampleDeletion as (...args: unknown[]) => unknown)(
+        ...args
+      ),
     setEmailParseImprovementSharingPreference: (...args: unknown[]) =>
       (mockSetEmailParseImprovementSharingPreference as (...args: unknown[]) => unknown)(...args),
   }));

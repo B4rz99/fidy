@@ -2,7 +2,10 @@ import {
   shareNotificationParseImprovementSample,
   type ShareParseImprovementInput,
 } from "@/features/capture-sources/diagnostics.public";
-import { setEmailParseImprovementSharingPreference } from "@/features/email-capture/parse-improvement.public";
+import {
+  retryPendingEmailParseImprovementSampleDeletion,
+  setEmailParseImprovementSharingPreference,
+} from "@/features/email-capture/parse-improvement.public";
 import {
   isExplicitParseImprovementOptIn,
   useSettingsStore,
@@ -43,7 +46,9 @@ export function useNotificationCapture(db: AnyDb | null, userId: UserId | null) 
                   enabled: true,
                   userId,
                 }).then(share)
-              : share()
+              : retryPendingEmailParseImprovementSampleDeletion({ db, userId }).then((result) =>
+                  result.retried ? undefined : share()
+                )
           ).catch(captureError);
         },
       }).catch((error) => {

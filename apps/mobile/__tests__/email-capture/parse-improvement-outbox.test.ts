@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   countPendingEmailParseImprovementSamples,
   deleteEmailParseImprovementSamplesForUser,
+  ensureEmailParseImprovementSamplesDeletedForUser,
   enqueueEmailParseImprovementRequests,
   flushPendingEmailParseImprovementSamples,
   pruneStaleFailedEmailSourceEvents,
@@ -16,6 +17,7 @@ import {
 } from "@/features/email-capture/services/email-parse-improvement-outbox";
 import { recordProcessedCaptureSourceEventWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
+  captureImprovementDeletionConfirmations,
   captureImprovementDeletionRequests,
   emailParseImprovementSamples,
   processedSourceEvents,
@@ -713,6 +715,36 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("ensures a stored opt-out sends one remote deletion and records completion", async () => {
+    const { db, sqlite } = createDb();
+
+    await expect(
+      ensureEmailParseImprovementSamplesDeletedForUser({
+        db,
+        userId: USER_ID,
+        now: NOW,
+      })
+    ).resolves.toEqual({ deleted: 0, retried: true });
+
+    await expect(
+      ensureEmailParseImprovementSamplesDeletedForUser({
+        db,
+        userId: USER_ID,
+        now: new Date("2026-05-19T10:05:00.000Z"),
+      })
+    ).resolves.toEqual({ deleted: 0, retried: false });
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(1);
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([]);
+    expect(db.select().from(captureImprovementDeletionConfirmations).all()).toEqual([
+      {
+        userId: USER_ID,
+        confirmedAt: "2026-05-19T10:00:00.000Z",
+      },
+    ]);
+    sqlite.close();
+  });
+
   it("serializes opt-in preference updates behind pending opt-out deletion retries", async () => {
     const { db, sqlite } = createDb();
     let resolveDelete: () => void = () => undefined;
@@ -865,6 +897,55 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("drains a pending opt-out deletion before returning on an empty outbox", async () => {
+    const { db, sqlite } = createDb();
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+    mockDeleteCaptureParseImprovementSamplesForUser.mockRejectedValueOnce(new Error("network"));
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("network");
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(0);
+    mockDeleteCaptureParseImprovementSamplesForUser.mockClear();
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({
+        db,
+        userId: USER_ID,
+        now: new Date("2026-05-19T10:06:00.000Z"),
+        canEnableRemotePreference: () => false,
+      })
+    ).resolves.toEqual({ shared: 0, failed: 0 });
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(1);
+    expect(mockShareCaptureParseImprovementSample).not.toHaveBeenCalled();
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([]);
+    sqlite.close();
+  });
+
+  it("rechecks live consent before enabling the remote preference", async () => {
+    const { db, sqlite } = createDb();
+    let consentChecks = 0;
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({
+        db,
+        userId: USER_ID,
+        now: NOW,
+        isSharingEnabled: () => {
+          consentChecks += 1;
+          return consentChecks === 1;
+        },
+      })
+    ).resolves.toEqual({ shared: 0, failed: 0 });
+
+    expect(mockSetCaptureParseImprovementPreference).not.toHaveBeenCalled();
+    expect(mockShareCaptureParseImprovementSample).not.toHaveBeenCalled();
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(1);
+    sqlite.close();
+  });
+
   it("does not advance the continuation cursor past unprocessed rows", async () => {
     const { db, sqlite } = createDb();
     const requests = Array.from({ length: 12 }, (_, index) => ({
@@ -884,6 +965,7 @@ describe("email parse improvement outbox", () => {
           consentChecks += 1;
           return consentChecks !== 3;
         },
+        canEnableRemotePreference: () => false,
       })
     ).resolves.toMatchObject({ shared: 1, failed: 0 });
 

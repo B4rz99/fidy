@@ -260,6 +260,13 @@
       "when": 1782252369447,
       "tag": "0036_capture_improvement_active_sample_dedupe",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1782345600000,
+      "tag": "0037_capture_improvement_deletion_confirmations",
+      "breakpoints": true
     }
   ]
 }

@@ -309,6 +309,14 @@ export const captureImprovementDeletionRequests = sqliteTable(
   }
 );
 
+export const captureImprovementDeletionConfirmations = sqliteTable(
+  "capture_improvement_deletion_confirmations",
+  {
+    userId: text("user_id").$type<UserId>().primaryKey(),
+    confirmedAt: text("confirmed_at").$type<IsoDateTime>().notNull(),
+  }
+);
+
 export const reviewCandidates = sqliteTable(
   "review_candidates",
   {
