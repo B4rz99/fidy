@@ -64,11 +64,15 @@ export function useHomeActivityFeed({
   const activityFeedRequestIdRef = useRef(0);
   const lastRequestedActivityOffsetRef = useRef<number | null>(null);
 
-  const resetActivityFeed = useCallback(() => {
-    activityFeedRequestIdRef.current += 1;
+  const clearActivityFeed = useCallback(() => {
     setActivityFeed(EMPTY_ACTIVITY_FEED);
     lastRequestedActivityOffsetRef.current = null;
   }, []);
+
+  const resetActivityFeed = useCallback(() => {
+    activityFeedRequestIdRef.current += 1;
+    clearActivityFeed();
+  }, [clearActivityFeed]);
 
   const loadFirstPage = useCallback(() => {
     if (!db || !userId) {
@@ -78,6 +82,7 @@ export function useHomeActivityFeed({
 
     const requestId = activityFeedRequestIdRef.current + 1;
     activityFeedRequestIdRef.current = requestId;
+    clearActivityFeed();
     let cancelled = false;
 
     try {
@@ -99,7 +104,7 @@ export function useHomeActivityFeed({
         })
         .catch(() => {
           if (cancelled || activityFeedRequestIdRef.current !== requestId) return;
-          resetActivityFeed();
+          clearActivityFeed();
         });
     } catch {
       resetActivityFeed();
@@ -108,7 +113,7 @@ export function useHomeActivityFeed({
     return () => {
       cancelled = true;
     };
-  }, [db, resetActivityFeed, userId]);
+  }, [clearActivityFeed, db, resetActivityFeed, userId]);
 
   useFocusEffect(loadFirstPage);
 

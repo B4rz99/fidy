@@ -787,7 +787,14 @@ describe("transaction boundaries", () => {
     });
   });
 
-  it("rejects initial transaction load when encrypted outbox restore fails", async () => {
+  it("loads committed initial transactions when encrypted outbox restore fails", async () => {
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce([makeRow()]);
+    vi.mocked(getSpendingByCategoryAggregate).mockReturnValueOnce([
+      { categoryId: "food" as CategoryId, total: 1000 as CopAmount },
+    ]);
+    vi.mocked(getDailySpendingAggregate).mockReturnValueOnce([
+      { date: "2026-03-04" as IsoDate, total: 1000 as CopAmount },
+    ]);
     vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
       createMockCloudLedgerOutbox(
         vi
@@ -798,9 +805,16 @@ describe("transaction boundaries", () => {
       )
     );
 
-    await expect(loadInitialTransactions(mockDb, mockUserId)).rejects.toThrow(
-      CloudLedgerOutboxFailure
-    );
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      offset: 1,
+      hasMore: false,
+      balance: 1000,
+      categorySpending: [{ categoryId: "food", total: 1000 }],
+      dailySpending: [{ date: "2026-03-04", total: 1000 }],
+    });
+    expect(useTransactionStore.getState().pages[0]?.id).toBe("tx-1");
   });
 
   it("rejects manual saves without a selected category", async () => {
@@ -1077,6 +1091,69 @@ describe("transaction boundaries", () => {
     });
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("keeps full runtime Cloud Ledger history bounded to the loaded page window", async () => {
+    const historyDate = "2026-06-20" as IsoDate;
+    const runtimeTransactions = Array.from({ length: 35 }, (_, index) => {
+      const minute = String(59 - index).padStart(2, "0");
+      return {
+        id: `txn-cloud-history-${index}` as TransactionId,
+        type: "expense" as const,
+        amount: (1000 + index) as CopAmount,
+        currency: "COP" as const,
+        categoryId: "food" as CategoryId,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        description: `Accepted history ${index}`,
+        date: historyDate,
+        updatedAt: `2026-06-20T10:${minute}:00.000Z` as IsoDateTime,
+      };
+    });
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:10" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: runtimeTransactions,
+        tombstones: [],
+      })
+    );
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce(
+      runtimeTransactions.slice(0, 31).map((transaction) =>
+        makeRow({
+          id: transaction.id,
+          amount: transaction.amount,
+          date: transaction.date,
+          createdAt: transaction.updatedAt,
+          updatedAt: transaction.updatedAt,
+          source: "cloud_ledger",
+        })
+      )
+    );
+    vi.mocked(getTransactionById).mockImplementation((_, transactionId) => {
+      const transaction = runtimeTransactions.find((item) => item.id === transactionId);
+      return transaction
+        ? makeRow({
+            id: transaction.id,
+            amount: transaction.amount,
+            date: transaction.date,
+            createdAt: transaction.updatedAt,
+            updatedAt: transaction.updatedAt,
+            source: "cloud_ledger",
+          })
+        : null;
+    });
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).toEqual(
+      runtimeTransactions.slice(0, 30).map((transaction) => transaction.id)
+    );
+    expect(useTransactionStore.getState()).toMatchObject({
+      offset: 30,
+      hasMore: true,
+    });
   });
 
   it("maps uncategorized Cloud Ledger transactions to the ordinary Other category", async () => {

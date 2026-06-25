@@ -169,7 +169,35 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
 }
 export { useTransactionStore };
 
-async function recordManualTransactionWithCloudLedger({
+async function recordManualTransactionWithCloudLedger(
+  input: RecordCloudLedgerManualTransactionInput
+): Promise<TransactionMutationResult> {
+  const recorder = canUseCloudLedgerTransactionEffects(input.userId, input.sessionId)
+    ? recordManualTransactionWithCloudLedgerEffects
+    : recordManualTransactionWithLocalLedgerCache;
+  return recorder(input);
+}
+
+async function recordManualTransactionWithLocalLedgerCache({
+  db,
+  userId,
+  transactionId,
+  input,
+  now,
+}: RecordCloudLedgerManualTransactionInput): Promise<TransactionMutationResult> {
+  const result = await recordManualTransactionWithLocalLedger({
+    db,
+    userId,
+    transactionId,
+    input,
+    now,
+  });
+  return result.success
+    ? { success: true, transaction: toStoredTransaction(result.transaction) }
+    : result;
+}
+
+async function recordManualTransactionWithCloudLedgerEffects({
   db,
   sessionId,
   userId,
@@ -177,19 +205,6 @@ async function recordManualTransactionWithCloudLedger({
   input,
   now,
 }: RecordCloudLedgerManualTransactionInput): Promise<TransactionMutationResult> {
-  if (!canUseCloudLedgerTransactionEffects(userId, sessionId)) {
-    const result = await recordManualTransactionWithLocalLedger({
-      db,
-      userId,
-      transactionId,
-      input,
-      now,
-    });
-    return result.success
-      ? { success: true, transaction: toStoredTransaction(result.transaction) }
-      : result;
-  }
-
   const validation = validateCloudLedgerManualTransaction(input, now);
   if (!validation.success) return validation;
 
@@ -507,15 +522,44 @@ export async function loadInitialTransactions(db: AnyDb, userId: UserId): Promis
     return;
   }
   if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
-  const optimisticSnapshot = canUseCloudLedgerTransactionEffects(userId, sessionId)
-    ? await applyCloudLedgerOptimisticView(snapshot, userId, {
-        isTransactionIncludedInAggregate: (transaction) =>
-          isPersistedActiveTransaction(db, userId, transaction.id),
-      })
-    : snapshot;
+  const optimisticSnapshot = await applyInitialCloudLedgerOptimisticView({
+    db,
+    sessionId,
+    snapshot,
+    userId,
+  });
   if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
   useTransactionStore.getState().setPageSnapshot(optimisticSnapshot);
   useTransactionStore.getState().setAggregateSnapshot(optimisticSnapshot);
+}
+
+async function applyInitialCloudLedgerOptimisticView({
+  db,
+  sessionId,
+  snapshot,
+  userId,
+}: {
+  readonly db: AnyDb;
+  readonly sessionId: number;
+  readonly snapshot: ReturnType<
+    ReturnType<typeof createTransactionQueryService>["loadInitialSnapshot"]
+  >;
+  readonly userId: UserId;
+}) {
+  if (!canUseCloudLedgerTransactionEffects(userId, sessionId)) return snapshot;
+
+  try {
+    return await applyCloudLedgerOptimisticView(snapshot, userId, {
+      isTransactionIncludedInAggregate: (transaction) =>
+        isPersistedActiveTransaction(db, userId, transaction.id),
+      pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
+    });
+  } catch (error) {
+    captureWarning("transactions_initial_cloud_ledger_overlay_failed", {
+      errorType: getErrorType(error),
+    });
+    return snapshot;
+  }
 }
 
 export async function loadNextTransactions(db: AnyDb, userId: UserId): Promise<void> {
@@ -556,6 +600,7 @@ export function loadTransactionAggregates(db: AnyDb, userId: UserId): void {
         ? applyRuntimeCloudLedgerTransactions(aggregateSnapshot, userId, {
             isTransactionIncludedInAggregate: (transaction) =>
               isPersistedActiveTransaction(db, userId, transaction.id),
+            pageWindowSize: Math.max(aggregateSnapshot.offset, PAGE_SIZE),
           })
         : aggregateSnapshot
     );
@@ -581,6 +626,7 @@ export async function refreshTransactions(db: AnyDb, userId: UserId): Promise<vo
       ? await applyCloudLedgerOptimisticView(snapshot, userId, {
           isTransactionIncludedInAggregate: (transaction) =>
             isPersistedActiveTransaction(db, userId, transaction.id),
+          pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
         })
       : snapshot;
     if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;

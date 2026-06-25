@@ -2,7 +2,10 @@ import { getCloudLedgerOutbox, getCloudLedgerRuntimeCache } from "@/features/clo
 import { toIsoDate, toMonth } from "@/shared/lib";
 import { requireCopAmount } from "@/shared/types/assertions";
 import type { CopAmount, UserId } from "@/shared/types/branded";
-import { upsertStoredTransactionByRepositoryOrder } from "../lib/transaction-order";
+import {
+  compareStoredTransactionsByRepositoryOrder,
+  upsertStoredTransactionByRepositoryOrder,
+} from "../lib/transaction-order";
 import type { StoredTransaction } from "../schema";
 import {
   cloudLedgerTransactionToStoredTransactions,
@@ -18,6 +21,7 @@ import type {
 type TransactionSnapshot = TransactionPageSnapshot & TransactionAggregateSnapshot;
 type ApplyCloudLedgerTransactionsOptions = {
   readonly isTransactionIncludedInAggregate?: (transaction: StoredTransaction) => boolean;
+  readonly pageWindowSize?: number;
 };
 
 const addCopAmount = (left: number, right: number): CopAmount => requireCopAmount(left + right);
@@ -67,22 +71,70 @@ function upsertDailySpending(
 
 function upsertCloudLedgerTransaction(
   snapshot: TransactionSnapshot,
-  transaction: StoredTransaction
+  transaction: StoredTransaction,
+  pageWindowSize?: number
 ): {
   readonly snapshot: TransactionSnapshot;
-  readonly didInsert: boolean;
+  readonly didExistInPages: boolean;
 } {
-  const pagesWithoutTransaction = snapshot.pages.filter((page) => page.id !== transaction.id);
-  const didInsert = pagesWithoutTransaction.length === snapshot.pages.length;
+  const didExistInPages = snapshot.pages.some((page) => page.id === transaction.id);
+  const shouldInsertIntoPages = shouldInsertTransactionIntoPages(
+    snapshot,
+    transaction,
+    pageWindowSize
+  );
+  const pages = shouldInsertIntoPages
+    ? trimPagesToWindow(
+        upsertStoredTransactionByRepositoryOrder(snapshot.pages, transaction),
+        pageWindowSize
+      )
+    : snapshot.pages;
+
   return {
     snapshot: {
       ...snapshot,
-      pages: upsertStoredTransactionByRepositoryOrder(snapshot.pages, transaction),
+      pages,
       offset: snapshot.offset,
     },
-    didInsert,
+    didExistInPages,
   };
 }
+
+const hasTransactionInPages = (
+  pages: readonly StoredTransaction[],
+  transaction: StoredTransaction
+): boolean => pages.some((page) => page.id === transaction.id);
+
+const hasPageWindowCapacity = (
+  pages: readonly StoredTransaction[],
+  pageWindowSize: number | undefined
+): boolean => pageWindowSize == null || pages.length < pageWindowSize;
+
+const sortsIntoVisibleWindow = (
+  pages: readonly StoredTransaction[],
+  transaction: StoredTransaction
+): boolean => {
+  const lastVisibleTransaction = pages[pages.length - 1];
+  return (
+    lastVisibleTransaction != null &&
+    compareStoredTransactionsByRepositoryOrder(transaction, lastVisibleTransaction) <= 0
+  );
+};
+
+const shouldInsertTransactionIntoPages = (
+  snapshot: TransactionSnapshot,
+  transaction: StoredTransaction,
+  pageWindowSize: number | undefined
+): boolean =>
+  hasTransactionInPages(snapshot.pages, transaction) ||
+  hasPageWindowCapacity(snapshot.pages, pageWindowSize) ||
+  sortsIntoVisibleWindow(snapshot.pages, transaction);
+
+const trimPagesToWindow = (
+  pages: readonly StoredTransaction[],
+  pageWindowSize: number | undefined
+): readonly StoredTransaction[] =>
+  pageWindowSize == null ? pages : pages.slice(0, pageWindowSize);
 
 function addCloudLedgerTransactionToSnapshot(
   snapshot: TransactionSnapshot,
@@ -90,26 +142,34 @@ function addCloudLedgerTransactionToSnapshot(
   now: Date,
   options: ApplyCloudLedgerTransactionsOptions
 ): TransactionSnapshot {
-  const cloudLedgerSnapshot = upsertCloudLedgerTransaction(snapshot, transaction);
-  if (
-    !cloudLedgerSnapshot.didInsert ||
+  const cloudLedgerSnapshot = upsertCloudLedgerTransaction(
+    snapshot,
+    transaction,
+    options.pageWindowSize
+  );
+  return cloudLedgerSnapshot.didExistInPages ||
     options.isTransactionIncludedInAggregate?.(transaction) === true
-  ) {
-    return cloudLedgerSnapshot.snapshot;
-  }
-  const nextSnapshot = cloudLedgerSnapshot.snapshot;
+    ? cloudLedgerSnapshot.snapshot
+    : addCloudLedgerTransactionToAggregates(cloudLedgerSnapshot.snapshot, transaction, now);
+}
+
+function addCloudLedgerTransactionToAggregates(
+  snapshot: TransactionSnapshot,
+  transaction: StoredTransaction,
+  now: Date
+): TransactionSnapshot {
   const isMonthlyExpense = isCurrentMonthExpense(transaction, now);
   const isDailyExpense = isRecentDailyExpense(transaction, now);
 
   return {
-    ...nextSnapshot,
-    balance: isMonthlyExpense ? nextSnapshot.balance + transaction.amount : nextSnapshot.balance,
+    ...snapshot,
+    balance: isMonthlyExpense ? snapshot.balance + transaction.amount : snapshot.balance,
     categorySpending: isMonthlyExpense
-      ? upsertCategorySpending(nextSnapshot.categorySpending, transaction)
-      : nextSnapshot.categorySpending,
+      ? upsertCategorySpending(snapshot.categorySpending, transaction)
+      : snapshot.categorySpending,
     dailySpending: isDailyExpense
-      ? upsertDailySpending(nextSnapshot.dailySpending, transaction)
-      : nextSnapshot.dailySpending,
+      ? upsertDailySpending(snapshot.dailySpending, transaction)
+      : snapshot.dailySpending,
   };
 }
 
@@ -166,9 +226,14 @@ export async function applyCloudLedgerOptimisticView(
   userId: UserId,
   options: ApplyCloudLedgerTransactionsOptions = {}
 ): Promise<TransactionSnapshot> {
-  return applyCloudLedgerTransactionsToSnapshot(
+  const runtimeSnapshot = applyCloudLedgerTransactionsToSnapshot(
     snapshot,
-    await loadCloudLedgerOptimisticTransactions(userId),
+    loadRuntimeCloudLedgerTransactions(userId),
     options
+  );
+  return applyCloudLedgerTransactionsToSnapshot(
+    runtimeSnapshot,
+    await loadRestoredCloudLedgerPendingTransactions(userId),
+    { isTransactionIncludedInAggregate: options.isTransactionIncludedInAggregate }
   );
 }

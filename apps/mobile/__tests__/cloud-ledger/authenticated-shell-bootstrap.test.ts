@@ -314,6 +314,34 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
   });
+
+  it("stops stale authenticated bootstrap before starting ordinary transaction state", async () => {
+    let resolveRestore!: (cache: unknown) => void;
+    mocks.restoreOptimisticCloudLedgerCache.mockImplementationOnce(({ cache }) =>
+      new Promise((resolve) => {
+        resolveRestore = resolve;
+      }).then(() => cache)
+    );
+    const isCurrent = vi.fn(() => true);
+    const context = {
+      db: {} as never,
+      enableRemoteEffects: true,
+      isCurrent,
+      userId: "user-1" as UserId,
+    };
+
+    const bootstrap = runAuthenticatedBootstrap(context);
+    await vi.waitFor(() => {
+      expect(mocks.restoreOptimisticCloudLedgerCache).toHaveBeenCalledTimes(1);
+    });
+
+    isCurrent.mockReturnValue(false);
+    resolveRestore(mocks.createEmptyCache());
+    await bootstrap;
+
+    expect(useTransactionStore.getState().activeUserId).toBe("user-reset");
+    expect(mocks.tryEnsureDefaultFinancialAccount).not.toHaveBeenCalled();
+  });
 });
 
 async function flushMicrotasks(): Promise<void> {

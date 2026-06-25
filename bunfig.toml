@@ -1,4 +1,23 @@
 [install]
 linker = "hoisted"
 minimumReleaseAge = 604800
-minimumReleaseAgeExcludes = ["@fidy/*", "undici"]
+minimumReleaseAgeExcludes = [
+  "@fidy/*",
+  "expo",
+  "expo-background-task",
+  "expo-blur",
+  "expo-crypto",
+  "expo-dev-client",
+  "expo-haptics",
+  "expo-linking",
+  "expo-localization",
+  "expo-notifications",
+  "expo-secure-store",
+  "expo-splash-screen",
+  "expo-sqlite",
+  "expo-system-ui",
+  "expo-task-manager",
+  "expo-updates",
+  "expo-web-browser",
+  "undici",
+]

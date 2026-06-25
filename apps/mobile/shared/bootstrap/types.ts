@@ -4,6 +4,7 @@ import type { UserId } from "@/shared/types/branded";
 export type AuthenticatedBootstrapContext = {
   readonly db: AnyDb;
   readonly enableRemoteEffects: boolean;
+  readonly isCurrent?: () => boolean;
   readonly userId: UserId;
 };
 
