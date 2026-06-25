@@ -1,0 +1,35 @@
+apps/mobile/__tests__/settings/store.test.ts
+  s_d585a7fa922fba::t_2c176149a25402 115-126
+apps/mobile/__tests__/capture-sources/capture-improvement-template-shape-policy.test.ts
+  s_d585a7fa922fba::t_5c50064bda7c55 39-41
+apps/mobile/__tests__/capture-sources/notification-parse-improvement.test.ts
+  s_d585a7fa922fba::t_3796a36d8020da 135,143
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_acd245939dd271 893-944
+apps/mobile/features/capture-sources/lib/capture-improvement-template-shape-policy.ts
+  s_d585a7fa922fba::t_01a030d12583a1 22
+apps/mobile/features/email-capture/services/capture-improvement-deletion-request-queue.ts
+  s_d585a7fa922fba::t_f3b009d6a9ebe0 22-28
+apps/mobile/features/capture-sources/lib/notification-parse-improvement.ts
+  s_d585a7fa922fba::t_f8d7ebe6af46c8 57-60
+apps/mobile/features/settings/store.ts
+  s_d585a7fa922fba::t_0b1da9f3348de2 158-159,164-166,285-286,294,298-299
+supabase/functions/cloud-ledger-api/capture-improvement-template-shape-policy.ts
+  s_d585a7fa922fba::t_a7a6f8c36a4ff5 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "05bd93661786ea92a0d345b7a6933898fbb23799",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
