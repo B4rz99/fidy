@@ -1,0 +1,57 @@
+supabase/functions/cloud-ledger-api/store.ts
+  s_a015eeb45038bf::t_c4f4f1fb05da82 40-44
+  s_a015eeb45038bf::t_663689cd93f4de 117-120,125,128,134
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_a015eeb45038bf::t_2f6347f006d633 263,265-270,278,280-286,632
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_3bfe969e8d11e7 735-739,751,799
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_a015eeb45038bf::t_a275e5afa8d11a 99,126,314
+apps/mobile/features/transactions/services/cloud-ledger-transaction-adapter.ts
+  s_a015eeb45038bf::t_c5194e160619a4 6,26,31
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_bf2389d3b7d9fe 358-365
+  s_a015eeb45038bf::t_fd8451d903f755 478-522
+  s_a015eeb45038bf::t_09e847256ab78e 267,291-298
+apps/mobile/features/auth/store.ts
+  s_a015eeb45038bf::t_4d378264183262 206
+supabase/functions/cloud-ledger-api/model.ts
+  s_a015eeb45038bf::t_763501897943ab 104,122
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_a015eeb45038bf::t_8e0a8a57380179 58,62,66-70,220-237,349-352,373,400-407
+  s_a015eeb45038bf::t_ff02d2e5204814 347-348
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_a015eeb45038bf::t_448a794a1da581 165,192-210,212-220,268,271,273,294-295
+  s_a015eeb45038bf::t_4e6fe0203d95b9 211,224-263
+  s_a015eeb45038bf::t_c4f4f1fb05da82 300-302
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_944d02dc5bba20 198-199,211,216-221,225-226
+  s_a015eeb45038bf::t_d81b4c505bcb4d 360-369
+  s_a015eeb45038bf::t_c4f4f1fb05da82 222-224
+  s_a015eeb45038bf::t_54e6d7c635fcd9 37
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_c420e12a3ed087 131-137,449-458,462-465,494
+  s_a015eeb45038bf::t_3c2cda75166bd2 1009-1043
+  s_a015eeb45038bf::t_c4f4f1fb05da82 459-461
+apps/mobile/__tests__/auth/store.test.ts
+  s_a015eeb45038bf::t_25403157504fe1 550-569
+  s_a015eeb45038bf::t_36b6f2b2c028e0 535,540
+apps/mobile/supabase/migrations/20260622100000_cloud_ledger_transaction_create.sql
+  s_a015eeb45038bf::t_ff8edd4e6b548f 121-122,208-209,213-236,238,271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "f561b3005631ea4a6f05a5c82ca144ae637c670e",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
