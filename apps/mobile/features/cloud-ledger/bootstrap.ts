@@ -1,7 +1,10 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { BootstrapTask, SubscriptionTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
-import { refreshTransactions } from "@/features/transactions/store.public";
+import {
+  persistCloudLedgerRuntimeTransactionShadows,
+  refreshTransactions,
+} from "@/features/transactions/store.public";
 import { captureWarning } from "@/shared/lib";
 import {
   flushCloudLedgerOutboxForUser,
@@ -13,13 +16,14 @@ export { flushCloudLedgerOutboxForUser };
 export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "cloud-ledger",
   run: async ({ db, enableRemoteEffects, userId }) => {
-    await restoreCloudLedgerOptimisticState(userId);
+    await restoreCloudLedgerOptimisticState(userId).catch(captureCloudLedgerOutboxRestoreFailure);
     if (!enableRemoteEffects) {
       return;
     }
     void flushCloudLedgerOutboxForUser(userId)
       .then((didWriteRuntimeCache) => {
         if (!didWriteRuntimeCache) return;
+        persistCloudLedgerRuntimeTransactionShadows(db, userId);
         return refreshTransactions(db, userId);
       })
       .catch(captureCloudLedgerOutboxFlushFailure);
@@ -29,12 +33,18 @@ export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapConte
 export const cloudLedgerReconnectFlushTask: SubscriptionTask<AuthenticatedBootstrapContext> = {
   id: "cloud-ledger-reconnect-flush",
   isEnabled: ({ enableRemoteEffects }) => enableRemoteEffects,
-  subscribe: ({ userId }) =>
+  subscribe: ({ db, userId }) =>
     NetInfo.addEventListener((state) => {
       if (state.isConnected !== true) {
         return;
       }
-      void flushCloudLedgerOutboxForUser(userId).catch(captureCloudLedgerOutboxFlushFailure);
+      void flushCloudLedgerOutboxForUser(userId)
+        .then((didWriteRuntimeCache) => {
+          if (!didWriteRuntimeCache) return;
+          persistCloudLedgerRuntimeTransactionShadows(db, userId);
+          return refreshTransactions(db, userId);
+        })
+        .catch(captureCloudLedgerOutboxFlushFailure);
     }),
 };
 
@@ -46,6 +56,12 @@ export async function restoreCloudLedgerOptimisticState(
 
 function captureCloudLedgerOutboxFlushFailure(error: unknown): void {
   captureWarning("cloud_ledger_outbox_flush_failed", {
+    errorType: error instanceof Error ? error.name : typeof error,
+  });
+}
+
+function captureCloudLedgerOutboxRestoreFailure(error: unknown): void {
+  captureWarning("cloud_ledger_outbox_restore_failed", {
     errorType: error instanceof Error ? error.name : typeof error,
   });
 }

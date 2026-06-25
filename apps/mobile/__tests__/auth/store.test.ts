@@ -10,7 +10,9 @@ const {
   mockClearCloudLedgerRuntimeCache,
   mockCleanupCurrentPushToken,
   mockDiscardCloudLedgerOutbox,
+  mockDeletePendingCloudLedgerTransactionShadows,
   mockInvalidateTransactionSession,
+  mockResumeTransactionSession,
   mockResumeCloudLedgerRuntimeCacheWrites,
   mockSuspendCloudLedgerRuntimeCacheWrites,
   mockLoadLocalQaSession,
@@ -22,7 +24,11 @@ const {
   const mockClearCloudLedgerRuntimeCache = vi.fn<(...args: any[]) => any>();
   const mockCleanupCurrentPushToken = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockDiscardCloudLedgerOutbox = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+  const mockDeletePendingCloudLedgerTransactionShadows = vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve()
+  );
   const mockInvalidateTransactionSession = vi.fn<(...args: any[]) => any>();
+  const mockResumeTransactionSession = vi.fn<(...args: any[]) => any>();
   const mockResumeCloudLedgerRuntimeCacheWrites = vi.fn<(...args: any[]) => any>();
   const mockSuspendCloudLedgerRuntimeCacheWrites = vi.fn<(...args: any[]) => any>();
   const mockLoadLocalQaSession = vi.fn<
@@ -52,7 +58,9 @@ const {
     mockClearCloudLedgerRuntimeCache,
     mockCleanupCurrentPushToken,
     mockDiscardCloudLedgerOutbox,
+    mockDeletePendingCloudLedgerTransactionShadows,
     mockInvalidateTransactionSession,
+    mockResumeTransactionSession,
     mockResumeCloudLedgerRuntimeCacheWrites,
     mockSuspendCloudLedgerRuntimeCacheWrites,
     mockLoadLocalQaSession,
@@ -139,7 +147,9 @@ vi.mock("@/features/cloud-ledger/public", () => ({
 }));
 
 vi.mock("@/features/transactions/store.public", () => ({
+  deletePendingCloudLedgerTransactionShadows: mockDeletePendingCloudLedgerTransactionShadows,
   invalidateTransactionSession: mockInvalidateTransactionSession,
+  resumeTransactionSession: mockResumeTransactionSession,
 }));
 
 vi.mock("@/features/qa/local-session", () => ({
@@ -486,6 +496,7 @@ describe("useAuthStore", () => {
 
     expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeletePendingCloudLedgerTransactionShadows).toHaveBeenCalledWith("user-1");
     expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
@@ -493,8 +504,11 @@ describe("useAuthStore", () => {
       mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!
     );
     expect(mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!).toBeLessThan(
-      mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!
+      mockDeletePendingCloudLedgerTransactionShadows.mock.invocationCallOrder[0]!
     );
+    expect(
+      mockDeletePendingCloudLedgerTransactionShadows.mock.invocationCallOrder[0]!
+    ).toBeLessThan(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!);
     expect(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!).toBeLessThan(
       mockClearCloudLedgerRuntimeCache.mock.invocationCallOrder[0]!
     );
@@ -512,6 +526,7 @@ describe("useAuthStore", () => {
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
     expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
     expect(mockSignOut).not.toHaveBeenCalled();
     expect(useAuthStore.getState().session).toEqual(mockSession);

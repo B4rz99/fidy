@@ -21,12 +21,15 @@ import {
   getStoredTransactionById,
   initializeTransactionSession,
   invalidateTransactionSession,
+  deleteTransaction,
   loadInitialTransactions,
   loadNextTransactions,
   loadTransactionAggregates,
   loadTransactionIntoForm,
   refreshTransactions,
+  resumeTransactionSession,
   saveCurrentTransaction,
+  updateTransactionDirect,
   useTransactionStore,
 } from "@/features/transactions/store";
 import type { StoredTransaction } from "@/features/transactions/schema";
@@ -207,6 +210,10 @@ function createMockSupabase(): SupabaseClient {
 describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getTransactionsPaginated).mockReturnValue([]);
+    vi.mocked(getSpendingByCategoryAggregate).mockReturnValue([]);
+    vi.mocked(getDailySpendingAggregate).mockReturnValue([]);
+    vi.mocked(getTransactionById).mockReturnValue(null);
     vi.mocked(getSupabase).mockReturnValue(createMockSupabase());
     vi.mocked(getCloudLedgerOutbox).mockImplementation(() => createMockCloudLedgerOutbox());
     vi.mocked(enqueueCloudLedgerOptimisticCreate).mockImplementation((input) => {
@@ -349,6 +356,39 @@ describe("transaction boundaries", () => {
         source: "manual",
       }),
     ]);
+  });
+
+  it("rejects local-only edits and deletes for pending Cloud Ledger creates", async () => {
+    const pendingTransaction = makeStoredTransaction({
+      id: "tx-pending-cloud-ledger-edit" as TransactionId,
+    });
+    vi.mocked(getCloudLedgerOutbox).mockReturnValue(
+      createMockCloudLedgerOutbox(
+        vi
+          .fn<(...args: any[]) => any>()
+          .mockResolvedValue([pendingCreateFromStoredTransaction(pendingTransaction)])
+      )
+    );
+    vi.mocked(getTransactionById).mockReturnValue(makeRow({ id: pendingTransaction.id }));
+
+    await expect(deleteTransaction(mockDb, mockUserId, pendingTransaction.id)).rejects.toThrow(
+      "cloudLedgerMutationUnsupported"
+    );
+    await expect(
+      updateTransactionDirect({
+        db: mockDb,
+        userId: mockUserId,
+        id: pendingTransaction.id,
+        fields: {
+          type: "expense",
+          digits: "9999",
+          categoryId: "food" as CategoryId,
+          accountId: "fa-default-user-1" as FinancialAccountId,
+          description: "Edited locally",
+          date: new Date("2026-03-04T00:00:00.000Z"),
+        },
+      })
+    ).resolves.toEqual({ success: false, error: "cloudLedgerMutationUnsupported" });
   });
 
   it("inserts backdated optimistic Cloud Ledger creates after newer cached transactions", async () => {
@@ -702,6 +742,55 @@ describe("transaction boundaries", () => {
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
   });
 
+  it("does not double-count off-page local Cloud Ledger shadow rows in aggregates", async () => {
+    const today = new Date();
+    const todayIso = toIsoDate(today);
+    const shadowTransaction = makeStoredTransaction({
+      id: "tx-shadow-off-page" as TransactionId,
+      amount: 4520 as CopAmount,
+      date: today,
+      createdAt: new Date(`${todayIso}T08:00:00.000Z`),
+      updatedAt: new Date(`${todayIso}T08:00:00.000Z`),
+    });
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce(
+      Array.from({ length: 30 }, (_, index) =>
+        makeRow({
+          id: `tx-visible-${index}` as TransactionId,
+          date: todayIso,
+          createdAt: `${todayIso}T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+          updatedAt: `${todayIso}T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+        })
+      )
+    );
+    vi.mocked(getSpendingByCategoryAggregate).mockReturnValueOnce([
+      { categoryId: "food" as CategoryId, total: shadowTransaction.amount },
+    ]);
+    vi.mocked(getDailySpendingAggregate).mockReturnValueOnce([
+      { date: todayIso, total: shadowTransaction.amount },
+    ]);
+    vi.mocked(getTransactionById).mockImplementation((_, id) =>
+      id === shadowTransaction.id ? makeRow({ id: shadowTransaction.id, date: todayIso }) : null
+    );
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(
+        vi
+          .fn<(...args: any[]) => any>()
+          .mockResolvedValue([pendingCreateFromStoredTransaction(shadowTransaction)])
+      )
+    );
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 4520,
+      categorySpending: [{ categoryId: "food", total: 4520 }],
+      dailySpending: [{ date: todayIso, total: 4520 }],
+    });
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).toContain(
+      shadowTransaction.id
+    );
+  });
+
   it("does not apply a delayed initial optimistic load after the transaction session is invalidated", async () => {
     const delayedPendingTransaction = makeStoredTransaction({
       id: "tx-delayed-discarded-pending" as TransactionId,
@@ -733,6 +822,27 @@ describe("transaction boundaries", () => {
       balance: 0,
       categorySpending: [],
       dailySpending: [],
+    });
+  });
+
+  it("resumes the transaction session after aborted logout without clearing visible state", () => {
+    const visibleTransaction = makeStoredTransaction({
+      id: "tx-visible-before-aborted-logout" as TransactionId,
+    });
+    useTransactionStore.setState({
+      pages: [visibleTransaction],
+      offset: 1,
+      hasMore: false,
+    });
+
+    invalidateTransactionSession();
+    resumeTransactionSession(mockUserId);
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      activeUserId: mockUserId,
+      pages: [visibleTransaction],
+      offset: 1,
+      hasMore: false,
     });
   });
 

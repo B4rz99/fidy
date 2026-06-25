@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => {
   return {
     captureWarning: vi.fn(),
     flushCloudLedgerOutboxForUser: vi.fn<(...args: any[]) => any>(),
+    persistCloudLedgerRuntimeTransactionShadows: vi.fn<(...args: any[]) => any>(),
+    refreshTransactions: vi.fn<(...args: any[]) => any>(),
     restoreCloudLedgerOptimisticRuntimeState: vi.fn<(...args: any[]) => any>(),
   };
 });
@@ -23,11 +25,18 @@ vi.mock("@/shared/lib", () => ({
   captureWarning: mocks.captureWarning,
 }));
 
+vi.mock("@/features/transactions/store.public", () => ({
+  persistCloudLedgerRuntimeTransactionShadows: mocks.persistCloudLedgerRuntimeTransactionShadows,
+  refreshTransactions: mocks.refreshTransactions,
+}));
+
 describe("Cloud Ledger bootstrap task", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.restoreCloudLedgerOptimisticRuntimeState.mockResolvedValue(true);
     mocks.flushCloudLedgerOutboxForUser.mockResolvedValue(true);
+    mocks.persistCloudLedgerRuntimeTransactionShadows.mockReturnValue(undefined);
+    mocks.refreshTransactions.mockResolvedValue(undefined);
   });
 
   it("keeps authenticated bootstrap alive when the opportunistic outbox flush fails", async () => {
@@ -49,6 +58,44 @@ describe("Cloud Ledger bootstrap task", () => {
     expect(mocks.captureWarning).toHaveBeenCalledWith("cloud_ledger_outbox_flush_failed", {
       errorType: "OfflineFlushFailure",
     });
+  });
+
+  it("keeps authenticated bootstrap alive when encrypted outbox restore fails", async () => {
+    const userId = requireUserId("user-cloud-ledger-bootstrap");
+    const restoreFailure = new Error("decrypt failed");
+    restoreFailure.name = "CloudLedgerOutboxFailure";
+    mocks.restoreCloudLedgerOptimisticRuntimeState.mockRejectedValueOnce(restoreFailure);
+
+    await expect(
+      cloudLedgerBootstrapTask.run({
+        db: {} as never,
+        enableRemoteEffects: true,
+        userId,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(mocks.captureWarning).toHaveBeenCalledWith("cloud_ledger_outbox_restore_failed", {
+      errorType: "CloudLedgerOutboxFailure",
+    });
+    expect(mocks.flushCloudLedgerOutboxForUser).toHaveBeenCalledWith(userId);
+  });
+
+  it("persists runtime Cloud Ledger rows before refreshing ordinary transaction views", async () => {
+    const userId = requireUserId("user-cloud-ledger-bootstrap");
+    const db = {} as never;
+
+    await cloudLedgerBootstrapTask.run({
+      db,
+      enableRemoteEffects: true,
+      userId,
+    });
+    await Promise.resolve();
+
+    expect(mocks.persistCloudLedgerRuntimeTransactionShadows).toHaveBeenCalledWith(db, userId);
+    expect(mocks.refreshTransactions).toHaveBeenCalledWith(db, userId);
+    expect(
+      mocks.persistCloudLedgerRuntimeTransactionShadows.mock.invocationCallOrder[0]!
+    ).toBeLessThan(mocks.refreshTransactions.mock.invocationCallOrder[0]!);
   });
 
   it("does not start remote flush when remote effects are disabled", async () => {

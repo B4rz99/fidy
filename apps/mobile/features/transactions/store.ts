@@ -1,8 +1,12 @@
+import { and, eq, inArray } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { transactions } from "@/shared/db/schema";
+import { tryGetDb } from "@/shared/db/client";
 import {
   type CloudLedgerCreateTransactionCommand,
   enqueueCloudLedgerOptimisticCreate,
+  getCloudLedgerOutbox,
+  getCloudLedgerRuntimeCache,
 } from "@/features/cloud-ledger/public";
 import {
   captureWarning,
@@ -36,6 +40,7 @@ import { cloudLedgerCreateCommandToStoredTransaction } from "./services/cloud-le
 import {
   applyCloudLedgerOptimisticView,
   applyRuntimeCloudLedgerTransactions,
+  loadRuntimeCloudLedgerTransactions,
 } from "./services/cloud-ledger-optimistic-snapshot";
 import { createTransactionQueryService } from "./services/create-transaction-query-service";
 import { toTransactionFormInput } from "./store/form-input";
@@ -86,6 +91,7 @@ type ValidCloudLedgerManualTransaction = {
 type CloudLedgerManualTransactionValidation =
   | { readonly success: true; readonly transaction: ValidCloudLedgerManualTransaction }
   | { readonly success: false; readonly error: string };
+type TransactionInsertRow = typeof transactions.$inferInsert;
 
 function isActiveTransactionSession(userId: UserId, sessionId: number): boolean {
   return (
@@ -110,6 +116,9 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
     recordManualTransaction: (input) =>
       recordManualTransactionWithCloudLedger({ ...input, db, sessionId }),
     amendManualTransaction: async (input) => {
+      if (await isCloudLedgerTransactionReadOnly(input.userId, input.transactionId)) {
+        return { success: false, error: "cloudLedgerMutationUnsupported" };
+      }
       const result = await amendManualTransactionWithLocalLedger({
         db,
         userId: input.userId,
@@ -121,13 +130,17 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
         ? { success: true, transaction: toStoredTransaction(result.transaction) }
         : result;
     },
-    voidTransaction: async (input) =>
-      voidTransactionWithLocalLedger({
+    voidTransaction: async (input) => {
+      if (await isCloudLedgerTransactionReadOnly(input.userId, input.transactionId)) {
+        return { success: false, error: "cloudLedgerMutationUnsupported" };
+      }
+      return voidTransactionWithLocalLedger({
         db,
         userId: input.userId,
         transactionId: input.transactionId,
         now: input.now,
-      }),
+      });
+    },
     refresh: async () => {
       if (!isActiveTransactionSession(userId, sessionId)) return;
       await refreshTransactions(db, userId);
@@ -197,33 +210,103 @@ async function recordManualTransactionWithCloudLedger({
 }
 
 function persistCloudLedgerTransactionShadow(db: AnyDb, transaction: StoredTransaction): boolean {
+  const row = toCloudLedgerTransactionShadowRow(transaction);
   try {
-    db.insert(transactions)
-      .values({
-        accountAttributionState: transaction.accountAttributionState,
-        accountId: transaction.accountId,
-        amount: transaction.amount,
-        categoryId: transaction.categoryId,
-        counterpartyName: transaction.counterpartyName,
-        createdAt: toIsoDateTime(transaction.createdAt),
-        date: toIsoDate(transaction.date),
-        description: transaction.description,
-        id: transaction.id,
-        source: transaction.source ?? "manual",
-        supersededAt:
-          transaction.supersededAt == null ? null : toIsoDateTime(transaction.supersededAt),
-        supersededByTransferId: transaction.supersededByTransferId,
-        type: transaction.type,
-        updatedAt: toIsoDateTime(transaction.updatedAt),
-        userId: transaction.userId,
-        voidedAt: transaction.voidedAt == null ? null : toIsoDateTime(transaction.voidedAt),
-      })
-      .run();
+    if (isPersistedActiveTransaction(db, transaction.userId, transaction.id)) {
+      db.update(transactions)
+        .set(row)
+        .where(
+          and(eq(transactions.id, transaction.id), eq(transactions.userId, transaction.userId))
+        )
+        .run();
+    } else {
+      db.insert(transactions).values(row).run();
+    }
     return true;
   } catch (error) {
     captureWarning("cloud_ledger_shadow_transaction_write_failed", {
       errorType: getErrorType(error),
     });
+    return false;
+  }
+}
+
+function toCloudLedgerTransactionShadowRow(transaction: StoredTransaction): TransactionInsertRow {
+  return {
+    accountAttributionState: transaction.accountAttributionState,
+    accountId: transaction.accountId,
+    amount: transaction.amount,
+    categoryId: transaction.categoryId,
+    counterpartyName: transaction.counterpartyName,
+    createdAt: toIsoDateTime(transaction.createdAt),
+    date: toIsoDate(transaction.date),
+    description: transaction.description,
+    id: transaction.id,
+    source: transaction.source ?? "manual",
+    supersededAt: transaction.supersededAt == null ? null : toIsoDateTime(transaction.supersededAt),
+    supersededByTransferId: transaction.supersededByTransferId,
+    type: transaction.type,
+    updatedAt: toIsoDateTime(transaction.updatedAt),
+    userId: transaction.userId,
+    voidedAt: transaction.voidedAt == null ? null : toIsoDateTime(transaction.voidedAt),
+  };
+}
+
+export function persistCloudLedgerRuntimeTransactionShadows(db: AnyDb, userId: UserId): void {
+  loadRuntimeCloudLedgerTransactions(userId).forEach((transaction) => {
+    persistCloudLedgerTransactionShadow(db, transaction);
+  });
+}
+
+export async function deletePendingCloudLedgerTransactionShadows(userId: UserId): Promise<void> {
+  const db = tryGetDb(userId);
+  if (db === null) return;
+
+  const pendingTransactionIds = (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
+    change.kind === "createTransaction" ? [change.transaction.id] : []
+  );
+  deleteCloudLedgerTransactionShadows(db, userId, pendingTransactionIds);
+}
+
+function deleteCloudLedgerTransactionShadows(
+  db: AnyDb,
+  userId: UserId,
+  transactionIds: readonly TransactionId[]
+): void {
+  const uniqueTransactionIds = [...new Set(transactionIds)];
+  if (uniqueTransactionIds.length === 0) return;
+
+  db.delete(transactions)
+    .where(and(eq(transactions.userId, userId), inArray(transactions.id, uniqueTransactionIds)))
+    .run();
+}
+
+async function isCloudLedgerTransactionReadOnly(
+  userId: UserId,
+  transactionId: TransactionId
+): Promise<boolean> {
+  if (
+    getCloudLedgerRuntimeCache(userId).transactions.some(
+      (transaction) => transaction.id === transactionId
+    )
+  ) {
+    return true;
+  }
+  return (await getCloudLedgerOutbox(userId).load()).some(
+    (change) => change.kind === "createTransaction" && change.transaction.id === transactionId
+  );
+}
+
+function isPersistedActiveTransaction(db: AnyDb, userId: UserId, transactionId: TransactionId) {
+  try {
+    return (
+      createTransactionQueryService().getStoredTransaction({
+        db,
+        userId,
+        transactionId,
+      }) !== null
+    );
+  } catch {
     return false;
   }
 }
@@ -288,6 +371,12 @@ export function invalidateTransactionSession(): void {
   loadTransactionsRequestId += 1;
 }
 
+export function resumeTransactionSession(userId: UserId): void {
+  transactionsSessionId += 1;
+  loadTransactionsRequestId += 1;
+  useTransactionStore.setState({ activeUserId: userId });
+}
+
 export async function loadInitialTransactions(db: AnyDb, userId: UserId): Promise<void> {
   const requestId = ++loadTransactionsRequestId;
   const sessionId = transactionsSessionId;
@@ -305,7 +394,10 @@ export async function loadInitialTransactions(db: AnyDb, userId: UserId): Promis
     return;
   }
   if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
-  const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId);
+  const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId, {
+    isTransactionIncludedInAggregate: (transaction) =>
+      isPersistedActiveTransaction(db, userId, transaction.id),
+  });
   if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
   useTransactionStore.getState().setPageSnapshot(optimisticSnapshot);
   useTransactionStore.getState().setAggregateSnapshot(optimisticSnapshot);
@@ -343,11 +435,12 @@ export function loadTransactionAggregates(db: AnyDb, userId: UserId): void {
     });
     if (!isActiveTransactionSession(userId, sessionId)) return;
     const { pages, offset, hasMore } = useTransactionStore.getState();
-    useTransactionStore
-      .getState()
-      .setAggregateSnapshot(
-        applyRuntimeCloudLedgerTransactions({ ...snapshot, pages, offset, hasMore }, userId)
-      );
+    useTransactionStore.getState().setAggregateSnapshot(
+      applyRuntimeCloudLedgerTransactions({ ...snapshot, pages, offset, hasMore }, userId, {
+        isTransactionIncludedInAggregate: (transaction) =>
+          isPersistedActiveTransaction(db, userId, transaction.id),
+      })
+    );
   } catch {
     // Aggregate query failed — keep existing state
   }
@@ -366,7 +459,10 @@ export async function refreshTransactions(db: AnyDb, userId: UserId): Promise<vo
       currentOffset: offset,
       pageSize: PAGE_SIZE,
     });
-    const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId);
+    const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId, {
+      isTransactionIncludedInAggregate: (transaction) =>
+        isPersistedActiveTransaction(db, userId, transaction.id),
+    });
     if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
     useTransactionStore.getState().applyRefreshSnapshot({
       ...optimisticSnapshot,

@@ -32,7 +32,7 @@
 
 ## Architecture
 
-- User financial data remains local-first; remote durability belongs to encrypted backups, not plaintext Supabase tables.
+- Financial source-of-truth architecture follows ADR-0007: Cloud Ledger records live behind the Remote API Boundary in the non-exposed `ledger` schema, while mobile keeps only local cache, projections, and encrypted pending outbox state.
 - Transaction search uses SQL `LIKE`; do not add FTS5 without profiling evidence.
 - `deriveBudgetProgress()` stays pure.
 - New pure derivations get direct unit tests; file-source tests are for navigation/layout cases only.

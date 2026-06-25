@@ -16,6 +16,9 @@ import type {
 } from "./create-transaction-query-service";
 
 type TransactionSnapshot = TransactionPageSnapshot & TransactionAggregateSnapshot;
+type ApplyCloudLedgerTransactionsOptions = {
+  readonly isTransactionIncludedInAggregate?: (transaction: StoredTransaction) => boolean;
+};
 
 const addCopAmount = (left: number, right: number): CopAmount => requireCopAmount(left + right);
 
@@ -84,10 +87,14 @@ function upsertCloudLedgerTransaction(
 function addCloudLedgerTransactionToSnapshot(
   snapshot: TransactionSnapshot,
   transaction: StoredTransaction,
-  now: Date
+  now: Date,
+  options: ApplyCloudLedgerTransactionsOptions
 ): TransactionSnapshot {
   const cloudLedgerSnapshot = upsertCloudLedgerTransaction(snapshot, transaction);
-  if (!cloudLedgerSnapshot.didInsert) {
+  if (
+    !cloudLedgerSnapshot.didInsert ||
+    options.isTransactionIncludedInAggregate?.(transaction) === true
+  ) {
     return cloudLedgerSnapshot.snapshot;
   }
   const nextSnapshot = cloudLedgerSnapshot.snapshot;
@@ -131,32 +138,37 @@ export async function loadCloudLedgerOptimisticTransactions(
 
 function applyCloudLedgerTransactionsToSnapshot(
   snapshot: TransactionSnapshot,
-  transactions: readonly StoredTransaction[]
+  transactions: readonly StoredTransaction[],
+  options: ApplyCloudLedgerTransactionsOptions = {}
 ): TransactionSnapshot {
   const now = new Date();
   return transactions.reduce(
     (currentSnapshot, transaction) =>
-      addCloudLedgerTransactionToSnapshot(currentSnapshot, transaction, now),
+      addCloudLedgerTransactionToSnapshot(currentSnapshot, transaction, now, options),
     snapshot
   );
 }
 
 export function applyRuntimeCloudLedgerTransactions(
   snapshot: TransactionSnapshot,
-  userId: UserId
+  userId: UserId,
+  options: ApplyCloudLedgerTransactionsOptions = {}
 ): TransactionSnapshot {
   return applyCloudLedgerTransactionsToSnapshot(
     snapshot,
-    loadRuntimeCloudLedgerTransactions(userId)
+    loadRuntimeCloudLedgerTransactions(userId),
+    options
   );
 }
 
 export async function applyCloudLedgerOptimisticView(
   snapshot: TransactionSnapshot,
-  userId: UserId
+  userId: UserId,
+  options: ApplyCloudLedgerTransactionsOptions = {}
 ): Promise<TransactionSnapshot> {
   return applyCloudLedgerTransactionsToSnapshot(
     snapshot,
-    await loadCloudLedgerOptimisticTransactions(userId)
+    await loadCloudLedgerOptimisticTransactions(userId),
+    options
   );
 }
