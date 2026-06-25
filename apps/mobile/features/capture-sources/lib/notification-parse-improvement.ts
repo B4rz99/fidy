@@ -1,14 +1,24 @@
 import { stripPii } from "@/features/email-capture/parsing.public";
 import { capturePipelineEvent } from "@/shared/lib";
+import {
+  isAllowedStructuralLowercaseWord,
+  isAllowedStructuralTitleWord,
+} from "./capture-improvement-template-shape-policy";
 import { insertNotificationParseImprovementSample } from "./notification-parse-improvement-repository";
+export {
+  deleteNotificationParseImprovementSamplesForUser,
+  setNotificationParseImprovementPreference,
+} from "./notification-parse-improvement-repository";
 
 export type ParseImprovementStatus = "failed" | "needs_review";
 export type ParseMethod = "regex" | "llm";
 export type ConfidenceBucket = "none" | "low" | "medium" | "high";
+export type CaptureImprovementProviderCategory = "bank" | "payment_app" | "wallet" | "unknown";
 
 export type ParseImprovementInput = {
   readonly rawText: string;
   readonly parserTemplate?: string;
+  readonly providerCategory?: CaptureImprovementProviderCategory;
   readonly senderDomain?: string | null;
   readonly source: string;
   readonly status: ParseImprovementStatus;
@@ -22,6 +32,13 @@ export type ShareParseImprovementInput = ParseImprovementInput & {
 };
 
 const MAX_PARSE_IMPROVEMENT_TEMPLATE_LENGTH = 1000;
+const PROVIDER_CATEGORY_BY_SOURCE: Readonly<
+  Partial<Record<string, CaptureImprovementProviderCategory>>
+> = {
+  google_pay: "wallet",
+};
+const EMAIL_CAPTURE_IMPROVEMENT_SOURCES = new Set(["email_gmail", "email_outlook"]);
+const BANK_PROVIDER_DOMAIN_PATTERN = /(?:banco|bank|bbva|davibank|davivienda|nequi|bancolombia)/iu;
 
 type RedactionRule = {
   readonly pattern: RegExp;
@@ -32,6 +49,16 @@ const SENSITIVE_VALUE_RULES: readonly RedactionRule[] = [
   { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, replacement: "[EMAIL]" },
   { pattern: /\+\d[\d\s-]{8,14}\d/g, replacement: "[PHONE]" },
   { pattern: /(?<!\d)3\d{2}[\s-]?\d{3}[\s-]?\d{4}\b/g, replacement: "[PHONE]" },
+  {
+    pattern:
+      /\b(ref(?:erencia)?|autori[sz]aci[oó]n|authorization)\b\s*:?\s*(?:no\.?\s*)?#?\s*(?=[A-Z0-9-]{3,}\b)(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{3,}\b/gi,
+    replacement: "$1 [REFERENCE]",
+  },
+  {
+    pattern:
+      /\b(no\.?)\s+#?\s*(?=[A-Z0-9-]{3,}\b)(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{3,}\b/gi,
+    replacement: "$1 [REFERENCE]",
+  },
   { pattern: /\b\d{10}\b/g, replacement: "[ID]" },
   { pattern: /\b\d{9,10}-\d\b/g, replacement: "[ID]" },
   { pattern: /\b\d{3}\.\d{3}\.\d{3,4}-?\d?\b/g, replacement: "[ID]" },
@@ -61,6 +88,11 @@ const SENSITIVE_VALUE_RULES: readonly RedactionRule[] = [
 
 const COUNTERPARTY_RULES: readonly RedactionRule[] = [
   {
+    pattern:
+      /(^|[.;:]\s*)([a-záéíóúñ]{3,}(?:\s+[a-záéíóúñ]{2,}){0,3})(\s+(?:compra|purchase|pago|payment)\b)/g,
+    replacement: "$1[COUNTERPARTY]$3",
+  },
+  {
     pattern: /(\ben\s+)(.+?)(?=\s+(?:el|con|tarjeta|cuenta|card)\b|[.;]|$)/gi,
     replacement: "$1[MERCHANT]",
   },
@@ -74,7 +106,7 @@ const COUNTERPARTY_RULES: readonly RedactionRule[] = [
   },
   {
     pattern:
-      /(\b(?:comercio|establecimiento|beneficiario|destinatario|para)\s+)(.+?)(?=\s+(?:el|con|tarjeta|cuenta|card)\b|[.;]|$)/gi,
+      /(\b(?:comercio|establecimiento|beneficiario|destinatario|para)\b\s*:?\s*)(.+?)(?=\s+(?:por|of|for|el|con|tarjeta|cuenta|card)\b|[.;]|$)/gi,
     replacement: "$1[COUNTERPARTY]",
   },
   {
@@ -94,32 +126,17 @@ const applyRedactionRule = (text: string, rule: RedactionRule): string =>
 
 const normalizeTemplateWhitespace = (text: string): string => text.trim().replace(/\s+/g, " ");
 
-const STRUCTURAL_TITLE_WORDS = new Set([
-  "Abono",
-  "Beneficiario",
-  "Cel",
-  "Compra",
-  "Comercio",
-  "Consignacion",
-  "Consignación",
-  "Deposito",
-  "Depósito",
-  "Destinatario",
-  "Establecimiento",
-  "Pago",
-  "Recibiste",
-  "Ref",
-  "Referencia",
-  "Tarjeta",
-  "Tel",
-  "Transferencia",
-]);
-
 const RESIDUAL_ENTITY_TOKEN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\b(?!\])/g;
+const RESIDUAL_LOWERCASE_ENTITY_TOKEN = /(?<!\[)\b[a-záéíóúñ]{3,}\b(?!\])/g;
 
 const redactResidualEntityTokens = (text: string): string =>
   text.replace(RESIDUAL_ENTITY_TOKEN, (word) =>
-    STRUCTURAL_TITLE_WORDS.has(word) ? word : "[ENTITY]"
+    isAllowedStructuralTitleWord(word) ? word : "[ENTITY]"
+  );
+
+const redactResidualLowercaseEntityTokens = (text: string): string =>
+  text.replace(RESIDUAL_LOWERCASE_ENTITY_TOKEN, (word) =>
+    isAllowedStructuralLowercaseWord(word) ? word : "[ENTITY]"
   );
 
 function confidenceBucket(confidence: number | null): ConfidenceBucket {
@@ -132,9 +149,11 @@ function confidenceBucket(confidence: number | null): ConfidenceBucket {
 export function anonymizeNotificationParseSample(rawText: string): string {
   return normalizeTemplateWhitespace(
     redactResidualEntityTokens(
-      COUNTERPARTY_RULES.reduce(
-        applyRedactionRule,
-        SENSITIVE_VALUE_RULES.reduce(applyRedactionRule, stripPii(rawText))
+      redactResidualLowercaseEntityTokens(
+        COUNTERPARTY_RULES.reduce(
+          applyRedactionRule,
+          SENSITIVE_VALUE_RULES.reduce(applyRedactionRule, stripPii(rawText))
+        )
       )
     )
   );
@@ -144,16 +163,36 @@ export function buildNotificationParseImprovementSample(input: ParseImprovementI
   const template = clampParseImprovementTemplate(
     anonymizeNotificationParseSample(input.parserTemplate ?? input.rawText)
   );
+  const providerCategory = captureImprovementProviderCategory(input);
 
   return {
     template,
-    ...(input.senderDomain ? { senderDomain: input.senderDomain } : {}),
+    ...(providerCategory ? { providerCategory } : {}),
     source: input.source,
     status: input.status,
     confidenceBucket: confidenceBucket(input.confidence),
     parseMethod: input.parseMethod,
   };
 }
+
+const captureImprovementProviderCategory = (
+  input: ParseImprovementInput
+): CaptureImprovementProviderCategory | null =>
+  input.providerCategory ??
+  PROVIDER_CATEGORY_BY_SOURCE[input.source] ??
+  emailProviderCategory(input);
+
+const emailProviderCategory = (
+  input: ParseImprovementInput
+): CaptureImprovementProviderCategory | null =>
+  EMAIL_CAPTURE_IMPROVEMENT_SOURCES.has(input.source)
+    ? providerCategoryFromSenderDomain(input.senderDomain)
+    : null;
+
+const providerCategoryFromSenderDomain = (
+  senderDomain: string | null | undefined
+): CaptureImprovementProviderCategory =>
+  senderDomain != null && BANK_PROVIDER_DOMAIN_PATTERN.test(senderDomain) ? "bank" : "unknown";
 
 const LENGTH_BUCKETS = [
   { max: 20, label: "0_19" },

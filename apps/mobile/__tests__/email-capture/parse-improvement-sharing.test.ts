@@ -6,24 +6,42 @@ import type { UserId } from "@/shared/types/branded";
 const {
   mockCaptureError,
   mockCaptureWarning,
+  mockDeleteEmailParseImprovementSamplesForUser,
   mockEnqueueEmailParseImprovementRequests,
+  mockEnsureEmailParseImprovementSamplesDeletedForUser,
   mockFlushPendingEmailParseImprovementSamples,
+  mockRetryPendingEmailParseImprovementSampleDeletion,
 } = vi.hoisted(() => ({
   mockCaptureError: vi.fn<(error: unknown) => void>((_error) => undefined),
   mockCaptureWarning: vi.fn<(message: string, context?: unknown) => void>(
     (_message, _context) => undefined
   ),
+  mockDeleteEmailParseImprovementSamplesForUser: vi.fn<(input: unknown) => Promise<unknown>>(() =>
+    Promise.resolve({ deleted: 0 })
+  ),
   mockEnqueueEmailParseImprovementRequests: vi.fn<(input: unknown) => number>(() => 1),
+  mockEnsureEmailParseImprovementSamplesDeletedForUser: vi.fn<(input: unknown) => Promise<unknown>>(
+    () => Promise.resolve({ deleted: 0, retried: false })
+  ),
   mockFlushPendingEmailParseImprovementSamples: vi.fn<
     (input: unknown) => Promise<{ readonly shared: number; readonly failed: number }>
   >(() => Promise.resolve({ shared: 1, failed: 0 })),
+  mockRetryPendingEmailParseImprovementSampleDeletion: vi.fn<(input: unknown) => Promise<unknown>>(
+    () => Promise.resolve({ deleted: 0, retried: false })
+  ),
 }));
 
 vi.mock("@/features/email-capture/services/email-parse-improvement-outbox", () => ({
+  deleteEmailParseImprovementSamplesForUser: (input: unknown) =>
+    mockDeleteEmailParseImprovementSamplesForUser(input),
   enqueueEmailParseImprovementRequests: (input: unknown) =>
     mockEnqueueEmailParseImprovementRequests(input),
+  ensureEmailParseImprovementSamplesDeletedForUser: (input: unknown) =>
+    mockEnsureEmailParseImprovementSamplesDeletedForUser(input),
   flushPendingEmailParseImprovementSamples: (input: unknown) =>
     mockFlushPendingEmailParseImprovementSamples(input),
+  retryPendingEmailParseImprovementSampleDeletion: (input: unknown) =>
+    mockRetryPendingEmailParseImprovementSampleDeletion(input),
 }));
 
 vi.mock("@/shared/lib", () => ({
@@ -48,10 +66,19 @@ describe("shareEmailParseImprovementRequests", () => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     mockEnqueueEmailParseImprovementRequests.mockReturnValue(1);
+    mockDeleteEmailParseImprovementSamplesForUser.mockResolvedValue({ deleted: 0 });
+    mockEnsureEmailParseImprovementSamplesDeletedForUser.mockResolvedValue({
+      deleted: 0,
+      retried: false,
+    });
     mockFlushPendingEmailParseImprovementSamples.mockResolvedValue({ shared: 1, failed: 0 });
+    mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValue({
+      deleted: 0,
+      retried: false,
+    });
   });
 
-  it("does not enqueue or flush samples when sharing is disabled", async () => {
+  it("does not enqueue, flush, or delete samples when disabled sharing is not authoritative", async () => {
     await shareEmailParseImprovementRequests({
       db,
       enabled: false,
@@ -61,6 +88,63 @@ describe("shareEmailParseImprovementRequests", () => {
 
     expect(mockEnqueueEmailParseImprovementRequests).not.toHaveBeenCalled();
     expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
+  });
+
+  it("ensures account-linked sample deletion when sharing is authoritatively disabled", async () => {
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: false,
+      userId,
+      requests: [],
+      canDeleteDisabledSamples: () => true,
+    });
+
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).toHaveBeenCalledWith({
+      db,
+      userId,
+    });
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+  });
+
+  it("does not delete samples when disabled sharing is not authoritative yet", async () => {
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: false,
+      userId,
+      requests: [request],
+      canDeleteDisabledSamples: () => false,
+    });
+
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
+    expect(mockEnqueueEmailParseImprovementRequests).not.toHaveBeenCalled();
+    expect(mockFlushPendingEmailParseImprovementSamples).not.toHaveBeenCalled();
+  });
+
+  it("captures disabled deletion retry failures without rejecting the email sync", async () => {
+    const error = new Error("delete failed");
+    mockEnsureEmailParseImprovementSamplesDeletedForUser.mockRejectedValueOnce(error);
+
+    await expect(
+      shareEmailParseImprovementRequests({
+        db,
+        enabled: false,
+        userId,
+        requests: [request],
+        canDeleteDisabledSamples: () => true,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    expect(mockCaptureError).toHaveBeenCalledWith(error);
+    expect(mockCaptureWarning).toHaveBeenCalledWith(
+      "email_parse_improvement_sample_delete_failed",
+      { errorType: "Error" }
+    );
   });
 
   it("logs disabled sharing summaries when debug logging is enabled", async () => {
@@ -116,6 +200,24 @@ describe("shareEmailParseImprovementRequests", () => {
       db,
       userId,
       isSharingEnabled,
+    });
+  });
+
+  it("passes explicit opt-in authority through to the outbox flush", async () => {
+    const canEnableRemotePreference = () => false;
+
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: true,
+      userId,
+      requests: [request],
+      canEnableRemotePreference,
+    });
+
+    expect(mockFlushPendingEmailParseImprovementSamples).toHaveBeenCalledWith({
+      db,
+      userId,
+      canEnableRemotePreference,
     });
   });
 
@@ -316,6 +418,25 @@ describe("shareEmailParseImprovementRequests", () => {
 
     expect(mockCaptureWarning).toHaveBeenCalledWith("email_parse_improvement_sample_share_failed", {
       errorType: "unknown",
+    });
+  });
+
+  it("preserves outbox failure types when individual pending samples fail to flush", async () => {
+    mockFlushPendingEmailParseImprovementSamples.mockResolvedValueOnce({
+      shared: 0,
+      failed: 2,
+      failureTypes: ["ParseImprovementSampleInsertError", "ParseImprovementSampleOptOutError"],
+    } as never);
+
+    await shareEmailParseImprovementRequests({
+      db,
+      enabled: true,
+      userId,
+      requests: [request],
+    });
+
+    expect(mockCaptureWarning).toHaveBeenCalledWith("email_parse_improvement_sample_share_failed", {
+      errorType: "ParseImprovementSampleInsertError,ParseImprovementSampleOptOutError",
     });
   });
 });

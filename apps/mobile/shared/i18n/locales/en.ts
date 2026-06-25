@@ -738,9 +738,9 @@ const en = {
     },
     notifications: "Notifications",
     privateBackup: "Private backup",
-    parseImprovementSharing: "Improve capture parsing",
+    parseImprovementSharing: "Capture improvement samples",
     parseImprovementSharingSubtitle:
-      "Share redacted email and notification formats when parsing struggles. Amounts, merchants, dates, names, and cards are removed first.",
+      "On by default. Fidy keeps only structural, redacted capture shapes; turning this off stops future retention and deletes linked samples.",
     privateBackupStatus: {
       notSetUp: "Not set up",
       recoveryKeyNotConfirmed: "Recovery Key not confirmed",

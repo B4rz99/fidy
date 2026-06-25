@@ -46,6 +46,19 @@ const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
   },
   cursor: "ledger:2",
 } as const;
+const CAPTURE_IMPROVEMENT_SAMPLE = {
+  sourceChannel: "email",
+  sourceFamily: "email",
+  sourceProvider: "gmail",
+  providerCategory: "bank",
+  templateShape: "Compra por [AMOUNT] en [MERCHANT] con tarjeta [CARD].",
+  parseOutcome: "failed",
+  confidenceBucket: "none",
+  extractor: {
+    method: "regex",
+    version: 1,
+  },
+} as const;
 
 type LedgerBootstrapPayload = {
   readonly cursor: string;
@@ -229,6 +242,7 @@ describe("cloud-ledger-api Edge Function", () => {
       applyPendingChangesResult: {
         code: "accepted",
         acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: [],
         cursor: "ledger:2",
       },
     });
@@ -244,6 +258,7 @@ describe("cloud-ledger-api Edge Function", () => {
       data: {
         code: "accepted",
         acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: [],
         cursor: "ledger:2",
       },
     });
@@ -285,6 +300,511 @@ describe("cloud-ledger-api Edge Function", () => {
         cursor: "ledger:2",
       },
     });
+  });
+
+  it("retains Capture Improvement Samples for the authenticated account only", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          userId: OTHER_USER_ID,
+          sample: CAPTURE_IMPROVEMENT_SAMPLE,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(
+      USER_ID,
+      CAPTURE_IMPROVEMENT_SAMPLE
+    );
+  });
+
+  it("preserves Outlook source-provider Capture Improvement Samples at the API boundary", async () => {
+    const api = createCloudLedgerApiDeps();
+    const sample = {
+      ...CAPTURE_IMPROVEMENT_SAMPLE,
+      sourceProvider: "outlook",
+    } as const;
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(USER_ID, sample);
+  });
+
+  it("rejects email Capture Improvement Samples without a coarse source provider", async () => {
+    const api = createCloudLedgerApiDeps();
+    const { sourceProvider: _sourceProvider, ...sample } = CAPTURE_IMPROVEMENT_SAMPLE;
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects inconsistent Capture Improvement Sample source metadata", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            sourceChannel: "wallet",
+            sourceFamily: "email",
+            sourceProvider: undefined,
+            providerCategory: "bank",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects Capture Improvement Sample retention when the account has opted out", async () => {
+    const api = createCloudLedgerApiDeps({
+      retainCaptureImprovementResult: { code: "capture_improvement_opted_out" },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: CAPTURE_IMPROVEMENT_SAMPLE,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "capture_improvement_opted_out",
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(
+      USER_ID,
+      CAPTURE_IMPROVEMENT_SAMPLE
+    );
+  });
+
+  it("propagates invalid Capture Improvement Sample retain outcomes from the store", async () => {
+    const api = createCloudLedgerApiDeps({
+      retainCaptureImprovementResult: { code: "invalid_capture_improvement_sample" },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: CAPTURE_IMPROVEMENT_SAMPLE,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(
+      USER_ID,
+      CAPTURE_IMPROVEMENT_SAMPLE
+    );
+  });
+
+  it("updates Capture Improvement Preference for the authenticated account only", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "setCaptureImprovementPreference",
+          userId: OTHER_USER_ID,
+          enabled: true,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.setCaptureImprovementPreference).toHaveBeenCalledWith(USER_ID, true);
+  });
+
+  it("rejects raw capture content in the top-level Capture Improvement Preference envelope", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "setCaptureImprovementPreference",
+          enabled: false,
+          rawText: "Compra por $50,000 en EXITO. Ref ABC123XYZ. user@example.com",
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.setCaptureImprovementPreference).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsafe Capture Improvement Samples before remote retention", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape:
+              "Compra por 50000 en EXITO con tarjeta *1234. Ref 12345678901 user@example.com",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects lowercase merchant and location residue in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "compra en exito cerca de bogota por [AMOUNT]",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects colon-labeled lowercase entities in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "Comercio: exito por [AMOUNT]. Beneficiario: juan perez.",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects alphanumeric reference values in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "Referencia ABC123XYZ por [AMOUNT].",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects short alphanumeric reference values in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "Ref No. A123B por [AMOUNT]. Autorizacion No. A1B2C.",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects unlabeled alphanumeric reference values in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            templateShape: "ABC123XYZ Compra por [AMOUNT] en [MERCHANT].",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsafe_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("accepts structural authorization reference placeholders in Capture Improvement Samples", async () => {
+    const api = createCloudLedgerApiDeps();
+    const sample = {
+      ...CAPTURE_IMPROVEMENT_SAMPLE,
+      templateShape: "Autorizacion [REFERENCE] por [AMOUNT].",
+    };
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(USER_ID, sample);
+  });
+
+  it("rejects unlabeled lowercase merchant or person tokens in Capture Improvement Samples", async () => {
+    const samples = [
+      "exito compra por [AMOUNT].",
+      "juan perez pago por [AMOUNT].",
+      "rappi retiro por [AMOUNT].",
+    ];
+
+    for (const templateShape of samples) {
+      const api = createCloudLedgerApiDeps();
+      const response = await handleCloudLedgerRequest(
+        jsonRequest(
+          {
+            action: "retainCaptureImprovementSample",
+            sample: {
+              ...CAPTURE_IMPROVEMENT_SAMPLE,
+              templateShape,
+            },
+          },
+          "valid-token"
+        ),
+        api.deps
+      );
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        success: false,
+        error: "unsafe_capture_improvement_sample",
+      });
+      expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+    }
+  });
+
+  it("rejects Capture Improvement Samples with disallowed raw fields", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: {
+            ...CAPTURE_IMPROVEMENT_SAMPLE,
+            rawText: "Compra por $50,000 en EXITO",
+            senderDomain: "davibank.com",
+          },
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("rejects raw capture content in the top-level Capture Improvement Sample envelope", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          rawText: "Compra por $50,000 en EXITO. Ref ABC123XYZ. user@example.com",
+          sample: CAPTURE_IMPROVEMENT_SAMPLE,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).not.toHaveBeenCalled();
+  });
+
+  it("deletes user-linked Capture Improvement Samples for the authenticated account", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "deleteCaptureImprovementSamples",
+          userId: OTHER_USER_ID,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { code: "accepted" },
+    });
+    expect(api.store.deleteCaptureImprovementSamples).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("rejects raw capture content in the top-level Capture Improvement deletion envelope", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "deleteCaptureImprovementSamples",
+          rawText: "Compra por $50,000 en EXITO. Ref ABC123XYZ. user@example.com",
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.deleteCaptureImprovementSamples).not.toHaveBeenCalled();
   });
 
   it("rejects invalid client transaction ids with typed failures before ledger access", async () => {
@@ -589,6 +1109,7 @@ function createCloudLedgerApiDeps(
     readonly bootstrapByUserId?: ReadonlyMap<string, LedgerBootstrapPayload>;
     readonly applyPendingChangesResult?: unknown;
     readonly createTransactionResult?: unknown;
+    readonly retainCaptureImprovementResult?: unknown;
     readonly userId?: string;
   } = {}
 ) {
@@ -633,6 +1154,15 @@ function createCloudLedgerApiDeps(
           cursor: "ledger:2",
         }
       )
+    ),
+    retainCaptureImprovementSample: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve(options.retainCaptureImprovementResult ?? { code: "accepted" })
+    ),
+    deleteCaptureImprovementSamples: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve({ code: "accepted" })
+    ),
+    setCaptureImprovementPreference: vi.fn<(...args: any[]) => any>(() =>
+      Promise.resolve({ code: "accepted" })
     ),
   };
 

@@ -121,12 +121,41 @@ export type CloudLedgerCreateTransactionOutcome =
 
 export type CloudLedgerApplyPendingChangesOutcome = CloudLedgerApplyPendingChangesAccepted;
 
+export type CaptureImprovementSample = {
+  readonly sourceChannel: "email" | "notification" | "wallet";
+  readonly sourceFamily: "email" | "android_notification" | "wallet_notification";
+  readonly sourceProvider?: "gmail" | "outlook";
+  readonly providerCategory: "bank" | "payment_app" | "wallet" | "unknown";
+  readonly templateShape: string;
+  readonly parseOutcome: "failed" | "needs_review";
+  readonly confidenceBucket: "none" | "low" | "medium" | "high";
+  readonly extractor: {
+    readonly method: "regex" | "llm";
+    readonly version: 1;
+  };
+};
+
+export type CaptureImprovementSampleAccepted = {
+  readonly code: "accepted";
+};
+
+export type CaptureImprovementSampleRejected = {
+  readonly code: "capture_improvement_opted_out" | "invalid_capture_improvement_sample";
+};
+
+export type CaptureImprovementSampleOutcome =
+  | CaptureImprovementSampleAccepted
+  | CaptureImprovementSampleRejected;
+
 export type CloudLedgerApiError =
   | "missing_auth"
   | "invalid_auth"
   | "method_not_allowed"
   | "unsupported_action"
   | "invalid_cursor"
+  | "invalid_capture_improvement_sample"
+  | "unsafe_capture_improvement_sample"
+  | "capture_improvement_opted_out"
   | "duplicate_transaction_id"
   | "invalid_ledger_reference"
   | "invalid_transaction"
@@ -139,4 +168,5 @@ export type CloudLedgerApiResponse =
   | { readonly success: true; readonly data: CloudLedgerBootstrapPayload }
   | { readonly success: true; readonly data: CloudLedgerCreateTransactionAccepted }
   | { readonly success: true; readonly data: CloudLedgerApplyPendingChangesAccepted }
+  | { readonly success: true; readonly data: CaptureImprovementSampleAccepted }
   | { readonly success: false; readonly error: CloudLedgerApiError };

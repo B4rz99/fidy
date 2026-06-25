@@ -52,6 +52,19 @@ const CREATE_TRANSACTION_RPC_DATA = {
   },
   cursor: "ledger:4",
 } as const;
+const CAPTURE_IMPROVEMENT_SAMPLE = {
+  sourceChannel: "email",
+  sourceFamily: "email",
+  sourceProvider: "gmail",
+  providerCategory: "bank",
+  templateShape: "Compra por [AMOUNT] en [MERCHANT].",
+  parseOutcome: "failed",
+  confidenceBucket: "none",
+  extractor: {
+    method: "regex",
+    version: 1,
+  },
+} as const;
 
 describe("Cloud Ledger Edge store", () => {
   it("refreshes through the service-only Cloud Ledger RPC without exposing table APIs", async () => {
@@ -170,23 +183,7 @@ describe("Cloud Ledger Edge store", () => {
 
     const outcome = await store.applyPendingChanges(USER_ID, {
       commandVersion: 1,
-      changes: [
-        {
-          id: "change-rejected-offline-create",
-          kind: "createTransaction",
-          commandVersion: 1,
-          transaction: {
-            id: CLIENT_TRANSACTION_ID,
-            type: "expense",
-            amount: 15_000,
-            currency: "COP",
-            categoryId: "cat-groceries",
-            accountId: "acct-cash",
-            description: "Market",
-            date: "2026-06-01",
-          },
-        },
-      ],
+      changes: [rejectedPendingCreateChange()],
     });
 
     expect(outcome).toEqual({
@@ -218,6 +215,82 @@ describe("Cloud Ledger Edge store", () => {
       cursor: "ledger:5",
     });
     expect(supabase.rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("retains Capture Improvement Samples through a service-only account-linked RPC", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.retainCaptureImprovementSample(USER_ID, CAPTURE_IMPROVEMENT_SAMPLE);
+
+    expect(outcome).toEqual({ code: "accepted" });
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_retain_capture_improvement_sample", {
+      p_confidence_bucket: "none",
+      p_extractor_method: "regex",
+      p_extractor_version: 1,
+      p_parse_outcome: "failed",
+      p_provider_category: "bank",
+      p_source_channel: "email",
+      p_source_family: "email",
+      p_source_provider: "gmail",
+      p_template_shape: "Compra por [AMOUNT] en [MERCHANT].",
+      p_user_id: USER_ID,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.schema).not.toHaveBeenCalled();
+  });
+
+  it("passes Outlook Capture Improvement Samples through the source-provider RPC field", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.retainCaptureImprovementSample(USER_ID, {
+      ...CAPTURE_IMPROVEMENT_SAMPLE,
+      sourceProvider: "outlook",
+    });
+
+    expect(outcome).toEqual({ code: "accepted" });
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_retain_capture_improvement_sample", {
+      p_confidence_bucket: "none",
+      p_extractor_method: "regex",
+      p_extractor_version: 1,
+      p_parse_outcome: "failed",
+      p_provider_category: "bank",
+      p_source_channel: "email",
+      p_source_family: "email",
+      p_source_provider: "outlook",
+      p_template_shape: "Compra por [AMOUNT] en [MERCHANT].",
+      p_user_id: USER_ID,
+    });
+  });
+
+  it("deletes Capture Improvement Samples through a service-only account-linked RPC", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.deleteCaptureImprovementSamples(USER_ID);
+
+    expect(outcome).toEqual({ code: "accepted" });
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_delete_capture_improvement_samples", {
+      p_user_id: USER_ID,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.schema).not.toHaveBeenCalled();
+  });
+
+  it("updates Capture Improvement Preference through a service-only account-linked RPC", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.setCaptureImprovementPreference(USER_ID, true);
+
+    expect(outcome).toEqual({ code: "accepted" });
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_set_capture_improvement_preference", {
+      p_enabled: true,
+      p_user_id: USER_ID,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.schema).not.toHaveBeenCalled();
   });
 });
 
@@ -300,7 +373,13 @@ function ledgerRpcResult(
         ? (createTransactionOutcomes.shift() ??
           options.createTransactionOutcome ??
           CREATE_TRANSACTION_RPC_DATA)
-        : BOOTSTRAP_RPC_DATA,
+        : functionName === "cloud_ledger_retain_capture_improvement_sample"
+          ? { code: "accepted" }
+          : functionName === "cloud_ledger_delete_capture_improvement_samples"
+            ? { code: "accepted" }
+            : functionName === "cloud_ledger_set_capture_improvement_preference"
+              ? { code: "accepted" }
+              : BOOTSTRAP_RPC_DATA,
     error: null,
   };
 }

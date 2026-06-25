@@ -748,9 +748,9 @@ const es = {
     },
     notifications: "Notificaciones",
     privateBackup: "Copia privada",
-    parseImprovementSharing: "Mejorar lectura de capturas",
+    parseImprovementSharing: "Muestras para mejorar capturas",
     parseImprovementSharingSubtitle:
-      "Comparte formatos redactados de correos y notificaciones cuando falle una lectura. Primero se quitan montos, comercios, fechas, nombres y tarjetas.",
+      "Activado por defecto. Fidy conserva solo estructuras redactadas de capturas; al apagarlo se detienen futuras muestras y se eliminan las vinculadas.",
     privateBackupStatus: {
       notSetUp: "Sin configurar",
       recoveryKeyNotConfirmed: "Llave de recuperación sin confirmar",

@@ -270,7 +270,7 @@ export const emailParseImprovementSamples = sqliteTable(
     id: text("id").$type<EmailParseImprovementSampleId>().primaryKey(),
     userId: text("user_id").$type<UserId>().notNull(),
     template: text("template").notNull(),
-    senderDomain: text("sender_domain"),
+    providerCategory: text("provider_category").notNull().default("unknown"),
     source: text("source").notNull(),
     status: text("status").notNull(),
     confidence: real("confidence"),
@@ -280,14 +280,16 @@ export const emailParseImprovementSamples = sqliteTable(
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
-    uniqueIndex("uq_email_parse_improvement_sample").on(
-      table.userId,
-      table.source,
-      table.status,
-      table.parseMethod,
-      sql`coalesce(${table.senderDomain}, '')`,
-      table.template
-    ),
+    uniqueIndex("uq_email_parse_improvement_sample")
+      .on(
+        table.userId,
+        table.source,
+        table.status,
+        table.parseMethod,
+        table.providerCategory,
+        table.template
+      )
+      .where(sql`${table.deletedAt} is null`),
     index("idx_email_parse_improvement_samples_pending").on(
       table.userId,
       table.sharedAt,
@@ -296,6 +298,23 @@ export const emailParseImprovementSamples = sqliteTable(
       table.id
     ),
   ]
+);
+
+export const captureImprovementDeletionRequests = sqliteTable(
+  "capture_improvement_deletion_requests",
+  {
+    userId: text("user_id").$type<UserId>().primaryKey(),
+    requestedAt: text("requested_at").$type<IsoDateTime>().notNull(),
+    lastAttemptAt: text("last_attempt_at").$type<IsoDateTime>(),
+  }
+);
+
+export const captureImprovementDeletionConfirmations = sqliteTable(
+  "capture_improvement_deletion_confirmations",
+  {
+    userId: text("user_id").$type<UserId>().primaryKey(),
+    confirmedAt: text("confirmed_at").$type<IsoDateTime>().notNull(),
+  }
 );
 
 export const reviewCandidates = sqliteTable(

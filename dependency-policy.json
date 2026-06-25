@@ -31,9 +31,24 @@
       "reason": "Expo SDK 56 expects 2.0.2; newer native versions need Expo compatibility confirmation."
     },
     {
+      "name": "@babel/plugin-transform-react-jsx",
+      "until": "2026-07-15",
+      "reason": "Babel 8 should land in a dedicated Expo/Babel tooling migration with Metro transform verification."
+    },
+    {
       "name": "better-sqlite3",
       "until": "2026-07-15",
       "reason": "Native test database addon update should land in a dedicated dependency PR with install and DB test verification."
+    },
+    {
+      "name": "lucide-react-native",
+      "until": "2026-07-15",
+      "reason": "Icon library updates need a dedicated UI dependency PR with icon export and visual smoke verification."
+    },
+    {
+      "name": "posthog-react-native",
+      "until": "2026-07-15",
+      "reason": "Analytics SDK updates should land in a dedicated telemetry PR with native startup and capture verification."
     },
     {
       "name": "react-native",

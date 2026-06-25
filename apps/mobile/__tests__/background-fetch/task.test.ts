@@ -19,11 +19,13 @@ describe("background email fetch task", () => {
     mockHydrateSettings.mockImplementation(async () => {
       mockGetSettingsState.mockReturnValue({
         hydrate: mockHydrateSettings,
+        parseImprovementSharingPreferenceState: "default_enabled",
         shareAnonymizedParseSamples: true,
       });
     });
     mockGetSettingsState.mockReturnValue({
       hydrate: mockHydrateSettings,
+      parseImprovementSharingPreferenceState: "unhydrated",
       shareAnonymizedParseSamples: false,
     });
   });
@@ -46,9 +48,33 @@ describe("background email fetch task", () => {
       {
         parseProfile: "background",
         shareParseImprovementSamples: true,
+        canEnableRemoteParseImprovementPreference: expect.any(Function),
         isShareParseImprovementSamplesEnabled: expect.any(Function),
+        canDeleteDisabledParseImprovementSamples: expect.any(Function),
       }
     );
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.canEnableRemoteParseImprovementPreference()).toBe(false);
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(false);
+  });
+
+  it("allows background sync to retry deletion after an explicit opt-out", async () => {
+    mockHydrateSettings.mockImplementation(async () => {
+      mockGetSettingsState.mockReturnValue({
+        hydrate: mockHydrateSettings,
+        parseImprovementSharingPreferenceState: "explicit_disabled",
+        shareAnonymizedParseSamples: false,
+      });
+    });
+    const task = await loadBackgroundTask();
+
+    await task();
+
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.shareParseImprovementSamples).toBe(false);
+    expect(options.isShareParseImprovementSamplesEnabled()).toBe(false);
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(true);
+    expect(options.canEnableRemoteParseImprovementPreference()).toBe(false);
   });
 });
 
@@ -73,6 +99,12 @@ async function loadBackgroundTask() {
       (mockLoadEmailAccounts as (...args: unknown[]) => unknown)(...args),
   }));
   vi.doMock("@/features/settings/hooks.public", () => ({
+    isAuthoritativeParseImprovementOptOut: (state: {
+      readonly parseImprovementSharingPreferenceState: string;
+    }) => state.parseImprovementSharingPreferenceState === "explicit_disabled",
+    isExplicitParseImprovementOptIn: (state: {
+      readonly parseImprovementSharingPreferenceState: string;
+    }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
     useSettingsStore: { getState: () => mockGetSettingsState() },
   }));
   vi.doMock("@/shared/db", () => ({
