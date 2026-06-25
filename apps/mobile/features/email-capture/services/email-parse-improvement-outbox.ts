@@ -35,6 +35,11 @@ const PERMANENT_INSERT_ERROR_CODES = new Set([
 const activeFlushesByUserId = new Map<UserId, Promise<FlushResult>>();
 const activeRemoteOperationsByUserId = new Map<UserId, Promise<unknown>>();
 
+type DeletionRetryResult = {
+  readonly deleted: number;
+  readonly retried: boolean;
+};
+
 type FlushCursor = {
   readonly createdAt: IsoDateTime;
   readonly id: EmailParseImprovementSampleId;
@@ -163,18 +168,18 @@ export async function retryPendingEmailParseImprovementSampleDeletion(input: {
   readonly db: AnyDb;
   readonly userId: UserId;
   readonly now?: Date;
-}): Promise<{ readonly deleted: number; readonly retried: boolean }> {
-  const pendingRequest = getCaptureImprovementDeletionRequest(input);
-  if (pendingRequest === null) {
-    return { deleted: 0, retried: false };
-  }
+}): Promise<DeletionRetryResult> {
+  return await runCaptureImprovementRemoteOperation<DeletionRetryResult>(input.userId, () => {
+    const pendingRequest = getCaptureImprovementDeletionRequest(input);
+    if (pendingRequest === null) {
+      return Promise.resolve({ deleted: 0, retried: false });
+    }
 
-  return await runCaptureImprovementRemoteOperation(input.userId, () =>
-    performPendingEmailParseImprovementSampleDeletion({
+    return performPendingEmailParseImprovementSampleDeletion({
       ...input,
       requestedAt: pendingRequest.requestedAt,
-    })
-  );
+    });
+  });
 }
 
 export async function setEmailParseImprovementSharingPreference(input: {
@@ -262,7 +267,16 @@ export async function flushPendingEmailParseImprovementSamples(input: {
     const pendingCount = countPendingEmailParseImprovementSamples(input);
     if (pendingCount === 0) return { shared: 0, failed: 0 };
 
-    if (input.canEnableRemotePreference?.() !== false) {
+    if (input.canEnableRemotePreference?.() === false) {
+      const deletionRetry = await retryPendingEmailParseImprovementSampleDeletion({
+        db: input.db,
+        now: input.now,
+        userId: input.userId,
+      });
+      if (deletionRetry.retried) {
+        return { shared: 0, failed: 0 };
+      }
+    } else {
       await setEmailParseImprovementSharingPreference({
         db: input.db,
         enabled: true,

@@ -782,6 +782,89 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("does not run a stale deletion retry after an opt-in clears the request", async () => {
+    const { db, sqlite } = createDb();
+    mockDeleteCaptureParseImprovementSamplesForUser.mockRejectedValueOnce(new Error("network"));
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("network");
+    mockDeleteCaptureParseImprovementSamplesForUser.mockClear();
+
+    let resolveDelete: () => void = () => undefined;
+    mockDeleteCaptureParseImprovementSamplesForUser.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        })
+    );
+
+    const optIn = setEmailParseImprovementSharingPreference({
+      db,
+      enabled: true,
+      userId: USER_ID,
+    });
+    await Promise.resolve();
+
+    const retry = retryPendingEmailParseImprovementSampleDeletion({
+      db,
+      userId: USER_ID,
+      now: new Date("2026-05-19T10:05:00.000Z"),
+    });
+    await Promise.resolve();
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(1);
+    resolveDelete();
+    await expect(optIn).resolves.toBeUndefined();
+    await expect(retry).resolves.toEqual({ deleted: 0, retried: false });
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(1);
+    expect(mockSetCaptureParseImprovementPreference).toHaveBeenCalledWith({
+      enabled: true,
+      userId: USER_ID,
+    });
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([]);
+    sqlite.close();
+  });
+
+  it("blocks default-enabled flushes while an opt-out deletion request is pending", async () => {
+    const { db, sqlite } = createDb();
+    mockDeleteCaptureParseImprovementSamplesForUser.mockRejectedValueOnce(new Error("network"));
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("network");
+    mockDeleteCaptureParseImprovementSamplesForUser.mockClear();
+
+    const postOptOutRequest = {
+      ...request,
+      parserTemplate: "Nuevo pago en [MERCHANT] por [AMOUNT]",
+      rawText: "Nuevo pago en Comercio por $123",
+    };
+    enqueueEmailParseImprovementRequests({
+      db,
+      userId: USER_ID,
+      requests: [postOptOutRequest],
+      now: new Date("2026-05-19T10:05:00.000Z"),
+    });
+
+    await expect(
+      flushPendingEmailParseImprovementSamples({
+        db,
+        userId: USER_ID,
+        now: new Date("2026-05-19T10:06:00.000Z"),
+        canEnableRemotePreference: () => false,
+      })
+    ).resolves.toEqual({ shared: 0, failed: 0 });
+
+    expect(mockDeleteCaptureParseImprovementSamplesForUser).toHaveBeenCalledTimes(1);
+    expect(mockSetCaptureParseImprovementPreference).not.toHaveBeenCalled();
+    expect(mockShareCaptureParseImprovementSample).not.toHaveBeenCalled();
+    expect(countPendingEmailParseImprovementSamples({ db, userId: USER_ID })).toBe(1);
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([]);
+    sqlite.close();
+  });
+
   it("does not advance the continuation cursor past unprocessed rows", async () => {
     const { db, sqlite } = createDb();
     const requests = Array.from({ length: 12 }, (_, index) => ({

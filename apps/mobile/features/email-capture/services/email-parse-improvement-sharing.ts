@@ -4,9 +4,9 @@ import type { UserId } from "@/shared/types/branded";
 import { isEmailCaptureDebugEnabled } from "./email-capture-debug";
 import type { EmailParseImprovementRequest } from "./email-pipeline-service/types";
 import {
-  deleteEmailParseImprovementSamplesForUser,
   enqueueEmailParseImprovementRequests,
   flushPendingEmailParseImprovementSamples,
+  retryPendingEmailParseImprovementSampleDeletion,
 } from "./email-parse-improvement-outbox";
 
 const getErrorName = (error: unknown): string => (error instanceof Error ? error.name : "unknown");
@@ -38,7 +38,7 @@ const retryDisabledParseImprovementDeletion = (input: {
   readonly db: AnyDb;
   readonly userId: UserId;
 }) =>
-  deleteEmailParseImprovementSamplesForUser(input).catch((error) => {
+  retryPendingEmailParseImprovementSampleDeletion(input).catch((error) => {
     captureError(error);
     captureWarning("email_parse_improvement_sample_delete_failed", {
       errorType: getErrorName(error),
