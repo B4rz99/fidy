@@ -19,7 +19,13 @@ export function enqueueCaptureImprovementDeletionRequest(input: {
       requestedAt: input.requestedAt,
       lastAttemptAt: null,
     })
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: captureImprovementDeletionRequests.userId,
+      set: {
+        requestedAt: input.requestedAt,
+        lastAttemptAt: null,
+      },
+    })
     .run();
 }
 

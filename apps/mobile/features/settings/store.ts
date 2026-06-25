@@ -155,11 +155,15 @@ const applyStoredNotificationPreferences = (set: SetSettingsState, storedPrefs: 
 };
 
 const resolveStoredShareAnonymizedParseSamples = (
-  value: string | null
+  value: string | null,
+  currentPreferenceState: ParseImprovementSharingPreferenceState
 ): {
   readonly enabled: boolean;
   readonly preferenceState: ParseImprovementSharingPreferenceState;
 } => {
+  if (currentPreferenceState === "explicit_disabled") {
+    return { enabled: false, preferenceState: "explicit_disabled" };
+  }
   if (value === "false") {
     return { enabled: false, preferenceState: "explicit_disabled" };
   }
@@ -278,7 +282,8 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       applyStoredPrivateBackup(set, stored.privateBackup);
       applyStoredNotificationPreferences(set, stored.storedPrefs);
       const storedShareAnonymizedParseSamples = resolveStoredShareAnonymizedParseSamples(
-        stored.storedShareAnonymizedParseSamples
+        stored.storedShareAnonymizedParseSamples,
+        get().parseImprovementSharingPreferenceState
       );
       set({
         shareAnonymizedParseSamples: storedShareAnonymizedParseSamples.enabled,
@@ -286,10 +291,12 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       });
     } catch {
       // SecureStore unavailable (e.g., in tests)
+      const currentPreferenceState = get().parseImprovementSharingPreferenceState;
       Appearance.setColorScheme(toColorScheme("system"));
       set({
         themePreference: "system",
-        parseImprovementSharingPreferenceState: "unavailable",
+        parseImprovementSharingPreferenceState:
+          currentPreferenceState === "explicit_disabled" ? "explicit_disabled" : "unavailable",
         shareAnonymizedParseSamples: false,
       });
     } finally {

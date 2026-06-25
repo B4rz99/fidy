@@ -890,6 +890,58 @@ describe("email parse improvement outbox", () => {
     sqlite.close();
   });
 
+  it("advances a pending deletion request when the user disables sharing again", async () => {
+    const { db, sqlite } = createDb();
+    mockDeleteCaptureParseImprovementSamplesForUser
+      .mockRejectedValueOnce(new Error("first-network-failure"))
+      .mockRejectedValueOnce(new Error("second-network-failure"));
+    enqueueEmailParseImprovementRequests({ db, userId: USER_ID, requests: [request], now: NOW });
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({ db, userId: USER_ID, now: NOW })
+    ).rejects.toThrow("first-network-failure");
+
+    const postOptInRequest = {
+      ...request,
+      parserTemplate: "Nuevo pago en [MERCHANT] por [AMOUNT]",
+      rawText: "Nuevo pago en Comercio por $123",
+    };
+    expect(
+      enqueueEmailParseImprovementRequests({
+        db,
+        userId: USER_ID,
+        requests: [postOptInRequest],
+        now: new Date("2026-05-19T10:05:00.000Z"),
+      })
+    ).toBe(1);
+
+    await expect(
+      deleteEmailParseImprovementSamplesForUser({
+        db,
+        userId: USER_ID,
+        now: new Date("2026-05-19T10:10:00.000Z"),
+      })
+    ).rejects.toThrow("second-network-failure");
+
+    expect(db.select().from(emailParseImprovementSamples).all()).toEqual([
+      expect.objectContaining({
+        template: "Compra en [MERCHANT] por [AMOUNT]",
+        deletedAt: "2026-05-19T10:00:00.000Z",
+      }),
+      expect.objectContaining({
+        template: "Nuevo pago en [MERCHANT] por [AMOUNT]",
+        deletedAt: "2026-05-19T10:10:00.000Z",
+      }),
+    ]);
+    expect(db.select().from(captureImprovementDeletionRequests).all()).toEqual([
+      expect.objectContaining({
+        requestedAt: "2026-05-19T10:10:00.000Z",
+        lastAttemptAt: "2026-05-19T10:10:00.000Z",
+      }),
+    ]);
+    sqlite.close();
+  });
+
   it("soft-deletes failed email source events older than retention", () => {
     const { db, sqlite } = createDb();
     recordProcessedCaptureSourceEventWithLocalLedger({

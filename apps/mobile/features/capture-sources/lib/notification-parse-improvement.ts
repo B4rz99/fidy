@@ -54,6 +54,11 @@ const SENSITIVE_VALUE_RULES: readonly RedactionRule[] = [
       /\b(ref(?:erencia)?|autori[sz]aci[oó]n|authorization)\b\s*:?\s*(?:no\.?\s*)?#?\s*(?=[A-Z0-9-]{3,}\b)(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{3,}\b/gi,
     replacement: "$1 [REFERENCE]",
   },
+  {
+    pattern:
+      /\b(no\.?)\s+#?\s*(?=[A-Z0-9-]{3,}\b)(?=[A-Z0-9-]*[A-Z])(?=[A-Z0-9-]*\d)[A-Z0-9-]{3,}\b/gi,
+    replacement: "$1 [REFERENCE]",
+  },
   { pattern: /\b\d{10}\b/g, replacement: "[ID]" },
   { pattern: /\b\d{9,10}-\d\b/g, replacement: "[ID]" },
   { pattern: /\b\d{3}\.\d{3}\.\d{3,4}-?\d?\b/g, replacement: "[ID]" },

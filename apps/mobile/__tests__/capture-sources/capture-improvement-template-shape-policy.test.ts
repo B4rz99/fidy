@@ -36,6 +36,10 @@ const unsafeCases: readonly {
     template: "Autorizacion No. A1B2C por [AMOUNT].",
   },
   {
+    expected: "sensitive_value_pattern",
+    template: "No. A123B por [AMOUNT].",
+  },
+  {
     expected: "lowercase_counterparty_pattern",
     template: "juan perez te envio [AMOUNT].",
   },

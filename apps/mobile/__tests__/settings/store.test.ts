@@ -112,6 +112,18 @@ describe("useSettingsStore", () => {
     expect(isAuthoritativeParseImprovementOptOut(useSettingsStore.getState())).toBe(false);
   });
 
+  test("does not reopen sharing when storage is missing after an explicit opt-out", async () => {
+    useSettingsStore.getState().setShareAnonymizedParseSamples(false);
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(false);
+    expect(useSettingsStore.getState().parseImprovementSharingPreferenceState).toBe(
+      "explicit_disabled"
+    );
+    expect(isAuthoritativeParseImprovementOptOut(useSettingsStore.getState())).toBe(true);
+  });
+
   test("does not treat SecureStore hydration failure as an authoritative opt-out", async () => {
     vi.mocked(SecureStore.getItemAsync).mockRejectedValueOnce(new Error("locked"));
 
