@@ -141,8 +141,8 @@ async function loadUseNotificationCapture() {
 
     return {
       isExplicitParseImprovementOptIn: (state: {
-      readonly parseImprovementSharingPreferenceState: string;
-    }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
+        readonly parseImprovementSharingPreferenceState: string;
+      }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
       useSettingsStore,
     };
   });
