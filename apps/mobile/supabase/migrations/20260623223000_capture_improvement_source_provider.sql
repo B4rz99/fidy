@@ -27,11 +27,22 @@ begin
     or p_source_family not in ('email', 'android_notification', 'wallet_notification')
     or (p_source_channel = 'email' and (p_source_provider is null or p_source_provider not in ('gmail', 'outlook')))
     or (p_source_channel <> 'email' and p_source_provider is not null)
+    or (p_source_channel = 'email' and p_source_family <> 'email')
+    or (p_source_channel = 'wallet' and (p_source_family <> 'wallet_notification' or p_provider_category <> 'wallet'))
+    or (p_source_channel = 'notification' and (p_source_family <> 'android_notification' or p_provider_category = 'wallet'))
     or p_provider_category is null
     or p_provider_category not in ('bank', 'payment_app', 'wallet', 'unknown')
     or p_template_shape is null
     or length(trim(p_template_shape)) = 0
     or length(p_template_shape) > 1000
+    or p_template_shape ~* '[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}'
+    or p_template_shape ~* '\m(ref(erencia)?|autori[sz]ación|autori[sz]acion|authorization|no\.?)\M[[:space:]:#]*(no\.?[[:space:]]*)?#?[[:space:]]*[A-Z0-9-]*[A-Z][A-Z0-9-]*[0-9][A-Z0-9-]*'
+    or p_template_shape ~ '\y[A-Z0-9-]*[A-Z][A-Z0-9-]*[0-9][A-Z0-9-]*\y'
+    or p_template_shape ~ '\y[A-Z0-9-]*[0-9][A-Z0-9-]*[A-Z][A-Z0-9-]*\y'
+    or p_template_shape ~ '\y[0-9]{11,16}\y'
+    or p_template_shape ~ '\y[0-9]{4}([[:space:]-]?[0-9]{4}){2,3}\y'
+    or p_template_shape ~ '[*Xx]{2,}[[:space:].-]*[0-9]{4}'
+    or p_template_shape ~ '\y[0-9]+\y'
     or p_parse_outcome is null
     or p_parse_outcome not in ('failed', 'needs_review')
     or p_confidence_bucket is null

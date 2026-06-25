@@ -106,6 +106,22 @@ describe("useNotificationCapture", () => {
     });
     expect(mockShareSample).not.toHaveBeenCalled();
   });
+
+  it("re-checks sharing before upload when an old notification callback runs after opt-out", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "explicit_enabled";
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
+    useNotificationCapture(mockDb, userId);
+    mockShareAnonymizedParseSamples = false;
+    mockParseImprovementSharingPreferenceState = "explicit_disabled";
+    triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockSetEmailParseImprovementSharingPreference).not.toHaveBeenCalled();
+    expect(mockShareSample).not.toHaveBeenCalled();
+  });
 });
 
 async function loadUseNotificationCapture() {
@@ -115,16 +131,21 @@ async function loadUseNotificationCapture() {
     shareNotificationParseImprovementSample: (...args: unknown[]) =>
       (mockShareSample as (...args: unknown[]) => unknown)(...args),
   }));
-  vi.doMock("@/features/settings/hooks.public", () => ({
-    isExplicitParseImprovementOptIn: (state: {
+  vi.doMock("@/features/settings/hooks.public", () => {
+    const readSettingsState = () => ({
+      parseImprovementSharingPreferenceState: mockParseImprovementSharingPreferenceState,
+      shareAnonymizedParseSamples: mockShareAnonymizedParseSamples,
+    });
+    const useSettingsStore = (selector: any) => selector(readSettingsState());
+    useSettingsStore.getState = readSettingsState;
+
+    return {
+      isExplicitParseImprovementOptIn: (state: {
       readonly parseImprovementSharingPreferenceState: string;
     }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
-    useSettingsStore: (selector: any) =>
-      selector({
-        parseImprovementSharingPreferenceState: mockParseImprovementSharingPreferenceState,
-        shareAnonymizedParseSamples: mockShareAnonymizedParseSamples,
-      }),
-  }));
+      useSettingsStore,
+    };
+  });
   vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
     setEmailParseImprovementSharingPreference: (...args: unknown[]) =>
       (mockSetEmailParseImprovementSharingPreference as (...args: unknown[]) => unknown)(...args),

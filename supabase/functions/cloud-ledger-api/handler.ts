@@ -190,6 +190,9 @@ async function retainCaptureImprovementSampleResponse(
   if (outcome.code === "capture_improvement_opted_out") {
     return jsonResponse({ success: false, error: "capture_improvement_opted_out" }, 403);
   }
+  if (outcome.code !== "accepted") {
+    return jsonResponse({ success: false, error: outcome.code }, 400);
+  }
   return jsonResponse({
     success: true,
     data: outcome,

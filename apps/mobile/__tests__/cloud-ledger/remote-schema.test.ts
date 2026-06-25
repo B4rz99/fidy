@@ -246,6 +246,27 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).toContain("p_confidence_bucket is null");
     expect(sql).toContain("p_extractor_method is null");
   });
+
+  it("rejects inconsistent Capture Improvement Sample source metadata in the retain RPC", () => {
+    const sql = readFileSync(CAPTURE_IMPROVEMENT_SOURCE_PROVIDER_MIGRATION, "utf8").toLowerCase();
+    const compactSql = sql.replace(/\s+/g, " ");
+
+    expect(compactSql).toContain("p_source_channel = 'email' and p_source_family <> 'email'");
+    expect(compactSql).toContain(
+      "p_source_channel = 'wallet' and (p_source_family <> 'wallet_notification' or p_provider_category <> 'wallet')"
+    );
+    expect(compactSql).toContain(
+      "p_source_channel = 'notification' and (p_source_family <> 'android_notification' or p_provider_category = 'wallet')"
+    );
+  });
+
+  it("rejects unsafe Capture Improvement Sample templates in the retain RPC", () => {
+    const sql = readFileSync(CAPTURE_IMPROVEMENT_SOURCE_PROVIDER_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toMatch(/p_template_shape\s+~\*\s+'[^']*@[^']+'/u);
+    expect(sql).toMatch(/p_template_shape\s+~\*\s+'[^']*ref[^']+'/u);
+    expect(sql).toContain("p_template_shape ~ '\\y[0-9]+\\y'");
+  });
 });
 
 function escapeRegExp(value: string): string {

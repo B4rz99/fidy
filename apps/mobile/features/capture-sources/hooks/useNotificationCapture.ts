@@ -18,38 +18,40 @@ import { setupNotificationCapture } from "./setup";
 export function useNotificationCapture(db: AnyDb | null, userId: UserId | null) {
   const enabledPackages = useCaptureSourcesStore((s) => s.enabledPackages);
   const shareAnonymizedParseSamples = useSettingsStore((s) => s.shareAnonymizedParseSamples);
-  const canEnableRemotePreference = useSettingsStore(isExplicitParseImprovementOptIn);
 
   useSubscription(
     () => {
       if (!db || !userId) return;
       return setupNotificationCapture(db, userId, enabledPackages, {
         onParseImprovementRequest: (input) => {
+          const settings = useSettingsStore.getState();
+          if (!settings.shareAnonymizedParseSamples) {
+            return;
+          }
+
           const shareInput: ShareParseImprovementInput = {
             ...input,
             userId,
-            consent: shareAnonymizedParseSamples,
+            consent: true,
           };
 
-          if (shareAnonymizedParseSamples) {
-            const share = () => shareNotificationParseImprovementSample(shareInput);
-            void (
-              canEnableRemotePreference
-                ? setEmailParseImprovementSharingPreference({
-                    db,
-                    enabled: true,
-                    userId,
-                  }).then(share)
-                : share()
-            ).catch(captureError);
-          }
+          const share = () => shareNotificationParseImprovementSample(shareInput);
+          void (
+            isExplicitParseImprovementOptIn(settings)
+              ? setEmailParseImprovementSharingPreference({
+                  db,
+                  enabled: true,
+                  userId,
+                }).then(share)
+              : share()
+          ).catch(captureError);
         },
       }).catch((error) => {
         captureError(error);
         return () => undefined;
       });
     },
-    [db, userId, enabledPackages, shareAnonymizedParseSamples, canEnableRemotePreference],
+    [db, userId, enabledPackages, shareAnonymizedParseSamples],
     Platform.OS === "android" && db != null && userId != null && enabledPackages.length > 0
   );
 }

@@ -355,6 +355,33 @@ describe("cloud-ledger-api Edge Function", () => {
     );
   });
 
+  it("propagates invalid Capture Improvement Sample retain outcomes from the store", async () => {
+    const api = createCloudLedgerApiDeps({
+      retainCaptureImprovementResult: { code: "invalid_capture_improvement_sample" },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "retainCaptureImprovementSample",
+          sample: CAPTURE_IMPROVEMENT_SAMPLE,
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_capture_improvement_sample",
+    });
+    expect(api.store.retainCaptureImprovementSample).toHaveBeenCalledWith(
+      USER_ID,
+      CAPTURE_IMPROVEMENT_SAMPLE
+    );
+  });
+
   it("updates Capture Improvement Preference for the authenticated account only", async () => {
     const api = createCloudLedgerApiDeps();
 

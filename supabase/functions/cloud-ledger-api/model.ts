@@ -119,7 +119,7 @@ export type CaptureImprovementSampleAccepted = {
 };
 
 export type CaptureImprovementSampleRejected = {
-  readonly code: "capture_improvement_opted_out";
+  readonly code: "capture_improvement_opted_out" | "invalid_capture_improvement_sample";
 };
 
 export type CaptureImprovementSampleOutcome =
