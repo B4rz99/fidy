@@ -1,0 +1,19 @@
+apps/mobile/__tests__/capture-sources/use-notification-capture.test.ts
+  s_d585a7fa922fba::t_d3c6f891ffe6c9 144-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "b710db4acae9f6d0b0a4e9f153b6afac33a6d37b",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
