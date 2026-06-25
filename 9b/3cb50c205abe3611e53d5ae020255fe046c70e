@@ -1,0 +1,19 @@
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_d585a7fa922fba::t_c1309b1d2ac0f3 25-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "9b3cb50c205abe3611e53d5ae020255fe046c70e",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
