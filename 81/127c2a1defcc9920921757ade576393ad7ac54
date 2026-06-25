@@ -1,0 +1,32 @@
+apps/mobile/__tests__/capture-sources/use-notification-capture.test.ts
+  s_d585a7fa922fba::t_1e0373d75a1fec 109-124,134-143,146-148
+supabase/functions/cloud-ledger-api/handler.ts
+  s_d585a7fa922fba::t_025f8520de8700 193-195
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_d585a7fa922fba::t_dd8ab36a59660a 249-269
+apps/mobile/features/capture-sources/hooks/useNotificationCapture.ts
+  s_d585a7fa922fba::t_5903b35a6d0150 27-31,35,38-47,54
+supabase/functions/cloud-ledger-api/model.ts
+  s_d585a7fa922fba::t_ce80c33379a75b 122
+apps/mobile/supabase/migrations/20260623223000_capture_improvement_source_provider.sql
+  s_d585a7fa922fba::t_7823715a1c602e 30-32,38-39,42-45
+  s_d585a7fa922fba::t_c3f651763a4460 40-41
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_d585a7fa922fba::t_304ec4407a80f6 358-384
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "81127c2a1defcc9920921757ade576393ad7ac54",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
