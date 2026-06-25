@@ -1,0 +1,19 @@
+apps/mobile/__tests__/dashboard/home-activity-feed.test.tsx
+  s_a015eeb45038bf::t_a6f0662036c743 1-2,5-8,27-33,59-62,64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "c35b4d46e14ef3bd64c76fcd8784dd262e25ee01",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
