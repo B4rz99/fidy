@@ -1,0 +1,47 @@
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_d585a7fa922fba::t_e6d7256c51e7f0 25,49-52,108,126,152,159,163,205-206
+apps/mobile/shared/db/schema.ts
+  s_d585a7fa922fba::t_c77f9f6afe187e 312-319
+apps/mobile/drizzle/migrations.js
+  s_d585a7fa922fba::t_7cadd64ad19a2c 39,82
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_d585a7fa922fba::t_fdc2f0f38c5863 968
+  s_d585a7fa922fba::t_997ebaf99ea84e 11,20,718-744
+  s_d585a7fa922fba::t_b82ea5ac922a88 745-746,900-948
+apps/mobile/features/email-capture/services/capture-improvement-deletion-request-queue.ts
+  s_d585a7fa922fba::t_e1e39072a83bea 3-6,13-16,22-25,56-87
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_d585a7fa922fba::t_a90f3ba5be6d69 301-304,314,334,340-342
+  s_d585a7fa922fba::t_d7dc5efe3347b0 56-73,232,305-313,315-333,335-339,348-350
+  s_d585a7fa922fba::t_a339f15385f4ae 16,18,145-149,210-231
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_d585a7fa922fba::t_15f32a53b5c3ea 11,23-25,39-40,70-73,92,95,104,108,122,129,142
+apps/mobile/features/email-capture/hooks/useEmailCapture.ts
+  s_d585a7fa922fba::t_4df71e06f7c1de 12,37
+apps/mobile/drizzle/0037_capture_improvement_deletion_confirmations.sql
+  s_d585a7fa922fba::t_d162f78f2bb409 1-4
+apps/mobile/__tests__/capture-sources/use-notification-capture.test.ts
+  s_d585a7fa922fba::t_62dc392795214e 13-15,32-35,98-119,179-182
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_d585a7fa922fba::t_2e2227c30e5ddd 7,41
+apps/mobile/features/email-capture/parse-improvement.public.ts
+  s_d585a7fa922fba::t_66d82741b2df0c 4
+apps/mobile/features/capture-sources/hooks/useNotificationCapture.ts
+  s_d585a7fa922fba::t_8aa286b3c442d7 6-8,49-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "319982ee886b23a761ede5450d30bf3d8b9faa6a",
+  "prompts": {},
+  "sessions": {
+    "s_d585a7fa922fba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eef5d-1515-73d0-9dad-1504eecee279",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
