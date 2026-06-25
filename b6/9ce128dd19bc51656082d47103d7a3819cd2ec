@@ -1,0 +1,35 @@
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_484b5e103ad7b2 1159-1162,1166-1176,1178-1207,1209-1211
+  s_a015eeb45038bf::t_33ea43d7b6aae4 1163-1165,1208
+  s_a015eeb45038bf::t_2f02304c60650f 1177
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_7693324ebf09c1 76,331-338,343-344,356-359,361
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_3d696853a940d4 2,148-188,757-770,773-774
+  s_a015eeb45038bf::t_6a347e9de40779 771-772
+apps/mobile/__tests__/setup.ts
+  s_a015eeb45038bf::t_55bc981834b486 30-34
+  s_a015eeb45038bf::t_bab881a8f04e40 8-9,11-28,35-55,58-64,68-83,88-91,95-96,102-112,344-345,348-350
+  s_a015eeb45038bf::t_35b34b420faafd 29,56-57,65-67,84-87,92-94,97-101
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_a015eeb45038bf::t_a351858759a420 193,195-199,203-210,241,244,249-252
+plans/lizard-complexity-debt.json
+  s_a015eeb45038bf::t_9d863a83abe487 23-24,26-29,31
+  s_a015eeb45038bf::t_cf6445a65a8b5c 16,25,30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "b69ce128dd19bc51656082d47103d7a3819cd2ec",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
