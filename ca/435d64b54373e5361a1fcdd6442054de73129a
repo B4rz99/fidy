@@ -1,0 +1,59 @@
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_a015eeb45038bf::t_f5a8ea14d8de43 164-193,196-200,202,219-224,228
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_718b96a9d03c44 769-770
+apps/mobile/features/cloud-ledger/runtime.ts
+  s_a015eeb45038bf::t_718b96a9d03c44 34-52,99-100,106-119
+apps/mobile/__tests__/cloud-ledger/runtime.test.ts
+  s_a015eeb45038bf::t_393830b2c275a7 6,48-58
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_a015eeb45038bf::t_0a863da805ca48 70-72,76-77
+  s_a015eeb45038bf::t_ab51f1f2008801 73-75
+apps/mobile/__tests__/transactions/callers.test.ts
+  s_a015eeb45038bf::t_750fde879e9541 38-39,43-44
+  s_a015eeb45038bf::t_ab51f1f2008801 40-42
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_a015eeb45038bf::t_85a2fe3aab03aa 263-279
+supabase/functions/cloud-ledger-api/store.ts
+  s_a015eeb45038bf::t_718b96a9d03c44 122-124
+  s_a015eeb45038bf::t_b74778fd06a263 140
+  s_a015eeb45038bf::t_b4ecf79d7c40bf 7,41-48,112,115-117,125-129,131,134-136
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_a015eeb45038bf::t_718b96a9d03c44 17,115-116,122-126
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_a015eeb45038bf::t_718b96a9d03c44 29,57-58
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_a015eeb45038bf::t_a2609b231c42d2 24,26,40,66-67,82,156-160,189-192
+supabase/functions/cloud-ledger-api/handler.ts
+  s_a015eeb45038bf::t_718b96a9d03c44 168-169,174,177
+  s_a015eeb45038bf::t_ab51f1f2008801 170-173
+apps/mobile/features/cloud-ledger/public.ts
+  s_a015eeb45038bf::t_718b96a9d03c44 29
+supabase/functions/cloud-ledger-api/model.ts
+  s_a015eeb45038bf::t_718b96a9d03c44 121-123
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_ab51f1f2008801 1012-1014
+  s_a015eeb45038bf::t_7bf6dac60cf932 21-22
+  s_a015eeb45038bf::t_ef88705d5ed03a 1008-1011,1015-1034
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_b74778fd06a263 384-386
+  s_a015eeb45038bf::t_c6d4c6ec2e1e94 381-383,387-393
+apps/mobile/app/edit-transaction.tsx
+  s_a015eeb45038bf::t_718b96a9d03c44 99-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "ca435d64b54373e5361a1fcdd6442054de73129a",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
