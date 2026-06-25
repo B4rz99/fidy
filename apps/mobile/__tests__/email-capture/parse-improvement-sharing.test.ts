@@ -22,9 +22,9 @@ const {
   mockFlushPendingEmailParseImprovementSamples: vi.fn<
     (input: unknown) => Promise<{ readonly shared: number; readonly failed: number }>
   >(() => Promise.resolve({ shared: 1, failed: 0 })),
-  mockRetryPendingEmailParseImprovementSampleDeletion: vi.fn<
-    (input: unknown) => Promise<unknown>
-  >(() => Promise.resolve({ deleted: 0, retried: false })),
+  mockRetryPendingEmailParseImprovementSampleDeletion: vi.fn<(input: unknown) => Promise<unknown>>(
+    () => Promise.resolve({ deleted: 0, retried: false })
+  ),
 }));
 
 vi.mock("@/features/email-capture/services/email-parse-improvement-outbox", () => ({
