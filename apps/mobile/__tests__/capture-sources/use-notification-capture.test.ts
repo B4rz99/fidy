@@ -6,10 +6,18 @@ const mockAlert = vi.fn<(...args: any[]) => any>();
 const mockBuildSample = vi.fn<(...args: any[]) => any>(() => ({
   template: "[BANK] [AMOUNT] [MERCHANT]",
 }));
-const mockShareSample = vi.fn<(...args: any[]) => any>();
+const mockShareSample = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+const mockSetEmailParseImprovementSharingPreference = vi.fn<(...args: any[]) => any>(() =>
+  Promise.resolve()
+);
+const mockRetryPendingEmailParseImprovementSampleDeletion = vi.fn<(...args: any[]) => any>(() =>
+  Promise.resolve({ deleted: 0, retried: false })
+);
 const mockSetupNotificationCapture = vi.fn<(...args: any[]) => any>(() =>
   Promise.resolve(() => undefined)
 );
+let mockShareAnonymizedParseSamples = false;
+let mockParseImprovementSharingPreferenceState = "explicit_disabled";
 
 const mockPackages = ["com.todo1.mobile.co.bancolombia"];
 const mockDb = {} as any;
@@ -18,32 +26,130 @@ describe("useNotificationCapture", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    mockShareAnonymizedParseSamples = false;
+    mockParseImprovementSharingPreferenceState = "explicit_disabled";
+    mockSetEmailParseImprovementSharingPreference.mockResolvedValue(undefined);
+    mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValue({
+      deleted: 0,
+      retried: false,
+    });
+    mockShareSample.mockResolvedValue(undefined);
   });
 
-  it("prompts separately for the same redacted template under different users", async () => {
-    const { useNotificationCapture } = await loadUseNotificationCapture();
-    const userOne = requireUserId("user-1");
-    const userTwo = requireUserId("user-2");
-
-    useNotificationCapture(mockDb, userOne);
-    triggerParseImprovementRequest();
-    useNotificationCapture(mockDb, userTwo);
-    triggerParseImprovementRequest();
-
-    expect(mockAlert).toHaveBeenCalledTimes(2);
-    expect(mockShareSample).not.toHaveBeenCalled();
-  });
-
-  it("dedupes repeated prompts for the same user and redacted template", async () => {
+  it("does not prompt or share when the global preference is disabled", async () => {
     const { useNotificationCapture } = await loadUseNotificationCapture();
     const userId = requireUserId("user-1");
 
     useNotificationCapture(mockDb, userId);
     triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockShareSample).not.toHaveBeenCalled();
+    expect(mockSetEmailParseImprovementSharingPreference).not.toHaveBeenCalled();
+  });
+
+  it("shares automatically without prompting when the global preference is enabled", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "explicit_enabled";
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
     useNotificationCapture(mockDb, userId);
     triggerParseImprovementRequest();
+    await flushPromises();
 
-    expect(mockAlert).toHaveBeenCalledTimes(1);
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockSetEmailParseImprovementSharingPreference).toHaveBeenCalledWith({
+      db: mockDb,
+      enabled: true,
+      userId,
+    });
+    expect(mockShareSample).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consent: true,
+        userId,
+      })
+    );
+    expect(
+      mockSetEmailParseImprovementSharingPreference.mock.invocationCallOrder[0] ?? 0
+    ).toBeLessThan(mockShareSample.mock.invocationCallOrder[0] ?? 0);
+  });
+
+  it("does not rewrite remote opt-outs when notification sharing is default-enabled", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "default_enabled";
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
+    useNotificationCapture(mockDb, userId);
+    triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockSetEmailParseImprovementSharingPreference).not.toHaveBeenCalled();
+    expect(mockShareSample).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consent: true,
+        userId,
+      })
+    );
+  });
+
+  it("drains pending opt-out deletion before default-enabled notification sharing", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "default_enabled";
+    mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValueOnce({
+      deleted: 0,
+      retried: true,
+    });
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
+    useNotificationCapture(mockDb, userId);
+    triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).toHaveBeenCalledWith({
+      db: mockDb,
+      userId,
+    });
+    expect(mockSetEmailParseImprovementSharingPreference).not.toHaveBeenCalled();
+    expect(mockShareSample).not.toHaveBeenCalled();
+  });
+
+  it("does not retain notification samples when the remote opt-in retry fails", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "explicit_enabled";
+    mockSetEmailParseImprovementSharingPreference.mockRejectedValueOnce(new Error("offline"));
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
+    useNotificationCapture(mockDb, userId);
+    triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockSetEmailParseImprovementSharingPreference).toHaveBeenCalledWith({
+      db: mockDb,
+      enabled: true,
+      userId,
+    });
+    expect(mockShareSample).not.toHaveBeenCalled();
+  });
+
+  it("re-checks sharing before upload when an old notification callback runs after opt-out", async () => {
+    mockShareAnonymizedParseSamples = true;
+    mockParseImprovementSharingPreferenceState = "explicit_enabled";
+    const { useNotificationCapture } = await loadUseNotificationCapture();
+    const userId = requireUserId("user-1");
+
+    useNotificationCapture(mockDb, userId);
+    mockShareAnonymizedParseSamples = false;
+    mockParseImprovementSharingPreferenceState = "explicit_disabled";
+    triggerParseImprovementRequest();
+    await flushPromises();
+
+    expect(mockSetEmailParseImprovementSharingPreference).not.toHaveBeenCalled();
+    expect(mockShareSample).not.toHaveBeenCalled();
   });
 });
 
@@ -54,8 +160,28 @@ async function loadUseNotificationCapture() {
     shareNotificationParseImprovementSample: (...args: unknown[]) =>
       (mockShareSample as (...args: unknown[]) => unknown)(...args),
   }));
-  vi.doMock("@/features/settings/hooks.public", () => ({
-    useSettingsStore: (selector: any) => selector({ shareAnonymizedParseSamples: false }),
+  vi.doMock("@/features/settings/hooks.public", () => {
+    const readSettingsState = () => ({
+      parseImprovementSharingPreferenceState: mockParseImprovementSharingPreferenceState,
+      shareAnonymizedParseSamples: mockShareAnonymizedParseSamples,
+    });
+    const useSettingsStore = (selector: any) => selector(readSettingsState());
+    useSettingsStore.getState = readSettingsState;
+
+    return {
+      isExplicitParseImprovementOptIn: (state: {
+        readonly parseImprovementSharingPreferenceState: string;
+      }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
+      useSettingsStore,
+    };
+  });
+  vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
+    retryPendingEmailParseImprovementSampleDeletion: (...args: unknown[]) =>
+      (mockRetryPendingEmailParseImprovementSampleDeletion as (...args: unknown[]) => unknown)(
+        ...args
+      ),
+    setEmailParseImprovementSharingPreference: (...args: unknown[]) =>
+      (mockSetEmailParseImprovementSharingPreference as (...args: unknown[]) => unknown)(...args),
   }));
   vi.doMock("@/shared/components/rn", () => ({
     Alert: { alert: (...args: any[]) => mockAlert(...args) },
@@ -77,6 +203,12 @@ async function loadUseNotificationCapture() {
   }));
 
   return import("@/features/capture-sources/hooks/useNotificationCapture");
+}
+
+async function flushPromises() {
+  await Promise.resolve();
+  await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function triggerParseImprovementRequest() {

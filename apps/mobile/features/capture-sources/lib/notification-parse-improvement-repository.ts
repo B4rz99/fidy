@@ -1,9 +1,12 @@
-import { CryptoDigestAlgorithm, digest } from "expo-crypto";
 import { getSupabase } from "@/shared/db";
+import {
+  getTemplateShapePrivacyFailure,
+  type TemplateShapePrivacyFailureReason,
+} from "./capture-improvement-template-shape-policy";
 
 export type PersistedNotificationParseImprovementSample = {
   readonly template: string;
-  readonly senderDomain?: string | null;
+  readonly providerCategory?: CaptureImprovementProviderCategory;
   readonly source: string;
   readonly status: "failed" | "needs_review";
   readonly confidenceBucket: "none" | "low" | "medium" | "high";
@@ -32,78 +35,101 @@ export class ParseImprovementSamplePrivacyError extends Error {
   }
 }
 
+export class ParseImprovementSampleOptOutError extends Error {
+  constructor() {
+    super("Capture Improvement Preference is disabled");
+    this.name = "ParseImprovementSampleOptOutError";
+  }
+}
+
+export class ParseImprovementSampleAccountSessionError extends Error {
+  constructor() {
+    super("Capture improvement account session changed");
+    this.name = "ParseImprovementSampleAccountSessionError";
+  }
+}
+
 type InsertNotificationParseImprovementSampleInput = {
   readonly userId: string;
   readonly sample: PersistedNotificationParseImprovementSample;
 };
 
-async function sha256Hex(value: string): Promise<string> {
-  const hash = await digest(CryptoDigestAlgorithm.SHA256, new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
+type CaptureImprovementSourceChannel = "email" | "notification" | "wallet";
+type CaptureImprovementSourceFamily = "email" | "android_notification" | "wallet_notification";
+type CaptureImprovementProviderCategory = "bank" | "payment_app" | "wallet" | "unknown";
+type CaptureImprovementSourceProvider = "gmail" | "outlook";
 
-const SENSITIVE_TEMPLATE_PATTERNS = [
-  String.raw`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`,
-  String.raw`\+\d[\d\s-]{8,14}\d`,
-  String.raw`(?<!\d)3\d{2}[\s-]?\d{3}[\s-]?\d{4}\b`,
-  String.raw`\b(?:C\.?\s?C\.?|T\.?\s?I\.?|C\.?\s?E\.?|[Cc][eé]dula)\s*:?\s*#?\s*\d{6,11}\b`,
-  String.raw`\bNIT\s*:?\s*\d{3}\.?\d{3}\.?\d{3,4}-?\d?\b`,
-  String.raw`\b\d{9,10}-\d\b`,
-  String.raw`\b\d{3}\.\d{3}\.\d{3,4}-?\d?\b`,
-  String.raw`(?:(?:No\.?\s*)?Cuenta|Cta\.?)\s*(?:(?:de\s+)?(?:Ahorros|Corriente)\s*)?(?:No\.?\s*)?#?\s{0,3}\d{8,20}`,
-  String.raw`\b\d{11,14}\b`,
-  String.raw`\b\d{4}\s+\d{4}\s+\d{3,6}\b`,
-  String.raw`(?<!\d)\(?60[1-8]\)?[\s-]?\d{3}[\s-]?\d{4}\b`,
-  String.raw`\btarjeta\s+(?:terminada|finalizada)\s+en\s+\d{4}\b`,
-  String.raw`\b\d{4}[\s-]\d{4}[\s-]\d{4}[\s-]\d{4}\b`,
-  String.raw`\b\d{15,16}\b`,
-  String.raw`\d{4}[\s-]*[*Xx]{2,}[\s-]*[*Xx]{2,}[\s-]*\d{4}`,
-  String.raw`[*Xx]{2,4}[\s.-]*[*Xx]{2,4}[\s.-]*[*Xx]{2,4}[\s.-]*\d{4}`,
-  String.raw`(?<![A-Za-z0-9])(?:\*{1,4}|[Xx]{2,4})[\s.-]*\d{4}\b`,
-  String.raw`\b\d+\b`,
-].map((pattern) => new RegExp(pattern, "i"));
-const LOWERCASE_COUNTERPARTY_PATTERN =
-  /\b[a-záéíóúñ]+(?:\s+[a-záéíóúñ]+)+\s*:?\s+te\s+(?:envio|envió|transfirio|transfirió)\b/i;
-const RESIDUAL_ENTITY_PATTERN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ]{3,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*\b(?!\])/;
-const STRUCTURAL_TITLE_WORDS = new Set([
-  "Abono",
-  "Beneficiario",
-  "Cel",
-  "Compra",
-  "Comercio",
-  "Consignacion",
-  "Consignación",
-  "Deposito",
-  "Depósito",
-  "Destinatario",
-  "Establecimiento",
-  "Pago",
-  "Recibiste",
-  "Ref",
-  "Referencia",
-  "Tarjeta",
-  "Tel",
-  "Transferencia",
-]);
-const RESIDUAL_TITLE_TOKEN = /(?<!\[)\b[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\b(?!\])/g;
+type CaptureImprovementSamplePayload = {
+  readonly sourceChannel: CaptureImprovementSourceChannel;
+  readonly sourceFamily: CaptureImprovementSourceFamily;
+  readonly sourceProvider?: CaptureImprovementSourceProvider;
+  readonly providerCategory: CaptureImprovementProviderCategory;
+  readonly templateShape: string;
+  readonly parseOutcome: "failed" | "needs_review";
+  readonly confidenceBucket: "none" | "low" | "medium" | "high";
+  readonly extractor: {
+    readonly method: "regex" | "llm";
+    readonly version: 1;
+  };
+};
 
-const hasResidualTitleEntity = (template: string): boolean =>
-  Array.from(template.matchAll(RESIDUAL_TITLE_TOKEN)).some(
-    ([word]) => typeof word === "string" && !STRUCTURAL_TITLE_WORDS.has(word)
-  );
+type CaptureImprovementApiResponse =
+  | { readonly success: true; readonly data: { readonly code: "accepted" } }
+  | {
+      readonly success: false;
+      readonly error:
+        | "capture_improvement_opted_out"
+        | "internal_error"
+        | "invalid_capture_improvement_sample"
+        | "unsafe_capture_improvement_sample";
+    };
+type CaptureImprovementApiFailure = Extract<
+  CaptureImprovementApiResponse,
+  { readonly success: false }
+>;
+type CaptureImprovementApiFailureCode = CaptureImprovementApiFailure["error"];
+
+type RemoteErrorLike = {
+  readonly context?: unknown;
+  readonly message?: string;
+};
+type CaptureImprovementBoundaryAuth = {
+  readonly headers: {
+    readonly Authorization: string;
+  };
+};
+
+const CLOUD_LEDGER_FUNCTION = "cloud-ledger-api";
+const SOURCE_CHANNEL_BY_SOURCE: Readonly<Record<string, CaptureImprovementSourceChannel>> = {
+  email_gmail: "email",
+  email_outlook: "email",
+  google_pay: "wallet",
+  notification_android: "notification",
+};
+const SOURCE_FAMILY_BY_SOURCE: Readonly<Record<string, CaptureImprovementSourceFamily>> = {
+  email_gmail: "email",
+  email_outlook: "email",
+  google_pay: "wallet_notification",
+  notification_android: "android_notification",
+};
+const SOURCE_PROVIDER_BY_SOURCE: Readonly<
+  Partial<Record<string, CaptureImprovementSourceProvider>>
+> = {
+  email_gmail: "gmail",
+  email_outlook: "outlook",
+};
+const PROVIDER_CATEGORY_BY_SOURCE: Readonly<
+  Partial<Record<string, CaptureImprovementProviderCategory>>
+> = {
+  google_pay: "wallet",
+  notification_android: "unknown",
+};
 
 function assertTemplateIsAnonymized(template: string): void {
-  if (SENSITIVE_TEMPLATE_PATTERNS.some((pattern) => pattern.test(template))) {
-    throw new ParseImprovementSamplePrivacyError("sensitive_value_pattern");
-  }
-  if (LOWERCASE_COUNTERPARTY_PATTERN.test(template)) {
-    throw new ParseImprovementSamplePrivacyError("lowercase_counterparty_pattern");
-  }
-  if (RESIDUAL_ENTITY_PATTERN.test(template)) {
-    throw new ParseImprovementSamplePrivacyError("residual_entity_pattern");
-  }
-  if (hasResidualTitleEntity(template)) {
-    throw new ParseImprovementSamplePrivacyError("residual_title_entity");
+  const failure: TemplateShapePrivacyFailureReason | null =
+    getTemplateShapePrivacyFailure(template);
+  if (failure) {
+    throw new ParseImprovementSamplePrivacyError(failure);
   }
 }
 
@@ -112,24 +138,219 @@ export async function insertNotificationParseImprovementSample(
 ): Promise<void> {
   assertTemplateIsAnonymized(input.sample.template);
 
-  const { error } = await getSupabase()
-    .from("notification_parse_improvement_samples")
-    .insert({
-      user_id: input.userId,
-      source: input.sample.source,
-      sender_domain: input.sample.senderDomain ?? null,
-      status: input.sample.status,
-      confidence_bucket: input.sample.confidenceBucket,
-      parse_method: input.sample.parseMethod,
-      template: input.sample.template,
-      template_hash: await sha256Hex(input.sample.template),
-      review_status: "pending",
-    });
+  const supabase = getSupabase();
+  const auth = await captureImprovementBoundaryAuth(supabase, input.userId);
+  const { data, error } = await supabase.functions.invoke<CaptureImprovementApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "retainCaptureImprovementSample",
+        sample: toCaptureImprovementSamplePayload(input.sample),
+      },
+      ...auth,
+    }
+  );
 
+  await assertCaptureImprovementBoundarySuccess(data, error);
+}
+
+export async function deleteNotificationParseImprovementSamplesForUser(_input: {
+  readonly userId: string;
+}): Promise<void> {
+  const supabase = getSupabase();
+  const auth = await captureImprovementBoundaryAuth(supabase, _input.userId);
+  const { data, error } = await supabase.functions.invoke<CaptureImprovementApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "deleteCaptureImprovementSamples",
+      },
+      ...auth,
+    }
+  );
+
+  await assertCaptureImprovementBoundarySuccess(data, error);
+}
+
+export async function setNotificationParseImprovementPreference(_input: {
+  readonly userId: string;
+  readonly enabled: boolean;
+}): Promise<void> {
+  const supabase = getSupabase();
+  const auth = await captureImprovementBoundaryAuth(supabase, _input.userId);
+  const { data, error } = await supabase.functions.invoke<CaptureImprovementApiResponse>(
+    CLOUD_LEDGER_FUNCTION,
+    {
+      body: {
+        action: "setCaptureImprovementPreference",
+        enabled: _input.enabled,
+      },
+      ...auth,
+    }
+  );
+
+  await assertCaptureImprovementBoundarySuccess(data, error);
+}
+
+const assertCaptureImprovementBoundarySuccess = async (
+  data: CaptureImprovementApiResponse | null,
+  error: RemoteErrorLike | null
+): Promise<void> => {
+  throwIfKnownFailureResponse(data);
+  await throwIfRemoteBoundaryError(error);
+  throwIfMissingSuccess(data);
+};
+
+const captureImprovementBoundaryAuth = async (
+  supabase: ReturnType<typeof getSupabase>,
+  userId: string
+): Promise<CaptureImprovementBoundaryAuth> => {
+  const { data, error } = await supabase.auth.getSession();
+  const session = error === null ? data.session : null;
+  if (session?.user.id !== userId) {
+    throw new ParseImprovementSampleAccountSessionError();
+  }
+
+  return {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  };
+};
+
+const throwIfKnownFailureResponse = (data: CaptureImprovementApiResponse | null): void => {
+  if (data?.success !== false) return;
+  throwCaptureImprovementBoundaryFailure(data.error);
+};
+
+const throwIfRemoteBoundaryError = async (error: RemoteErrorLike | null): Promise<void> => {
   if (error != null) {
+    const remoteFailure = await readRemoteError(error);
+    throwCaptureImprovementBoundaryFailure(remoteFailure);
     throw new ParseImprovementSampleInsertError({
-      code: error.code,
-      details: error.details,
+      details: error.message,
     });
   }
-}
+};
+
+const throwCaptureImprovementBoundaryFailure = (
+  failure: CaptureImprovementApiFailureCode | null
+): void => {
+  const error = captureImprovementBoundaryFailureError(failure);
+  if (error !== null) throw error;
+};
+
+const captureImprovementBoundaryFailureError = (
+  failure: CaptureImprovementApiFailureCode | null
+): Error | null => {
+  switch (failure) {
+    case "unsafe_capture_improvement_sample":
+      return new ParseImprovementSamplePrivacyError("remote_unsafe_sample");
+    case "capture_improvement_opted_out":
+      return new ParseImprovementSampleOptOutError();
+    case "invalid_capture_improvement_sample":
+      return new ParseImprovementSampleInsertError({
+        code: "invalid_capture_improvement_sample",
+      });
+    default:
+      return null;
+  }
+};
+
+const throwIfMissingSuccess = (data: CaptureImprovementApiResponse | null): void => {
+  if (data?.success !== true) {
+    throw new ParseImprovementSampleInsertError({});
+  }
+};
+
+const readRemoteError = async (
+  error: RemoteErrorLike
+): Promise<
+  | "capture_improvement_opted_out"
+  | "invalid_capture_improvement_sample"
+  | "unsafe_capture_improvement_sample"
+  | null
+> => {
+  if (error.context === undefined) {
+    return null;
+  }
+  try {
+    const body = await readRemoteErrorContext(error.context);
+    return isCaptureImprovementApiFailure(body) && body.error !== "internal_error"
+      ? body.error
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const readRemoteErrorContext = async (context: unknown): Promise<unknown> =>
+  hasJsonReader(context) ? await context.json() : context;
+
+const hasJsonReader = (value: unknown): value is { readonly json: () => Promise<unknown> } =>
+  value !== null &&
+  typeof value === "object" &&
+  "json" in value &&
+  typeof (value as { readonly json?: unknown }).json === "function";
+
+const CAPTURE_IMPROVEMENT_API_FAILURE_CODES = new Set<CaptureImprovementApiFailureCode>([
+  "capture_improvement_opted_out",
+  "invalid_capture_improvement_sample",
+  "unsafe_capture_improvement_sample",
+]);
+
+const isCaptureImprovementApiFailure = (value: unknown): value is CaptureImprovementApiFailure => {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    record.success === false &&
+    typeof record.error === "string" &&
+    CAPTURE_IMPROVEMENT_API_FAILURE_CODES.has(record.error as CaptureImprovementApiFailureCode)
+  );
+};
+
+const toCaptureImprovementSamplePayload = (
+  sample: PersistedNotificationParseImprovementSample
+): CaptureImprovementSamplePayload => {
+  const extractor = captureImprovementExtractor(sample.parseMethod);
+  const provider = sourceProvider(sample.source);
+  return {
+    sourceChannel: sourceChannel(sample.source),
+    sourceFamily: sourceFamily(sample.source),
+    ...(provider === undefined ? {} : { sourceProvider: provider }),
+    providerCategory: providerCategory(sample),
+    templateShape: sample.template,
+    parseOutcome: sample.status,
+    confidenceBucket: sample.confidenceBucket,
+    extractor,
+  };
+};
+
+const captureImprovementExtractor = (parseMethod: "regex" | "llm") =>
+  ({
+    method: parseMethod,
+    version: 1 as const,
+  }) as const;
+
+const sourceChannel = (source: string): CaptureImprovementSourceChannel => {
+  const channel = SOURCE_CHANNEL_BY_SOURCE[source];
+  return channel === undefined ? "notification" : channel;
+};
+
+const sourceFamily = (source: string): CaptureImprovementSourceFamily => {
+  const family = SOURCE_FAMILY_BY_SOURCE[source];
+  return family === undefined ? "android_notification" : family;
+};
+
+const sourceProvider = (source: string): CaptureImprovementSourceProvider | undefined =>
+  SOURCE_PROVIDER_BY_SOURCE[source];
+
+const providerCategory = (
+  sample: PersistedNotificationParseImprovementSample
+): CaptureImprovementProviderCategory => {
+  if (sample.providerCategory !== undefined) return sample.providerCategory;
+  const category = PROVIDER_CATEGORY_BY_SOURCE[sample.source];
+  return category === undefined ? "unknown" : category;
+};

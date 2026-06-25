@@ -1,10 +1,10 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { emailParseImprovementSamples } from "@/shared/db/schema";
 import type { UserId } from "@/shared/types/branded";
 
 type EmailParseImprovementSampleDedupeInput = {
-  readonly senderDomain: string | null | undefined;
+  readonly providerCategory: string;
   readonly source: string;
   readonly status: string;
   readonly parseMethod: string;
@@ -14,13 +14,9 @@ type EmailParseImprovementSampleDedupeInput = {
 export const getEmailParseImprovementSampleDedupeKey = (
   sample: EmailParseImprovementSampleDedupeInput
 ): string =>
-  [
-    sample.senderDomain ?? "",
-    sample.source,
-    sample.status,
-    sample.parseMethod,
-    sample.template,
-  ].join("\u001f");
+  [sample.providerCategory, sample.source, sample.status, sample.parseMethod, sample.template].join(
+    "\u001f"
+  );
 
 export function hasEmailParseImprovementSample(input: {
   readonly db: AnyDb;
@@ -37,10 +33,9 @@ export function hasEmailParseImprovementSample(input: {
           eq(emailParseImprovementSamples.source, input.sample.source),
           eq(emailParseImprovementSamples.status, input.sample.status),
           eq(emailParseImprovementSamples.parseMethod, input.sample.parseMethod),
-          sql`coalesce(${emailParseImprovementSamples.senderDomain}, '') = ${
-            input.sample.senderDomain ?? ""
-          }`,
-          eq(emailParseImprovementSamples.template, input.sample.template)
+          eq(emailParseImprovementSamples.providerCategory, input.sample.providerCategory),
+          eq(emailParseImprovementSamples.template, input.sample.template),
+          isNull(emailParseImprovementSamples.deletedAt)
         )
       )
       .limit(1)

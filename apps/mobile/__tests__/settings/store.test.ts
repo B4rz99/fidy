@@ -1,6 +1,10 @@
 import * as SecureStore from "expo-secure-store";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { useSettingsStore } from "@/features/settings/store";
+import {
+  isAuthoritativeParseImprovementOptOut,
+  isExplicitParseImprovementOptIn,
+  useSettingsStore,
+} from "@/features/settings/store";
 import { Appearance } from "@/shared/components/rn";
 import { requireBackupId, requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 
@@ -30,6 +34,7 @@ describe("useSettingsStore", () => {
       spendingAnomalies: true,
     });
     expect(initial.shareAnonymizedParseSamples).toBe(false);
+    expect(initial.parseImprovementSharingPreferenceState).toBe("unhydrated");
   });
 
   beforeEach(() => {
@@ -59,10 +64,14 @@ describe("useSettingsStore", () => {
     useSettingsStore.getState().setShareAnonymizedParseSamples(true);
 
     expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+    expect(useSettingsStore.getState().parseImprovementSharingPreferenceState).toBe(
+      "explicit_enabled"
+    );
+    expect(isExplicitParseImprovementOptIn(useSettingsStore.getState())).toBe(true);
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith("share_anonymized_parse_samples", "true");
   });
 
-  test("hydrates anonymized parse sample sharing preference", async () => {
+  test("hydrates explicit anonymized parse sample sharing opt-in", async () => {
     vi.mocked(SecureStore.getItemAsync).mockImplementation((key) =>
       Promise.resolve(key === "share_anonymized_parse_samples" ? "true" : null)
     );
@@ -70,6 +79,60 @@ describe("useSettingsStore", () => {
     await useSettingsStore.getState().hydrate();
 
     expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+    expect(useSettingsStore.getState().parseImprovementSharingPreferenceState).toBe(
+      "explicit_enabled"
+    );
+    expect(isExplicitParseImprovementOptIn(useSettingsStore.getState())).toBe(true);
+  });
+
+  test("hydrates explicit anonymized parse sample sharing opt-out", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation((key) =>
+      Promise.resolve(key === "share_anonymized_parse_samples" ? "false" : null)
+    );
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(false);
+    expect(useSettingsStore.getState().parseImprovementSharingPreferenceState).toBe(
+      "explicit_disabled"
+    );
+    expect(isAuthoritativeParseImprovementOptOut(useSettingsStore.getState())).toBe(true);
+  });
+
+  test("hydrates missing anonymized parse sample sharing preference as default enabled", async () => {
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(false);
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+    expect(useSettingsStore.getState().parseImprovementSharingPreferenceState).toBe(
+      "default_enabled"
+    );
+    expect(isExplicitParseImprovementOptIn(useSettingsStore.getState())).toBe(false);
+    expect(isAuthoritativeParseImprovementOptOut(useSettingsStore.getState())).toBe(false);
+  });
+
+  test("does not reopen sharing when storage is missing after an explicit opt-out", async () => {
+    useSettingsStore.getState().setShareAnonymizedParseSamples(false);
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(false);
+    expect(useSettingsStore.getState().parseImprovementSharingPreferenceState).toBe(
+      "explicit_disabled"
+    );
+    expect(isAuthoritativeParseImprovementOptOut(useSettingsStore.getState())).toBe(true);
+  });
+
+  test("does not treat SecureStore hydration failure as an authoritative opt-out", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockRejectedValueOnce(new Error("locked"));
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().isHydrated).toBe(true);
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(false);
+    expect(useSettingsStore.getState().parseImprovementSharingPreferenceState).toBe("unavailable");
+    expect(isAuthoritativeParseImprovementOptOut(useSettingsStore.getState())).toBe(false);
   });
 
   test("hydrates missing theme preference as system before first render", async () => {

@@ -1,6 +1,8 @@
-import { and, asc, count, eq, gt, isNull, or } from "drizzle-orm";
+import { and, asc, count, eq, gt, isNull, lte, or } from "drizzle-orm";
 import {
   buildNotificationParseImprovementSample,
+  deleteCaptureParseImprovementSamplesForUser,
+  setCaptureParseImprovementPreference,
   shareCaptureParseImprovementSample,
 } from "@/features/capture-sources/diagnostics.public";
 import type { AnyDb } from "@/shared/db";
@@ -8,6 +10,14 @@ import { emailParseImprovementSamples } from "@/shared/db/schema";
 import { generateEmailParseImprovementSampleId } from "@/shared/lib/generate-id";
 import { toIsoDateTime } from "@/shared/lib";
 import type { EmailParseImprovementSampleId, IsoDateTime, UserId } from "@/shared/types/branded";
+import {
+  clearCaptureImprovementDeletionRequest,
+  enqueueCaptureImprovementDeletionRequest,
+  getCaptureImprovementDeletionConfirmation,
+  getCaptureImprovementDeletionRequest,
+  markCaptureImprovementDeletionConfirmed,
+  markCaptureImprovementDeletionAttempt,
+} from "./capture-improvement-deletion-request-queue";
 import { isEmailCaptureDebugEnabled } from "./email-capture-debug";
 import {
   getEmailParseImprovementSampleDedupeKey,
@@ -17,8 +27,20 @@ export { pruneStaleFailedEmailSourceEvents } from "./email-parse-improvement-pru
 import type { EmailParseImprovementRequest } from "./email-pipeline-service/types";
 
 const FLUSH_BATCH_SIZE = 10;
-const PERMANENT_INSERT_ERROR_CODES = new Set(["22P02", "23502", "23505", "23514"]);
+const PERMANENT_INSERT_ERROR_CODES = new Set([
+  "22P02",
+  "23502",
+  "23505",
+  "23514",
+  "invalid_capture_improvement_sample",
+]);
 const activeFlushesByUserId = new Map<UserId, Promise<FlushResult>>();
+const activeRemoteOperationsByUserId = new Map<UserId, Promise<unknown>>();
+
+type DeletionRetryResult = {
+  readonly deleted: number;
+  readonly retried: boolean;
+};
 
 type FlushCursor = {
   readonly createdAt: IsoDateTime;
@@ -30,6 +52,24 @@ type FlushResult = {
   readonly failed: number;
   readonly failureTypes?: readonly string[];
 };
+
+type FlushInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly now?: Date;
+  readonly isSharingEnabled?: () => boolean;
+  readonly canEnableRemotePreference?: () => boolean;
+};
+
+type FlushStartupResult =
+  | {
+      readonly status: "skip";
+    }
+  | {
+      readonly status: "continue";
+      readonly pendingCount: number;
+      readonly sharedAt: IsoDateTime;
+    };
 
 const logParseImprovementOutboxForDebug = (
   event: string,
@@ -51,11 +91,65 @@ const getPrivacyReason = (error: unknown): string | null =>
 
 const isPermanentShareFailure = (error: unknown): boolean => {
   if (getErrorName(error) === "ParseImprovementSamplePrivacyError") return true;
+  if (getErrorName(error) === "ParseImprovementSampleOptOutError") return true;
   const code = getErrorCode(error);
   return getErrorName(error) === "ParseImprovementSampleInsertError" && code !== null
     ? PERMANENT_INSERT_ERROR_CODES.has(code)
     : false;
 };
+
+async function runCaptureImprovementRemoteOperation<T>(
+  userId: UserId,
+  operation: () => Promise<T>
+): Promise<T> {
+  const previous = activeRemoteOperationsByUserId.get(userId) ?? Promise.resolve();
+  const current = previous.catch(() => undefined).then(operation);
+  activeRemoteOperationsByUserId.set(userId, current);
+
+  try {
+    return await current;
+  } finally {
+    if (activeRemoteOperationsByUserId.get(userId) === current) {
+      activeRemoteOperationsByUserId.delete(userId);
+    }
+  }
+}
+
+async function performPendingEmailParseImprovementSampleDeletion(input: {
+  readonly db: AnyDb;
+  readonly requestedAt: IsoDateTime;
+  readonly userId: UserId;
+  readonly now?: Date;
+}): Promise<{ readonly deleted: number; readonly retried: true }> {
+  const deletedAt = toIsoDateTime(input.now ?? new Date());
+  markCaptureImprovementDeletionAttempt({
+    db: input.db,
+    lastAttemptAt: deletedAt,
+    userId: input.userId,
+  });
+  const deleted = input.db
+    .update(emailParseImprovementSamples)
+    .set({ deletedAt })
+    .where(
+      and(
+        eq(emailParseImprovementSamples.userId, input.userId),
+        lte(emailParseImprovementSamples.createdAt, input.requestedAt),
+        isNull(emailParseImprovementSamples.deletedAt)
+      )
+    )
+    .run().changes;
+
+  await deleteCaptureParseImprovementSamplesForUser({ userId: input.userId });
+
+  clearCaptureImprovementDeletionRequest({ db: input.db, userId: input.userId });
+  markCaptureImprovementDeletionConfirmed({
+    db: input.db,
+    confirmedAt: deletedAt,
+    userId: input.userId,
+  });
+  logParseImprovementOutboxForDebug("delete", { deleted });
+  return { deleted, retried: true };
+}
 
 export function countPendingEmailParseImprovementSamples(input: {
   readonly db: AnyDb;
@@ -76,6 +170,87 @@ export function countPendingEmailParseImprovementSamples(input: {
   );
 }
 
+export async function deleteEmailParseImprovementSamplesForUser(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly now?: Date;
+}): Promise<{ readonly deleted: number }> {
+  const requestedAt = toIsoDateTime(input.now ?? new Date());
+  enqueueCaptureImprovementDeletionRequest({
+    db: input.db,
+    requestedAt,
+    userId: input.userId,
+  });
+  const result = await retryPendingEmailParseImprovementSampleDeletion({
+    db: input.db,
+    now: input.now,
+    userId: input.userId,
+  });
+  return { deleted: result.deleted };
+}
+
+export async function retryPendingEmailParseImprovementSampleDeletion(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly now?: Date;
+}): Promise<DeletionRetryResult> {
+  return await runCaptureImprovementRemoteOperation<DeletionRetryResult>(input.userId, () => {
+    const pendingRequest = getCaptureImprovementDeletionRequest(input);
+    if (pendingRequest === null) {
+      return Promise.resolve({ deleted: 0, retried: false });
+    }
+
+    return performPendingEmailParseImprovementSampleDeletion({
+      ...input,
+      requestedAt: pendingRequest.requestedAt,
+    });
+  });
+}
+
+export async function ensureEmailParseImprovementSamplesDeletedForUser(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly now?: Date;
+}): Promise<DeletionRetryResult> {
+  const pendingRequest = getCaptureImprovementDeletionRequest(input);
+  if (pendingRequest !== null) {
+    return await retryPendingEmailParseImprovementSampleDeletion(input);
+  }
+
+  const confirmation = getCaptureImprovementDeletionConfirmation(input);
+  if (confirmation !== null) {
+    return { deleted: 0, retried: false };
+  }
+
+  const requestedAt = toIsoDateTime(input.now ?? new Date());
+  enqueueCaptureImprovementDeletionRequest({
+    db: input.db,
+    requestedAt,
+    userId: input.userId,
+  });
+  return await retryPendingEmailParseImprovementSampleDeletion(input);
+}
+
+export async function setEmailParseImprovementSharingPreference(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly enabled: boolean;
+}): Promise<void> {
+  await runCaptureImprovementRemoteOperation(input.userId, async () => {
+    const pendingRequest = getCaptureImprovementDeletionRequest(input);
+    if (input.enabled && pendingRequest !== null) {
+      await performPendingEmailParseImprovementSampleDeletion({
+        ...input,
+        requestedAt: pendingRequest.requestedAt,
+      });
+    }
+    await setCaptureParseImprovementPreference({
+      enabled: input.enabled,
+      userId: input.userId,
+    });
+  });
+}
+
 export function enqueueEmailParseImprovementRequests(input: {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -92,7 +267,7 @@ export function enqueueEmailParseImprovementRequests(input: {
       id: generateEmailParseImprovementSampleId(),
       userId: input.userId,
       template: sample.template,
-      senderDomain: sample.senderDomain ?? null,
+      providerCategory: sample.providerCategory ?? "unknown",
       source: sample.source,
       status: sample.status,
       confidence: request.confidence,
@@ -123,23 +298,63 @@ export function enqueueEmailParseImprovementRequests(input: {
   return enqueued;
 }
 
-export async function flushPendingEmailParseImprovementSamples(input: {
-  readonly db: AnyDb;
-  readonly userId: UserId;
-  readonly now?: Date;
-  readonly isSharingEnabled?: () => boolean;
-}): Promise<FlushResult> {
+async function shouldContinueAfterRemotePreferencePreflight(
+  input: FlushInput,
+  isSharingEnabled: () => boolean
+): Promise<boolean> {
+  if (input.canEnableRemotePreference?.() === false) {
+    const deletionRetry = await retryPendingEmailParseImprovementSampleDeletion({
+      db: input.db,
+      now: input.now,
+      userId: input.userId,
+    });
+    return !deletionRetry.retried;
+  }
+
+  if (!isSharingEnabled()) return false;
+  await setEmailParseImprovementSharingPreference({
+    db: input.db,
+    enabled: true,
+    userId: input.userId,
+  });
+  return true;
+}
+
+async function prepareEmailParseImprovementFlush(
+  input: FlushInput,
+  isSharingEnabled: () => boolean
+): Promise<FlushStartupResult> {
+  if (!isSharingEnabled()) return { status: "skip" };
+
+  const sharedAt = toIsoDateTime(input.now ?? new Date());
+  const hasPendingDeletion = getCaptureImprovementDeletionRequest(input) !== null;
+  const pendingCount = countPendingEmailParseImprovementSamples(input);
+  if (pendingCount === 0 && !hasPendingDeletion) return { status: "skip" };
+
+  const shouldContinue = await shouldContinueAfterRemotePreferencePreflight(
+    input,
+    isSharingEnabled
+  );
+  if (!shouldContinue || pendingCount === 0) return { status: "skip" };
+
+  return { status: "continue", pendingCount, sharedAt };
+}
+
+export async function flushPendingEmailParseImprovementSamples(
+  input: FlushInput
+): Promise<FlushResult> {
   const activeFlush = activeFlushesByUserId.get(input.userId);
   if (activeFlush) return activeFlush;
 
   const flush = (async (): Promise<FlushResult> => {
     const isSharingEnabled = input.isSharingEnabled ?? (() => true);
-    if (!isSharingEnabled()) return { shared: 0, failed: 0 };
+    const startup = await prepareEmailParseImprovementFlush(input, isSharingEnabled);
+    if (startup.status === "skip") return { shared: 0, failed: 0 };
+    const { pendingCount, sharedAt } = startup;
 
-    const sharedAt = toIsoDateTime(input.now ?? new Date());
     if (isEmailCaptureDebugEnabled()) {
       logParseImprovementOutboxForDebug("flush.start", {
-        pending: countPendingEmailParseImprovementSamples(input),
+        pending: pendingCount,
       });
     }
 
@@ -190,7 +405,11 @@ export async function flushPendingEmailParseImprovementSamples(input: {
               await shareCaptureParseImprovementSample({
                 rawText: sample.template,
                 parserTemplate: sample.template,
-                senderDomain: sample.senderDomain,
+                providerCategory: sample.providerCategory as
+                  | "bank"
+                  | "payment_app"
+                  | "wallet"
+                  | "unknown",
                 source: sample.source,
                 status: sample.status as "failed" | "needs_review",
                 confidence: sample.confidence,

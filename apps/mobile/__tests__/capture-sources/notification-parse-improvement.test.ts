@@ -114,6 +114,68 @@ describe("notification parse improvement samples", () => {
     expect(sample.template).not.toContain("juan perez");
   });
 
+  it("redacts lowercase entities after colon-labeled fields", () => {
+    const sample = buildNotificationParseImprovementSample({
+      rawText: "Comercio: exito por $50.000. Beneficiario: juan perez.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+
+    expect(sample.template).toBe(
+      "Comercio: [COUNTERPARTY] por [AMOUNT]. Beneficiario: [COUNTERPARTY]."
+    );
+    expect(sample.template).not.toMatch(/exito|juan perez/u);
+  });
+
+  it("redacts alphanumeric reference and authorization values", () => {
+    const sample = buildNotificationParseImprovementSample({
+      rawText:
+        "Referencia ABC123XYZ por $50.000. Ref A123B. Ref No. A123B. No. A123B. Autorizacion ZX98A76. Autorizacion A1B2C. Autorizacion No. A1B2C.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+
+    expect(sample.template).toBe(
+      "Referencia [REFERENCE] por [AMOUNT]. Ref [REFERENCE]. Ref [REFERENCE]. No. [REFERENCE]. Autorizacion [REFERENCE]. Autorizacion [REFERENCE]. Autorizacion [REFERENCE]."
+    );
+    expect(sample.template).not.toMatch(/ABC123XYZ|A123B|ZX98A76|A1B2C/u);
+  });
+
+  it("redacts unlabeled lowercase merchant and person tokens before payment actions", () => {
+    const merchantSample = buildNotificationParseImprovementSample({
+      rawText: "exito compra por $50.000.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+    const personSample = buildNotificationParseImprovementSample({
+      rawText: "juan perez pago por $50.000.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+    const unlabeledSample = buildNotificationParseImprovementSample({
+      rawText: "rappi retiro por $50.000.",
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+
+    expect(merchantSample.template).toBe("[COUNTERPARTY] compra por [AMOUNT].");
+    expect(personSample.template).toBe("[COUNTERPARTY] pago por [AMOUNT].");
+    expect(unlabeledSample.template).toBe("[ENTITY] retiro por [AMOUNT].");
+    expect(
+      `${merchantSample.template} ${personSample.template} ${unlabeledSample.template}`
+    ).not.toMatch(/exito|juan perez|rappi/u);
+  });
+
   it("does not share samples without explicit consent", async () => {
     await shareNotificationParseImprovementSample({
       consent: false,
@@ -182,7 +244,7 @@ describe("notification parse improvement samples", () => {
       userId: "user-1",
       sample: {
         template: "Compra [MERCHANT] por [AMOUNT] con tarjeta [CARD].",
-        senderDomain: "davibank.com",
+        providerCategory: "bank",
         source: "email_gmail",
         status: "needs_review",
         confidenceBucket: "low",
@@ -208,7 +270,7 @@ describe("notification parse improvement samples", () => {
       userId: "user-1",
       sample: {
         template: "Compra [MERCHANT] por [AMOUNT] con tarjeta [CARD].",
-        senderDomain: "davibank.com",
+        providerCategory: "bank",
         source: "email_gmail",
         status: "failed",
         confidenceBucket: "none",

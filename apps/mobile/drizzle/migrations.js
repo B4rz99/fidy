@@ -33,6 +33,10 @@ import m0030 from "./0030_email_parse_improvement_outbox.sql";
 import m0031 from "./0031_drop_user_memories.sql";
 import m0032 from "./0032_category_icon_overrides.sql";
 import m0033 from "./0033_category_color_overrides.sql";
+import m0034 from "./0034_capture_improvement_deletion_requests.sql";
+import m0035 from "./0035_capture_improvement_provider_category.sql";
+import m0036 from "./0036_capture_improvement_active_sample_dedupe.sql";
+import m0037 from "./0037_capture_improvement_deletion_confirmations.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -72,5 +76,9 @@ export default {
     m0031,
     m0032,
     m0033,
+    m0034,
+    m0035,
+    m0036,
+    m0037,
   },
 };

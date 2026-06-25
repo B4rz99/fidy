@@ -58,6 +58,7 @@ const BACKUP_DELETE_PAGE_SIZE = 1000;
 const OPERATIONAL_REMOTE_TABLES = [
   "push_devices",
   "notification_preferences",
+  "capture_improvement_preferences",
   "notification_parse_improvement_samples",
   "rate_limits",
 ] as const;

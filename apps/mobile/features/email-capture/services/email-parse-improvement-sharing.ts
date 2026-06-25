@@ -4,6 +4,7 @@ import type { UserId } from "@/shared/types/branded";
 import { isEmailCaptureDebugEnabled } from "./email-capture-debug";
 import type { EmailParseImprovementRequest } from "./email-pipeline-service/types";
 import {
+  ensureEmailParseImprovementSamplesDeletedForUser,
   enqueueEmailParseImprovementRequests,
   flushPendingEmailParseImprovementSamples,
 } from "./email-parse-improvement-outbox";
@@ -33,10 +34,26 @@ const logDisabledParseImprovementSharing = (requestCount: number): void => {
   });
 };
 
+const retryDisabledParseImprovementDeletion = (input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+}) =>
+  ensureEmailParseImprovementSamplesDeletedForUser(input).catch((error) => {
+    captureError(error);
+    captureWarning("email_parse_improvement_sample_delete_failed", {
+      errorType: getErrorName(error),
+    });
+    return { deleted: 0 };
+  });
+
 const shouldShareParseImprovements = (input: {
   readonly enabled: boolean;
   readonly isSharingEnabled?: () => boolean;
 }): boolean => input.enabled && (!input.isSharingEnabled || input.isSharingEnabled());
+
+const shouldDeleteDisabledSamples = (input: {
+  readonly canDeleteDisabledSamples?: () => boolean;
+}): boolean => input.canDeleteDisabledSamples?.() === true;
 
 const enqueueParseImprovementRequest = (input: {
   readonly db: AnyDb;
@@ -62,11 +79,15 @@ const flushParseImprovementRequests = (input: {
   readonly db: AnyDb;
   readonly userId: UserId;
   readonly isSharingEnabled?: () => boolean;
+  readonly canEnableRemotePreference?: () => boolean;
 }) =>
   flushPendingEmailParseImprovementSamples({
     db: input.db,
     userId: input.userId,
     ...(input.isSharingEnabled ? { isSharingEnabled: input.isSharingEnabled } : {}),
+    ...(input.canEnableRemotePreference
+      ? { canEnableRemotePreference: input.canEnableRemotePreference }
+      : {}),
   }).catch((error) => {
     captureError(error);
     captureWarning("email_parse_improvement_sample_share_failed", {
@@ -81,8 +102,13 @@ export async function shareEmailParseImprovementRequests(input: {
   readonly userId: UserId;
   readonly requests: readonly EmailParseImprovementRequest[];
   readonly isSharingEnabled?: () => boolean;
+  readonly canDeleteDisabledSamples?: () => boolean;
+  readonly canEnableRemotePreference?: () => boolean;
 }): Promise<void> {
   if (!shouldShareParseImprovements(input)) {
+    if (shouldDeleteDisabledSamples(input)) {
+      await retryDisabledParseImprovementDeletion({ db: input.db, userId: input.userId });
+    }
     logDisabledParseImprovementSharing(input.requests.length);
     return;
   }

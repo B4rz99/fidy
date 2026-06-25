@@ -5,26 +5,32 @@ import { requireUserId } from "@/shared/types/assertions";
 const mockDb = {} as any;
 const mockRefreshTransactions = vi.fn<(...args: any[]) => any>();
 const mockHydrateSettings = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+const defaultSettingsState = {
+  hydrate: mockHydrateSettings,
+  isHydrated: true,
+  parseImprovementSharingPreferenceState: "explicit_disabled",
+  shareAnonymizedParseSamples: false,
+};
+let settingsState = defaultSettingsState;
 const mockUseSettingsStore = Object.assign(
-  vi.fn<(...args: any[]) => any>((selector: any) =>
-    selector({ shareAnonymizedParseSamples: false })
-  ),
+  vi.fn<(...args: any[]) => any>((selector: any) => selector(settingsState)),
   {
-    getState: () => ({
-      hydrate: mockHydrateSettings,
-      shareAnonymizedParseSamples: false,
-    }),
+    getState: () => settingsState,
   }
 );
 const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
 const mockLoadEmailAccounts = vi.fn<(...args: any[]) => any>();
 const mockFetchAndProcessEmails = vi.fn<(...args: any[]) => any>();
+const mockDeleteEmailParseImprovementSamplesForUser = vi.fn<(...args: any[]) => any>();
+const mockEnsureEmailParseImprovementSamplesDeletedForUser = vi.fn<(...args: any[]) => any>();
+const mockRetryPendingEmailParseImprovementSampleDeletion = vi.fn<(...args: any[]) => any>();
 const mockAddEventListener = vi.fn<(...args: any[]) => any>();
 
 describe("useEmailCapture", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    settingsState = defaultSettingsState;
     mockLoadEmailAccounts.mockResolvedValue(undefined);
     mockHydrateSettings.mockResolvedValue(undefined);
     mockFetchAndProcessEmails.mockResolvedValue({
@@ -32,6 +38,17 @@ describe("useEmailCapture", () => {
       savedCount: 0,
       needsReviewCount: 0,
       failedCount: 0,
+    });
+    mockRetryPendingEmailParseImprovementSampleDeletion.mockResolvedValue({
+      deleted: 0,
+      retried: false,
+    });
+    mockDeleteEmailParseImprovementSamplesForUser.mockResolvedValue({
+      deleted: 0,
+    });
+    mockEnsureEmailParseImprovementSamplesDeletedForUser.mockResolvedValue({
+      deleted: 0,
+      retried: false,
     });
     mockAddEventListener.mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
   });
@@ -63,8 +80,88 @@ describe("useEmailCapture", () => {
       {
         shareParseImprovementSamples: false,
         isShareParseImprovementSamplesEnabled: expect.any(Function),
+        canDeleteDisabledParseImprovementSamples: expect.any(Function),
+        canEnableRemoteParseImprovementPreference: expect.any(Function),
       }
     );
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.shareParseImprovementSamples).toBe(false);
+    expect(options.isShareParseImprovementSamplesEnabled()).toBe(false);
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(true);
+    expect(options.canEnableRemoteParseImprovementPreference()).toBe(false);
+  });
+
+  it("does not treat pre-hydration sharing false as an opt-out", async () => {
+    settingsState = {
+      ...defaultSettingsState,
+      isHydrated: false,
+      shareAnonymizedParseSamples: false,
+    };
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockInitializeEmailCaptureSession).not.toHaveBeenCalled();
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
+    expect(mockFetchAndProcessEmails).not.toHaveBeenCalled();
+  });
+
+  it("does not treat unavailable hydrated sharing state as an opt-out", async () => {
+    settingsState = {
+      ...defaultSettingsState,
+      isHydrated: true,
+      parseImprovementSharingPreferenceState: "unavailable",
+      shareAnonymizedParseSamples: false,
+    };
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).not.toHaveBeenCalled();
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(false);
+  });
+
+  it("does not treat default-enabled sharing as an explicit remote opt-in", async () => {
+    settingsState = {
+      ...defaultSettingsState,
+      isHydrated: true,
+      parseImprovementSharingPreferenceState: "default_enabled",
+      shareAnonymizedParseSamples: true,
+    };
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const options = mockFetchAndProcessEmails.mock.calls[0]?.[5];
+    expect(options.shareParseImprovementSamples).toBe(true);
+    expect(options.isShareParseImprovementSamplesEnabled()).toBe(true);
+    expect(options.canDeleteDisabledParseImprovementSamples()).toBe(false);
+    expect(options.canEnableRemoteParseImprovementPreference()).toBe(false);
+  });
+
+  it("ensures remote opt-out deletion on app open when sharing is disabled", async () => {
+    const { useEmailCapture } = await loadUseEmailCapture();
+    const userId = requireUserId("user-1");
+
+    useEmailCapture(mockDb, userId);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockEnsureEmailParseImprovementSamplesDeletedForUser).toHaveBeenCalledWith({
+      db: mockDb,
+      userId,
+    });
+    expect(mockRetryPendingEmailParseImprovementSampleDeletion).not.toHaveBeenCalled();
+    expect(mockDeleteEmailParseImprovementSamplesForUser).not.toHaveBeenCalled();
   });
 });
 
@@ -73,6 +170,12 @@ async function loadUseEmailCapture() {
     refreshTransactions: (...args: unknown[]) => mockRefreshTransactions(...args),
   }));
   vi.doMock("@/features/settings/hooks.public", () => ({
+    isAuthoritativeParseImprovementOptOut: (state: {
+      readonly parseImprovementSharingPreferenceState: string;
+    }) => state.parseImprovementSharingPreferenceState === "explicit_disabled",
+    isExplicitParseImprovementOptIn: (state: {
+      readonly parseImprovementSharingPreferenceState: string;
+    }) => state.parseImprovementSharingPreferenceState === "explicit_enabled",
     useSettingsStore: mockUseSettingsStore,
   }));
   vi.doMock("@/shared/components/rn", () => ({
@@ -95,6 +198,14 @@ async function loadUseEmailCapture() {
     initializeEmailCaptureSession: (...args: unknown[]) =>
       mockInitializeEmailCaptureSession(...args),
     loadEmailAccounts: (...args: unknown[]) => mockLoadEmailAccounts(...args),
+  }));
+  vi.doMock("@/features/email-capture/parse-improvement.public", () => ({
+    deleteEmailParseImprovementSamplesForUser: (...args: unknown[]) =>
+      mockDeleteEmailParseImprovementSamplesForUser(...args),
+    ensureEmailParseImprovementSamplesDeletedForUser: (...args: unknown[]) =>
+      mockEnsureEmailParseImprovementSamplesDeletedForUser(...args),
+    retryPendingEmailParseImprovementSampleDeletion: (...args: unknown[]) =>
+      mockRetryPendingEmailParseImprovementSampleDeletion(...args),
   }));
 
   return import("@/features/email-capture/hooks/useEmailCapture");

@@ -21,6 +21,13 @@ export type NotificationPreferences = {
   readonly spendingAnomalies: boolean;
 };
 
+export type ParseImprovementSharingPreferenceState =
+  | "unhydrated"
+  | "unavailable"
+  | "default_enabled"
+  | "explicit_enabled"
+  | "explicit_disabled";
+
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   budgetAlerts: true,
   goalMilestones: true,
@@ -34,6 +41,7 @@ type SettingsState = {
   areAllNotificationsOff: boolean;
   privateBackup: PrivateBackupSettingsState;
   shareAnonymizedParseSamples: boolean;
+  parseImprovementSharingPreferenceState: ParseImprovementSharingPreferenceState;
 };
 
 type SetSettingsState = (partial: Partial<SettingsState>) => void;
@@ -146,6 +154,33 @@ const applyStoredNotificationPreferences = (set: SetSettingsState, storedPrefs: 
   });
 };
 
+const resolveStoredShareAnonymizedParseSamples = (
+  value: string | null,
+  currentPreferenceState: ParseImprovementSharingPreferenceState
+): {
+  readonly enabled: boolean;
+  readonly preferenceState: ParseImprovementSharingPreferenceState;
+} => {
+  if (currentPreferenceState === "explicit_disabled") {
+    return { enabled: false, preferenceState: "explicit_disabled" };
+  }
+  if (value === "false") {
+    return { enabled: false, preferenceState: "explicit_disabled" };
+  }
+  if (value === "true") {
+    return { enabled: true, preferenceState: "explicit_enabled" };
+  }
+  return { enabled: true, preferenceState: "default_enabled" };
+};
+
+export const isAuthoritativeParseImprovementOptOut = (state: {
+  readonly parseImprovementSharingPreferenceState: ParseImprovementSharingPreferenceState;
+}): boolean => state.parseImprovementSharingPreferenceState === "explicit_disabled";
+
+export const isExplicitParseImprovementOptIn = (state: {
+  readonly parseImprovementSharingPreferenceState: ParseImprovementSharingPreferenceState;
+}): boolean => state.parseImprovementSharingPreferenceState === "explicit_enabled";
+
 export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
   themePreference: "system",
   isHydrated: false,
@@ -153,6 +188,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   areAllNotificationsOff: false,
   privateBackup: DEFAULT_PRIVATE_BACKUP_STATE,
   shareAnonymizedParseSamples: false,
+  parseImprovementSharingPreferenceState: "unhydrated",
 
   setThemePreference: (pref) => {
     set({ themePreference: pref });
@@ -195,7 +231,10 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   },
 
   setShareAnonymizedParseSamples: (enabled) => {
-    set({ shareAnonymizedParseSamples: enabled });
+    set({
+      shareAnonymizedParseSamples: enabled,
+      parseImprovementSharingPreferenceState: enabled ? "explicit_enabled" : "explicit_disabled",
+    });
     void SecureStore.setItemAsync(SHARE_ANONYMIZED_PARSE_SAMPLES_KEY, String(enabled)).catch(
       (error) => {
         captureWarning("parse_sample_sharing_preference_persist_failed", {
@@ -242,11 +281,24 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       applyStoredThemePreference(set, stored.storedTheme);
       applyStoredPrivateBackup(set, stored.privateBackup);
       applyStoredNotificationPreferences(set, stored.storedPrefs);
-      set({ shareAnonymizedParseSamples: stored.storedShareAnonymizedParseSamples === "true" });
+      const storedShareAnonymizedParseSamples = resolveStoredShareAnonymizedParseSamples(
+        stored.storedShareAnonymizedParseSamples,
+        get().parseImprovementSharingPreferenceState
+      );
+      set({
+        shareAnonymizedParseSamples: storedShareAnonymizedParseSamples.enabled,
+        parseImprovementSharingPreferenceState: storedShareAnonymizedParseSamples.preferenceState,
+      });
     } catch {
       // SecureStore unavailable (e.g., in tests)
+      const currentPreferenceState = get().parseImprovementSharingPreferenceState;
       Appearance.setColorScheme(toColorScheme("system"));
-      set({ themePreference: "system" });
+      set({
+        themePreference: "system",
+        parseImprovementSharingPreferenceState:
+          currentPreferenceState === "explicit_disabled" ? "explicit_disabled" : "unavailable",
+        shareAnonymizedParseSamples: false,
+      });
     } finally {
       set({ isHydrated: true });
     }

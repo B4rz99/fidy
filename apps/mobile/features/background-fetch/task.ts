@@ -7,7 +7,11 @@ import {
   initializeEmailCaptureSession,
   loadEmailAccounts,
 } from "@/features/email-capture/public";
-import { useSettingsStore } from "@/features/settings/hooks.public";
+import {
+  isAuthoritativeParseImprovementOptOut,
+  isExplicitParseImprovementOptIn,
+  useSettingsStore,
+} from "@/features/settings/hooks.public";
 import { getDb, getSupabase } from "@/shared/db";
 import { captureError } from "@/shared/lib";
 import { requireUserId } from "@/shared/types/assertions";
@@ -31,6 +35,10 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
       shareParseImprovementSamples: useSettingsStore.getState().shareAnonymizedParseSamples,
       isShareParseImprovementSamplesEnabled: () =>
         useSettingsStore.getState().shareAnonymizedParseSamples,
+      canDeleteDisabledParseImprovementSamples: () =>
+        isAuthoritativeParseImprovementOptOut(useSettingsStore.getState()),
+      canEnableRemoteParseImprovementPreference: () =>
+        isExplicitParseImprovementOptIn(useSettingsStore.getState()),
     });
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {
