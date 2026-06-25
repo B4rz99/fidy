@@ -190,10 +190,22 @@ export async function loadRestoredCloudLedgerPendingTransactions(
 export async function loadCloudLedgerOptimisticTransactions(
   userId: UserId
 ): Promise<readonly StoredTransaction[]> {
+  const runtimeTransactions = loadRuntimeCloudLedgerTransactions(userId);
   return [
-    ...loadRuntimeCloudLedgerTransactions(userId),
-    ...(await loadRestoredCloudLedgerPendingTransactions(userId)),
+    ...runtimeTransactions,
+    ...excludeTransactionsById(
+      await loadRestoredCloudLedgerPendingTransactions(userId),
+      runtimeTransactions
+    ),
   ];
+}
+
+function excludeTransactionsById(
+  transactions: readonly StoredTransaction[],
+  excludedTransactions: readonly StoredTransaction[]
+): readonly StoredTransaction[] {
+  const excludedIds = new Set(excludedTransactions.map((transaction) => transaction.id));
+  return transactions.filter((transaction) => !excludedIds.has(transaction.id));
 }
 
 function applyCloudLedgerTransactionsToSnapshot(
@@ -226,14 +238,18 @@ export async function applyCloudLedgerOptimisticView(
   userId: UserId,
   options: ApplyCloudLedgerTransactionsOptions = {}
 ): Promise<TransactionSnapshot> {
+  const runtimeTransactions = loadRuntimeCloudLedgerTransactions(userId);
   const runtimeSnapshot = applyCloudLedgerTransactionsToSnapshot(
     snapshot,
-    loadRuntimeCloudLedgerTransactions(userId),
+    runtimeTransactions,
     options
   );
   return applyCloudLedgerTransactionsToSnapshot(
     runtimeSnapshot,
-    await loadRestoredCloudLedgerPendingTransactions(userId),
+    excludeTransactionsById(
+      await loadRestoredCloudLedgerPendingTransactions(userId),
+      runtimeTransactions
+    ),
     { isTransactionIncludedInAggregate: options.isTransactionIncludedInAggregate }
   );
 }

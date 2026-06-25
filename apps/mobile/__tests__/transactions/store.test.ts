@@ -1156,6 +1156,59 @@ describe("transaction boundaries", () => {
     });
   });
 
+  it("deduplicates restored pending Cloud Ledger rows already present in runtime aggregates", async () => {
+    const restoredPendingTransaction = makeStoredTransaction({
+      id: "txn-restored-pending-duplicate" as TransactionId,
+      amount: 18_000 as CopAmount,
+      date: new Date("2026-06-15T12:00:00.000Z"),
+      createdAt: new Date("2026-06-15T12:00:00.000Z"),
+      updatedAt: new Date("2026-06-15T12:03:00.000Z"),
+    });
+    const restoredPendingChange = pendingCreateFromStoredTransaction(restoredPendingTransaction);
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:11" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            ...restoredPendingChange.transaction,
+            updatedAt: restoredPendingChange.createdAt as IsoDateTime,
+          },
+        ],
+        tombstones: [],
+      })
+    );
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(
+        vi.fn<(...args: any[]) => any>().mockResolvedValue([restoredPendingChange])
+      ) as never
+    );
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce(
+      Array.from({ length: 30 }, (_, index) =>
+        makeRow({
+          id: `tx-visible-newer-${index}` as TransactionId,
+          amount: (1000 + index) as CopAmount,
+          date: "2026-06-20" as IsoDate,
+          createdAt: `2026-06-20T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+          updatedAt: `2026-06-20T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+        })
+      )
+    );
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).not.toContain(
+      "txn-restored-pending-duplicate"
+    );
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 18_000,
+      categorySpending: [{ categoryId: "food", total: 18_000 }],
+      dailySpending: [{ date: "2026-06-15", total: 18_000 }],
+    });
+  });
+
   it("maps uncategorized Cloud Ledger transactions to the ordinary Other category", async () => {
     setCloudLedgerRuntimeCache(
       mockUserId,

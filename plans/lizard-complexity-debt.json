@@ -13,22 +13,22 @@
   },
   "violations": [
     {
-      "key": "encodeJson@470-551@apps/mobile/features/cloud-ledger/outbox.ts",
-      "file": "apps/mobile/features/cloud-ledger/outbox.ts",
-      "function": "encodeJson",
-      "thresholdProfile": "default",
-      "cyclomaticComplexity": 6,
-      "nloc": 68,
-      "parameterCount": 3
-    },
-    {
-      "key": "requireChunkAllocationCoverage@611-696@apps/mobile/features/cloud-ledger/outbox.ts",
+      "key": "requireChunkAllocationCoverage@591-676@apps/mobile/features/cloud-ledger/outbox.ts",
       "file": "apps/mobile/features/cloud-ledger/outbox.ts",
       "function": "requireChunkAllocationCoverage",
       "thresholdProfile": "default",
       "cyclomaticComplexity": 10,
       "nloc": 78,
       "parameterCount": 8
+    },
+    {
+      "key": "requireString@450-531@apps/mobile/features/cloud-ledger/outbox.ts",
+      "file": "apps/mobile/features/cloud-ledger/outbox.ts",
+      "function": "requireString",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 8,
+      "nloc": 69,
+      "parameterCount": 5
     }
   ]
 }

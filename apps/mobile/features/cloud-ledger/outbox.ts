@@ -73,6 +73,7 @@ type ChunkedSecureStoreOutboxManifest = {
 
 const CLOUD_LEDGER_OUTBOX_VERSION = 1;
 const GCM_NONCE_BYTES = 12;
+const GCM_TAG_BYTES = 16;
 const OUTBOX_KEY_BYTES = 32;
 const OUTBOX_KEY_PATTERN = /^[0-9a-f]{64}$/;
 const SECURE_STORE_OUTBOX_CHUNK_SIZE = 1500;
@@ -327,17 +328,20 @@ async function encryptOutboxSnapshot(
   snapshot: CloudLedgerOutboxSnapshot,
   encryptionKey: Uint8Array
 ): Promise<EncryptedCloudLedgerOutboxSnapshot> {
-  const nonce = randomBytes(GCM_NONCE_BYTES);
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: toPlainBufferSource(nonce) },
-    await importAesGcmKey(encryptionKey, ["encrypt"]),
-    toPlainBufferSource(encodeJson(snapshot))
+  const nonce = Crypto.getRandomBytes(GCM_NONCE_BYTES);
+  const sealedData = await Crypto.aesEncryptAsync(
+    encodeJson(snapshot),
+    await Crypto.AESEncryptionKey.import(encryptionKey),
+    {
+      nonce: { bytes: nonce },
+      tagLength: GCM_TAG_BYTES,
+    }
   );
   return {
     version: CLOUD_LEDGER_OUTBOX_VERSION,
     algorithm: "AES-GCM",
-    nonce: toBase64(nonce),
-    ciphertext: toBase64(new Uint8Array(ciphertext)),
+    nonce: await sealedData.iv("base64"),
+    ciphertext: await sealedData.ciphertext({ includeTag: true, encoding: "base64" }),
   };
 }
 
@@ -349,12 +353,12 @@ async function decryptOutboxSnapshot(
     if (snapshot.version !== CLOUD_LEDGER_OUTBOX_VERSION || snapshot.algorithm !== "AES-GCM") {
       throw new Error("unsupported Cloud Ledger outbox snapshot");
     }
-    const plaintext = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: toPlainBufferSource(fromBase64(snapshot.nonce)) },
-      await importAesGcmKey(encryptionKey, ["decrypt"]),
-      toPlainBufferSource(fromBase64(snapshot.ciphertext))
+    const plaintext = await Crypto.aesDecryptAsync(
+      Crypto.AESSealedData.fromParts(snapshot.nonce, snapshot.ciphertext, GCM_TAG_BYTES),
+      await Crypto.AESEncryptionKey.import(encryptionKey),
+      { output: "bytes" }
     );
-    return parseOutboxSnapshot(JSON.parse(decodeUtf8(new Uint8Array(plaintext))));
+    return parseOutboxSnapshot(JSON.parse(decodeUtf8(plaintext)));
   } catch (error) {
     throw new CloudLedgerOutboxFailure(
       "invalid_encrypted_outbox",
@@ -457,16 +461,6 @@ function requireNumber(value: unknown, label: string): number {
   throw new Error(`${label} must be a number`);
 }
 
-function randomBytes(length: number): Uint8Array {
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  return bytes;
-}
-
-function importAesGcmKey(rawKey: Uint8Array, usages: ReadonlyArray<KeyUsage>): Promise<CryptoKey> {
-  return crypto.subtle.importKey("raw", toPlainBufferSource(rawKey), "AES-GCM", false, [...usages]);
-}
-
 function encodeJson(value: unknown): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(value));
 }
@@ -475,22 +469,8 @@ function decodeUtf8(value: Uint8Array): string {
   return new TextDecoder().decode(value);
 }
 
-function toBase64(value: Uint8Array): string {
-  return btoa(Array.from(value, (byte) => String.fromCodePoint(byte)).join(""));
-}
-
-function fromBase64(value: string): Uint8Array {
-  return Uint8Array.from(atob(value), (char) => char.codePointAt(0) ?? 0);
-}
-
 function copyBytes(value: Uint8Array): Uint8Array {
   const copy = new Uint8Array(value.byteLength);
-  copy.set(value);
-  return copy;
-}
-
-function toPlainBufferSource(value: Uint8Array): BufferSource {
-  const copy = new Uint8Array(new ArrayBuffer(value.byteLength));
   copy.set(value);
   return copy;
 }

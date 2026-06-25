@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { beforeEach } from "vitest";
 import { describe, expect, it, vi } from "vitest";
@@ -142,6 +143,47 @@ describe("mobile Cloud Ledger offline outbox", () => {
       code: "invalid_encrypted_outbox",
       name: "CloudLedgerOutboxFailure",
     } satisfies Partial<CloudLedgerOutboxFailure>);
+  });
+
+  it("writes and reads encrypted pending changes through Expo AES without WebCrypto globals", async () => {
+    const unavailableWebCrypto = {
+      getRandomValues: vi.fn(() => {
+        throw new Error("WebCrypto getRandomValues should not be used by Cloud Ledger outbox");
+      }),
+      subtle: {
+        decrypt: vi.fn(() =>
+          Promise.reject(new Error("WebCrypto decrypt should not be used by Cloud Ledger outbox"))
+        ),
+        encrypt: vi.fn(() =>
+          Promise.reject(new Error("WebCrypto encrypt should not be used by Cloud Ledger outbox"))
+        ),
+      },
+    };
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+
+    await withTemporaryGlobalCrypto(unavailableWebCrypto, async () => {
+      await outbox.enqueue(
+        pendingCreateChange({
+          changeId: "change-offline-coffee",
+          command: offlineCoffeeCommand(),
+          createdAt: "2026-06-02T10:03:00.000Z",
+        })
+      );
+
+      await expect(outbox.load()).resolves.toEqual([
+        expect.objectContaining({ id: "change-offline-coffee" }),
+      ]);
+    });
+
+    expect(unavailableWebCrypto.getRandomValues).not.toHaveBeenCalled();
+    expect(unavailableWebCrypto.subtle.encrypt).not.toHaveBeenCalled();
+    expect(unavailableWebCrypto.subtle.decrypt).not.toHaveBeenCalled();
+    expect(Crypto.aesEncryptAsync).toHaveBeenCalled();
+    expect(Crypto.aesDecryptAsync).toHaveBeenCalled();
   });
 
   it("persists encrypted pending changes in app storage across outbox recreation", async () => {
@@ -710,6 +752,26 @@ function createMemoryOutboxStorage() {
       stored = snapshot;
     },
   };
+}
+
+async function withTemporaryGlobalCrypto<Result>(
+  cryptoValue: unknown,
+  run: () => Promise<Result>
+): Promise<Result> {
+  const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+  Object.defineProperty(globalThis, "crypto", {
+    configurable: true,
+    value: cryptoValue,
+  });
+  try {
+    return await run();
+  } finally {
+    if (originalDescriptor === undefined) {
+      Reflect.deleteProperty(globalThis, "crypto");
+    } else {
+      Object.defineProperty(globalThis, "crypto", originalDescriptor);
+    }
+  }
 }
 
 function createSeededLedgerCache() {
