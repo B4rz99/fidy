@@ -13,8 +13,8 @@ const getErrorType = (error: unknown): string =>
 
 export const transactionBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "transactions",
-  run: ({ db, userId }) => {
-    initializeTransactionSession(userId);
+  run: ({ db, enableRemoteEffects, userId }) => {
+    initializeTransactionSession(userId, { enableRemoteEffects });
     const defaultAccount = tryEnsureDefaultFinancialAccount(db, userId);
     if (defaultAccount) {
       useTransactionStore.getState().setDefaultAccountId(defaultAccount.id);

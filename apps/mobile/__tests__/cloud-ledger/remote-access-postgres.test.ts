@@ -1,5 +1,5 @@
 // biome-ignore-all lint/style/useNamingConvention: PostgreSQL roles and payloads use snake_case fields
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
@@ -185,6 +185,42 @@ describe("Cloud Ledger Postgres access boundary", () => {
         },
       ],
     });
+  });
+
+  postgresIt("idempotently seeds shared local-only references for concurrent creates", async () => {
+    const postgres = setupSeededPostgres();
+    const lockedCursor = psqlScalarAsync(
+      postgres,
+      `
+begin;
+select 1
+from ledger.ledger_cursors
+where user_id = '${USER_ID}'::uuid
+for update;
+select pg_sleep(1);
+commit;
+`
+    );
+    await delay(100);
+
+    const outcomes = await Promise.all([
+      createTransactionOutcomeAsync(postgres, {
+        transactionId: "txn-concurrent-local-refs-1",
+        accountId: "acct-concurrent-local",
+        categoryId: "cat-concurrent-local",
+      }),
+      createTransactionOutcomeAsync(postgres, {
+        transactionId: "txn-concurrent-local-refs-2",
+        accountId: "acct-concurrent-local",
+        categoryId: "cat-concurrent-local",
+      }),
+    ]);
+    await lockedCursor;
+
+    expect(outcomes.map((outcome) => outcome.code)).toEqual(["accepted", "accepted"]);
+    expect(outcomes.map((outcome) => outcome.cursor).sort()).toEqual(["ledger:7", "ledger:8"]);
+    expect(readAccountRowCount(postgres, USER_ID, "acct-concurrent-local")).toBe("1");
+    expect(readCategoryRowCount(postgres, USER_ID, "cat-concurrent-local")).toBe("1");
   });
 
   postgresIt("seeds built-in categories per user even when another user has the same id", () => {
@@ -537,7 +573,7 @@ function readRefreshAfterInitialSeed(postgres: PostgresHarness) {
   );
 }
 
-function startPostgres(): PostgresHarness {
+const startPostgres = (): PostgresHarness => {
   const rootDir = mkdtempSync(join(tmpdir(), "fidy-cloud-ledger-pg-"));
   const dataDir = join(rootDir, "data");
   const socketDir = join(rootDir, "socket");
@@ -574,9 +610,9 @@ function startPostgres(): PostgresHarness {
   };
   harnesses.push(harness);
   return harness;
-}
+};
 
-function stopPostgres(harness: PostgresHarness) {
+const stopPostgres = (harness: PostgresHarness): void => {
   try {
     execFileSync(postgresBinary("pg_ctl"), ["-D", harness.dataDir, "-m", "fast", "stop"], {
       stdio: "ignore",
@@ -584,7 +620,7 @@ function stopPostgres(harness: PostgresHarness) {
   } finally {
     rmSync(harness.rootDir, { force: true, recursive: true });
   }
-}
+};
 
 function setupSupabaseAuthSurface(harness: PostgresHarness) {
   psql(
@@ -707,6 +743,32 @@ select public.cloud_ledger_create_transaction(
   );
 }
 
+async function createTransactionOutcomeAsync(
+  harness: PostgresHarness,
+  overrides: CreateTransactionOverrides = {}
+) {
+  return JSON.parse(
+    await psqlScalarAsync(
+      harness,
+      `
+set role service_role;
+select public.cloud_ledger_create_transaction(
+  '${USER_ID}'::uuid,
+  ${nullableSqlInteger(overrides.commandVersion === undefined ? 1 : overrides.commandVersion)},
+  '${overrides.transactionId ?? CLIENT_TRANSACTION_ID}',
+  ${nullableSqlText(overrides.type === undefined ? "expense" : overrides.type)},
+  ${nullableSqlInteger(overrides.amount === undefined ? 15000 : overrides.amount)},
+  ${nullableSqlText(overrides.currency === undefined ? "COP" : overrides.currency)},
+  ${nullableSqlText(overrides.categoryId === undefined ? "cat-groceries" : overrides.categoryId)},
+  ${nullableSqlText(overrides.accountId === undefined ? "acct-cash" : overrides.accountId)},
+  ${nullableSqlText(overrides.description === undefined ? "Market" : overrides.description)},
+  ${nullableSqlDate(overrides.date === undefined ? "2026-06-01" : overrides.date)}
+)::text;
+`
+    )
+  );
+}
+
 function readLedgerCursorSequence(harness: PostgresHarness) {
   return psqlScalar(
     harness,
@@ -775,4 +837,25 @@ function psqlScalar(harness: PostgresHarness, sql: string): string {
       stdio: ["ignore", "pipe", "pipe"],
     }
   ).trim();
+}
+
+function psqlScalarAsync(harness: PostgresHarness, sql: string): Promise<string> {
+  return new Promise((resolvePromise, reject) => {
+    execFile(
+      postgresBinary("psql"),
+      ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-t", "-A", "-c", sql],
+      { encoding: "utf8", env: harness.env },
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(Object.assign(error, { stdout, stderr }));
+          return;
+        }
+        resolvePromise(stdout.trim());
+      }
+    );
+  });
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
 }

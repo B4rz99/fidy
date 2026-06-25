@@ -20,6 +20,7 @@ import {
 } from "@/shared/lib";
 import {
   amendManualTransactionWithLocalLedger,
+  recordManualTransactionWithLocalLedger,
   voidTransactionWithLocalLedger,
 } from "@/infrastructure/local-ledger/public";
 import type {
@@ -53,6 +54,10 @@ const CLOUD_LEDGER_TRANSACTION_SOURCE = "cloud_ledger";
 
 let transactionsSessionId = 0;
 let loadTransactionsRequestId = 0;
+let transactionSessionRemoteEffectsEnabled = true;
+type InitializeTransactionSessionOptions = {
+  readonly enableRemoteEffects?: boolean;
+};
 type UpdateTransactionDirectInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -95,19 +100,18 @@ type CloudLedgerManualTransactionValidation =
   | { readonly success: false; readonly error: string };
 type TransactionInsertRow = typeof transactions.$inferInsert;
 
-function isActiveTransactionSession(userId: UserId, sessionId: number): boolean {
-  return (
-    transactionsSessionId === sessionId && useTransactionStore.getState().activeUserId === userId
-  );
-}
+const isActiveTransactionSession = (userId: UserId, sessionId: number): boolean =>
+  transactionsSessionId === sessionId && useTransactionStore.getState().activeUserId === userId;
 
-function isCurrentTransactionsRequest(
+const isCurrentTransactionsRequest = (
   requestId: number,
   userId: UserId,
   sessionId: number
-): boolean {
-  return loadTransactionsRequestId === requestId && isActiveTransactionSession(userId, sessionId);
-}
+): boolean =>
+  loadTransactionsRequestId === requestId && isActiveTransactionSession(userId, sessionId);
+
+const canUseCloudLedgerTransactionEffects = (userId: UserId, sessionId: number): boolean =>
+  isActiveTransactionSession(userId, sessionId) && transactionSessionRemoteEffectsEnabled;
 
 const getErrorType = (error: unknown): string =>
   error instanceof Error ? error.name : typeof error;
@@ -173,6 +177,19 @@ async function recordManualTransactionWithCloudLedger({
   input,
   now,
 }: RecordCloudLedgerManualTransactionInput): Promise<TransactionMutationResult> {
+  if (!canUseCloudLedgerTransactionEffects(userId, sessionId)) {
+    const result = await recordManualTransactionWithLocalLedger({
+      db,
+      userId,
+      transactionId,
+      input,
+      now,
+    });
+    return result.success
+      ? { success: true, transaction: toStoredTransaction(result.transaction) }
+      : result;
+  }
+
   const validation = validateCloudLedgerManualTransaction(input, now);
   if (!validation.success) return validation;
 
@@ -450,20 +467,26 @@ function toCloudLedgerCreateTransactionCommand(
   };
 }
 
-export function initializeTransactionSession(userId: UserId): void {
+export function initializeTransactionSession(
+  userId: UserId,
+  options: InitializeTransactionSessionOptions = {}
+): void {
   transactionsSessionId += 1;
   loadTransactionsRequestId += 1;
+  transactionSessionRemoteEffectsEnabled = options.enableRemoteEffects ?? true;
   useTransactionStore.getState().beginSession(userId);
 }
 
 export function invalidateTransactionSession(): void {
   transactionsSessionId += 1;
   loadTransactionsRequestId += 1;
+  transactionSessionRemoteEffectsEnabled = false;
 }
 
 export function resumeTransactionSession(userId: UserId): void {
   transactionsSessionId += 1;
   loadTransactionsRequestId += 1;
+  transactionSessionRemoteEffectsEnabled = true;
   useTransactionStore.setState({ activeUserId: userId });
 }
 
@@ -484,10 +507,12 @@ export async function loadInitialTransactions(db: AnyDb, userId: UserId): Promis
     return;
   }
   if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
-  const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId, {
-    isTransactionIncludedInAggregate: (transaction) =>
-      isPersistedActiveTransaction(db, userId, transaction.id),
-  });
+  const optimisticSnapshot = canUseCloudLedgerTransactionEffects(userId, sessionId)
+    ? await applyCloudLedgerOptimisticView(snapshot, userId, {
+        isTransactionIncludedInAggregate: (transaction) =>
+          isPersistedActiveTransaction(db, userId, transaction.id),
+      })
+    : snapshot;
   if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
   useTransactionStore.getState().setPageSnapshot(optimisticSnapshot);
   useTransactionStore.getState().setAggregateSnapshot(optimisticSnapshot);
@@ -525,11 +550,14 @@ export function loadTransactionAggregates(db: AnyDb, userId: UserId): void {
     });
     if (!isActiveTransactionSession(userId, sessionId)) return;
     const { pages, offset, hasMore } = useTransactionStore.getState();
+    const aggregateSnapshot = { ...snapshot, pages, offset, hasMore };
     useTransactionStore.getState().setAggregateSnapshot(
-      applyRuntimeCloudLedgerTransactions({ ...snapshot, pages, offset, hasMore }, userId, {
-        isTransactionIncludedInAggregate: (transaction) =>
-          isPersistedActiveTransaction(db, userId, transaction.id),
-      })
+      canUseCloudLedgerTransactionEffects(userId, sessionId)
+        ? applyRuntimeCloudLedgerTransactions(aggregateSnapshot, userId, {
+            isTransactionIncludedInAggregate: (transaction) =>
+              isPersistedActiveTransaction(db, userId, transaction.id),
+          })
+        : aggregateSnapshot
     );
   } catch {
     // Aggregate query failed — keep existing state
@@ -549,10 +577,12 @@ export async function refreshTransactions(db: AnyDb, userId: UserId): Promise<vo
       currentOffset: offset,
       pageSize: PAGE_SIZE,
     });
-    const optimisticSnapshot = await applyCloudLedgerOptimisticView(snapshot, userId, {
-      isTransactionIncludedInAggregate: (transaction) =>
-        isPersistedActiveTransaction(db, userId, transaction.id),
-    });
+    const optimisticSnapshot = canUseCloudLedgerTransactionEffects(userId, sessionId)
+      ? await applyCloudLedgerOptimisticView(snapshot, userId, {
+          isTransactionIncludedInAggregate: (transaction) =>
+            isPersistedActiveTransaction(db, userId, transaction.id),
+        })
+      : snapshot;
     if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
     useTransactionStore.getState().applyRefreshSnapshot({
       ...optimisticSnapshot,

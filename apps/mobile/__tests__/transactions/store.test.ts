@@ -344,6 +344,35 @@ describe("transaction boundaries", () => {
     });
   });
 
+  it("keeps local QA manual saves out of the Cloud Ledger outbox", async () => {
+    initializeTransactionSession(mockUserId, { enableRemoteEffects: false });
+    useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    useTransactionStore.getState().setDescription("Local QA groceries");
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.transaction).toMatchObject({
+      amount: 4520,
+      categoryId: "food",
+      description: "Local QA groceries",
+    });
+    expect(insertedTransactionRows).toEqual([
+      expect.objectContaining({
+        id: result.transaction.id,
+        amount: 4520,
+        categoryId: "food",
+        description: "Local QA groceries",
+        source: "manual",
+      }),
+    ]);
+    expect(cloudLedgerOutboxCalls).toEqual([]);
+    expect(cloudLedgerFlushIfOnline).not.toHaveBeenCalled();
+  });
+
   it("flushes the encrypted Cloud Ledger outbox after an already-online signed-in create", async () => {
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
@@ -492,6 +521,50 @@ describe("transaction boundaries", () => {
       }),
     ]);
     expect(useTransactionStore.getState().offset).toBe(1);
+  });
+
+  it("dedupes a backdated optimistic Cloud Ledger create when loading the next page", async () => {
+    const newerTransaction = makeStoredTransaction({
+      id: "tx-newer-visible" as TransactionId,
+      date: new Date("2026-06-20T00:00:00.000Z"),
+      createdAt: new Date("2026-06-20T10:00:00.000Z"),
+      updatedAt: new Date("2026-06-20T10:00:00.000Z"),
+    });
+    useTransactionStore.setState({
+      pages: [newerTransaction],
+      offset: 1,
+      hasMore: true,
+    });
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    const backdatedCalendarDate = new Date(2026, 2, 4);
+    useTransactionStore.getState().setDate(backdatedCalendarDate);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
+      makeRow({
+        id: result.transaction.id,
+        date: toIsoDate(backdatedCalendarDate),
+        createdAt: toIsoDateTime(result.transaction.createdAt),
+        updatedAt: toIsoDateTime(result.transaction.updatedAt),
+        source: "cloud_ledger",
+      }),
+      makeRow({ id: "tx-committed-next" as TransactionId }),
+    ]);
+
+    await loadNextTransactions(mockDb, mockUserId);
+
+    const visibleIds = useTransactionStore.getState().pages.map((transaction) => transaction.id);
+    expect(visibleIds.filter((id) => id === result.transaction.id)).toHaveLength(1);
+    expect(visibleIds).toContain("tx-committed-next");
+    expect(getTransactionsPaginated).toHaveBeenLastCalledWith({
+      db: mockDb,
+      userId: mockUserId,
+      limit: 30,
+      offset: 1,
+    });
   });
 
   it("does not ask for an online flush when the optimistic runtime write was stale", async () => {
