@@ -59,10 +59,6 @@ const INVALID_CREATE_CASES: readonly RejectedCreateCase[] = [
     outcome: { code: "invalid_ledger_reference" },
   },
   {
-    overrides: { transactionId: "txn-bad-category", categoryId: "cat-other" },
-    outcome: { code: "invalid_ledger_reference" },
-  },
-  {
     overrides: { transactionId: "txn-deleted-account", accountId: "acct-deleted" },
     outcome: { code: "invalid_ledger_reference" },
   },
@@ -187,6 +183,36 @@ describe("Cloud Ledger Postgres access boundary", () => {
     });
   });
 
+  postgresIt("seeds built-in categories per user even when another user has the same id", () => {
+    const postgres = setupSeededPostgres();
+    psql(
+      postgres,
+      `
+insert into ledger.categories (
+  user_id, id, name, icon, color, cursor_sequence, updated_at, deleted_at
+) values (
+  '${OTHER_USER_ID}'::uuid, 'cat-shared-built-in', 'Shared built-in', null, null, 10, '2026-06-01T10:00:00Z', null
+);
+`
+    );
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-shared-built-in-category",
+        categoryId: "cat-shared-built-in",
+      })
+    ).toMatchObject({
+      code: "accepted",
+      transaction: {
+        id: "txn-shared-built-in-category",
+        categoryId: "cat-shared-built-in",
+      },
+      cursor: "ledger:6",
+    });
+    expect(readCategoryRowCount(postgres, USER_ID, "cat-shared-built-in")).toBe("1");
+    expect(readCategoryRowCount(postgres, OTHER_USER_ID, "cat-shared-built-in")).toBe("1");
+  });
+
   postgresIt("rebuilds monthly projections for valid totals above integer range", () => {
     const postgres = setupSeededPostgres();
 
@@ -297,7 +323,6 @@ from ledger.transactions
 where user_id = '${USER_ID}'::uuid
   and id in (
     'txn-bad-account',
-    'txn-bad-category',
     'txn-deleted-account',
     'txn-deleted-category',
     'txn-zero',
@@ -331,6 +356,18 @@ select count(*)
 from ledger.transactions
 where user_id = '${USER_ID}'::uuid
   and id = '${CLIENT_TRANSACTION_ID}';
+`
+  );
+}
+
+function readCategoryRowCount(postgres: PostgresHarness, userId: string, categoryId: string) {
+  return psqlScalar(
+    postgres,
+    `
+select count(*)
+from ledger.categories
+where user_id = '${userId}'::uuid
+  and id = '${categoryId}';
 `
   );
 }

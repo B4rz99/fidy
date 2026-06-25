@@ -8,6 +8,7 @@ describe("normalizeTransactionSource", () => {
     expect(normalizeTransactionSource("notification_capture")).toBe("notification_capture");
     expect(normalizeTransactionSource("widget_capture")).toBe("widget_capture");
     expect(normalizeTransactionSource("apple_pay_capture")).toBe("apple_pay_capture");
+    expect(normalizeTransactionSource("cloud_ledger")).toBe("cloud_ledger");
   });
 
   it("defaults missing sources to manual", () => {

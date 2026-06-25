@@ -35,7 +35,7 @@ function toStoredCloudLedgerTransaction(
     date: transaction.date,
     description: transaction.description ?? "",
     id: transaction.id,
-    source: "manual",
+    source: "cloud_ledger",
     supersededAt: null,
     supersededByTransferId: null,
     type: transaction.type,

@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => {
     outbox,
     writeToken,
     beginCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
+    createCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
     createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerOutbox: vi.fn<(...args: any[]) => any>(),
@@ -55,6 +56,8 @@ vi.mock("@/features/cloud-ledger/outbox", () => ({
 
 vi.mock("@/features/cloud-ledger/runtime", () => ({
   beginCloudLedgerRuntimeCacheWrite: mocks.beginCloudLedgerRuntimeCacheWrite,
+  createCloudLedgerRuntimeCacheWriteAbortSignal:
+    mocks.createCloudLedgerRuntimeCacheWriteAbortSignal,
   getCloudLedgerRuntimeCache: mocks.getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent: mocks.isCloudLedgerRuntimeCacheWriteCurrent,
   resumeCloudLedgerRuntimeCacheWrites: mocks.resumeCloudLedgerRuntimeCacheWrites,
@@ -71,6 +74,9 @@ describe("Cloud Ledger runtime mutations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.beginCloudLedgerRuntimeCacheWrite.mockReturnValue(mocks.writeToken);
+    mocks.createCloudLedgerRuntimeCacheWriteAbortSignal.mockReturnValue(
+      new AbortController().signal
+    );
     mocks.createOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
     mocks.flushPendingCloudLedgerChanges.mockResolvedValue(mocks.flushedCache);
     mocks.getCloudLedgerOutbox.mockReturnValue(mocks.outbox);

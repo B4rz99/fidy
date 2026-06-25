@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { transactions } from "@/shared/db/schema";
 import { tryGetDb } from "@/shared/db/client";
@@ -48,6 +48,7 @@ import { useTransactionStore } from "./store/state";
 
 const PAGE_SIZE = 30;
 const CLOUD_LEDGER_MAX_COP_AMOUNT = 2_147_483_647;
+const CLOUD_LEDGER_TRANSACTION_SOURCE = "cloud_ledger";
 
 let transactionsSessionId = 0;
 let loadTransactionsRequestId = 0;
@@ -116,7 +117,7 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
     recordManualTransaction: (input) =>
       recordManualTransactionWithCloudLedger({ ...input, db, sessionId }),
     amendManualTransaction: async (input) => {
-      if (await isCloudLedgerTransactionReadOnly(input.userId, input.transactionId)) {
+      if (await isCloudLedgerTransactionReadOnly(db, input.userId, input.transactionId)) {
         return { success: false, error: "cloudLedgerMutationUnsupported" };
       }
       const result = await amendManualTransactionWithLocalLedger({
@@ -131,7 +132,7 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
         : result;
     },
     voidTransaction: async (input) => {
-      if (await isCloudLedgerTransactionReadOnly(input.userId, input.transactionId)) {
+      if (await isCloudLedgerTransactionReadOnly(db, input.userId, input.transactionId)) {
         return { success: false, error: "cloudLedgerMutationUnsupported" };
       }
       return voidTransactionWithLocalLedger({
@@ -242,7 +243,7 @@ function toCloudLedgerTransactionShadowRow(transaction: StoredTransaction): Tran
     date: toIsoDate(transaction.date),
     description: transaction.description,
     id: transaction.id,
-    source: transaction.source ?? "manual",
+    source: CLOUD_LEDGER_TRANSACTION_SOURCE,
     supersededAt: transaction.supersededAt == null ? null : toIsoDateTime(transaction.supersededAt),
     supersededByTransferId: transaction.supersededByTransferId,
     type: transaction.type,
@@ -253,35 +254,80 @@ function toCloudLedgerTransactionShadowRow(transaction: StoredTransaction): Tran
 }
 
 export function persistCloudLedgerRuntimeTransactionShadows(db: AnyDb, userId: UserId): void {
-  loadRuntimeCloudLedgerTransactions(userId).forEach((transaction) => {
+  const runtimeTransactions = loadRuntimeCloudLedgerTransactions(userId);
+  runtimeTransactions.forEach((transaction) => {
     persistCloudLedgerTransactionShadow(db, transaction);
   });
+  try {
+    deleteCloudLedgerTransactionShadowsExcept(
+      db,
+      userId,
+      runtimeTransactions.map((transaction) => transaction.id)
+    );
+  } catch (error) {
+    captureWarning("cloud_ledger_shadow_transaction_prune_failed", {
+      errorType: getErrorType(error),
+    });
+  }
 }
 
 export async function deletePendingCloudLedgerTransactionShadows(userId: UserId): Promise<void> {
   const db = tryGetDb(userId);
   if (db === null) return;
 
-  const pendingTransactionIds = (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
-    change.kind === "createTransaction" ? [change.transaction.id] : []
-  );
+  let pendingTransactionIds: readonly TransactionId[];
+  try {
+    pendingTransactionIds = (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
+      change.kind === "createTransaction" ? [change.transaction.id] : []
+    );
+  } catch (error) {
+    captureWarning("cloud_ledger_shadow_transaction_delete_failed", {
+      errorType: getErrorType(error),
+    });
+    deleteAllCloudLedgerTransactionShadows(db, userId);
+    return;
+  }
   deleteCloudLedgerTransactionShadows(db, userId, pendingTransactionIds);
 }
 
-function deleteCloudLedgerTransactionShadows(
+const cloudLedgerShadowRowsForUser = (userId: UserId) =>
+  and(eq(transactions.userId, userId), eq(transactions.source, CLOUD_LEDGER_TRANSACTION_SOURCE));
+
+const deleteCloudLedgerTransactionShadows = (
   db: AnyDb,
   userId: UserId,
   transactionIds: readonly TransactionId[]
-): void {
+): void => {
   const uniqueTransactionIds = [...new Set(transactionIds)];
   if (uniqueTransactionIds.length === 0) return;
 
   db.delete(transactions)
     .where(and(eq(transactions.userId, userId), inArray(transactions.id, uniqueTransactionIds)))
     .run();
-}
+};
+
+const deleteAllCloudLedgerTransactionShadows = (db: AnyDb, userId: UserId): void => {
+  db.delete(transactions).where(cloudLedgerShadowRowsForUser(userId)).run();
+};
+
+const deleteCloudLedgerTransactionShadowsExcept = (
+  db: AnyDb,
+  userId: UserId,
+  transactionIds: readonly TransactionId[]
+): void => {
+  const uniqueTransactionIds = [...new Set(transactionIds)];
+  const staleShadowCondition =
+    uniqueTransactionIds.length === 0
+      ? cloudLedgerShadowRowsForUser(userId)
+      : and(
+          cloudLedgerShadowRowsForUser(userId),
+          notInArray(transactions.id, uniqueTransactionIds)
+        );
+  db.delete(transactions).where(staleShadowCondition).run();
+};
 
 async function isCloudLedgerTransactionReadOnly(
+  db: AnyDb,
   userId: UserId,
   transactionId: TransactionId
 ): Promise<boolean> {
@@ -292,10 +338,31 @@ async function isCloudLedgerTransactionReadOnly(
   ) {
     return true;
   }
+  if (isPersistedCloudLedgerTransactionShadow(db, userId, transactionId)) {
+    return true;
+  }
   return (await getCloudLedgerOutbox(userId).load()).some(
     (change) => change.kind === "createTransaction" && change.transaction.id === transactionId
   );
 }
+
+const isPersistedCloudLedgerTransactionShadow = (
+  db: AnyDb,
+  userId: UserId,
+  transactionId: TransactionId
+): boolean => {
+  try {
+    return (
+      createTransactionQueryService().getStoredTransaction({
+        db,
+        userId,
+        transactionId,
+      })?.source === CLOUD_LEDGER_TRANSACTION_SOURCE
+    );
+  } catch {
+    return false;
+  }
+};
 
 function isPersistedActiveTransaction(db: AnyDb, userId: UserId, transactionId: TransactionId) {
   try {

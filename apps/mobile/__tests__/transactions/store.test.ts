@@ -26,6 +26,7 @@ import {
   loadNextTransactions,
   loadTransactionAggregates,
   loadTransactionIntoForm,
+  persistCloudLedgerRuntimeTransactionShadows,
   refreshTransactions,
   resumeTransactionSession,
   saveCurrentTransaction,
@@ -51,6 +52,7 @@ const cloudLedgerOutboxCalls: unknown[] = [];
 const cloudLedgerFlushIfOnline = vi.hoisted(() =>
   vi.fn<(...args: any[]) => any>(() => Promise.resolve())
 );
+const mockTryGetDb = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
@@ -93,7 +95,12 @@ vi.mock("@/shared/db/supabase", () => ({
   getSupabase: vi.fn<(...args: any[]) => any>(),
 }));
 
+vi.mock("@/shared/db/client", () => ({
+  tryGetDb: mockTryGetDb,
+}));
+
 const insertedTransactionRows: unknown[] = [];
+const deletedTransactionScopes: unknown[] = [];
 let canUseSelectedAccount = true;
 const mockDb = {
   transaction: vi.fn<(...args: any[]) => any>((fn: (tx: unknown) => unknown) => fn(mockDb)),
@@ -110,6 +117,13 @@ const mockDb = {
     values: (row: unknown) => ({
       run: () => {
         insertedTransactionRows.push(row);
+      },
+    }),
+  }),
+  delete: () => ({
+    where: (scope: unknown) => ({
+      run: () => {
+        deletedTransactionScopes.push(scope);
       },
     }),
   }),
@@ -145,6 +159,7 @@ function makeRow(
     createdAt: IsoDateTime;
     updatedAt: IsoDateTime;
     voidedAt: IsoDateTime | null;
+    source: string;
   }> = {}
 ) {
   return {
@@ -226,8 +241,10 @@ describe("transaction boundaries", () => {
     cloudLedgerFlushIfOnline.mockReset();
     cloudLedgerFlushIfOnline.mockResolvedValue(undefined);
     insertedTransactionRows.length = 0;
+    deletedTransactionScopes.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
+    mockTryGetDb.mockReturnValue(mockDb);
     resetCloudLedgerRuntimeCaches();
     initializeTransactionSession(mockUserId);
     useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
@@ -353,7 +370,7 @@ describe("transaction boundaries", () => {
         categoryId: "food",
         accountId: "fa-default-user-1",
         description: "Groceries",
-        source: "manual",
+        source: "cloud_ledger",
       }),
     ]);
   });
@@ -379,6 +396,36 @@ describe("transaction boundaries", () => {
         db: mockDb,
         userId: mockUserId,
         id: pendingTransaction.id,
+        fields: {
+          type: "expense",
+          digits: "9999",
+          categoryId: "food" as CategoryId,
+          accountId: "fa-default-user-1" as FinancialAccountId,
+          description: "Edited locally",
+          date: new Date("2026-03-04T00:00:00.000Z"),
+        },
+      })
+    ).resolves.toEqual({ success: false, error: "cloudLedgerMutationUnsupported" });
+  });
+
+  it("rejects local-only edits and deletes for persisted Cloud Ledger shadows after restart", async () => {
+    const persistedShadow = makeStoredTransaction({
+      id: "tx-persisted-cloud-ledger-shadow" as TransactionId,
+      source: "cloud_ledger",
+    });
+    vi.mocked(getTransactionById).mockReturnValue(
+      makeRow({ id: persistedShadow.id, source: "cloud_ledger" })
+    );
+    vi.mocked(getCloudLedgerOutbox).mockReturnValue(createMockCloudLedgerOutbox());
+
+    await expect(deleteTransaction(mockDb, mockUserId, persistedShadow.id)).rejects.toThrow(
+      "cloudLedgerMutationUnsupported"
+    );
+    await expect(
+      updateTransactionDirect({
+        db: mockDb,
+        userId: mockUserId,
+        id: persistedShadow.id,
         fields: {
           type: "expense",
           digits: "9999",
@@ -931,6 +978,30 @@ describe("transaction boundaries", () => {
     });
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("removes tombstoned persisted Cloud Ledger shadows when runtime refresh no longer contains them", () => {
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:9" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [
+          {
+            recordType: "transaction",
+            recordId: "tx-tombstoned-cloud-ledger-shadow",
+            deletedAt: "2026-06-02T10:05:00.000Z" as IsoDateTime,
+          },
+        ],
+      })
+    );
+
+    persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
+
+    expect(deletedTransactionScopes).toHaveLength(1);
+    expect(insertedTransactionRows).toEqual([]);
   });
 
   it("loads the next page when more rows are available", async () => {

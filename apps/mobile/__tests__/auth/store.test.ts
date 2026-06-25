@@ -532,6 +532,23 @@ describe("useAuthStore", () => {
     expect(useAuthStore.getState().session).toEqual(mockSession);
   });
 
+  it("signOut still discards raw Cloud Ledger outbox state when shadow cleanup cannot read it", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    mockDeletePendingCloudLedgerTransactionShadows.mockRejectedValueOnce(
+      new Error("encrypted outbox chunk is missing")
+    );
+
+    await useAuthStore.getState().signOut();
+
+    expect(mockDeletePendingCloudLedgerTransactionShadows).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).toHaveBeenCalled();
+  });
+
   it("signOut clears state even if supabase.signOut fails", async () => {
     useAuthStore.setState({
       session: { access_token: "token" } as never,

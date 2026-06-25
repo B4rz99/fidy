@@ -4,6 +4,7 @@ export const TRANSACTION_SOURCES = [
   "notification_capture",
   "widget_capture",
   "apple_pay_capture",
+  "cloud_ledger",
 ] as const;
 
 export type NormalizedTransactionSource = (typeof TRANSACTION_SOURCES)[number];

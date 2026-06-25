@@ -23,6 +23,7 @@ export {
 export {
   beginCloudLedgerRuntimeCacheWrite,
   clearCloudLedgerRuntimeCache,
+  createCloudLedgerRuntimeCacheWriteAbortSignal,
   getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent,
   resetCloudLedgerRuntimeCaches,

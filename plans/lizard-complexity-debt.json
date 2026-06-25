@@ -13,7 +13,7 @@
   },
   "violations": [
     {
-      "key": "encodeJson@464-545@apps/mobile/features/cloud-ledger/outbox.ts",
+      "key": "encodeJson@470-551@apps/mobile/features/cloud-ledger/outbox.ts",
       "file": "apps/mobile/features/cloud-ledger/outbox.ts",
       "function": "encodeJson",
       "thresholdProfile": "default",
@@ -22,7 +22,7 @@
       "parameterCount": 3
     },
     {
-      "key": "requireChunkAllocationCoverage@605-690@apps/mobile/features/cloud-ledger/outbox.ts",
+      "key": "requireChunkAllocationCoverage@611-696@apps/mobile/features/cloud-ledger/outbox.ts",
       "file": "apps/mobile/features/cloud-ledger/outbox.ts",
       "function": "requireChunkAllocationCoverage",
       "thresholdProfile": "default",

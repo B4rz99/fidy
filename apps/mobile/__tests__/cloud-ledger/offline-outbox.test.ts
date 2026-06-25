@@ -494,6 +494,52 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ]);
   });
 
+  it("passes abort signals to the Remote API Boundary so logout discard can cancel in-flight flushes", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = createSeededLedgerCache();
+    await createOfflineCloudLedgerTransaction({
+      cache,
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const abortController = new AbortController();
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:8",
+      },
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [acceptedCoffeeTransaction()],
+        tombstones: [],
+      },
+    });
+
+    await flushPendingCloudLedgerChanges({
+      abortSignal: abortController.signal,
+      cache,
+      outbox,
+      supabase: supabase.client,
+    });
+
+    expect(supabase.functionsInvoke).toHaveBeenNthCalledWith(
+      1,
+      "cloud-ledger-api",
+      expect.objectContaining({
+        signal: abortController.signal,
+      })
+    );
+  });
+
   it("keeps pending state when Cloud Ledger acceptance succeeds but cache reconciliation fails", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({

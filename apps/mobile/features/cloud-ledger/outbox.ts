@@ -227,6 +227,7 @@ export async function restoreOptimisticCloudLedgerCache(input: {
 }
 
 export async function flushPendingCloudLedgerChanges(input: {
+  readonly abortSignal?: AbortSignal;
   readonly cache: CloudLedgerCache;
   readonly outbox: EncryptedCloudLedgerOutbox;
   readonly supabase: SupabaseClient;
@@ -236,7 +237,7 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  const acceptedChangeIds = await flushPendingChanges(input.supabase, changes);
+  const acceptedChangeIds = await flushPendingChanges(input.supabase, changes, input.abortSignal);
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
@@ -264,20 +265,25 @@ export function applyPendingLedgerChanges(
 
 async function flushPendingChanges(
   supabase: SupabaseClient,
-  changes: readonly CloudLedgerPendingChange[]
+  changes: readonly CloudLedgerPendingChange[],
+  abortSignal?: AbortSignal
 ): Promise<readonly LedgerChangeId[]> {
   if (changes.length === 0) {
     return [];
   }
-  const outcome = await applyPendingCloudLedgerChanges(supabase, {
-    commandVersion: 1,
-    changes: changes.map((change) => ({
-      id: change.id,
-      kind: change.kind,
-      commandVersion: change.commandVersion,
-      transaction: change.transaction,
-    })),
-  });
+  const outcome = await applyPendingCloudLedgerChanges(
+    supabase,
+    {
+      commandVersion: 1,
+      changes: changes.map((change) => ({
+        id: change.id,
+        kind: change.kind,
+        commandVersion: change.commandVersion,
+        transaction: change.transaction,
+      })),
+    },
+    { signal: abortSignal }
+  );
   return outcome.acceptedChangeIds;
 }
 

@@ -229,7 +229,8 @@ export async function createCloudLedgerTransaction(
 
 export async function applyPendingCloudLedgerChanges(
   supabase: SupabaseClient,
-  command: CloudLedgerApplyPendingChangesCommand
+  command: CloudLedgerApplyPendingChangesCommand,
+  options: { readonly signal?: AbortSignal } = {}
 ): Promise<CloudLedgerApplyPendingChangesAccepted> {
   const response = await supabase.functions.invoke<CloudLedgerApplyPendingChangesApiResponse>(
     CLOUD_LEDGER_FUNCTION,
@@ -239,6 +240,7 @@ export async function applyPendingCloudLedgerChanges(
         commandVersion: command.commandVersion,
         changes: command.changes,
       },
+      signal: options.signal,
     }
   );
 

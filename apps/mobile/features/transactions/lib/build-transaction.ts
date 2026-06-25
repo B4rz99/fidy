@@ -5,7 +5,7 @@ import type { CategoryId } from "@/shared/types/branded";
 import type { AccountAttributionState, StoredTransaction, TransactionType } from "../schema";
 import type { TransactionRow } from "./repository";
 
-const TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT = new Set(["manual"]);
+const TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT = new Set(["manual", "cloud_ledger"]);
 
 const isAccountAttributionState = (state: string): state is AccountAttributionState =>
   state === "confirmed" || state === "inferred" || state === "unresolved";

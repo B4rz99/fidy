@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   beginCloudLedgerRuntimeCacheWrite,
+  createCloudLedgerRuntimeCacheWriteAbortSignal,
   isCloudLedgerRuntimeCacheWriteCurrent,
   resetCloudLedgerRuntimeCaches,
   resumeCloudLedgerRuntimeCacheWrites,
@@ -29,5 +30,18 @@ describe("Cloud Ledger runtime cache write tokens", () => {
     expect(
       isCloudLedgerRuntimeCacheWriteCurrent(userId, beginCloudLedgerRuntimeCacheWrite(userId))
     ).toBe(true);
+  });
+
+  it("aborts generation-bound remote work when logout discard suspends writes", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+    const signal = createCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken);
+
+    expect(signal).not.toBeNull();
+    expect(signal?.aborted).toBe(false);
+
+    suspendCloudLedgerRuntimeCacheWrites(userId);
+
+    expect(signal?.aborted).toBe(true);
   });
 });

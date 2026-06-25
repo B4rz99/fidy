@@ -11,6 +11,7 @@ import {
 } from "./outbox";
 import {
   beginCloudLedgerRuntimeCacheWrite,
+  createCloudLedgerRuntimeCacheWriteAbortSignal,
   getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent,
   resumeCloudLedgerRuntimeCacheWrites,
@@ -106,10 +107,15 @@ async function flushCloudLedgerOutboxIfCurrent(
   if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
     return false;
   }
+  const abortSignal = createCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken);
+  if (abortSignal === null) {
+    return false;
+  }
   return setCloudLedgerRuntimeCacheIfCurrent(
     userId,
     writeToken,
     await flushPendingCloudLedgerChanges({
+      abortSignal,
       cache: getCloudLedgerRuntimeCache(userId),
       outbox: getCloudLedgerOutbox(userId),
       supabase,

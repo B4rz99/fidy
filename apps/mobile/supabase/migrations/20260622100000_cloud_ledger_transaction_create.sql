@@ -254,7 +254,8 @@ begin
     if exists (
       select 1
       from ledger.categories
-      where ledger.categories.id = p_category_id
+      where ledger.categories.user_id = p_user_id
+        and ledger.categories.id = p_category_id
     ) then
       return jsonb_build_object('code', 'invalid_ledger_reference');
     end if;

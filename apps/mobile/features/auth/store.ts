@@ -203,7 +203,9 @@ async function discardCloudLedgerStateBeforeSignOut(): Promise<void> {
   try {
     invalidateTransactionSession();
     suspendCloudLedgerRuntimeCacheWrites(userId);
-    await deletePendingCloudLedgerTransactionShadows(userId);
+    await deletePendingCloudLedgerTransactionShadows(userId).catch((err) => {
+      captureAuthFailure("auth_signout_cloud_ledger_shadow_cleanup_failed", err);
+    });
     await discardCloudLedgerOutbox(userId);
     clearCloudLedgerRuntimeCache(userId);
   } catch (err) {
