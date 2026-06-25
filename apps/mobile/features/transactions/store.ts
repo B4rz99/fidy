@@ -34,6 +34,7 @@ import {
   createTransactionMutationService,
   type TransactionMutationResult,
 } from "./lib/mutation-service";
+import { compareStoredTransactionsByRepositoryOrder } from "./lib/transaction-order";
 import { toStoredTransaction } from "./lib/build-transaction";
 import type { StoredTransaction, TransactionType } from "./schema";
 import { cloudLedgerCreateCommandToStoredTransaction } from "./services/cloud-ledger-transaction-adapter";
@@ -194,6 +195,8 @@ async function recordManualTransactionWithCloudLedger({
     optimisticCreate.didWriteRuntimeCache &&
     isActiveTransactionSession(userId, sessionId) &&
     persistCloudLedgerTransactionShadow(db, transaction);
+  const shouldCountCachedTransactionInPagination =
+    didPersistShadow && isWithinLoadedTransactionPageWindow(transaction);
   if (optimisticCreate.didWriteRuntimeCache) {
     void optimisticCreate.flushIfOnline().catch((error) => {
       captureWarning("cloud_ledger_outbox_flush_failed", {
@@ -205,9 +208,22 @@ async function recordManualTransactionWithCloudLedger({
   return {
     success: true,
     cacheCommittedTransaction: optimisticCreate.didWriteRuntimeCache,
-    countCachedTransactionInPagination: didPersistShadow,
+    countCachedTransactionInPagination: shouldCountCachedTransactionInPagination,
     transaction,
   };
+}
+
+function isWithinLoadedTransactionPageWindow(transaction: StoredTransaction): boolean {
+  const { pages, offset } = useTransactionStore.getState();
+  if (offset <= 0) {
+    return false;
+  }
+  const precedingVisibleTransactions = pages.filter(
+    (page) =>
+      page.id !== transaction.id &&
+      compareStoredTransactionsByRepositoryOrder(page, transaction) <= 0
+  ).length;
+  return precedingVisibleTransactions < offset;
 }
 
 function persistCloudLedgerTransactionShadow(db: AnyDb, transaction: StoredTransaction): boolean {
@@ -341,9 +357,16 @@ async function isCloudLedgerTransactionReadOnly(
   if (isPersistedCloudLedgerTransactionShadow(db, userId, transactionId)) {
     return true;
   }
-  return (await getCloudLedgerOutbox(userId).load()).some(
-    (change) => change.kind === "createTransaction" && change.transaction.id === transactionId
-  );
+  try {
+    return (await getCloudLedgerOutbox(userId).load()).some(
+      (change) => change.kind === "createTransaction" && change.transaction.id === transactionId
+    );
+  } catch (error) {
+    captureWarning("cloud_ledger_read_only_outbox_lookup_failed", {
+      errorType: getErrorType(error),
+    });
+    return false;
+  }
 }
 
 const isPersistedCloudLedgerTransactionShadow = (

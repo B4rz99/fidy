@@ -732,7 +732,11 @@ async function readSecureStoreOutboxPayload(key: string): Promise<string | null>
   return chunks.join("");
 }
 
-async function writeSecureStoreOutboxPayload(key: string, payload: string): Promise<void> {
+async function writeSecureStoreOutboxPayload(
+  key: string,
+  payload: string,
+  retainedAllocations: readonly SecureStoreOutboxChunkAllocation[] = []
+): Promise<void> {
   const [previousManifest, stagedAllocation] = await Promise.all([
     SecureStore.getItemAsync(key).then(parseChunkedOutboxManifest),
     SecureStore.getItemAsync(secureStoreOutboxStagedKey(key)).then(parseStagedChunkAllocation),
@@ -744,6 +748,7 @@ async function writeSecureStoreOutboxPayload(key: string, payload: string): Prom
   } satisfies SecureStoreOutboxChunkAllocation;
   const allocatedGenerations = mergeChunkAllocations([
     activeAllocation,
+    ...retainedAllocations,
     ...(previousManifest?.allocatedGenerations ?? []),
     ...(stagedAllocation === null ? [] : [stagedAllocation]),
   ]);
@@ -791,7 +796,7 @@ async function clearSecureStoreOutboxPayload(key: string): Promise<void> {
     return;
   }
   if (payload !== null) {
-    await writeSecureStoreOutboxPayload(key, payload);
+    await writeSecureStoreOutboxPayload(key, payload, allocations);
   }
   throw failedDelete.reason;
 }

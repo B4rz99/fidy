@@ -128,6 +128,13 @@ const mockDb = {
       },
     }),
   }),
+  update: () => ({
+    set: () => ({
+      where: () => ({
+        run: () => ({ changes: 1 }),
+      }),
+    }),
+  }),
 } as unknown as AnyDb;
 const mockUserId = "user-1" as UserId;
 
@@ -439,6 +446,23 @@ describe("transaction boundaries", () => {
     ).resolves.toEqual({ success: false, error: "cloudLedgerMutationUnsupported" });
   });
 
+  it("allows local deletes for ordinary rows when encrypted Cloud Ledger outbox is unreadable", async () => {
+    const localTransaction = makeStoredTransaction({
+      id: "tx-local-delete-with-corrupt-outbox" as TransactionId,
+    });
+    const load = vi
+      .fn<(...args: any[]) => any>()
+      .mockRejectedValue(new CloudLedgerOutboxFailure("invalid_encrypted_outbox", "corrupt"));
+    vi.mocked(getTransactionById).mockReturnValue(makeRow({ id: localTransaction.id }));
+    vi.mocked(getCloudLedgerOutbox).mockReturnValue(createMockCloudLedgerOutbox(load));
+
+    await expect(
+      deleteTransaction(mockDb, mockUserId, localTransaction.id)
+    ).resolves.toBeUndefined();
+
+    expect(load).toHaveBeenCalled();
+  });
+
   it("inserts backdated optimistic Cloud Ledger creates after newer cached transactions", async () => {
     const newerTransaction = makeStoredTransaction({
       id: "tx-newer-visible" as TransactionId,
@@ -467,6 +491,7 @@ describe("transaction boundaries", () => {
         date: backdatedCalendarDate,
       }),
     ]);
+    expect(useTransactionStore.getState().offset).toBe(1);
   });
 
   it("does not ask for an online flush when the optimistic runtime write was stale", async () => {
@@ -979,6 +1004,41 @@ describe("transaction boundaries", () => {
     });
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("commitStatus");
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("maps uncategorized Cloud Ledger transactions to the ordinary Other category", async () => {
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:9" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            id: "txn-cloud-uncategorized" as TransactionId,
+            type: "expense",
+            amount: 4200 as CopAmount,
+            currency: "COP",
+            categoryId: null,
+            accountId: "fa-default-user-1" as FinancialAccountId,
+            description: "Remote uncategorized",
+            date: "2026-06-12" as IsoDate,
+            updatedAt: "2026-06-12T10:00:00.000Z" as IsoDateTime,
+          },
+        ],
+        tombstones: [],
+      })
+    );
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages).toEqual([
+      expect.objectContaining({
+        id: "txn-cloud-uncategorized",
+        categoryId: "other",
+        source: "cloud_ledger",
+      }),
+    ]);
   });
 
   it("removes tombstoned persisted Cloud Ledger shadows when runtime refresh no longer contains them", () => {

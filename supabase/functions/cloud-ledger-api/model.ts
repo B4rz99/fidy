@@ -101,6 +101,7 @@ export type CloudLedgerApplyPendingChangesCommand = {
 export type CloudLedgerApplyPendingChangesAccepted = {
   readonly code: "accepted";
   readonly acceptedChangeIds: readonly string[];
+  readonly rejectedChangeIds: readonly string[];
   readonly cursor: LedgerCursor;
 };
 
@@ -118,9 +119,7 @@ export type CloudLedgerCreateTransactionOutcome =
   | CloudLedgerCreateTransactionAccepted
   | CloudLedgerCreateTransactionRejected;
 
-export type CloudLedgerApplyPendingChangesOutcome =
-  | CloudLedgerApplyPendingChangesAccepted
-  | CloudLedgerCreateTransactionRejected;
+export type CloudLedgerApplyPendingChangesOutcome = CloudLedgerApplyPendingChangesAccepted;
 
 export type CloudLedgerApiError =
   | "missing_auth"

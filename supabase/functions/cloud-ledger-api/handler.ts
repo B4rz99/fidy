@@ -166,12 +166,6 @@ async function applyPendingChangesResponse(
     return jsonResponse({ success: false, error: "unsupported_command_version" }, 400);
   }
   const outcome = await store.applyPendingChanges(userId, commandResult.command);
-  if (outcome.code !== "accepted") {
-    return jsonResponse(
-      { success: false, error: outcome.code },
-      createTransactionFailureStatus(outcome)
-    );
-  }
   return jsonResponse({
     success: true,
     data: outcome,

@@ -3,6 +3,7 @@ import type {
   CloudLedgerPendingChange,
   CloudLedgerTransaction,
 } from "@/features/cloud-ledger/public";
+import { getBuiltInCategoryId } from "@/shared/categories";
 import { parseIsoDate } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import type { StoredTransaction } from "../schema";
@@ -22,14 +23,12 @@ function toStoredCloudLedgerTransaction(
   userId: UserId,
   transaction: CloudLedgerStoredTransactionShape
 ): StoredTransaction | null {
-  if (transaction.categoryId === null) {
-    return null;
-  }
+  const categoryId = transaction.categoryId ?? getBuiltInCategoryId("other");
   return {
     accountAttributionState: "confirmed",
     accountId: transaction.accountId,
     amount: transaction.amount,
-    categoryId: transaction.categoryId,
+    categoryId,
     counterpartyName: "",
     createdAt: transaction.timestamp,
     date: transaction.date,

@@ -264,7 +264,7 @@ describe("mobile Cloud Ledger offline outbox", () => {
     );
   });
 
-  it("removes stale encrypted payload chunks on logout after a failed smaller overwrite cleanup", async () => {
+  it("removes stale encrypted payload chunks on logout retry after a failed discard", async () => {
     const pendingChanges = createLargePendingChanges();
     await enqueueCloudLedgerPendingChanges(pendingChanges);
     const staleChunkKey = secureStoreOutboxPayloadChunkKeys().find((key) =>
@@ -288,9 +288,16 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ).resolves.toBeUndefined();
     expect(secureStoreOutboxPayloadChunkKeys()).toContain(staleChunkKey);
 
+    await expect(discardCloudLedgerOutbox(USER_ID)).rejects.toThrow(
+      "simulated stale chunk cleanup failure"
+    );
+    resetCloudLedgerOutboxInstances();
+    expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual(
+      pendingChanges.slice(0, 1).map((pending) => pending.changeId)
+    );
+
     failStaleChunkCleanup = false;
     await discardCloudLedgerOutbox(USER_ID);
-
     expect([...secureStore.keys()]).toEqual([]);
   });
 
@@ -348,6 +355,14 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual([
       "change-offline-coffee",
     ]);
+
+    vi.mocked(SecureStore.deleteItemAsync).mockImplementation((key: string) => {
+      secureStore.delete(key);
+      return Promise.resolve();
+    });
+    await expect(discardCloudLedgerOutbox(USER_ID)).resolves.toBeUndefined();
+
+    expect([...secureStore.keys()]).toEqual([]);
   });
 
   it("keeps pending encrypted outbox usable when logout discard cannot delete a payload chunk", async () => {
@@ -458,6 +473,51 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(storage.readRaw()).toBeNull();
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.getSession).not.toHaveBeenCalled();
+  });
+
+  it("removes accepted pending changes while retaining reported rejected changes", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    await outbox.enqueue(
+      pendingCreateChange({
+        changeId: "change-offline-coffee",
+        command: offlineCoffeeCommand(),
+        createdAt: "2026-06-02T10:03:00.000Z",
+      })
+    );
+    await outbox.enqueue(
+      pendingCreateChange({
+        changeId: "change-offline-taxi",
+        command: offlineTaxiCommand(),
+        createdAt: "2026-06-02T10:04:00.000Z",
+      })
+    );
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-taxi"],
+        rejectedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:8",
+      },
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [],
+      },
+    });
+
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: supabase.client,
+    });
+
+    expect((await outbox.load()).map((change) => change.id)).toEqual(["change-offline-coffee"]);
   });
 
   it("does not send pending changes when the flush generation is stale after loading them", async () => {

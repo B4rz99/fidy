@@ -4,7 +4,6 @@ import type {
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
   CloudLedgerCreateTransactionOutcome,
-  CloudLedgerCreateTransactionRejected,
   LedgerCursor,
 } from "./model.ts";
 import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
@@ -38,13 +37,11 @@ type SupabaseLike = {
   }>;
 };
 
-type ApplyPendingChangesProgress =
-  | {
-      readonly code: "accepted";
-      readonly acceptedChangeIds: readonly string[];
-      readonly cursor: string | null;
-    }
-  | CloudLedgerCreateTransactionRejected;
+type ApplyPendingChangesProgress = {
+  readonly acceptedChangeIds: readonly string[];
+  readonly cursor: string | null;
+  readonly rejectedChangeIds: readonly string[];
+};
 
 const CLOUD_LEDGER_BOOTSTRAP_RPC = "cloud_ledger_bootstrap";
 const CLOUD_LEDGER_CREATE_TRANSACTION_RPC = "cloud_ledger_create_transaction";
@@ -112,31 +109,29 @@ async function applyPendingChanges(
   const outcomes = await command.changes.reduce<Promise<ApplyPendingChangesProgress>>(
     async (previous, change) => {
       const accepted = await previous;
-      if (accepted.code !== "accepted") {
-        return accepted;
-      }
       const outcome = await createTransaction(supabase, userId, {
         commandVersion: change.commandVersion,
         transaction: change.transaction,
       });
       if (outcome.code !== "accepted") {
-        return outcome;
+        return {
+          ...accepted,
+          rejectedChangeIds: [...accepted.rejectedChangeIds, change.id],
+        };
       }
       return {
-        code: "accepted",
         acceptedChangeIds: [...accepted.acceptedChangeIds, change.id],
         cursor: outcome.cursor,
+        rejectedChangeIds: accepted.rejectedChangeIds,
       };
     },
-    Promise.resolve({ code: "accepted", acceptedChangeIds: [], cursor: null })
+    Promise.resolve({ acceptedChangeIds: [], cursor: null, rejectedChangeIds: [] })
   );
 
-  if (outcomes.code !== "accepted") {
-    return outcomes;
-  }
   return {
     code: "accepted",
     acceptedChangeIds: outcomes.acceptedChangeIds,
+    rejectedChangeIds: outcomes.rejectedChangeIds,
     cursor: (outcomes.cursor ?? "ledger:0") as LedgerCursor,
   };
 }

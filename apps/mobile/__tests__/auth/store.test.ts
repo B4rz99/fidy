@@ -532,14 +532,12 @@ describe("useAuthStore", () => {
     expect(useAuthStore.getState().session).toEqual(mockSession);
   });
 
-  it("signOut still discards raw Cloud Ledger outbox state when shadow cleanup cannot read it", async () => {
+  it("signOut discards raw Cloud Ledger outbox state after shadow cleanup handles unreadable state", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
     });
-    mockDeletePendingCloudLedgerTransactionShadows.mockRejectedValueOnce(
-      new Error("encrypted outbox chunk is missing")
-    );
+    mockDeletePendingCloudLedgerTransactionShadows.mockResolvedValueOnce(undefined);
 
     await useAuthStore.getState().signOut();
 
@@ -547,6 +545,26 @@ describe("useAuthStore", () => {
     expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockSignOut).toHaveBeenCalled();
+  });
+
+  it("signOut preserves Cloud Ledger outbox state when shadow cleanup fails", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    mockDeletePendingCloudLedgerTransactionShadows.mockRejectedValueOnce(
+      new Error("local shadow delete failed")
+    );
+
+    await expect(useAuthStore.getState().signOut()).rejects.toThrow("local shadow delete failed");
+
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).not.toHaveBeenCalled();
+    expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toEqual(mockSession);
   });
 
   it("signOut clears state even if supabase.signOut fails", async () => {

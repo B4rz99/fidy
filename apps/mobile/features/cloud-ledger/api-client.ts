@@ -96,6 +96,7 @@ type CloudLedgerWireCreateTransactionAccepted = {
 type CloudLedgerWireApplyPendingChangesAccepted = {
   readonly code: "accepted";
   readonly acceptedChangeIds: readonly string[];
+  readonly rejectedChangeIds?: readonly string[];
   readonly cursor: string;
 };
 
@@ -122,6 +123,7 @@ export type CloudLedgerApplyPendingChangesCommand = {
 export type CloudLedgerApplyPendingChangesAccepted = {
   readonly code: "accepted";
   readonly acceptedChangeIds: readonly LedgerChangeId[];
+  readonly rejectedChangeIds: readonly LedgerChangeId[];
   readonly cursor: LedgerCursor;
 };
 
@@ -309,6 +311,7 @@ function parseApplyPendingChangesAccepted(
     return {
       code: "accepted",
       acceptedChangeIds: data.acceptedChangeIds.map(requireLedgerChangeId),
+      rejectedChangeIds: (data.rejectedChangeIds ?? []).map(requireLedgerChangeId),
       cursor: requireLedgerCursor(data.cursor),
     };
   } catch (error) {

@@ -260,9 +260,14 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
-  it("surfaces permanent pending-change rejections as typed batch failures", async () => {
+  it("reports permanent pending-change rejections without failing the whole batch", async () => {
     const api = createCloudLedgerApiDeps({
-      applyPendingChangesResult: { code: "invalid_ledger_reference" },
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:2",
+      },
     });
 
     const response = await handleCloudLedgerRequest(
@@ -270,10 +275,15 @@ describe("cloud-ledger-api Edge Function", () => {
       api.deps
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      success: false,
-      error: "invalid_ledger_reference",
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:2",
+      },
     });
   });
 
@@ -619,6 +629,7 @@ function createCloudLedgerApiDeps(
         options.applyPendingChangesResult ?? {
           code: "accepted",
           acceptedChangeIds: [],
+          rejectedChangeIds: [],
           cursor: "ledger:2",
         }
       )

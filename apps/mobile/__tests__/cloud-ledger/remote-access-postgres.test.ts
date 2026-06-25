@@ -55,15 +55,19 @@ const INVALID_CREATE_CASES: readonly RejectedCreateCase[] = [
     outcome: { code: "unauthorized_transaction_id" },
   },
   {
-    overrides: { transactionId: "txn-bad-account", accountId: "acct-other" },
-    outcome: { code: "invalid_ledger_reference" },
-  },
-  {
     overrides: { transactionId: "txn-deleted-account", accountId: "acct-deleted" },
     outcome: { code: "invalid_ledger_reference" },
   },
   {
     overrides: { transactionId: "txn-deleted-category", categoryId: "cat-deleted" },
+    outcome: { code: "invalid_ledger_reference" },
+  },
+  {
+    overrides: {
+      transactionId: "txn-new-account-deleted-category",
+      accountId: "acct-side-effect",
+      categoryId: "cat-deleted",
+    },
     outcome: { code: "invalid_ledger_reference" },
   },
   {
@@ -213,6 +217,26 @@ insert into ledger.categories (
     expect(readCategoryRowCount(postgres, OTHER_USER_ID, "cat-shared-built-in")).toBe("1");
   });
 
+  postgresIt("seeds local-only accounts per user even when another user has the same id", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-shared-account-id",
+        accountId: "acct-other",
+      })
+    ).toMatchObject({
+      code: "accepted",
+      transaction: {
+        id: "txn-shared-account-id",
+        accountId: "acct-other",
+      },
+      cursor: "ledger:6",
+    });
+    expect(readAccountRowCount(postgres, USER_ID, "acct-other")).toBe("1");
+    expect(readAccountRowCount(postgres, OTHER_USER_ID, "acct-other")).toBe("1");
+  });
+
   postgresIt("rebuilds monthly projections for valid totals above integer range", () => {
     const postgres = setupSeededPostgres();
 
@@ -320,12 +344,12 @@ function expectRejectedCreatesHaveNoSideEffects(postgres: PostgresHarness) {
       `
 select count(*)
 from ledger.transactions
-where user_id = '${USER_ID}'::uuid
-  and id in (
-    'txn-bad-account',
-    'txn-deleted-account',
-    'txn-deleted-category',
-    'txn-zero',
+	where user_id = '${USER_ID}'::uuid
+	  and id in (
+	    'txn-deleted-account',
+	    'txn-deleted-category',
+	    'txn-new-account-deleted-category',
+	    'txn-zero',
     'txn-future',
     'txn-null-version',
     'txn-null-type',
@@ -346,6 +370,7 @@ where user_id = '${USER_ID}'::uuid;
 `
     )
   ).toBe("0");
+  expect(readAccountRowCount(postgres, USER_ID, "acct-side-effect")).toBe("0");
 }
 
 function readCreatedTransactionRowCount(postgres: PostgresHarness) {
@@ -368,6 +393,18 @@ select count(*)
 from ledger.categories
 where user_id = '${userId}'::uuid
   and id = '${categoryId}';
+`
+  );
+}
+
+function readAccountRowCount(postgres: PostgresHarness, userId: string, accountId: string) {
+  return psqlScalar(
+    postgres,
+    `
+select count(*)
+from ledger.financial_accounts
+where user_id = '${userId}'::uuid
+  and id = '${accountId}';
 `
   );
 }
