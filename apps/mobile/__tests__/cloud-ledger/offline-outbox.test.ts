@@ -378,6 +378,19 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ]);
   });
 
+  it("discards corrupted chunked encrypted outboxes when active chunks are missing", async () => {
+    await enqueueCloudLedgerPendingChanges(createLargePendingChanges());
+    const activeChunkKey = secureStoreOutboxPayloadChunkKeys()[0];
+    if (activeChunkKey === undefined) {
+      throw new Error("expected chunked encrypted outbox payload");
+    }
+    secureStore.delete(activeChunkKey);
+
+    await expect(discardCloudLedgerOutbox(USER_ID)).resolves.toBeUndefined();
+
+    expect([...secureStore.keys()]).toEqual([]);
+  });
+
   it("preserves concurrent pending creates enqueued for the same encrypted outbox", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({

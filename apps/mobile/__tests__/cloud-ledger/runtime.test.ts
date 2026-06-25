@@ -3,6 +3,7 @@ import {
   beginCloudLedgerRuntimeCacheWrite,
   createCloudLedgerRuntimeCacheWriteAbortSignal,
   isCloudLedgerRuntimeCacheWriteCurrent,
+  releaseCloudLedgerRuntimeCacheWriteAbortSignal,
   resetCloudLedgerRuntimeCaches,
   resumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites,
@@ -43,5 +44,17 @@ describe("Cloud Ledger runtime cache write tokens", () => {
     suspendCloudLedgerRuntimeCacheWrites(userId);
 
     expect(signal?.aborted).toBe(true);
+  });
+
+  it("does not abort completed generation-bound remote work after the signal is released", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+    const signal = createCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken);
+
+    expect(signal).not.toBeNull();
+    releaseCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken, signal);
+    suspendCloudLedgerRuntimeCacheWrites(userId);
+
+    expect(signal?.aborted).toBe(false);
   });
 });

@@ -14,6 +14,7 @@ import {
   createCloudLedgerRuntimeCacheWriteAbortSignal,
   getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent,
+  releaseCloudLedgerRuntimeCacheWriteAbortSignal,
   resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCacheIfCurrent,
   type CloudLedgerRuntimeCacheWriteToken,
@@ -111,15 +112,16 @@ async function flushCloudLedgerOutboxIfCurrent(
   if (abortSignal === null) {
     return false;
   }
-  return setCloudLedgerRuntimeCacheIfCurrent(
-    userId,
-    writeToken,
-    await flushPendingCloudLedgerChanges({
+  try {
+    const cache = await flushPendingCloudLedgerChanges({
       abortSignal,
       cache: getCloudLedgerRuntimeCache(userId),
       outbox: getCloudLedgerOutbox(userId),
       supabase,
       shouldContinue: () => isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken),
-    })
-  );
+    });
+    return setCloudLedgerRuntimeCacheIfCurrent(userId, writeToken, cache);
+  } finally {
+    releaseCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken, abortSignal);
+  }
 }

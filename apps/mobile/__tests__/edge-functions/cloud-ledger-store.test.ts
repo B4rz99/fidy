@@ -161,11 +161,45 @@ describe("Cloud Ledger Edge store", () => {
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.schema).not.toHaveBeenCalled();
   });
+
+  it("returns permanent pending-change create rejections instead of accepting an empty retry", async () => {
+    const supabase = createLedgerSupabase({
+      createTransactionOutcome: { code: "invalid_ledger_reference" },
+    });
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.applyPendingChanges(USER_ID, {
+      commandVersion: 1,
+      changes: [
+        {
+          id: "change-rejected-offline-create",
+          kind: "createTransaction",
+          commandVersion: 1,
+          transaction: {
+            id: CLIENT_TRANSACTION_ID,
+            type: "expense",
+            amount: 15_000,
+            currency: "COP",
+            categoryId: "cat-groceries",
+            accountId: "acct-cash",
+            description: "Market",
+            date: "2026-06-01",
+          },
+        },
+      ],
+    });
+
+    expect(outcome).toEqual({ code: "invalid_ledger_reference" });
+  });
 });
 
-function createLedgerSupabase() {
+function createLedgerSupabase(
+  options: {
+    readonly createTransactionOutcome?: unknown;
+  } = {}
+) {
   const rpc = vi.fn<(...args: any[]) => any>((functionName: string) =>
-    Promise.resolve(ledgerRpcResult(functionName))
+    Promise.resolve(ledgerRpcResult(functionName, options))
   );
   const from = vi.fn<(...args: any[]) => any>();
   const schema = vi.fn<(...args: any[]) => any>();
@@ -182,11 +216,16 @@ function createLedgerSupabase() {
   };
 }
 
-function ledgerRpcResult(functionName: string) {
+function ledgerRpcResult(
+  functionName: string,
+  options: {
+    readonly createTransactionOutcome?: unknown;
+  }
+) {
   return {
     data:
       functionName === "cloud_ledger_create_transaction"
-        ? CREATE_TRANSACTION_RPC_DATA
+        ? (options.createTransactionOutcome ?? CREATE_TRANSACTION_RPC_DATA)
         : BOOTSTRAP_RPC_DATA,
     error: null,
   };

@@ -4,6 +4,7 @@ import type {
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
   CloudLedgerCreateTransactionOutcome,
+  CloudLedgerCreateTransactionRejected,
   LedgerCursor,
 } from "./model.ts";
 import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
@@ -36,6 +37,14 @@ type SupabaseLike = {
     readonly error: SupabaseError;
   }>;
 };
+
+type ApplyPendingChangesProgress =
+  | {
+      readonly code: "accepted";
+      readonly acceptedChangeIds: readonly string[];
+      readonly cursor: string | null;
+    }
+  | CloudLedgerCreateTransactionRejected;
 
 const CLOUD_LEDGER_BOOTSTRAP_RPC = "cloud_ledger_bootstrap";
 const CLOUD_LEDGER_CREATE_TRANSACTION_RPC = "cloud_ledger_create_transaction";
@@ -100,31 +109,34 @@ async function applyPendingChanges(
   userId: string,
   command: CloudLedgerApplyPendingChangesCommand
 ): Promise<CloudLedgerApplyPendingChangesOutcome> {
-  const outcomes = await command.changes.reduce<
-    Promise<{
-      readonly acceptedChangeIds: readonly string[];
-      readonly cursor: string | null;
-    }>
-  >(
+  const outcomes = await command.changes.reduce<Promise<ApplyPendingChangesProgress>>(
     async (previous, change) => {
       const accepted = await previous;
+      if (accepted.code !== "accepted") {
+        return accepted;
+      }
       const outcome = await createTransaction(supabase, userId, {
         commandVersion: change.commandVersion,
         transaction: change.transaction,
       });
-      return outcome.code === "accepted"
-        ? {
-            acceptedChangeIds: [...accepted.acceptedChangeIds, change.id],
-            cursor: outcome.cursor,
-          }
-        : accepted;
+      if (outcome.code !== "accepted") {
+        return outcome;
+      }
+      return {
+        code: "accepted",
+        acceptedChangeIds: [...accepted.acceptedChangeIds, change.id],
+        cursor: outcome.cursor,
+      };
     },
-    Promise.resolve({ acceptedChangeIds: [], cursor: null })
+    Promise.resolve({ code: "accepted", acceptedChangeIds: [], cursor: null })
   );
 
+  if (outcomes.code !== "accepted") {
+    return outcomes;
+  }
   return {
     code: "accepted",
     acceptedChangeIds: outcomes.acceptedChangeIds,
-    cursor: (outcomes.cursor ?? "ledger:0") as CloudLedgerApplyPendingChangesOutcome["cursor"],
+    cursor: (outcomes.cursor ?? "ledger:0") as LedgerCursor,
   };
 }

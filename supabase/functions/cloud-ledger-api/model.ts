@@ -118,7 +118,9 @@ export type CloudLedgerCreateTransactionOutcome =
   | CloudLedgerCreateTransactionAccepted
   | CloudLedgerCreateTransactionRejected;
 
-export type CloudLedgerApplyPendingChangesOutcome = CloudLedgerApplyPendingChangesAccepted;
+export type CloudLedgerApplyPendingChangesOutcome =
+  | CloudLedgerApplyPendingChangesAccepted
+  | CloudLedgerCreateTransactionRejected;
 
 export type CloudLedgerApiError =
   | "missing_auth"

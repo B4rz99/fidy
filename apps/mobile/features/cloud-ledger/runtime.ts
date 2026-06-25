@@ -31,6 +31,25 @@ function abortCloudLedgerRuntimeCacheWriteControllers(userId: UserId): void {
   abortControllersByUserId.delete(userId);
 }
 
+function releaseCloudLedgerRuntimeCacheWriteAbortController(
+  userId: UserId,
+  generation: number,
+  controller: AbortController
+): void {
+  const controllersByGeneration = abortControllersByUserId.get(userId);
+  const controllers = controllersByGeneration?.get(generation);
+  if (controllers === undefined) {
+    return;
+  }
+  controllers.delete(controller);
+  if (controllers.size === 0) {
+    controllersByGeneration?.delete(generation);
+  }
+  if (controllersByGeneration?.size === 0) {
+    abortControllersByUserId.delete(userId);
+  }
+}
+
 export function suspendCloudLedgerRuntimeCacheWrites(userId: UserId): void {
   suspendedWriteUserIds.add(userId);
   invalidateCloudLedgerRuntimeCacheWrites(userId);
@@ -77,18 +96,26 @@ export function createCloudLedgerRuntimeCacheWriteAbortSignal(
   abortControllersByUserId.set(userId, controllersByGeneration);
   controller.signal.addEventListener(
     "abort",
-    () => {
-      controllers.delete(controller);
-      if (controllers.size === 0) {
-        controllersByGeneration.delete(writeToken.generation);
-      }
-      if (controllersByGeneration.size === 0) {
-        abortControllersByUserId.delete(userId);
-      }
-    },
+    () =>
+      releaseCloudLedgerRuntimeCacheWriteAbortController(userId, writeToken.generation, controller),
     { once: true }
   );
   return controller.signal;
+}
+
+export function releaseCloudLedgerRuntimeCacheWriteAbortSignal(
+  userId: UserId,
+  writeToken: CloudLedgerRuntimeCacheWriteToken,
+  signal: AbortSignal | null
+): void {
+  if (signal === null) {
+    return;
+  }
+  const controllers = abortControllersByUserId.get(userId)?.get(writeToken.generation);
+  const controller = [...(controllers ?? [])].find((candidate) => candidate.signal === signal);
+  if (controller !== undefined) {
+    releaseCloudLedgerRuntimeCacheWriteAbortController(userId, writeToken.generation, controller);
+  }
 }
 
 export function getCloudLedgerRuntimeCache(userId: UserId): CloudLedgerCache {

@@ -260,6 +260,23 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
+  it("surfaces permanent pending-change rejections as typed batch failures", async () => {
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: { code: "invalid_ledger_reference" },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(APPLY_PENDING_CHANGES_REQUEST_BODY, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_ledger_reference",
+    });
+  });
+
   it("rejects invalid client transaction ids with typed failures before ledger access", async () => {
     const api = createCloudLedgerApiDeps();
 

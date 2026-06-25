@@ -18,10 +18,11 @@ import {
   getTransactionsPaginated,
 } from "@/features/transactions/lib/repository";
 import {
+  deletePendingCloudLedgerTransactionShadows,
+  deleteTransaction,
   getStoredTransactionById,
   initializeTransactionSession,
   invalidateTransactionSession,
-  deleteTransaction,
   loadInitialTransactions,
   loadNextTransactions,
   loadTransactionAggregates,
@@ -1002,6 +1003,33 @@ describe("transaction boundaries", () => {
 
     expect(deletedTransactionScopes).toHaveLength(1);
     expect(insertedTransactionRows).toEqual([]);
+  });
+
+  it("deletes local Cloud Ledger shadows for pending outbox creates on discard", async () => {
+    const pendingTransaction = makeStoredTransaction({
+      id: "tx-pending-cloud-ledger-shadow-discard" as TransactionId,
+    });
+    const load = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue([pendingCreateFromStoredTransaction(pendingTransaction)]);
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
+
+    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+
+    expect(load).toHaveBeenCalled();
+    expect(deletedTransactionScopes).toHaveLength(1);
+  });
+
+  it("deletes all local Cloud Ledger shadows when pending outbox cleanup cannot read the outbox", async () => {
+    const load = vi
+      .fn<(...args: any[]) => any>()
+      .mockRejectedValue(new CloudLedgerOutboxFailure("invalid_encrypted_outbox", "corrupt"));
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
+
+    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+
+    expect(load).toHaveBeenCalled();
+    expect(deletedTransactionScopes).toHaveLength(1);
   });
 
   it("loads the next page when more rows are available", async () => {

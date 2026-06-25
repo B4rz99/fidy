@@ -26,6 +26,7 @@ export {
   createCloudLedgerRuntimeCacheWriteAbortSignal,
   getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent,
+  releaseCloudLedgerRuntimeCacheWriteAbortSignal,
   resetCloudLedgerRuntimeCaches,
   resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCache,

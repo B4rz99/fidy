@@ -766,8 +766,8 @@ async function writeSecureStoreOutboxPayload(key: string, payload: string): Prom
 }
 
 async function clearSecureStoreOutboxPayload(key: string): Promise<void> {
-  const payload = await readSecureStoreOutboxPayload(key);
-  const [manifest, stagedAllocation] = await Promise.all([
+  const [payload, manifest, stagedAllocation] = await Promise.all([
+    readSecureStoreOutboxPayload(key).catch(() => null),
     SecureStore.getItemAsync(key).then(parseChunkedOutboxManifest),
     SecureStore.getItemAsync(secureStoreOutboxStagedKey(key)).then(parseStagedChunkAllocation),
   ]);

@@ -67,6 +67,14 @@ test("keeps activity item rendering memo-safe for edit and delete handlers", () 
   expect(activityItemSource).toContain("onDeleteTransaction={onDeleteTransaction}");
 });
 
+test("hides edit and delete actions for Cloud Ledger activity rows", () => {
+  expect(activityItemSource).toContain('tx.source !== "cloud_ledger"');
+  expect(activityItemSource).toContain("onEdit={canMutateTransaction ? handleEdit : undefined}");
+  expect(activityItemSource).toContain(
+    "onDelete={canMutateTransaction ? handleDelete : undefined}"
+  );
+});
+
 test("keeps the home feed aurora background visible behind section headers and row cards", () => {
   const dateHeaderSource = readSource("../../shared/components/ListDateHeader.tsx");
   const transactionRowSource = readSource("../../shared/components/TransactionRow.tsx");

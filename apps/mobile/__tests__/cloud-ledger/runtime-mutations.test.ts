@@ -21,7 +21,9 @@ const mocks = vi.hoisted(() => {
   const cache = { cursor: null, transactions: [] };
   const outbox = { id: "outbox" };
   const writeToken = { generation: 1 };
+  const abortSignal = new AbortController().signal;
   return {
+    abortSignal,
     cache,
     flushedCache: { cursor: "flushed", transactions: [] },
     optimisticCache: { cursor: "optimistic", transactions: [] },
@@ -35,6 +37,7 @@ const mocks = vi.hoisted(() => {
     getCloudLedgerRuntimeCache: vi.fn<(...args: any[]) => any>(),
     getSupabase: vi.fn<(...args: any[]) => any>(),
     isCloudLedgerRuntimeCacheWriteCurrent: vi.fn<(...args: any[]) => any>(),
+    releaseCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
     restoreOptimisticCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     resumeCloudLedgerRuntimeCacheWrites: vi.fn<(...args: any[]) => any>(),
     setCloudLedgerRuntimeCacheIfCurrent: vi.fn<(...args: any[]) => any>(),
@@ -60,6 +63,8 @@ vi.mock("@/features/cloud-ledger/runtime", () => ({
     mocks.createCloudLedgerRuntimeCacheWriteAbortSignal,
   getCloudLedgerRuntimeCache: mocks.getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent: mocks.isCloudLedgerRuntimeCacheWriteCurrent,
+  releaseCloudLedgerRuntimeCacheWriteAbortSignal:
+    mocks.releaseCloudLedgerRuntimeCacheWriteAbortSignal,
   resumeCloudLedgerRuntimeCacheWrites: mocks.resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCacheIfCurrent: mocks.setCloudLedgerRuntimeCacheIfCurrent,
 }));
@@ -74,9 +79,7 @@ describe("Cloud Ledger runtime mutations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.beginCloudLedgerRuntimeCacheWrite.mockReturnValue(mocks.writeToken);
-    mocks.createCloudLedgerRuntimeCacheWriteAbortSignal.mockReturnValue(
-      new AbortController().signal
-    );
+    mocks.createCloudLedgerRuntimeCacheWriteAbortSignal.mockReturnValue(mocks.abortSignal);
     mocks.createOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
     mocks.flushPendingCloudLedgerChanges.mockResolvedValue(mocks.flushedCache);
     mocks.getCloudLedgerOutbox.mockReturnValue(mocks.outbox);
@@ -150,6 +153,11 @@ describe("Cloud Ledger runtime mutations", () => {
       mocks.writeToken,
       mocks.flushedCache
     );
+    expect(mocks.releaseCloudLedgerRuntimeCacheWriteAbortSignal).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.abortSignal
+    );
   });
 
   it("enqueues optimistic create and exposes an online flush callback tied to the same token", async () => {
@@ -177,6 +185,11 @@ describe("Cloud Ledger runtime mutations", () => {
         outbox: mocks.outbox,
         shouldContinue: expect.any(Function),
       })
+    );
+    expect(mocks.releaseCloudLedgerRuntimeCacheWriteAbortSignal).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.abortSignal
     );
   });
 

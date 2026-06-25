@@ -26,6 +26,7 @@ function TransactionActivityItem({
   const { t, locale } = useTranslation();
   const categoryById = useAvailableCategoryMap();
   const category = categoryById.get(tx.categoryId);
+  const canMutateTransaction = tx.source !== "cloud_ledger";
   const handleEdit = () => {
     onEditTransaction(tx.id);
   };
@@ -53,8 +54,8 @@ function TransactionActivityItem({
           amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={canMutateTransaction ? handleEdit : undefined}
+          onDelete={canMutateTransaction ? handleDelete : undefined}
         />
       </View>
     </View>
