@@ -2,12 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
-  clearCloudLedgerRuntimeCache,
   createEmptyCloudLedgerCache,
+} from "@/features/cloud-ledger/public";
+import {
+  clearCloudLedgerRuntimeCache,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
   suspendCloudLedgerRuntimeCacheWrites,
-} from "@/features/cloud-ledger/public";
+} from "@/features/cloud-ledger/runtime.public";
 import {
   CloudLedgerOutboxFailure,
   getCloudLedgerOutbox,
@@ -324,6 +326,62 @@ function createMockCloudLedgerOutbox(
     load,
     remove: vi.fn<(...args: any[]) => any>(),
   };
+}
+
+function seedVisibleTransactionSnapshot(transaction: StoredTransaction) {
+  useTransactionStore.setState({
+    pages: [transaction],
+    offset: 1,
+    hasMore: false,
+    balance: transaction.amount,
+    categorySpending: [{ categoryId: transaction.categoryId, total: transaction.amount }],
+    dailySpending: [{ date: toIsoDate(transaction.date), total: transaction.amount }],
+  });
+}
+
+function mockCloudLedgerOutboxLoadFailure(message: string) {
+  vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+    createMockCloudLedgerOutbox(
+      vi
+        .fn<(...args: any[]) => any>()
+        .mockRejectedValue(new CloudLedgerOutboxFailure("invalid_encrypted_outbox", message))
+    )
+  );
+}
+
+function mockCommittedRideRefresh() {
+  vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
+    makeRow({
+      id: "tx-db-refresh-after-outbox-failure" as TransactionId,
+      amount: 7300 as CopAmount,
+      categoryId: "transport" as CategoryId,
+      description: "Committed ride",
+      date: "2026-06-24" as IsoDate,
+    }),
+  ]);
+  vi.mocked(getSpendingByCategoryAggregate).mockReturnValueOnce([
+    { categoryId: "transport" as CategoryId, total: 7300 as CopAmount },
+  ]);
+  vi.mocked(getDailySpendingAggregate).mockReturnValueOnce([
+    { date: "2026-06-24" as IsoDate, total: 7300 as CopAmount },
+  ]);
+}
+
+function expectCommittedRideRefreshApplied() {
+  expect(useTransactionStore.getState()).toMatchObject({
+    pages: [
+      expect.objectContaining({
+        id: "tx-db-refresh-after-outbox-failure",
+        amount: 7300,
+        categoryId: "transport",
+        description: "Committed ride",
+      }),
+    ],
+    offset: 1,
+    balance: 7300,
+    categorySpending: [{ categoryId: "transport", total: 7300 }],
+    dailySpending: [{ date: "2026-06-24", total: 7300 }],
+  });
 }
 
 function createMockSupabase(): SupabaseClient {
@@ -874,34 +932,41 @@ describe("transaction boundaries", () => {
   it("keeps visible transactions when encrypted outbox restore fails during refresh", async () => {
     const visibleTransaction = makeStoredTransaction({
       id: "tx-visible-before-outbox-failure" as TransactionId,
+      createdAt: new Date("2026-06-24T10:00:00.000Z"),
+      date: new Date(2026, 5, 24),
+      source: "cloud_ledger",
+      updatedAt: new Date("2026-06-24T10:00:00.000Z"),
     });
-    useTransactionStore.setState({
-      pages: [visibleTransaction],
-      offset: 1,
-      hasMore: false,
-      balance: visibleTransaction.amount,
-      categorySpending: [
-        { categoryId: visibleTransaction.categoryId, total: visibleTransaction.amount },
-      ],
-      dailySpending: [
-        { date: toIsoDate(visibleTransaction.date), total: visibleTransaction.amount },
-      ],
-    });
-    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
-      createMockCloudLedgerOutbox(
-        vi
-          .fn<(...args: any[]) => any>()
-          .mockRejectedValue(
-            new CloudLedgerOutboxFailure("invalid_encrypted_outbox", "decrypt failed")
-          )
-      )
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:visible-runtime" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            id: visibleTransaction.id,
+            type: visibleTransaction.type,
+            amount: visibleTransaction.amount,
+            currency: "COP",
+            categoryId: visibleTransaction.categoryId,
+            accountId: visibleTransaction.accountId,
+            description: visibleTransaction.description,
+            date: toIsoDate(visibleTransaction.date),
+            updatedAt: toIsoDateTime(visibleTransaction.updatedAt),
+          },
+        ],
+        tombstones: [],
+      })
     );
+    seedVisibleTransactionSnapshot(visibleTransaction);
+    mockCloudLedgerOutboxLoadFailure("decrypt failed");
 
     await refreshTransactions(mockDb, mockUserId);
 
     expect(useTransactionStore.getState()).toMatchObject({
       pages: [visibleTransaction],
-      offset: 1,
+      offset: 0,
       balance: visibleTransaction.amount,
       categorySpending: [
         { categoryId: visibleTransaction.categoryId, total: visibleTransaction.amount },
@@ -910,6 +975,20 @@ describe("transaction boundaries", () => {
         { date: toIsoDate(visibleTransaction.date), total: visibleTransaction.amount },
       ],
     });
+  });
+
+  it("applies committed refresh rows when encrypted outbox restore fails", async () => {
+    const staleTransaction = makeStoredTransaction({
+      id: "tx-stale-before-outbox-failure" as TransactionId,
+      amount: 1000 as CopAmount,
+    });
+    seedVisibleTransactionSnapshot(staleTransaction);
+    mockCommittedRideRefresh();
+    mockCloudLedgerOutboxLoadFailure("corrupt");
+
+    await refreshTransactions(mockDb, mockUserId);
+
+    expectCommittedRideRefreshApplied();
   });
 
   it("loads committed initial transactions when encrypted outbox restore fails", async () => {

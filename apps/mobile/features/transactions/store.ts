@@ -6,9 +6,9 @@ import {
   type CloudLedgerCategory,
   type CloudLedgerCreateTransactionCommand,
   type CloudLedgerFinancialAccount,
-  getCloudLedgerRuntimeCache,
 } from "@/features/cloud-ledger/public";
 import { getCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
+import { getCloudLedgerRuntimeCache } from "@/features/cloud-ledger/runtime.public";
 import { enqueueCloudLedgerOptimisticCreate } from "@/features/cloud-ledger/runtime-mutations.public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import { DEFAULT_CATEGORY_IDS, getBuiltInCategory } from "@/shared/categories";
@@ -729,13 +729,12 @@ export async function refreshTransactions(db: AnyDb, userId: UserId): Promise<vo
       currentOffset: offset,
       pageSize: PAGE_SIZE,
     });
-    const optimisticSnapshot = canUseCloudLedgerTransactionEffects(userId, sessionId)
-      ? await applyCloudLedgerOptimisticView(snapshot, userId, {
-          isTransactionIncludedInAggregate: (transaction) =>
-            isPersistedActiveTransaction(db, userId, transaction.id),
-          pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
-        })
-      : snapshot;
+    const optimisticSnapshot = await applyRefreshCloudLedgerOptimisticView({
+      db,
+      sessionId,
+      snapshot,
+      userId,
+    });
     if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
     useTransactionStore.getState().applyRefreshSnapshot({
       ...optimisticSnapshot,
@@ -744,6 +743,39 @@ export async function refreshTransactions(db: AnyDb, userId: UserId): Promise<vo
   } catch (error) {
     captureWarning("transactions_refresh_failed", {
       errorType: getErrorType(error),
+    });
+  }
+}
+
+async function applyRefreshCloudLedgerOptimisticView({
+  db,
+  sessionId,
+  snapshot,
+  userId,
+}: {
+  readonly db: AnyDb;
+  readonly sessionId: number;
+  readonly snapshot: ReturnType<
+    ReturnType<typeof createTransactionQueryService>["loadRefreshSnapshot"]
+  >;
+  readonly userId: UserId;
+}) {
+  if (!canUseCloudLedgerTransactionEffects(userId, sessionId)) return snapshot;
+
+  try {
+    return await applyCloudLedgerOptimisticView(snapshot, userId, {
+      isTransactionIncludedInAggregate: (transaction) =>
+        isPersistedActiveTransaction(db, userId, transaction.id),
+      pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
+    });
+  } catch (error) {
+    captureWarning("transactions_refresh_cloud_ledger_overlay_failed", {
+      errorType: getErrorType(error),
+    });
+    return applyRuntimeCloudLedgerTransactions(snapshot, userId, {
+      isTransactionIncludedInAggregate: (transaction) =>
+        isPersistedActiveTransaction(db, userId, transaction.id),
+      pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
     });
   }
 }

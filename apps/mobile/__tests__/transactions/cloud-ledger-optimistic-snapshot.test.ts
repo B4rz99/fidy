@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
   createEmptyCloudLedgerCache,
+} from "@/features/cloud-ledger/public";
+import {
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
-} from "@/features/cloud-ledger/public";
+} from "@/features/cloud-ledger/runtime.public";
 import { applyRuntimeCloudLedgerTransactions } from "@/features/transactions/services/cloud-ledger-optimistic-snapshot";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import {

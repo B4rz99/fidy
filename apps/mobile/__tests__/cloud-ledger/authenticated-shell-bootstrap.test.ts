@@ -138,13 +138,10 @@ vi.mock("@/features/financial-accounts/public", () => ({
   tryEnsureDefaultFinancialAccount: mocks.tryEnsureDefaultFinancialAccount,
 }));
 
-vi.mock("@/features/cloud-ledger/public", () => ({
+vi.mock("@/features/cloud-ledger/runtime.public", () => ({
   beginCloudLedgerRuntimeCacheWrite: mocks.beginCloudLedgerRuntimeCacheWrite,
-  flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
-  getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
   getCloudLedgerRuntimeCache: mocks.getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent: mocks.isCloudLedgerRuntimeCacheWriteCurrent,
-  restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
   resumeCloudLedgerRuntimeCacheWrites: mocks.resumeCloudLedgerRuntimeCacheWrites,
   setCloudLedgerRuntimeCache: mocks.setCloudLedgerRuntimeCache,
   setCloudLedgerRuntimeCacheIfCurrent: mocks.setCloudLedgerRuntimeCacheIfCurrent,

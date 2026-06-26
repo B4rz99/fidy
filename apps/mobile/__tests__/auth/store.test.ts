@@ -139,7 +139,7 @@ vi.mock("@/features/notifications/public", () => ({
   cleanupCurrentPushToken: mockCleanupCurrentPushToken,
 }));
 
-vi.mock("@/features/cloud-ledger/public", () => ({
+vi.mock("@/features/cloud-ledger/runtime.public", () => ({
   clearCloudLedgerRuntimeCache: mockClearCloudLedgerRuntimeCache,
   resumeCloudLedgerRuntimeCacheWrites: mockResumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites: mockSuspendCloudLedgerRuntimeCacheWrites,

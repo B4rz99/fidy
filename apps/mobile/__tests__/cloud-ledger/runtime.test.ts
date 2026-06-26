@@ -7,7 +7,7 @@ import {
   resetCloudLedgerRuntimeCaches,
   resumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites,
-} from "@/features/cloud-ledger/public";
+} from "@/features/cloud-ledger/runtime.public";
 import { requireUserId } from "@/shared/types/assertions";
 
 describe("Cloud Ledger runtime cache write tokens", () => {

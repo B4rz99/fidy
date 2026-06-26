@@ -1,5 +1,5 @@
 import { getCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
-import { getCloudLedgerRuntimeCache } from "@/features/cloud-ledger/public";
+import { getCloudLedgerRuntimeCache } from "@/features/cloud-ledger/runtime.public";
 import { toIsoDate, toMonth } from "@/shared/lib";
 import { requireCopAmount } from "@/shared/types/assertions";
 import type { CopAmount, UserId } from "@/shared/types/branded";

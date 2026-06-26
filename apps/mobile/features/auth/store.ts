@@ -4,7 +4,7 @@ import {
   clearCloudLedgerRuntimeCache,
   resumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites,
-} from "@/features/cloud-ledger/public";
+} from "@/features/cloud-ledger/runtime.public";
 import { discardCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
 import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
 import { useLocalOnboardingState } from "@/features/onboarding/store.public";
