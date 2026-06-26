@@ -1,0 +1,26 @@
+apps/mobile/features/auth/store.ts
+  s_a015eeb45038bf::t_a427860014c859 197,200,203-210,291,295
+apps/mobile/features/cloud-ledger/bootstrap.ts
+  s_a015eeb45038bf::t_a427860014c859 16-19,22-23,25-27,34,36,46,51-54,58,60
+apps/mobile/__tests__/auth/store.test.ts
+  s_a015eeb45038bf::t_4d1969c72eca73 520-540
+apps/mobile/__tests__/cloud-ledger/bootstrap.test.ts
+  s_a015eeb45038bf::t_4d1969c72eca73 113-134,136,138-145,147-153
+  s_a015eeb45038bf::t_b1b11cc1e54c1a 135,137,146,164-173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "7684d31bdf8eb99e2c312b8d476f653886870fd2",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
