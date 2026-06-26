@@ -1,0 +1,50 @@
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-source.test.ts
+  s_a015eeb45038bf::t_2bbe920ed26297 9-12,23-26
+  s_a015eeb45038bf::t_dc25e95abafdac 27-28
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_a015eeb45038bf::t_1575e201518bc1 32-33,64,86,136,140-141,160,165,170-177
+  s_a015eeb45038bf::t_556cce8010af21 37,68
+  s_a015eeb45038bf::t_b4721c8e52fed4 178-179
+apps/mobile/features/cloud-ledger/runtime.ts
+  s_a015eeb45038bf::t_e488e35ff1ea83 12,21,70-83,88-96,181
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_a015eeb45038bf::t_e841e7c78157af 13,16,33-44,48-49,62-81,83-89,91-92
+apps/mobile/features/cloud-ledger/runtime.public.ts
+  s_a015eeb45038bf::t_cfe816a2587480 2,6
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_a015eeb45038bf::t_416c69b032e1ab 388
+  s_a015eeb45038bf::t_4acfb1e681ab8f 2-5,72,144-149,226-229,360-387
+  s_a015eeb45038bf::t_85f8d650abbcc5 50-53,211
+apps/mobile/__tests__/cloud-ledger/runtime.test.ts
+  s_a015eeb45038bf::t_8b050e0acfece5 76-77
+  s_a015eeb45038bf::t_167b00c0471967 3,6,63-75
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_a015eeb45038bf::t_b034d06fe84037 122
+  s_a015eeb45038bf::t_9dae7e7538f452 25,239,241-243
+  s_a015eeb45038bf::t_7523df6c724709 28-31,81-82,117-118,121,123,165-166,171-172,176,240,244-245,248
+  s_a015eeb45038bf::t_88f04d3de2ffca 99-103
+apps/mobile/__tests__/transactions/cloud-ledger-optimistic-snapshot.test.ts
+  s_a015eeb45038bf::t_aa7690c583612f 183
+  s_a015eeb45038bf::t_be6676df16dc56 87-135,137-138,142-155,161-162,164,167,171-182,184
+  s_a015eeb45038bf::t_b034d06fe84037 136
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_3cede45f29d486 710-711
+apps/mobile/app/_layout.tsx
+  s_a015eeb45038bf::t_8f64fc6aadac54 111-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "872003ab89f806c5f929cd7a6c5a329a25730d4f",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
