@@ -7,6 +7,7 @@ import {
 } from "@/shared/categories";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { CATEGORY_ICON_BAR_SELECTED_SHADOW, CATEGORY_ICON_SELECTED_SHADOW } from "./effect-tokens";
 import { Pressable, StyleSheet, Text } from "./rn";
 
 type CategoryIconButtonVariant = "strip" | "filter" | "bar";
@@ -128,10 +129,10 @@ const styles = StyleSheet.create({
     paddingTop: 7,
   },
   selected: {
-    boxShadow: "0 3px 6px rgba(0, 0, 0, 0.18)",
+    boxShadow: CATEGORY_ICON_SELECTED_SHADOW,
   },
   barSelected: {
-    boxShadow: "0 3px 6px rgba(0, 0, 0, 0.22)",
+    boxShadow: CATEGORY_ICON_BAR_SELECTED_SHADOW,
   },
   stripIcon: {
     fontSize: 20,

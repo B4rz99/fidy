@@ -497,6 +497,7 @@ export function invalidateTransactionSession(): void {
   transactionsSessionId += 1;
   loadTransactionsRequestId += 1;
   transactionSessionRemoteEffectsEnabled = false;
+  useTransactionStore.setState({ activeUserId: null });
 }
 
 export function resumeTransactionSession(userId: UserId): void {

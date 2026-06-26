@@ -93,10 +93,6 @@ async function flushCloudLedgerOutboxAfterOptimisticCreate(
   if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
 
   const supabase = getSupabase();
-  const sessionResult = await supabase.auth.getSession();
-  if (sessionResult.error != null || sessionResult.data.session == null) return;
-  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) return;
-
   await flushCloudLedgerOutboxIfCurrent(userId, writeToken, supabase);
 }
 
@@ -105,6 +101,12 @@ async function flushCloudLedgerOutboxIfCurrent(
   writeToken: CloudLedgerRuntimeCacheWriteToken,
   supabase: SupabaseClient
 ): Promise<boolean> {
+  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+    return false;
+  }
+  if (!(await hasSupabaseSessionForUser(supabase, userId))) {
+    return false;
+  }
   if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
     return false;
   }
@@ -124,4 +126,12 @@ async function flushCloudLedgerOutboxIfCurrent(
   } finally {
     releaseCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken, abortSignal);
   }
+}
+
+async function hasSupabaseSessionForUser(
+  supabase: SupabaseClient,
+  userId: UserId
+): Promise<boolean> {
+  const sessionResult = await supabase.auth.getSession();
+  return sessionResult.error == null && sessionResult.data.session?.user.id === userId;
 }

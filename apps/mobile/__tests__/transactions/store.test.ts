@@ -580,6 +580,19 @@ describe("transaction boundaries", () => {
     expect(useTransactionStore.getState().pages).toEqual([]);
   });
 
+  it("rejects new manual saves while the transaction session is invalidated for sign-out", async () => {
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    invalidateTransactionSession();
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result).toEqual({ success: false, error: "Store not initialized" });
+    expect(enqueueCloudLedgerOptimisticCreate).not.toHaveBeenCalled();
+    expect(insertedTransactionRows).toEqual([]);
+    expect(useTransactionStore.getState().activeUserId).toBeNull();
+  });
+
   it("does not write optimistic runtime cache when manual create enqueue resolves after logout", async () => {
     let resolveCreate!: () => void;
     const createPromise = new Promise<void>((resolve) => {

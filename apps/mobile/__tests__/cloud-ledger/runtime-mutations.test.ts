@@ -91,7 +91,7 @@ describe("Cloud Ledger runtime mutations", () => {
     vi.mocked(getSupabase).mockReturnValue({
       auth: {
         getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
-          data: { session: { access_token: "access-token" } },
+          data: { session: { access_token: "access-token", user: { id: userId } } },
           error: null,
         }),
       },
@@ -207,6 +207,35 @@ describe("Cloud Ledger runtime mutations", () => {
     expect(result.didWriteRuntimeCache).toBe(false);
     expect(NetInfo.fetch).not.toHaveBeenCalled();
     expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
+  });
+
+  it("does not flush another user's outbox when the Supabase session changes before flush", async () => {
+    vi.mocked(getSupabase).mockReturnValueOnce({
+      auth: {
+        getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+          data: {
+            session: {
+              access_token: "access-token-for-user-2",
+              user: { id: "user-2" },
+            },
+          },
+          error: null,
+        }),
+      },
+    } as never);
+
+    const result = await enqueueCloudLedgerOptimisticCreate({
+      userId,
+      changeId: "ledger-change-1" as LedgerChangeId,
+      command: makeCreateCommand(),
+      createdAt: "2026-06-20T10:00:00.000Z" as IsoDateTime,
+    });
+    await result.flushIfOnline();
+
+    expect(result.didWriteRuntimeCache).toBe(true);
+    expect(NetInfo.fetch).toHaveBeenCalled();
+    expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
+    expect(mocks.createCloudLedgerRuntimeCacheWriteAbortSignal).not.toHaveBeenCalled();
   });
 
   it("does not enqueue optimistic create when runtime writes are already suspended", async () => {
