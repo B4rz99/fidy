@@ -1,0 +1,55 @@
+supabase/functions/cloud-ledger-api/apply-pending-changes-command.ts
+  s_a015eeb45038bf::t_9950b1fdca058c 1-4,13,35-36
+  s_a015eeb45038bf::t_341dcaefa8a18f 37
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_a015eeb45038bf::t_63a254e8dc6ec2 160
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_a015eeb45038bf::t_a147e83f2617b7 1143-1144
+  s_a015eeb45038bf::t_345766f2524cdc 4,279-303,1132-1142
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_0553020871efd6 1031-1032,1038-1040,1042-1043,1067-1098
+  s_a015eeb45038bf::t_7dc3c688c59e0e 611-631,633-654,662-664,1033-1034
+  s_a015eeb45038bf::t_2e709596f8b44f 632,655-661,1025-1030,1035
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_0714cc0711b410 357,372
+apps/mobile/__tests__/transactions/cloud-ledger-optimistic-snapshot.test.ts
+  s_a015eeb45038bf::t_fc3c26892dcff3 1-75,77-102
+  s_a015eeb45038bf::t_65c6655d9098e8 76
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_7620c1fa0a691f 1464-1465
+  s_a015eeb45038bf::t_486a67059afb81 105-106,123,125,127-133,155-175,244-248,362-363,1458-1463
+plans/lizard-complexity-debt.json
+  s_a015eeb45038bf::t_4b644eefe2d21b 16,25
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_a015eeb45038bf::t_e072d351451cd7 34,137,148
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_8ea6b2b05c0ec3 320
+  s_a015eeb45038bf::t_2c47ce7f1b2d2c 14
+  s_a015eeb45038bf::t_109f0cd0f36dd9 15-17,244-249,278-279,284-303,305,309-319
+supabase/functions/cloud-ledger-api/handler.ts
+  s_a015eeb45038bf::t_15c18ec80c5e9f 204-205
+  s_a015eeb45038bf::t_a90f55157d5c62 206
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_a015eeb45038bf::t_b079bb173b8054 239-240
+  s_a015eeb45038bf::t_8cac015856e9f0 3,221-238
+supabase/functions/cloud-ledger-api/model.ts
+  s_a015eeb45038bf::t_8a2bcf45c512c8 3-4,165
+supabase/functions/cloud-ledger-api/store.ts
+  s_a015eeb45038bf::t_8246f406766580 13,156-159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "69be8a9259ca79a93ed711d2450df6057b8bead2",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
