@@ -1,0 +1,50 @@
+plans/lizard-complexity-debt.json
+  s_a015eeb45038bf::t_2146b0477aea2c 16,21
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_a015eeb45038bf::t_253c730252814c 631,634-638,731-735
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_a015eeb45038bf::t_01ef3c09a24a5a 10-12,23
+  s_a015eeb45038bf::t_beebbba2ce6752 898-913
+  s_a015eeb45038bf::t_ba16f7a7335226 348-391
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_253c730252814c 9-10,440,451,460
+apps/mobile/__tests__/cloud-ledger/public-surface.test.ts
+  s_a015eeb45038bf::t_c0eb741489b647 1-15
+apps/mobile/features/transactions/services/cloud-ledger-transaction-adapter.ts
+  s_a015eeb45038bf::t_01ef3c09a24a5a 5
+apps/mobile/__tests__/auth/store.test.ts
+  s_a015eeb45038bf::t_01ef3c09a24a5a 148-149
+apps/mobile/features/auth/store.ts
+  s_a015eeb45038bf::t_01ef3c09a24a5a 8
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_a015eeb45038bf::t_253c730252814c 254
+  s_a015eeb45038bf::t_01ef3c09a24a5a 1-2
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_01ef3c09a24a5a 15,68-70,83-91
+  s_a015eeb45038bf::t_e5ae7634a3937c 923,967
+  s_a015eeb45038bf::t_c5c343d6ca6d58 1230-1243,1247-1260
+  s_a015eeb45038bf::t_b332b8f4f221da 838-857
+  s_a015eeb45038bf::t_2bb96e4d8c7fd5 11-14,1244-1246
+apps/mobile/features/cloud-ledger/runtime-mutations.public.ts
+  s_a015eeb45038bf::t_253c730252814c 1-6
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_a015eeb45038bf::t_01ef3c09a24a5a 11
+apps/mobile/features/cloud-ledger/outbox.public.ts
+  s_a015eeb45038bf::t_253c730252814c 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "1bb790397c98b28b7de82a9f3f32b7b7df28c365",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
