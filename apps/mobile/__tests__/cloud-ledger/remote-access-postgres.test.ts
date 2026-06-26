@@ -13,7 +13,15 @@ const CREATE_TRANSACTION_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622100000_cloud_ledger_transaction_create.sql"
 );
-const MIGRATIONS = [BOOTSTRAP_MIGRATION, CREATE_TRANSACTION_MIGRATION] as const;
+const PENDING_CHANGE_SET_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260626230000_cloud_ledger_pending_change_sets.sql"
+);
+const MIGRATIONS = [
+  BOOTSTRAP_MIGRATION,
+  CREATE_TRANSACTION_MIGRATION,
+  PENDING_CHANGE_SET_MIGRATION,
+] as const;
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
 const CLIENT_TRANSACTION_ID = "txn-20260622-client";
@@ -307,6 +315,262 @@ insert into ledger.categories (
     });
   });
 
+  postgresIt("partially accepts independent pending changes with typed repair outcomes", () => {
+    const postgres = setupSeededPostgres();
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-invalid-category",
+        transactionId: "txn-invalid-category",
+        categoryId: "cat-deleted",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-valid-market",
+        transactionId: "txn-valid-market",
+        categoryId: "cat-groceries",
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: ["change-valid-market"],
+      rejectedChangeIds: ["change-invalid-category"],
+      changeOutcomes: [
+        {
+          changeId: "change-invalid-category",
+          status: "repair_required",
+          code: "invalid_ledger_reference",
+        },
+        {
+          changeId: "change-valid-market",
+          status: "accepted",
+          code: "accepted",
+        },
+      ],
+      cursor: "ledger:5",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-invalid-category")).toBe("0");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-valid-market")).toBe("1");
+  });
+
+  postgresIt("blocks dependent pending changes when a required prior change fails", () => {
+    const postgres = setupSeededPostgres();
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-invalid-category",
+        transactionId: "txn-invalid-category",
+        categoryId: "cat-deleted",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-dependent-valid",
+        transactionId: "txn-dependent-valid",
+        categoryId: "cat-groceries",
+        dependencies: ["change-invalid-category"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-invalid-category", "change-dependent-valid"],
+      changeOutcomes: [
+        {
+          changeId: "change-invalid-category",
+          status: "repair_required",
+          code: "invalid_ledger_reference",
+        },
+        {
+          changeId: "change-dependent-valid",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-valid")).toBe("0");
+  });
+
+  postgresIt("retries accepted pending changes idempotently by change identity", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-idempotent-create",
+          idempotencyKey: "idem-stable-create",
+          transactionId: "txn-idempotent-original",
+          categoryId: "cat-groceries",
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-idempotent-create"],
+      rejectedChangeIds: [],
+      cursor: "ledger:5",
+    });
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-idempotent-create",
+          idempotencyKey: "idem-stable-create",
+          transactionId: "txn-idempotent-mutated",
+          categoryId: "cat-groceries",
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-idempotent-create"],
+      rejectedChangeIds: [],
+      changeOutcomes: [
+        {
+          changeId: "change-idempotent-create",
+          status: "accepted",
+          code: "accepted",
+        },
+      ],
+      cursor: "ledger:5",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-idempotent-original")).toBe("1");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-idempotent-mutated")).toBe("0");
+    expect(readMonthlyProjection(postgres)).toMatchObject({
+      expenseAmount: 15000,
+      transactionCount: 1,
+      cursorSequence: 5,
+    });
+  });
+
+  postgresIt(
+    "serializes concurrent accepted pending-change retries by idempotency key",
+    async () => {
+      const postgres = setupSeededPostgres();
+      const lockedCursor = psqlScalarAsync(
+        postgres,
+        `
+begin;
+select 1
+from ledger.ledger_cursors
+where user_id = '${USER_ID}'::uuid
+for update;
+select pg_sleep(1);
+commit;
+`
+      );
+      await delay(100);
+
+      const outcomes = await Promise.all([
+        applyPendingChangesOutcomeAsync(postgres, [
+          pendingCreateChangeJson({
+            changeId: "change-concurrent-idempotent",
+            idempotencyKey: "idem-concurrent-stable",
+            transactionId: "txn-concurrent-idempotent-original",
+            categoryId: "cat-groceries",
+          }),
+        ]),
+        applyPendingChangesOutcomeAsync(postgres, [
+          pendingCreateChangeJson({
+            changeId: "change-concurrent-idempotent",
+            idempotencyKey: "idem-concurrent-stable",
+            transactionId: "txn-concurrent-idempotent-mutated",
+            categoryId: "cat-groceries",
+          }),
+        ]),
+      ]);
+      await lockedCursor;
+
+      expect(outcomes.map((outcome) => outcome.acceptedChangeIds)).toEqual([
+        ["change-concurrent-idempotent"],
+        ["change-concurrent-idempotent"],
+      ]);
+      expect(
+        Number(readTransactionRowCount(postgres, USER_ID, "txn-concurrent-idempotent-original")) +
+          Number(readTransactionRowCount(postgres, USER_ID, "txn-concurrent-idempotent-mutated"))
+      ).toBe(1);
+      expect(readMonthlyProjection(postgres)).toMatchObject({
+        expenseAmount: 15000,
+        transactionCount: 1,
+        cursorSequence: 5,
+      });
+    }
+  );
+
+  postgresIt("rejects stale expected versions before applying a pending change", () => {
+    const postgres = setupSeededPostgres();
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-stale-guard",
+        transactionId: "txn-stale-guard",
+        categoryId: "cat-groceries",
+        expectedVersions: [
+          {
+            recordType: "transaction",
+            recordId: "txn-user",
+            version: 2,
+          },
+        ],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-stale-guard"],
+      changeOutcomes: [
+        {
+          changeId: "change-stale-guard",
+          status: "repair_required",
+          code: "stale_expected_version",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-stale-guard")).toBe("0");
+  });
+
+  postgresIt(
+    "classifies unsupported pending change command versions as requiring app update",
+    () => {
+      const postgres = setupSeededPostgres();
+
+      const outcome = applyPendingChangesOutcome(postgres, [
+        {
+          ...pendingCreateChangeJson({
+            changeId: "change-old-command",
+            transactionId: "txn-old-command",
+            categoryId: "cat-groceries",
+          }),
+          commandVersion: 0,
+        },
+        pendingCreateChangeJson({
+          changeId: "change-new-command",
+          transactionId: "txn-new-command",
+          categoryId: "cat-groceries",
+        }),
+      ]);
+
+      expect(outcome).toMatchObject({
+        code: "accepted",
+        acceptedChangeIds: ["change-new-command"],
+        rejectedChangeIds: ["change-old-command"],
+        changeOutcomes: [
+          {
+            changeId: "change-old-command",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+          {
+            changeId: "change-new-command",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:5",
+      });
+      expect(readTransactionRowCount(postgres, USER_ID, "txn-old-command")).toBe("0");
+      expect(readTransactionRowCount(postgres, USER_ID, "txn-new-command")).toBe("1");
+    }
+  );
+
   postgresIt(
     "rejects invalid transaction creates without partial cursor or projection writes",
     () => {
@@ -422,13 +686,17 @@ where user_id = '${USER_ID}'::uuid;
 }
 
 function readCreatedTransactionRowCount(postgres: PostgresHarness) {
+  return readTransactionRowCount(postgres, USER_ID, CLIENT_TRANSACTION_ID);
+}
+
+function readTransactionRowCount(postgres: PostgresHarness, userId: string, transactionId: string) {
   return psqlScalar(
     postgres,
     `
 select count(*)
 from ledger.transactions
-where user_id = '${USER_ID}'::uuid
-  and id = '${CLIENT_TRANSACTION_ID}';
+where user_id = '${userId}'::uuid
+  and id = '${transactionId}';
 `
   );
 }
@@ -779,6 +1047,78 @@ select public.cloud_ledger_create_transaction(
 `
     )
   );
+}
+
+function applyPendingChangesOutcome(harness: PostgresHarness, changes: readonly unknown[]) {
+  return JSON.parse(
+    psqlScalar(
+      harness,
+      `
+set role service_role;
+select public.cloud_ledger_apply_pending_changes(
+  '${USER_ID}'::uuid,
+  1,
+  'device-ios-17-pro',
+  'batch-20260601-offline',
+  ${jsonbSql(changes)}
+)::text;
+`
+    )
+  );
+}
+
+async function applyPendingChangesOutcomeAsync(
+  harness: PostgresHarness,
+  changes: readonly unknown[]
+) {
+  return JSON.parse(
+    await psqlScalarAsync(
+      harness,
+      `
+set role service_role;
+select public.cloud_ledger_apply_pending_changes(
+  '${USER_ID}'::uuid,
+  1,
+  'device-ios-17-pro',
+  'batch-20260601-offline',
+  ${jsonbSql(changes)}
+)::text;
+`
+    )
+  );
+}
+
+function pendingCreateChangeJson(input: {
+  readonly changeId: string;
+  readonly idempotencyKey?: string;
+  readonly transactionId: string;
+  readonly categoryId: string | null;
+  readonly dependencies?: readonly string[];
+  readonly expectedVersions?: readonly unknown[];
+}) {
+  return {
+    id: input.changeId,
+    kind: "createTransaction",
+    commandVersion: 1,
+    idempotencyKey: input.idempotencyKey ?? `idem-${input.changeId}`,
+    dependencies: input.dependencies ?? [],
+    expectedVersions: input.expectedVersions ?? [],
+    clientTimestamp: "2026-06-01T10:02:00.000Z",
+    transaction: {
+      id: input.transactionId,
+      type: "expense",
+      amount: 15000,
+      currency: "COP",
+      categoryId: input.categoryId,
+      accountId: "acct-cash",
+      description: "Market",
+      date: "2026-06-01",
+    },
+  };
+}
+
+function jsonbSql(value: unknown) {
+  return `'${JSON.stringify(value).replaceAll("'", "''")}'::jsonb`;
 }
 
 function readLedgerCursorSequence(harness: PostgresHarness) {

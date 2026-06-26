@@ -10,6 +10,10 @@ const CREATE_TRANSACTION_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622100000_cloud_ledger_transaction_create.sql"
 );
+const PENDING_CHANGE_SET_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260626230000_cloud_ledger_pending_change_sets.sql"
+);
 const CAPTURE_IMPROVEMENT_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql"
@@ -101,6 +105,36 @@ describe("Cloud Ledger remote schema", () => {
     expect(validationIndex).toBeGreaterThanOrEqual(0);
     expect(validationIndex).toBeLessThan(cursorSeedIndex);
     expect(validationIndex).toBeLessThan(accountSeedIndex);
+  });
+
+  it("exposes Pending Change Set acceptance only through a service-role command", () => {
+    const sql = readFileSync(PENDING_CHANGE_SET_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("create table if not exists ledger.pending_change_acceptances");
+    expect(sql).toContain("primary key (user_id, idempotency_key)");
+    expect(sql).toContain("alter table ledger.pending_change_acceptances force row level security");
+    expect(sql).toContain("create or replace function public.cloud_ledger_apply_pending_changes");
+    expect(sql).toMatch(
+      /revoke execute on function public\.cloud_ledger_apply_pending_changes\([\s\S]*?jsonb\s*\) from public, anon, authenticated/
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_apply_pending_changes\([\s\S]*?jsonb\s*\) to service_role/
+    );
+    expect(sql).toContain(
+      "revoke all on table ledger.pending_change_acceptances from public, anon, authenticated"
+    );
+  });
+
+  it("guards Pending Change Set retries, dependencies, versions, and unsupported commands in Postgres", () => {
+    const sql = readFileSync(PENDING_CHANGE_SET_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("pg_advisory_xact_lock");
+    expect(sql).toContain("idempotency_key = v_idempotency_key");
+    expect(sql).toContain("'code', 'dependency_failed'");
+    expect(sql).toContain("'code', 'stale_expected_version'");
+    expect(sql).toContain("'status', 'requires_app_update'");
+    expect(sql).toContain("'code', 'unsupported_command_version'");
+    expect(sql).not.toContain("raise notice");
   });
 
   it("exposes Capture Improvement Sample retention and deletion only through service-role commands", () => {

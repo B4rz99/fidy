@@ -1000,11 +1000,17 @@ function expectFlushThroughRemoteApiBoundary(
     body: {
       action: "applyPendingChanges",
       commandVersion: 1,
+      deviceId: "mobile-local-device",
+      batchId: "batch-change-offline-coffee",
       changes: [
         {
           id: "change-offline-coffee",
           kind: "createTransaction",
           commandVersion: 1,
+          idempotencyKey: "change-offline-coffee",
+          dependencies: [],
+          expectedVersions: [],
+          clientTimestamp: "2026-06-02T10:03:00.000Z",
           transaction: offlineCoffeeCommand().transaction,
         },
       ],

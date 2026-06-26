@@ -53,6 +53,24 @@ const CREATE_TRANSACTION_RPC_DATA = {
   },
   cursor: "ledger:4",
 } as const;
+const APPLY_PENDING_CHANGES_RPC_DATA = {
+  code: "accepted",
+  acceptedChangeIds: ["change-valid-offline-create"],
+  rejectedChangeIds: ["change-rejected-offline-create"],
+  changeOutcomes: [
+    {
+      changeId: "change-rejected-offline-create",
+      status: "repair_required",
+      code: "invalid_ledger_reference",
+    },
+    {
+      changeId: "change-valid-offline-create",
+      status: "accepted",
+      code: "accepted",
+    },
+  ],
+  cursor: "ledger:5",
+} as const;
 const CAPTURE_IMPROVEMENT_SAMPLE = {
   sourceChannel: "email",
   sourceFamily: "email",
@@ -178,44 +196,79 @@ describe("Cloud Ledger Edge store", () => {
 
   it("reports permanent pending-change create rejections in the batch outcome", async () => {
     const supabase = createLedgerSupabase({
-      createTransactionOutcome: { code: "invalid_ledger_reference" },
+      applyPendingChangesOutcome: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-rejected-offline-create"],
+        changeOutcomes: [
+          {
+            changeId: "change-rejected-offline-create",
+            status: "repair_required",
+            code: "invalid_ledger_reference",
+          },
+        ],
+        cursor: "ledger:4",
+      },
     });
     const store = createCloudLedgerStore(supabase.client);
 
-    const outcome = await store.applyPendingChanges(USER_ID, {
-      commandVersion: 1,
-      changes: [rejectedPendingCreateChange()],
-    });
+    const outcome = await store.applyPendingChanges(
+      USER_ID,
+      pendingChangeSetCommand([rejectedPendingCreateChange()])
+    );
 
     expect(outcome).toEqual({
       code: "accepted",
       acceptedChangeIds: [],
       rejectedChangeIds: ["change-rejected-offline-create"],
-      cursor: "ledger:0",
+      changeOutcomes: [
+        {
+          changeId: "change-rejected-offline-create",
+          status: "repair_required",
+          code: "invalid_ledger_reference",
+        },
+      ],
+      cursor: "ledger:4",
     });
+  });
+
+  it("applies pending change sets through the service-only batch acceptance RPC", async () => {
+    const supabase = createLedgerSupabase({
+      applyPendingChangesOutcome: APPLY_PENDING_CHANGES_RPC_DATA,
+    });
+    const store = createCloudLedgerStore(supabase.client);
+
+    const command = pendingChangeSetCommand([
+      rejectedPendingCreateChange(),
+      validPendingCreateChange(),
+    ]);
+    const outcome = await store.applyPendingChanges(USER_ID, command);
+
+    expect(outcome).toEqual(APPLY_PENDING_CHANGES_RPC_DATA);
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_apply_pending_changes", {
+      p_batch_id: "batch-20260601-offline",
+      p_changes: command.changes,
+      p_command_version: 1,
+      p_device_id: "device-ios-17-pro",
+      p_user_id: USER_ID,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.schema).not.toHaveBeenCalled();
   });
 
   it("continues applying independent pending changes after a rejected create", async () => {
     const supabase = createLedgerSupabase({
-      createTransactionOutcomes: [
-        { code: "invalid_ledger_reference" },
-        { ...CREATE_TRANSACTION_RPC_DATA, cursor: "ledger:5" },
-      ],
+      applyPendingChangesOutcome: APPLY_PENDING_CHANGES_RPC_DATA,
     });
     const store = createCloudLedgerStore(supabase.client);
 
-    const outcome = await store.applyPendingChanges(USER_ID, {
-      commandVersion: 1,
-      changes: [rejectedPendingCreateChange(), validPendingCreateChange()],
-    });
+    const outcome = await store.applyPendingChanges(
+      USER_ID,
+      pendingChangeSetCommand([rejectedPendingCreateChange(), validPendingCreateChange()])
+    );
 
-    expect(outcome).toEqual({
-      code: "accepted",
-      acceptedChangeIds: ["change-valid-offline-create"],
-      rejectedChangeIds: ["change-rejected-offline-create"],
-      cursor: "ledger:5",
-    });
-    expect(supabase.rpc).toHaveBeenCalledTimes(2);
+    expect(outcome).toEqual(APPLY_PENDING_CHANGES_RPC_DATA);
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
   });
 
   it("rejects oversized pending-change batches before replaying transaction RPCs", async () => {
@@ -225,6 +278,8 @@ describe("Cloud Ledger Edge store", () => {
     await expect(
       store.applyPendingChanges(USER_ID, {
         commandVersion: 1,
+        deviceId: "device-ios-17-pro",
+        batchId: "batch-oversized",
         changes: Array.from({ length: CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT + 1 }, (_, index) =>
           pendingCreateChange({
             categoryId: "cat-groceries",
@@ -333,6 +388,15 @@ function validPendingCreateChange() {
   });
 }
 
+function pendingChangeSetCommand(changes: readonly ReturnType<typeof pendingCreateChange>[]) {
+  return {
+    commandVersion: 1,
+    deviceId: "device-ios-17-pro",
+    batchId: "batch-20260601-offline",
+    changes,
+  } as const;
+}
+
 function pendingCreateChange(input: {
   readonly categoryId: string;
   readonly changeId: string;
@@ -343,6 +407,10 @@ function pendingCreateChange(input: {
     id: input.changeId,
     kind: "createTransaction",
     commandVersion: 1,
+    idempotencyKey: `idem-${input.changeId}`,
+    dependencies: [],
+    expectedVersions: [],
+    clientTimestamp: "2026-06-01T10:02:00.000Z",
     transaction: {
       id: input.transactionId,
       type: "expense",
@@ -358,6 +426,7 @@ function pendingCreateChange(input: {
 
 function createLedgerSupabase(
   options: {
+    readonly applyPendingChangesOutcome?: unknown;
     readonly createTransactionOutcome?: unknown;
     readonly createTransactionOutcomes?: readonly unknown[];
   } = {}
@@ -384,6 +453,7 @@ function createLedgerSupabase(
 function ledgerRpcResult(
   functionName: string,
   options: {
+    readonly applyPendingChangesOutcome?: unknown;
     readonly createTransactionOutcome?: unknown;
   },
   createTransactionOutcomes: unknown[]
@@ -394,13 +464,15 @@ function ledgerRpcResult(
         ? (createTransactionOutcomes.shift() ??
           options.createTransactionOutcome ??
           CREATE_TRANSACTION_RPC_DATA)
-        : functionName === "cloud_ledger_retain_capture_improvement_sample"
-          ? { code: "accepted" }
-          : functionName === "cloud_ledger_delete_capture_improvement_samples"
+        : functionName === "cloud_ledger_apply_pending_changes"
+          ? (options.applyPendingChangesOutcome ?? APPLY_PENDING_CHANGES_RPC_DATA)
+          : functionName === "cloud_ledger_retain_capture_improvement_sample"
             ? { code: "accepted" }
-            : functionName === "cloud_ledger_set_capture_improvement_preference"
+            : functionName === "cloud_ledger_delete_capture_improvement_samples"
               ? { code: "accepted" }
-              : BOOTSTRAP_RPC_DATA,
+              : functionName === "cloud_ledger_set_capture_improvement_preference"
+                ? { code: "accepted" }
+                : BOOTSTRAP_RPC_DATA,
     error: null,
   };
 }

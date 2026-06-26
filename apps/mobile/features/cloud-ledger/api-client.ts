@@ -9,7 +9,12 @@ import {
   requireLedgerCursor,
   requireTransactionId,
 } from "@/shared/types/assertions";
-import type { CategoryId, LedgerChangeId, LedgerCursor } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  LedgerChangeId,
+  LedgerCursor,
+  TransactionId,
+} from "@/shared/types/branded";
 import type {
   CloudLedgerBootstrapPayload,
   CloudLedgerCategory,
@@ -98,7 +103,14 @@ type CloudLedgerWireApplyPendingChangesAccepted = {
   readonly code: "accepted";
   readonly acceptedChangeIds: readonly string[];
   readonly rejectedChangeIds?: readonly string[];
+  readonly changeOutcomes?: readonly CloudLedgerWirePendingChangeOutcome[];
   readonly cursor: string;
+};
+
+type CloudLedgerWirePendingChangeOutcome = {
+  readonly changeId: string;
+  readonly status: string;
+  readonly code: string;
 };
 
 type CloudLedgerCreateTransactionApiResponse =
@@ -113,11 +125,29 @@ export type CloudLedgerApplyPendingCreateTransactionChange = {
   readonly id: LedgerChangeId;
   readonly kind: "createTransaction";
   readonly commandVersion: 1;
+  readonly idempotencyKey: LedgerChangeId;
+  readonly dependencies: readonly LedgerChangeId[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
+};
+
+export type CloudLedgerExpectedRecordVersion = {
+  readonly recordType: "transaction";
+  readonly recordId: TransactionId;
+  readonly version: number;
+};
+
+export type CloudLedgerPendingChangeOutcome = {
+  readonly changeId: LedgerChangeId;
+  readonly status: "accepted" | "repair_required" | "requires_app_update" | "retryable";
+  readonly code: string;
 };
 
 export type CloudLedgerApplyPendingChangesCommand = {
   readonly commandVersion: 1;
+  readonly deviceId: string;
+  readonly batchId: string;
   readonly changes: readonly CloudLedgerApplyPendingCreateTransactionChange[];
 };
 
@@ -125,6 +155,7 @@ export type CloudLedgerApplyPendingChangesAccepted = {
   readonly code: "accepted";
   readonly acceptedChangeIds: readonly LedgerChangeId[];
   readonly rejectedChangeIds: readonly LedgerChangeId[];
+  readonly changeOutcomes: readonly CloudLedgerPendingChangeOutcome[];
   readonly cursor: LedgerCursor;
 };
 
@@ -243,6 +274,8 @@ export async function applyPendingCloudLedgerChanges(
       body: {
         action: "applyPendingChanges",
         commandVersion: command.commandVersion,
+        deviceId: command.deviceId,
+        batchId: command.batchId,
         changes: command.changes,
       },
       signal: options.signal,
@@ -315,6 +348,7 @@ function parseApplyPendingChangesAccepted(
       code: "accepted",
       acceptedChangeIds: data.acceptedChangeIds.map(requireLedgerChangeId),
       rejectedChangeIds: (data.rejectedChangeIds ?? []).map(requireLedgerChangeId),
+      changeOutcomes: (data.changeOutcomes ?? []).map(parsePendingChangeOutcome),
       cursor: requireLedgerCursor(data.cursor),
     };
   } catch (error) {
@@ -323,6 +357,30 @@ function parseApplyPendingChangesAccepted(
       error instanceof Error ? error.message : "Invalid Cloud Ledger response"
     );
   }
+}
+
+function parsePendingChangeOutcome(
+  outcome: CloudLedgerWirePendingChangeOutcome
+): CloudLedgerPendingChangeOutcome {
+  return {
+    changeId: requireLedgerChangeId(outcome.changeId),
+    status: requirePendingChangeOutcomeStatus(outcome.status),
+    code: outcome.code,
+  };
+}
+
+function requirePendingChangeOutcomeStatus(
+  value: string
+): CloudLedgerPendingChangeOutcome["status"] {
+  if (
+    value === "accepted" ||
+    value === "repair_required" ||
+    value === "requires_app_update" ||
+    value === "retryable"
+  ) {
+    return value;
+  }
+  throw new Error("pending change outcome status must be supported");
 }
 
 function parseCategory(row: CloudLedgerWireCategory): CloudLedgerCategory {

@@ -81,6 +81,7 @@ const OUTBOX_KEY_BYTES = 32;
 const OUTBOX_KEY_PATTERN = /^[0-9a-f]{64}$/;
 const SECURE_STORE_OUTBOX_CHUNK_SIZE = 1500;
 const CHUNKED_SECURE_STORE_OUTBOX_STORAGE = "chunked-secure-store";
+const CLOUD_LEDGER_MOBILE_DEVICE_ID = "mobile-local-device";
 const outboxesByUserId = new Map<string, EncryptedCloudLedgerOutbox>();
 
 export class CloudLedgerOutboxFailure extends Error {
@@ -291,12 +292,9 @@ async function flushPendingChanges(
         supabase,
         {
           commandVersion: 1,
-          changes: batch.map((change) => ({
-            id: change.id,
-            kind: change.kind,
-            commandVersion: change.commandVersion,
-            transaction: change.transaction,
-          })),
+          deviceId: CLOUD_LEDGER_MOBILE_DEVICE_ID,
+          batchId: pendingChangeBatchId(batch),
+          changes: batch.map(toPendingChangeCommand),
         },
         { signal: abortSignal }
       );
@@ -317,6 +315,23 @@ const chunkPendingChanges = (
         (index + 1) * CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT
       )
   );
+
+function pendingChangeBatchId(batch: readonly CloudLedgerPendingChange[]): string {
+  return `batch-${batch[0]?.id ?? "empty"}`;
+}
+
+function toPendingChangeCommand(change: CloudLedgerPendingChange) {
+  return {
+    id: change.id,
+    kind: change.kind,
+    commandVersion: change.commandVersion,
+    idempotencyKey: change.id,
+    dependencies: [],
+    expectedVersions: [],
+    clientTimestamp: change.createdAt,
+    transaction: change.transaction,
+  } as const;
+}
 
 function toOptimisticTransaction(change: CloudLedgerPendingChange): CloudLedgerTransaction {
   return {
