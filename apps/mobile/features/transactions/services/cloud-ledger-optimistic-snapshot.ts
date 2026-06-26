@@ -90,16 +90,25 @@ function upsertCloudLedgerTransaction(
         pageWindowSize
       )
     : snapshot.pages;
+  const droppedCommittedPageCount = countDroppedCommittedPages(snapshot.pages, pages);
 
   return {
     snapshot: {
       ...snapshot,
       pages,
-      offset: snapshot.offset,
+      offset: Math.max(0, snapshot.offset - droppedCommittedPageCount),
     },
     didExistInPages,
   };
 }
+
+const countDroppedCommittedPages = (
+  before: readonly StoredTransaction[],
+  after: readonly StoredTransaction[]
+): number => {
+  const afterIds = new Set(after.map((transaction) => transaction.id));
+  return before.filter((transaction) => !afterIds.has(transaction.id)).length;
+};
 
 const hasTransactionInPages = (
   pages: readonly StoredTransaction[],

@@ -92,6 +92,17 @@ describe("Cloud Ledger remote schema", () => {
     );
   });
 
+  it("validates Cloud Ledger transaction fields before seeding missing references", () => {
+    const sql = readFileSync(CREATE_TRANSACTION_MIGRATION, "utf8").toLowerCase();
+    const validationIndex = sql.search(/p_amount is null\s+or p_amount <= 0/);
+    const cursorSeedIndex = sql.indexOf("insert into ledger.ledger_cursors");
+    const accountSeedIndex = sql.indexOf("v_should_seed_account := true");
+
+    expect(validationIndex).toBeGreaterThanOrEqual(0);
+    expect(validationIndex).toBeLessThan(cursorSeedIndex);
+    expect(validationIndex).toBeLessThan(accountSeedIndex);
+  });
+
   it("exposes Capture Improvement Sample retention and deletion only through service-role commands", () => {
     const sql = readFileSync(CAPTURE_IMPROVEMENT_MIGRATION, "utf8").toLowerCase();
 

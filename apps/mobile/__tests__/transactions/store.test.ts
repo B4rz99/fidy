@@ -39,6 +39,7 @@ import {
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type { AnyDb } from "@/shared/db";
 import { getSupabase } from "@/shared/db/supabase";
+import { financialAccounts, transactions, userCategories } from "@/shared/db/schema";
 import { toIsoDate, toIsoDateTime } from "@/shared/lib";
 import type {
   CategoryId,
@@ -99,6 +100,8 @@ vi.mock("@/shared/db/client", () => ({
 }));
 
 const insertedTransactionRows: unknown[] = [];
+const insertedFinancialAccountRows: unknown[] = [];
+const insertedUserCategoryRows: unknown[] = [];
 const deletedTransactionScopes: unknown[] = [];
 let canUseSelectedAccount = true;
 const mockDb = {
@@ -112,11 +115,32 @@ const mockDb = {
       }),
     }),
   }),
-  insert: () => ({
+  insert: (table: unknown) => ({
     values: (row: unknown) => ({
       run: () => {
-        insertedTransactionRows.push(row);
+        if (table === transactions) {
+          insertedTransactionRows.push(row);
+        }
+        if (table === financialAccounts) {
+          insertedFinancialAccountRows.push(row);
+        }
+        if (table === userCategories) {
+          insertedUserCategoryRows.push(row);
+        }
       },
+      onConflictDoUpdate: () => ({
+        run: () => {
+          if (table === transactions) {
+            insertedTransactionRows.push(row);
+          }
+          if (table === financialAccounts) {
+            insertedFinancialAccountRows.push(row);
+          }
+          if (table === userCategories) {
+            insertedUserCategoryRows.push(row);
+          }
+        },
+      }),
     }),
   }),
   delete: () => ({
@@ -135,6 +159,74 @@ const mockDb = {
   }),
 } as unknown as AnyDb;
 const mockUserId = "user-1" as UserId;
+
+function seedCloudLedgerRuntimeWithRemoteReferences() {
+  setCloudLedgerRuntimeCache(
+    mockUserId,
+    applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+      cursor: "ledger:12" as LedgerCursor,
+      categories: [
+        {
+          id: "ucat-cloud-remote" as CategoryId,
+          name: "Remote custom",
+          icon: "receipt",
+          color: "#445566",
+          updatedAt: "2026-06-20T10:01:00.000Z" as IsoDateTime,
+        },
+      ],
+      financialAccounts: [
+        {
+          id: "fa-cloud-remote" as FinancialAccountId,
+          name: "Remote account",
+          type: "cash",
+          currency: "COP",
+          updatedAt: "2026-06-20T10:00:00.000Z" as IsoDateTime,
+        },
+      ],
+      transactions: [
+        {
+          id: "txn-cloud-remote-reference" as TransactionId,
+          type: "expense",
+          amount: 4200 as CopAmount,
+          currency: "COP",
+          categoryId: "ucat-cloud-remote" as CategoryId,
+          accountId: "fa-cloud-remote" as FinancialAccountId,
+          description: "Remote refs",
+          date: "2026-06-20" as IsoDate,
+          updatedAt: "2026-06-20T10:02:00.000Z" as IsoDateTime,
+        },
+      ],
+      tombstones: [],
+    })
+  );
+}
+
+function expectCloudLedgerRemoteReferencesPersisted() {
+  expect(insertedFinancialAccountRows).toEqual([
+    expect.objectContaining({
+      id: "fa-cloud-remote",
+      userId: mockUserId,
+      name: "Remote account",
+      kind: "cash",
+    }),
+  ]);
+  expect(insertedUserCategoryRows).toEqual([
+    expect.objectContaining({
+      id: "ucat-cloud-remote",
+      userId: mockUserId,
+      name: "Remote custom",
+      iconName: "receipt",
+      colorHex: "#445566",
+    }),
+  ]);
+  expect(insertedTransactionRows).toEqual([
+    expect.objectContaining({
+      id: "txn-cloud-remote-reference",
+      accountId: "fa-cloud-remote",
+      categoryId: "ucat-cloud-remote",
+    }),
+  ]);
+}
 
 function makeStoredTransaction(overrides: Partial<StoredTransaction> = {}) {
   return {
@@ -247,6 +339,8 @@ describe("transaction boundaries", () => {
     cloudLedgerFlushIfOnline.mockReset();
     cloudLedgerFlushIfOnline.mockResolvedValue(undefined);
     insertedTransactionRows.length = 0;
+    insertedFinancialAccountRows.length = 0;
+    insertedUserCategoryRows.length = 0;
     deletedTransactionScopes.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
@@ -1047,6 +1141,9 @@ describe("transaction boundaries", () => {
     );
     const pendingTransaction = makeStoredTransaction({
       id: "tx-pending-cloud-ledger" as TransactionId,
+      date: new Date("2026-03-05T00:00:00.000Z"),
+      createdAt: new Date("2026-03-05T10:00:00.000Z"),
+      updatedAt: new Date("2026-03-05T10:00:00.000Z"),
     });
     const loadCommittedPage = ({
       limit,
@@ -1070,13 +1167,13 @@ describe("transaction boundaries", () => {
     await loadNextTransactions(mockDb, mockUserId);
 
     expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).toContain(
-      "tx-committed-30"
+      "tx-committed-29"
     );
     expect(getTransactionsPaginated).toHaveBeenLastCalledWith({
       db: mockDb,
       userId: mockUserId,
       limit: 30,
-      offset: 30,
+      offset: 29,
     });
   });
 
@@ -1328,6 +1425,14 @@ describe("transaction boundaries", () => {
 
     expect(deletedTransactionScopes).toHaveLength(1);
     expect(insertedTransactionRows).toEqual([]);
+  });
+
+  it("persists Cloud Ledger account and custom category references with transaction shadows", () => {
+    seedCloudLedgerRuntimeWithRemoteReferences();
+
+    persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
+
+    expectCloudLedgerRemoteReferencesPersisted();
   });
 
   it("deletes local Cloud Ledger shadows for pending outbox creates on discard", async () => {

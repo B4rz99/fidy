@@ -1,13 +1,16 @@
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
-import { transactions } from "@/shared/db/schema";
+import { financialAccounts, transactions, userCategories } from "@/shared/db/schema";
 import { tryGetDb } from "@/shared/db/client";
 import {
+  type CloudLedgerCategory,
   type CloudLedgerCreateTransactionCommand,
+  type CloudLedgerFinancialAccount,
   getCloudLedgerRuntimeCache,
 } from "@/features/cloud-ledger/public";
 import { getCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
 import { enqueueCloudLedgerOptimisticCreate } from "@/features/cloud-ledger/runtime-mutations.public";
+import { DEFAULT_CATEGORY_IDS, getBuiltInCategory } from "@/shared/categories";
 import {
   captureWarning,
   generateLedgerChangeId,
@@ -29,6 +32,7 @@ import type {
   FinancialAccountId,
   IsoDate,
   TransactionId,
+  UserCategoryId,
   UserId,
 } from "@/shared/types/branded";
 import {
@@ -38,11 +42,13 @@ import {
 import { compareStoredTransactionsByRepositoryOrder } from "./lib/transaction-order";
 import { toStoredTransaction } from "./lib/build-transaction";
 import type { StoredTransaction, TransactionType } from "./schema";
-import { cloudLedgerCreateCommandToStoredTransaction } from "./services/cloud-ledger-transaction-adapter";
+import {
+  cloudLedgerCreateCommandToStoredTransaction,
+  cloudLedgerTransactionToStoredTransactions,
+} from "./services/cloud-ledger-transaction-adapter";
 import {
   applyCloudLedgerOptimisticView,
   applyRuntimeCloudLedgerTransactions,
-  loadRuntimeCloudLedgerTransactions,
 } from "./services/cloud-ledger-optimistic-snapshot";
 import { createTransactionQueryService } from "./services/create-transaction-query-service";
 import { toTransactionFormInput } from "./store/form-input";
@@ -51,6 +57,7 @@ import { useTransactionStore } from "./store/state";
 const PAGE_SIZE = 30;
 const CLOUD_LEDGER_MAX_COP_AMOUNT = 2_147_483_647;
 const CLOUD_LEDGER_TRANSACTION_SOURCE = "cloud_ledger";
+const CLOUD_LEDGER_REFERENCE_FALLBACK_CATEGORY = getBuiltInCategory("other");
 
 let transactionsSessionId = 0;
 let loadTransactionsRequestId = 0;
@@ -99,6 +106,8 @@ type CloudLedgerManualTransactionValidation =
   | { readonly success: true; readonly transaction: ValidCloudLedgerManualTransaction }
   | { readonly success: false; readonly error: string };
 type TransactionInsertRow = typeof transactions.$inferInsert;
+type FinancialAccountInsertRow = typeof financialAccounts.$inferInsert;
+type UserCategoryInsertRow = typeof userCategories.$inferInsert;
 
 const isActiveTransactionSession = (userId: UserId, sessionId: number): boolean =>
   transactionsSessionId === sessionId && useTransactionStore.getState().activeUserId === userId;
@@ -302,7 +311,11 @@ function toCloudLedgerTransactionShadowRow(transaction: StoredTransaction): Tran
 }
 
 export function persistCloudLedgerRuntimeTransactionShadows(db: AnyDb, userId: UserId): void {
-  const runtimeTransactions = loadRuntimeCloudLedgerTransactions(userId);
+  const runtimeCache = getCloudLedgerRuntimeCache(userId);
+  persistCloudLedgerRuntimeReferences(db, userId, runtimeCache);
+  const runtimeTransactions = runtimeCache.transactions.flatMap((transaction) =>
+    cloudLedgerTransactionToStoredTransactions(userId, transaction)
+  );
   runtimeTransactions.forEach((transaction) => {
     persistCloudLedgerTransactionShadow(db, transaction);
   });
@@ -317,6 +330,113 @@ export function persistCloudLedgerRuntimeTransactionShadows(db: AnyDb, userId: U
       errorType: getErrorType(error),
     });
   }
+}
+
+function persistCloudLedgerRuntimeReferences(
+  db: AnyDb,
+  userId: UserId,
+  runtimeCache: ReturnType<typeof getCloudLedgerRuntimeCache>
+): void {
+  runtimeCache.financialAccounts.forEach((account) => {
+    persistCloudLedgerFinancialAccountReference(db, userId, account);
+  });
+  runtimeCache.categories
+    .filter((category) => !DEFAULT_CATEGORY_IDS.has(category.id))
+    .forEach((category) => {
+      persistCloudLedgerUserCategoryReference(db, userId, category);
+    });
+}
+
+function persistCloudLedgerFinancialAccountReference(
+  db: AnyDb,
+  userId: UserId,
+  account: CloudLedgerFinancialAccount
+): void {
+  const row = toCloudLedgerFinancialAccountRow(userId, account);
+  try {
+    db.insert(financialAccounts)
+      .values(row)
+      .onConflictDoUpdate({
+        target: financialAccounts.id,
+        set: {
+          deletedAt: row.deletedAt,
+          isDefault: row.isDefault,
+          kind: row.kind,
+          name: row.name,
+          paymentDueDay: row.paymentDueDay,
+          statementClosingDay: row.statementClosingDay,
+          updatedAt: row.updatedAt,
+          userId: row.userId,
+        },
+      })
+      .run();
+  } catch (error) {
+    captureWarning("cloud_ledger_shadow_account_reference_write_failed", {
+      errorType: getErrorType(error),
+    });
+  }
+}
+
+function persistCloudLedgerUserCategoryReference(
+  db: AnyDb,
+  userId: UserId,
+  category: CloudLedgerCategory
+): void {
+  const row = toCloudLedgerUserCategoryRow(userId, category);
+  try {
+    db.insert(userCategories)
+      .values(row)
+      .onConflictDoUpdate({
+        target: userCategories.id,
+        set: {
+          colorHex: row.colorHex,
+          deletedAt: row.deletedAt,
+          iconName: row.iconName,
+          name: row.name,
+          updatedAt: row.updatedAt,
+          userId: row.userId,
+        },
+      })
+      .run();
+  } catch (error) {
+    captureWarning("cloud_ledger_shadow_category_reference_write_failed", {
+      errorType: getErrorType(error),
+    });
+  }
+}
+
+function toCloudLedgerFinancialAccountRow(
+  userId: UserId,
+  account: CloudLedgerFinancialAccount
+): FinancialAccountInsertRow {
+  return {
+    createdAt: account.updatedAt,
+    deletedAt: null,
+    id: account.id,
+    isDefault: false,
+    kind: account.type,
+    name: account.name,
+    paymentDueDay: null,
+    statementClosingDay: null,
+    updatedAt: account.updatedAt,
+    userId,
+  };
+}
+
+function toCloudLedgerUserCategoryRow(
+  userId: UserId,
+  category: CloudLedgerCategory
+): UserCategoryInsertRow {
+  return {
+    colorHex: category.color ?? CLOUD_LEDGER_REFERENCE_FALLBACK_CATEGORY.color,
+    createdAt: category.updatedAt,
+    deletedAt: null,
+    iconName: category.icon ?? CLOUD_LEDGER_REFERENCE_FALLBACK_CATEGORY.icon,
+    id: category.id as unknown as UserCategoryId,
+    name: category.name,
+    updatedAt: category.updatedAt,
+    userId,
+  };
 }
 
 export async function deletePendingCloudLedgerTransactionShadows(userId: UserId): Promise<void> {

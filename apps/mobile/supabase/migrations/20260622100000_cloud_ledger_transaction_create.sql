@@ -187,6 +187,18 @@ begin
     return jsonb_build_object('code', 'duplicate_transaction_id');
   end if;
 
+  if p_type is null
+    or p_type not in ('expense', 'income')
+    or p_amount is null
+    or p_amount <= 0
+    or p_currency is distinct from 'COP'
+    or p_date is null
+    or p_date > current_date
+    or length(coalesce(p_description, '')) > 200
+  then
+    return jsonb_build_object('code', 'invalid_transaction');
+  end if;
+
   insert into ledger.ledger_cursors (user_id, latest_sequence, updated_at)
   values (p_user_id, 0, v_updated_at)
   on conflict (user_id) do nothing;

@@ -65,6 +65,7 @@ export function resumeCloudLedgerRuntimeCacheWrites(userId: UserId): void {
 export function beginCloudLedgerRuntimeCacheWrite(
   userId: UserId
 ): CloudLedgerRuntimeCacheWriteToken {
+  invalidateCloudLedgerRuntimeCacheWrites(userId);
   return { userId, generation: getCloudLedgerRuntimeCacheGeneration(userId) };
 }
 

@@ -46,6 +46,18 @@ describe("Cloud Ledger runtime cache write tokens", () => {
     expect(signal?.aborted).toBe(true);
   });
 
+  it("makes earlier overlapping writes stale when a newer write starts", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const firstWrite = beginCloudLedgerRuntimeCacheWrite(userId);
+    const firstSignal = createCloudLedgerRuntimeCacheWriteAbortSignal(userId, firstWrite);
+
+    const secondWrite = beginCloudLedgerRuntimeCacheWrite(userId);
+
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, firstWrite)).toBe(false);
+    expect(firstSignal?.aborted).toBe(true);
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, secondWrite)).toBe(true);
+  });
+
   it("does not abort completed generation-bound remote work after the signal is released", () => {
     const userId = requireUserId("user-cloud-ledger-runtime");
     const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);

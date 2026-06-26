@@ -75,6 +75,15 @@ const INVALID_CREATE_CASES: readonly RejectedCreateCase[] = [
     outcome: { code: "invalid_transaction" },
   },
   {
+    overrides: {
+      transactionId: "txn-zero-new-references",
+      amount: 0,
+      accountId: "acct-zero-side-effect",
+      categoryId: "cat-zero-side-effect",
+    },
+    outcome: { code: "invalid_transaction" },
+  },
+  {
     overrides: { transactionId: "txn-future", date: "2999-01-01" },
     outcome: { code: "invalid_transaction" },
   },
@@ -386,6 +395,7 @@ from ledger.transactions
 	    'txn-deleted-category',
 	    'txn-new-account-deleted-category',
 	    'txn-zero',
+    'txn-zero-new-references',
     'txn-future',
     'txn-null-version',
     'txn-null-type',
@@ -407,6 +417,8 @@ where user_id = '${USER_ID}'::uuid;
     )
   ).toBe("0");
   expect(readAccountRowCount(postgres, USER_ID, "acct-side-effect")).toBe("0");
+  expect(readAccountRowCount(postgres, USER_ID, "acct-zero-side-effect")).toBe("0");
+  expect(readCategoryRowCount(postgres, USER_ID, "cat-zero-side-effect")).toBe("0");
 }
 
 function readCreatedTransactionRowCount(postgres: PostgresHarness) {
