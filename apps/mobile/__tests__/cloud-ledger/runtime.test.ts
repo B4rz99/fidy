@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  beginCloudLedgerRuntimeCacheFlush,
   beginCloudLedgerRuntimeCacheWrite,
   createCloudLedgerRuntimeCacheWriteAbortSignal,
+  finishCloudLedgerRuntimeCacheWrite,
   isCloudLedgerRuntimeCacheWriteCurrent,
   releaseCloudLedgerRuntimeCacheWriteAbortSignal,
   resetCloudLedgerRuntimeCaches,
@@ -56,6 +58,21 @@ describe("Cloud Ledger runtime cache write tokens", () => {
     expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, firstWrite)).toBe(false);
     expect(firstSignal?.aborted).toBe(true);
     expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, secondWrite)).toBe(true);
+  });
+
+  it("does not let background flushes invalidate an active runtime write", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+
+    expect(beginCloudLedgerRuntimeCacheFlush(userId)).toBeNull();
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)).toBe(true);
+
+    finishCloudLedgerRuntimeCacheWrite(userId, writeToken);
+    const flushToken = beginCloudLedgerRuntimeCacheFlush(userId);
+
+    expect(flushToken).not.toBeNull();
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)).toBe(false);
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, flushToken!)).toBe(true);
   });
 
   it("does not abort completed generation-bound remote work after the signal is released", () => {

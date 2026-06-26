@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { runAuthenticatedBootstrap } from "@/bootstrap/authenticated-shell";
+import {
+  runAuthenticatedBootstrap,
+  subscribeAuthenticatedTransactionRefreshes,
+} from "@/bootstrap/authenticated-shell";
 import { useTransactionStore } from "@/features/transactions/store.public";
 import type {
   CategoryId,
@@ -44,7 +47,10 @@ const mocks = vi.hoisted(() => {
       dailySpending: [],
     },
   });
-  const state = { runtimeCache: createEmptyCache() };
+  const state: {
+    reconnectListener?: (state: { readonly isConnected: boolean }) => void;
+    runtimeCache: ReturnType<typeof createEmptyCache>;
+  } = { runtimeCache: createEmptyCache() };
   const writeToken = { generation: 1, userId: "user-1" };
   const noopTask = (id: string) => ({
     id,
@@ -63,6 +69,7 @@ const mocks = vi.hoisted(() => {
     writeToken,
     noopTask,
     noopSubscriptionTask,
+    addNetInfoEventListener: vi.fn<(...args: any[]) => any>(),
     beginCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerOutbox: vi.fn<(...args: any[]) => any>(),
@@ -134,6 +141,12 @@ vi.mock("@/features/settings/bootstrap", () => ({
   settingsBootstrapTask: mocks.noopTask("settings"),
 }));
 
+vi.mock("@react-native-community/netinfo", () => ({
+  default: {
+    addEventListener: mocks.addNetInfoEventListener,
+  },
+}));
+
 vi.mock("@/features/financial-accounts/public", () => ({
   tryEnsureDefaultFinancialAccount: mocks.tryEnsureDefaultFinancialAccount,
 }));
@@ -195,6 +208,7 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
     vi.clearAllMocks();
     useTransactionStore.getState().beginSession("user-reset" as UserId);
     mocks.state.runtimeCache = mocks.createEmptyCache();
+    mocks.state.reconnectListener = undefined;
     mocks.getCloudLedgerOutbox.mockReturnValue({
       clear: vi.fn<(...args: any[]) => any>(),
       enqueue: vi.fn<(...args: any[]) => any>(),
@@ -209,6 +223,10 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
       ...cache,
       transactions: [mocks.acceptedTransaction],
     }));
+    mocks.addNetInfoEventListener.mockImplementation((listener) => {
+      mocks.state.reconnectListener = listener;
+      return vi.fn();
+    });
     mocks.tryEnsureDefaultFinancialAccount.mockReturnValue({ id: "fa-default-user-1" });
   });
 
@@ -338,6 +356,35 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
 
     expect(useTransactionStore.getState().activeUserId).toBe("user-reset");
     expect(mocks.tryEnsureDefaultFinancialAccount).not.toHaveBeenCalled();
+  });
+
+  it("does not refresh ordinary transactions after a reconnect subscription is cleaned up", async () => {
+    let resolveFlush!: (cache: unknown) => void;
+    mocks.flushPendingCloudLedgerChanges.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFlush = resolve;
+        })
+    );
+    const unsubscribe = subscribeAuthenticatedTransactionRefreshes({
+      db: {} as never,
+      enableRemoteEffects: true,
+      userId: "user-1" as UserId,
+    });
+
+    mocks.state.reconnectListener?.({ isConnected: true });
+    await vi.waitFor(() => {
+      expect(mocks.flushPendingCloudLedgerChanges).toHaveBeenCalledTimes(1);
+    });
+
+    unsubscribe();
+    resolveFlush({
+      ...mocks.createEmptyCache(),
+      transactions: [mocks.acceptedTransaction],
+    });
+    await flushMicrotasks();
+
+    expect(useTransactionStore.getState().pages).toEqual([]);
   });
 });
 

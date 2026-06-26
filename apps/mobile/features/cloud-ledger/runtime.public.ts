@@ -1,7 +1,9 @@
 export {
+  beginCloudLedgerRuntimeCacheFlush,
   beginCloudLedgerRuntimeCacheWrite,
   clearCloudLedgerRuntimeCache,
   createCloudLedgerRuntimeCacheWriteAbortSignal,
+  finishCloudLedgerRuntimeCacheWrite,
   getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent,
   releaseCloudLedgerRuntimeCacheWriteAbortSignal,

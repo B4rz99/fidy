@@ -707,6 +707,8 @@ export function loadTransactionAggregates(db: AnyDb, userId: UserId): void {
         ? applyRuntimeCloudLedgerTransactions(aggregateSnapshot, userId, {
             isTransactionIncludedInAggregate: (transaction) =>
               isPersistedActiveTransaction(db, userId, transaction.id),
+            isTransactionIncludedInPageOffset: (transaction) =>
+              isPersistedActiveTransaction(db, userId, transaction.id),
             pageWindowSize: Math.max(aggregateSnapshot.offset, PAGE_SIZE),
           })
         : aggregateSnapshot

@@ -10,8 +10,10 @@ import {
   restoreOptimisticCloudLedgerCache,
 } from "./outbox";
 import {
+  beginCloudLedgerRuntimeCacheFlush,
   beginCloudLedgerRuntimeCacheWrite,
   createCloudLedgerRuntimeCacheWriteAbortSignal,
+  finishCloudLedgerRuntimeCacheWrite,
   getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent,
   releaseCloudLedgerRuntimeCacheWriteAbortSignal,
@@ -28,19 +30,23 @@ export type CloudLedgerOptimisticCreateResult = {
 export async function restoreCloudLedgerOptimisticRuntimeState(userId: UserId): Promise<boolean> {
   resumeCloudLedgerRuntimeCacheWrites(userId);
   const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
-  return setCloudLedgerRuntimeCacheIfCurrent(
-    userId,
-    writeToken,
-    await restoreOptimisticCloudLedgerCache({
-      cache: getCloudLedgerRuntimeCache(userId),
-      outbox: getCloudLedgerOutbox(userId),
-    })
-  );
+  try {
+    return setCloudLedgerRuntimeCacheIfCurrent(
+      userId,
+      writeToken,
+      await restoreOptimisticCloudLedgerCache({
+        cache: getCloudLedgerRuntimeCache(userId),
+        outbox: getCloudLedgerOutbox(userId),
+      })
+    );
+  } finally {
+    finishCloudLedgerRuntimeCacheWrite(userId, writeToken);
+  }
 }
 
 export async function flushCloudLedgerOutboxForUser(userId: UserId): Promise<boolean> {
-  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
-  if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+  const writeToken = beginCloudLedgerRuntimeCacheFlush(userId);
+  if (writeToken === null || !isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
     return false;
   }
   return flushCloudLedgerOutboxIfCurrent(userId, writeToken, getSupabase());
@@ -53,34 +59,38 @@ export async function enqueueCloudLedgerOptimisticCreate(input: {
   readonly createdAt: IsoDateTime;
 }): Promise<CloudLedgerOptimisticCreateResult> {
   const writeToken = beginCloudLedgerRuntimeCacheWrite(input.userId);
-  if (!isCloudLedgerRuntimeCacheWriteCurrent(input.userId, writeToken)) {
-    return {
-      didWriteRuntimeCache: false,
-      flushIfOnline: async () => undefined,
-    };
-  }
-  const optimisticCache = await createOfflineCloudLedgerTransaction({
-    cache: getCloudLedgerRuntimeCache(input.userId),
-    changeId: input.changeId,
-    command: input.command,
-    createdAt: input.createdAt,
-    outbox: getCloudLedgerOutbox(input.userId),
-  });
-  const didWriteRuntimeCache = setCloudLedgerRuntimeCacheIfCurrent(
-    input.userId,
-    writeToken,
-    optimisticCache
-  );
+  try {
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(input.userId, writeToken)) {
+      return {
+        didWriteRuntimeCache: false,
+        flushIfOnline: async () => undefined,
+      };
+    }
+    const optimisticCache = await createOfflineCloudLedgerTransaction({
+      cache: getCloudLedgerRuntimeCache(input.userId),
+      changeId: input.changeId,
+      command: input.command,
+      createdAt: input.createdAt,
+      outbox: getCloudLedgerOutbox(input.userId),
+    });
+    const didWriteRuntimeCache = setCloudLedgerRuntimeCacheIfCurrent(
+      input.userId,
+      writeToken,
+      optimisticCache
+    );
 
-  return {
-    didWriteRuntimeCache,
-    flushIfOnline: async () => {
-      if (!didWriteRuntimeCache) {
-        return;
-      }
-      await flushCloudLedgerOutboxAfterOptimisticCreate(input.userId, writeToken);
-    },
-  };
+    return {
+      didWriteRuntimeCache,
+      flushIfOnline: async () => {
+        if (!didWriteRuntimeCache) {
+          return;
+        }
+        await flushCloudLedgerOutboxAfterOptimisticCreate(input.userId, writeToken);
+      },
+    };
+  } finally {
+    finishCloudLedgerRuntimeCacheWrite(input.userId, writeToken);
+  }
 }
 
 async function flushCloudLedgerOutboxAfterOptimisticCreate(

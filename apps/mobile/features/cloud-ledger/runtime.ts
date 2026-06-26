@@ -9,6 +9,7 @@ export type CloudLedgerRuntimeCacheWriteToken = {
 const cachesByUserId = new Map<string, CloudLedgerCache>();
 const generationsByUserId = new Map<string, number>();
 const abortControllersByUserId = new Map<string, Map<number, Set<AbortController>>>();
+const activeWriteGenerationsByUserId = new Map<string, number>();
 const suspendedWriteUserIds = new Set<string>();
 
 function getCloudLedgerRuntimeCacheGeneration(userId: UserId): number {
@@ -17,6 +18,7 @@ function getCloudLedgerRuntimeCacheGeneration(userId: UserId): number {
 
 function invalidateCloudLedgerRuntimeCacheWrites(userId: UserId): void {
   abortCloudLedgerRuntimeCacheWriteControllers(userId);
+  activeWriteGenerationsByUserId.delete(userId);
   generationsByUserId.set(userId, getCloudLedgerRuntimeCacheGeneration(userId) + 1);
 }
 
@@ -66,7 +68,30 @@ export function beginCloudLedgerRuntimeCacheWrite(
   userId: UserId
 ): CloudLedgerRuntimeCacheWriteToken {
   invalidateCloudLedgerRuntimeCacheWrites(userId);
+  const writeToken = { userId, generation: getCloudLedgerRuntimeCacheGeneration(userId) };
+  if (!suspendedWriteUserIds.has(userId)) {
+    activeWriteGenerationsByUserId.set(userId, writeToken.generation);
+  }
+  return writeToken;
+}
+
+export function beginCloudLedgerRuntimeCacheFlush(
+  userId: UserId
+): CloudLedgerRuntimeCacheWriteToken | null {
+  if (suspendedWriteUserIds.has(userId) || activeWriteGenerationsByUserId.has(userId)) {
+    return null;
+  }
+  invalidateCloudLedgerRuntimeCacheWrites(userId);
   return { userId, generation: getCloudLedgerRuntimeCacheGeneration(userId) };
+}
+
+export function finishCloudLedgerRuntimeCacheWrite(
+  userId: UserId,
+  writeToken: CloudLedgerRuntimeCacheWriteToken
+): void {
+  if (activeWriteGenerationsByUserId.get(userId) === writeToken.generation) {
+    activeWriteGenerationsByUserId.delete(userId);
+  }
 }
 
 export function isCloudLedgerRuntimeCacheWriteCurrent(
@@ -153,6 +178,7 @@ export function clearCloudLedgerRuntimeCache(userId: UserId): void {
 export function resetCloudLedgerRuntimeCaches(): void {
   cachesByUserId.clear();
   generationsByUserId.clear();
+  activeWriteGenerationsByUserId.clear();
   abortControllersByUserId.forEach((controllersByGeneration) => {
     controllersByGeneration.forEach((controllers) => {
       controllers.forEach((controller) => controller.abort());

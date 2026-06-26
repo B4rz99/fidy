@@ -29,9 +29,12 @@ const mocks = vi.hoisted(() => {
     optimisticCache: { cursor: "optimistic", transactions: [] },
     outbox,
     writeToken,
+    flushToken: { generation: 2 },
+    beginCloudLedgerRuntimeCacheFlush: vi.fn<(...args: any[]) => any>(),
     beginCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     createCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
     createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
+    finishCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerOutbox: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerRuntimeCache: vi.fn<(...args: any[]) => any>(),
@@ -58,9 +61,11 @@ vi.mock("@/features/cloud-ledger/outbox", () => ({
 }));
 
 vi.mock("@/features/cloud-ledger/runtime", () => ({
+  beginCloudLedgerRuntimeCacheFlush: mocks.beginCloudLedgerRuntimeCacheFlush,
   beginCloudLedgerRuntimeCacheWrite: mocks.beginCloudLedgerRuntimeCacheWrite,
   createCloudLedgerRuntimeCacheWriteAbortSignal:
     mocks.createCloudLedgerRuntimeCacheWriteAbortSignal,
+  finishCloudLedgerRuntimeCacheWrite: mocks.finishCloudLedgerRuntimeCacheWrite,
   getCloudLedgerRuntimeCache: mocks.getCloudLedgerRuntimeCache,
   isCloudLedgerRuntimeCacheWriteCurrent: mocks.isCloudLedgerRuntimeCacheWriteCurrent,
   releaseCloudLedgerRuntimeCacheWriteAbortSignal:
@@ -78,6 +83,7 @@ describe("Cloud Ledger runtime mutations", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.beginCloudLedgerRuntimeCacheFlush.mockReturnValue(mocks.flushToken);
     mocks.beginCloudLedgerRuntimeCacheWrite.mockReturnValue(mocks.writeToken);
     mocks.createCloudLedgerRuntimeCacheWriteAbortSignal.mockReturnValue(mocks.abortSignal);
     mocks.createOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
@@ -127,11 +133,12 @@ describe("Cloud Ledger runtime mutations", () => {
   });
 
   it("does not start outbox flush when the generation is already stale", async () => {
-    mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValueOnce(false);
+    mocks.beginCloudLedgerRuntimeCacheFlush.mockReturnValueOnce(null);
 
     await expect(flushCloudLedgerOutboxForUser(userId)).resolves.toBe(false);
 
-    expect(mocks.beginCloudLedgerRuntimeCacheWrite).toHaveBeenCalledWith(userId);
+    expect(mocks.beginCloudLedgerRuntimeCacheFlush).toHaveBeenCalledWith(userId);
+    expect(mocks.beginCloudLedgerRuntimeCacheWrite).not.toHaveBeenCalled();
     expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
     expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).not.toHaveBeenCalled();
   });
@@ -150,14 +157,24 @@ describe("Cloud Ledger runtime mutations", () => {
     );
     expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
       userId,
-      mocks.writeToken,
+      mocks.flushToken,
       mocks.flushedCache
     );
     expect(mocks.releaseCloudLedgerRuntimeCacheWriteAbortSignal).toHaveBeenCalledWith(
       userId,
-      mocks.writeToken,
+      mocks.flushToken,
       mocks.abortSignal
     );
+  });
+
+  it("does not invalidate an active optimistic create when a background flush starts", async () => {
+    mocks.beginCloudLedgerRuntimeCacheFlush.mockReturnValueOnce(null);
+
+    await expect(flushCloudLedgerOutboxForUser(userId)).resolves.toBe(false);
+
+    expect(mocks.beginCloudLedgerRuntimeCacheFlush).toHaveBeenCalledWith(userId);
+    expect(mocks.beginCloudLedgerRuntimeCacheWrite).not.toHaveBeenCalled();
+    expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
   });
 
   it("enqueues optimistic create and exposes an online flush callback tied to the same token", async () => {

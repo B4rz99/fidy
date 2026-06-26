@@ -22,7 +22,12 @@ import type {
 type TransactionSnapshot = TransactionPageSnapshot & TransactionAggregateSnapshot;
 type ApplyCloudLedgerTransactionsOptions = {
   readonly isTransactionIncludedInAggregate?: (transaction: StoredTransaction) => boolean;
+  readonly isTransactionIncludedInPageOffset?: (transaction: StoredTransaction) => boolean;
   readonly pageWindowSize?: number;
+};
+type ApplyCloudLedgerTransactionsRuntime = {
+  readonly isTransactionIncludedInPageOffset: (transaction: StoredTransaction) => boolean;
+  readonly now: Date;
 };
 
 const addCopAmount = (left: number, right: number): CopAmount => requireCopAmount(left + right);
@@ -73,7 +78,8 @@ function upsertDailySpending(
 function upsertCloudLedgerTransaction(
   snapshot: TransactionSnapshot,
   transaction: StoredTransaction,
-  pageWindowSize?: number
+  pageWindowSize: number | undefined,
+  isTransactionIncludedInPageOffset: (transaction: StoredTransaction) => boolean
 ): {
   readonly snapshot: TransactionSnapshot;
   readonly didExistInPages: boolean;
@@ -90,7 +96,11 @@ function upsertCloudLedgerTransaction(
         pageWindowSize
       )
     : snapshot.pages;
-  const droppedCommittedPageCount = countDroppedCommittedPages(snapshot.pages, pages);
+  const droppedCommittedPageCount = countDroppedCommittedPages(
+    snapshot.pages,
+    pages,
+    isTransactionIncludedInPageOffset
+  );
 
   return {
     snapshot: {
@@ -104,10 +114,13 @@ function upsertCloudLedgerTransaction(
 
 const countDroppedCommittedPages = (
   before: readonly StoredTransaction[],
-  after: readonly StoredTransaction[]
+  after: readonly StoredTransaction[],
+  isTransactionIncludedInPageOffset: (transaction: StoredTransaction) => boolean
 ): number => {
   const afterIds = new Set(after.map((transaction) => transaction.id));
-  return before.filter((transaction) => !afterIds.has(transaction.id)).length;
+  return before.filter(
+    (transaction) => isTransactionIncludedInPageOffset(transaction) && !afterIds.has(transaction.id)
+  ).length;
 };
 
 const hasTransactionInPages = (
@@ -149,17 +162,18 @@ const trimPagesToWindow = (
 function addCloudLedgerTransactionToSnapshot(
   snapshot: TransactionSnapshot,
   transaction: StoredTransaction,
-  now: Date,
-  options: ApplyCloudLedgerTransactionsOptions
+  options: ApplyCloudLedgerTransactionsOptions,
+  runtime: ApplyCloudLedgerTransactionsRuntime
 ): TransactionSnapshot {
   const cloudLedgerSnapshot = upsertCloudLedgerTransaction(
     snapshot,
     transaction,
-    options.pageWindowSize
+    options.pageWindowSize,
+    runtime.isTransactionIncludedInPageOffset
   );
   return options.isTransactionIncludedInAggregate?.(transaction) === true
     ? cloudLedgerSnapshot.snapshot
-    : addCloudLedgerTransactionToAggregates(cloudLedgerSnapshot.snapshot, transaction, now);
+    : addCloudLedgerTransactionToAggregates(cloudLedgerSnapshot.snapshot, transaction, runtime.now);
 }
 
 function addCloudLedgerTransactionToAggregates(
@@ -222,10 +236,16 @@ function applyCloudLedgerTransactionsToSnapshot(
   transactions: readonly StoredTransaction[],
   options: ApplyCloudLedgerTransactionsOptions = {}
 ): TransactionSnapshot {
-  const now = new Date();
+  const basePageIds = new Set(snapshot.pages.map((transaction) => transaction.id));
+  const runtime = {
+    isTransactionIncludedInPageOffset:
+      options.isTransactionIncludedInPageOffset ??
+      ((transaction: StoredTransaction) => basePageIds.has(transaction.id)),
+    now: new Date(),
+  };
   return transactions.reduce(
     (currentSnapshot, transaction) =>
-      addCloudLedgerTransactionToSnapshot(currentSnapshot, transaction, now, options),
+      addCloudLedgerTransactionToSnapshot(currentSnapshot, transaction, options, runtime),
     snapshot
   );
 }

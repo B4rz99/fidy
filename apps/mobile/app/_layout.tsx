@@ -108,7 +108,19 @@ export function AuthenticatedShell({
   );
 
   useSubscription(
-    () => subscribeAuthenticatedTransactionRefreshes({ db, enableRemoteEffects, userId }),
+    () => {
+      let isCurrent = true;
+      const unsubscribe = subscribeAuthenticatedTransactionRefreshes({
+        db,
+        enableRemoteEffects,
+        isCurrent: () => isCurrent,
+        userId,
+      });
+      return () => {
+        isCurrent = false;
+        unsubscribe();
+      };
+    },
     [db, enableRemoteEffects, onboardingComplete, userId],
     migrationsReady && onboardingComplete
   );

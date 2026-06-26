@@ -84,21 +84,101 @@ describe("Cloud Ledger optimistic transaction snapshots", () => {
       { date: requireIsoDate("2026-06-02"), total: requireCopAmount(18_000) },
     ]);
   });
+
+  it("does not decrement committed offsets when a later overlay trims an optimistic row", () => {
+    const committedTop = storedTransaction({
+      createdAt: "2026-06-25T09:00:00.000Z",
+      id: "txn-committed-top",
+    });
+    const committedTrimmed = storedTransaction({
+      createdAt: "2026-06-24T09:00:00.000Z",
+      id: "txn-committed-trimmed",
+    });
+    const optimisticMiddle = storedTransaction({
+      createdAt: "2026-06-24T12:00:00.000Z",
+      id: "txn-optimistic-middle",
+    });
+    const optimisticNewest = storedTransaction({
+      createdAt: "2026-06-26T09:00:00.000Z",
+      id: "txn-optimistic-newest",
+    });
+    setCloudLedgerRuntimeCache(
+      USER_ID,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: requireLedgerCursor("ledger:10"),
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          storedTransactionToCloudLedgerTransaction(optimisticMiddle),
+          storedTransactionToCloudLedgerTransaction(optimisticNewest),
+        ],
+        tombstones: [],
+      })
+    );
+
+    const snapshot = applyRuntimeCloudLedgerTransactions(
+      {
+        balance: 0,
+        categorySpending: [],
+        dailySpending: [],
+        hasMore: true,
+        offset: 2,
+        pages: [committedTop, committedTrimmed],
+      },
+      USER_ID,
+      {
+        isTransactionIncludedInAggregate: (transaction) =>
+          transaction.id === committedTop.id || transaction.id === committedTrimmed.id,
+        pageWindowSize: 2,
+      }
+    );
+
+    expect(snapshot.pages.map((page) => page.id)).toEqual([optimisticNewest.id, committedTop.id]);
+    expect(snapshot.offset).toBe(1);
+  });
 });
 
 function cloudLedgerStoredTransaction(): StoredTransaction {
+  return storedTransaction({
+    createdAt: "2026-06-02T10:04:00.000Z",
+    id: "txn-cloud-ledger-visible",
+  });
+}
+
+function storedTransaction({
+  createdAt,
+  id,
+}: {
+  readonly createdAt: string;
+  readonly id: string;
+}): StoredTransaction {
+  const timestamp = new Date(createdAt);
   return {
     accountAttributionState: "confirmed",
     accountId: requireFinancialAccountId("acct-cash"),
     amount: requireCopAmount(18_000),
     categoryId: requireCategoryId("cat-groceries"),
-    createdAt: new Date("2026-06-02T10:04:00.000Z"),
-    date: new Date("2026-06-02T00:00:00.000Z"),
+    createdAt: timestamp,
+    date: new Date(timestamp.getFullYear(), timestamp.getMonth(), timestamp.getDate()),
     description: "Coffee",
-    id: requireTransactionId("txn-cloud-ledger-visible"),
+    id: requireTransactionId(id),
     source: "cloud_ledger",
     type: "expense",
-    updatedAt: new Date("2026-06-02T10:04:00.000Z"),
+    updatedAt: timestamp,
     userId: USER_ID,
+  };
+}
+
+function storedTransactionToCloudLedgerTransaction(transaction: StoredTransaction) {
+  return {
+    id: transaction.id,
+    type: transaction.type,
+    amount: transaction.amount,
+    currency: "COP" as const,
+    categoryId: transaction.categoryId,
+    accountId: transaction.accountId,
+    description: transaction.description,
+    date: requireIsoDate(transaction.createdAt.toISOString().slice(0, 10)),
+    updatedAt: requireIsoDateTime(transaction.updatedAt.toISOString()),
   };
 }
