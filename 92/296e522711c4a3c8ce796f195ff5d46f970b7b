@@ -1,0 +1,23 @@
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_1ea933c2491b95 176,194,1458-1477
+  s_a015eeb45038bf::t_4f6b74a8289db2 1478-1479
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_f3caa9db60af06 13,61,391,400-408
+  s_a015eeb45038bf::t_a84243312a25ee 409-410
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "92296e522711c4a3c8ce796f195ff5d46f970b7b",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
