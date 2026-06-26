@@ -157,8 +157,7 @@ function addCloudLedgerTransactionToSnapshot(
     transaction,
     options.pageWindowSize
   );
-  return cloudLedgerSnapshot.didExistInPages ||
-    options.isTransactionIncludedInAggregate?.(transaction) === true
+  return options.isTransactionIncludedInAggregate?.(transaction) === true
     ? cloudLedgerSnapshot.snapshot
     : addCloudLedgerTransactionToAggregates(cloudLedgerSnapshot.snapshot, transaction, now);
 }

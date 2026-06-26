@@ -1,4 +1,7 @@
-import type { CloudLedgerApplyPendingChangesCommand } from "./model.ts";
+import {
+  CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT,
+  type CloudLedgerApplyPendingChangesCommand,
+} from "./model.ts";
 import { readCreateTransactionCommand } from "./create-transaction-command.ts";
 
 export type ApplyPendingChangesCommandReadResult =
@@ -7,6 +10,7 @@ export type ApplyPendingChangesCommandReadResult =
   | { readonly kind: "invalid_transaction_id" }
   | { readonly kind: "invalid_ledger_reference" }
   | { readonly kind: "invalid_transaction" }
+  | { readonly kind: "pending_change_batch_too_large" }
   | { readonly kind: "unsupported_command_version" };
 type ValidPendingChangeReadResult = {
   readonly kind: "valid";
@@ -27,6 +31,9 @@ export function readApplyPendingChangesCommand(
   const record = body as Record<string, unknown>;
   if (record.commandVersion !== 1 || !Array.isArray(record.changes)) {
     return { kind: "unsupported_command_version" };
+  }
+  if (record.changes.length > CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT) {
+    return { kind: "pending_change_batch_too_large" };
   }
 
   const changes = record.changes.map(readPendingChange);

@@ -102,6 +102,8 @@ vi.mock("@/shared/db/client", () => ({
 const insertedTransactionRows: unknown[] = [];
 const insertedFinancialAccountRows: unknown[] = [];
 const insertedUserCategoryRows: unknown[] = [];
+const financialAccountConflictUpdates: unknown[] = [];
+const userCategoryConflictUpdates: unknown[] = [];
 const deletedTransactionScopes: unknown[] = [];
 let canUseSelectedAccount = true;
 const mockDb = {
@@ -118,27 +120,17 @@ const mockDb = {
   insert: (table: unknown) => ({
     values: (row: unknown) => ({
       run: () => {
-        if (table === transactions) {
-          insertedTransactionRows.push(row);
-        }
-        if (table === financialAccounts) {
-          insertedFinancialAccountRows.push(row);
-        }
-        if (table === userCategories) {
-          insertedUserCategoryRows.push(row);
-        }
+        recordInsertedRow(table, row);
       },
-      onConflictDoUpdate: () => ({
+      onConflictDoNothing: () => ({
         run: () => {
-          if (table === transactions) {
-            insertedTransactionRows.push(row);
-          }
-          if (table === financialAccounts) {
-            insertedFinancialAccountRows.push(row);
-          }
-          if (table === userCategories) {
-            insertedUserCategoryRows.push(row);
-          }
+          recordInsertedRow(table, row);
+        },
+      }),
+      onConflictDoUpdate: (config: { readonly set?: unknown }) => ({
+        run: () => {
+          recordConflictUpdate(table, config.set);
+          recordInsertedRow(table, row);
         },
       }),
     }),
@@ -159,6 +151,27 @@ const mockDb = {
   }),
 } as unknown as AnyDb;
 const mockUserId = "user-1" as UserId;
+
+function recordInsertedRow(table: unknown, row: unknown) {
+  if (table === transactions) {
+    insertedTransactionRows.push(row);
+  }
+  if (table === financialAccounts) {
+    insertedFinancialAccountRows.push(row);
+  }
+  if (table === userCategories) {
+    insertedUserCategoryRows.push(row);
+  }
+}
+
+function recordConflictUpdate(table: unknown, set: unknown) {
+  if (table === financialAccounts) {
+    financialAccountConflictUpdates.push(set);
+  }
+  if (table === userCategories) {
+    userCategoryConflictUpdates.push(set);
+  }
+}
 
 function seedCloudLedgerRuntimeWithRemoteReferences() {
   setCloudLedgerRuntimeCache(
@@ -226,6 +239,11 @@ function expectCloudLedgerRemoteReferencesPersisted() {
       categoryId: "ucat-cloud-remote",
     }),
   ]);
+}
+
+function expectCloudLedgerReferenceMetadataPreserved() {
+  expect(financialAccountConflictUpdates).toEqual([]);
+  expect(userCategoryConflictUpdates).toEqual([]);
 }
 
 function makeStoredTransaction(overrides: Partial<StoredTransaction> = {}) {
@@ -341,6 +359,8 @@ describe("transaction boundaries", () => {
     insertedTransactionRows.length = 0;
     insertedFinancialAccountRows.length = 0;
     insertedUserCategoryRows.length = 0;
+    financialAccountConflictUpdates.length = 0;
+    userCategoryConflictUpdates.length = 0;
     deletedTransactionScopes.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
@@ -1433,6 +1453,14 @@ describe("transaction boundaries", () => {
     persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
 
     expectCloudLedgerRemoteReferencesPersisted();
+  });
+
+  it("does not overwrite local account or category metadata when Cloud Ledger references conflict", () => {
+    seedCloudLedgerRuntimeWithRemoteReferences();
+
+    persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
+
+    expectCloudLedgerReferenceMetadataPreserved();
   });
 
   it("deletes local Cloud Ledger shadows for pending outbox creates on discard", async () => {

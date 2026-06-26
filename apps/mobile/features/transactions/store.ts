@@ -354,22 +354,7 @@ function persistCloudLedgerFinancialAccountReference(
 ): void {
   const row = toCloudLedgerFinancialAccountRow(userId, account);
   try {
-    db.insert(financialAccounts)
-      .values(row)
-      .onConflictDoUpdate({
-        target: financialAccounts.id,
-        set: {
-          deletedAt: row.deletedAt,
-          isDefault: row.isDefault,
-          kind: row.kind,
-          name: row.name,
-          paymentDueDay: row.paymentDueDay,
-          statementClosingDay: row.statementClosingDay,
-          updatedAt: row.updatedAt,
-          userId: row.userId,
-        },
-      })
-      .run();
+    db.insert(financialAccounts).values(row).onConflictDoNothing().run();
   } catch (error) {
     captureWarning("cloud_ledger_shadow_account_reference_write_failed", {
       errorType: getErrorType(error),
@@ -384,20 +369,7 @@ function persistCloudLedgerUserCategoryReference(
 ): void {
   const row = toCloudLedgerUserCategoryRow(userId, category);
   try {
-    db.insert(userCategories)
-      .values(row)
-      .onConflictDoUpdate({
-        target: userCategories.id,
-        set: {
-          colorHex: row.colorHex,
-          deletedAt: row.deletedAt,
-          iconName: row.iconName,
-          name: row.name,
-          updatedAt: row.updatedAt,
-          userId: row.userId,
-        },
-      })
-      .run();
+    db.insert(userCategories).values(row).onConflictDoNothing().run();
   } catch (error) {
     captureWarning("cloud_ledger_shadow_category_reference_write_failed", {
       errorType: getErrorType(error),

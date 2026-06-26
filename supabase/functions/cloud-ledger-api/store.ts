@@ -10,7 +10,7 @@ import type {
   LedgerCursor,
 } from "./model.ts";
 import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
-import { readLedgerCursorSequence } from "./model.ts";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT, readLedgerCursorSequence } from "./model.ts";
 
 type BootstrapRpcArgs = {
   readonly p_user_id: string;
@@ -153,6 +153,10 @@ async function applyPendingChanges(
   userId: string,
   command: CloudLedgerApplyPendingChangesCommand
 ): Promise<CloudLedgerApplyPendingChangesOutcome> {
+  if (command.changes.length > CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT) {
+    throw new Error("Cloud Ledger pending-change batch exceeds the server limit");
+  }
+
   const outcomes = await command.changes.reduce<Promise<ApplyPendingChangesProgress>>(
     async (previous, change) => {
       const accepted = await previous;

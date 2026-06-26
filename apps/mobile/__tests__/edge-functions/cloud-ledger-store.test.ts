@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: Supabase rows use snake_case fields
 import { describe, expect, it, vi } from "vitest";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT } from "../../../../supabase/functions/cloud-ledger-api/model";
 import { createCloudLedgerStore } from "../../../../supabase/functions/cloud-ledger-api/store";
 
 const USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -215,6 +216,26 @@ describe("Cloud Ledger Edge store", () => {
       cursor: "ledger:5",
     });
     expect(supabase.rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects oversized pending-change batches before replaying transaction RPCs", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    await expect(
+      store.applyPendingChanges(USER_ID, {
+        commandVersion: 1,
+        changes: Array.from({ length: CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT + 1 }, (_, index) =>
+          pendingCreateChange({
+            categoryId: "cat-groceries",
+            changeId: `change-oversized-${index}`,
+            description: "Oversized",
+            transactionId: `txn-oversized-${index}`,
+          })
+        ),
+      })
+    ).rejects.toThrow("Cloud Ledger pending-change batch exceeds");
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
   it("retains Capture Improvement Samples through a service-only account-linked RPC", async () => {

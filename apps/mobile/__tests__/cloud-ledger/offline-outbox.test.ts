@@ -608,6 +608,60 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect((await outbox.load()).map((change) => change.id)).toEqual(["change-offline-coffee"]);
   });
 
+  it("flushes large pending create sets in bounded Remote API batches", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const pendingChanges = createLargePendingChanges();
+    await pendingChanges.reduce<Promise<void>>(
+      (previous, pending) =>
+        previous.then(async () => {
+          await createOfflineCloudLedgerTransaction({
+            cache: createSeededLedgerCache(),
+            changeId: pending.changeId,
+            command: pending.command,
+            createdAt: pending.createdAt,
+            outbox,
+          });
+        }),
+      Promise.resolve()
+    );
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: (changes: readonly CloudLedgerApplyPendingChangeRequest[]) => ({
+        code: "accepted",
+        acceptedChangeIds: changes.map((change) => change.id),
+        cursor: "ledger:8",
+      }),
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [],
+      },
+    });
+
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: supabase.client,
+    });
+
+    const applyPendingCalls = supabase.functionsInvoke.mock.calls.filter(
+      ([, options]) => options.body.action === "applyPendingChanges"
+    );
+    const applyPendingBatches = applyPendingCalls.map(
+      ([, options]) => (options as CloudLedgerInvokeOptions).body.changes ?? []
+    );
+    expect(applyPendingBatches.map((changes) => changes.length)).toEqual([10, 2]);
+    expect(applyPendingBatches.flatMap((changes) => changes.map((change) => change.id))).toEqual(
+      pendingChanges.map((change) => change.changeId)
+    );
+    expect((await outbox.load()).map((change) => change.id)).toEqual([]);
+  });
+
   it("does not send pending changes when the flush generation is stale after loading them", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -968,29 +1022,25 @@ type WirePayload = {
   readonly transactions: readonly unknown[];
   readonly tombstones: readonly unknown[];
 };
-
-function createCloudLedgerSupabase(options: {
-  readonly createTransactionPayload: unknown;
+type CloudLedgerApplyPendingChangeRequest = { readonly id: string };
+type CloudLedgerInvokeOptions = {
+  readonly body: {
+    readonly action: string;
+    readonly changes?: readonly CloudLedgerApplyPendingChangeRequest[];
+  };
+};
+type CloudLedgerSupabaseOptions = {
+  readonly createTransactionPayload:
+    | unknown
+    | ((changes: readonly CloudLedgerApplyPendingChangeRequest[]) => unknown);
   readonly refreshFailure?: boolean;
   readonly refreshPayload: WirePayload;
-}) {
+};
+
+function createCloudLedgerSupabase(options: CloudLedgerSupabaseOptions) {
   const functionsInvoke = vi.fn<(...args: any[]) => any>(
-    (_functionName: string, invokeOptions: { readonly body: { readonly action: string } }) => {
-      if (options.refreshFailure === true && invokeOptions.body.action === "refresh") {
-        return Promise.resolve({ data: null, error: { message: "network unavailable" } });
-      }
-      return Promise.resolve({
-        data: {
-          success: true,
-          data:
-            invokeOptions.body.action === "createTransaction" ||
-            invokeOptions.body.action === "applyPendingChanges"
-              ? options.createTransactionPayload
-              : options.refreshPayload,
-        },
-        error: null,
-      });
-    }
+    (_functionName: string, invokeOptions: CloudLedgerInvokeOptions) =>
+      Promise.resolve(resolveCloudLedgerInvokeResult(options, invokeOptions))
   );
   const from = vi.fn<(...args: any[]) => any>();
   const getSession = vi.fn(() =>
@@ -1013,4 +1063,36 @@ function createCloudLedgerSupabase(options: {
     functionsInvoke,
     getSession,
   };
+}
+
+function resolveCloudLedgerInvokeResult(
+  options: CloudLedgerSupabaseOptions,
+  invokeOptions: CloudLedgerInvokeOptions
+) {
+  if (options.refreshFailure === true && invokeOptions.body.action === "refresh") {
+    return { data: null, error: { message: "network unavailable" } };
+  }
+  return {
+    data: {
+      success: true,
+      data: resolveCloudLedgerInvokePayload(options, invokeOptions),
+    },
+    error: null,
+  };
+}
+
+function resolveCloudLedgerInvokePayload(
+  options: CloudLedgerSupabaseOptions,
+  invokeOptions: CloudLedgerInvokeOptions
+) {
+  if (invokeOptions.body.action === "refresh") {
+    return options.refreshPayload;
+  }
+  if (
+    typeof options.createTransactionPayload === "function" &&
+    invokeOptions.body.action === "applyPendingChanges"
+  ) {
+    return options.createTransactionPayload(invokeOptions.body.changes ?? []);
+  }
+  return options.createTransactionPayload;
 }

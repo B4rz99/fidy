@@ -1,5 +1,7 @@
 export type LedgerCursor = string;
 
+export const CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT = 10;
+
 const LEDGER_CURSOR_PATTERN = /^ledger:(0|[1-9]\d*)$/;
 
 export function isLedgerCursor(value: string): value is LedgerCursor {
@@ -160,6 +162,7 @@ export type CloudLedgerApiError =
   | "invalid_ledger_reference"
   | "invalid_transaction"
   | "invalid_transaction_id"
+  | "pending_change_batch_too_large"
   | "unauthorized_transaction_id"
   | "unsupported_command_version"
   | "internal_error";

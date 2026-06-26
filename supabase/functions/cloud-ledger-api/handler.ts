@@ -201,6 +201,9 @@ async function applyPendingChangesResponse(
   if (commandResult.kind === "invalid_transaction") {
     return jsonResponse({ success: false, error: "invalid_transaction" }, 400);
   }
+  if (commandResult.kind === "pending_change_batch_too_large") {
+    return jsonResponse({ success: false, error: "pending_change_batch_too_large" }, 413);
+  }
   if (commandResult.kind === "unsupported_command_version") {
     return jsonResponse({ success: false, error: "unsupported_command_version" }, 400);
   }

@@ -1,6 +1,7 @@
 // biome-ignore-all lint/style/useNamingConvention: Cloud Ledger API payloads use snake_case fields
 import { describe, expect, it, vi } from "vitest";
 import { handleCloudLedgerRequest } from "../../../../supabase/functions/cloud-ledger-api/handler";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT } from "../../../../supabase/functions/cloud-ledger-api/model";
 
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
@@ -273,6 +274,31 @@ describe("cloud-ledger-api Edge Function", () => {
         },
       ],
     });
+  });
+
+  it("rejects oversized pending-change batches before replaying them", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "applyPendingChanges",
+          commandVersion: 1,
+          changes: Array.from({ length: CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT + 1 }, (_, index) =>
+            pendingChangeRequest(index)
+          ),
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "pending_change_batch_too_large",
+    });
+    expect(api.store.applyPendingChanges).not.toHaveBeenCalled();
   });
 
   it("reports permanent pending-change rejections without failing the whole batch", async () => {
@@ -1101,6 +1127,19 @@ function jsonRequest(body: unknown, token?: string) {
     },
     body: JSON.stringify(body),
   });
+}
+
+function pendingChangeRequest(index: number) {
+  const suffix = String(index).padStart(2, "0");
+  return {
+    id: `change-offline-${suffix}`,
+    kind: "createTransaction",
+    commandVersion: 1,
+    transaction: {
+      ...CREATE_TRANSACTION_PAYLOAD,
+      id: `txn-offline-${suffix}`,
+    },
+  };
 }
 
 type CloudLedgerApiDepsOptions = {

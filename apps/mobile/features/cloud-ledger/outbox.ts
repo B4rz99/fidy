@@ -11,7 +11,10 @@ import {
   requireTransactionId,
 } from "@/shared/types/assertions";
 import type { IsoDateTime, LedgerChangeId, UserId } from "@/shared/types/branded";
-import { applyPendingCloudLedgerChanges } from "./api-client";
+import {
+  applyPendingCloudLedgerChanges,
+  CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT,
+} from "./api-client";
 import {
   refreshCloudLedgerCache,
   withTransactionProjection,
@@ -238,7 +241,12 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  const acceptedChangeIds = await flushPendingChanges(input.supabase, changes, input.abortSignal);
+  const acceptedChangeIds = await flushPendingChanges(
+    input.supabase,
+    changes,
+    input.abortSignal,
+    input.shouldContinue
+  );
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
@@ -267,26 +275,48 @@ export function applyPendingLedgerChanges(
 async function flushPendingChanges(
   supabase: SupabaseClient,
   changes: readonly CloudLedgerPendingChange[],
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  shouldContinue?: () => boolean
 ): Promise<readonly LedgerChangeId[]> {
   if (changes.length === 0) {
     return [];
   }
-  const outcome = await applyPendingCloudLedgerChanges(
-    supabase,
-    {
-      commandVersion: 1,
-      changes: changes.map((change) => ({
-        id: change.id,
-        kind: change.kind,
-        commandVersion: change.commandVersion,
-        transaction: change.transaction,
-      })),
+  return await chunkPendingChanges(changes).reduce<Promise<readonly LedgerChangeId[]>>(
+    async (previous, batch) => {
+      const acceptedChangeIds = await previous;
+      if (shouldContinue?.() === false) {
+        return acceptedChangeIds;
+      }
+      const outcome = await applyPendingCloudLedgerChanges(
+        supabase,
+        {
+          commandVersion: 1,
+          changes: batch.map((change) => ({
+            id: change.id,
+            kind: change.kind,
+            commandVersion: change.commandVersion,
+            transaction: change.transaction,
+          })),
+        },
+        { signal: abortSignal }
+      );
+      return [...acceptedChangeIds, ...outcome.acceptedChangeIds];
     },
-    { signal: abortSignal }
+    Promise.resolve([])
   );
-  return outcome.acceptedChangeIds;
 }
+
+const chunkPendingChanges = (
+  changes: readonly CloudLedgerPendingChange[]
+): readonly (readonly CloudLedgerPendingChange[])[] =>
+  Array.from(
+    { length: Math.ceil(changes.length / CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT) },
+    (_, index) =>
+      changes.slice(
+        index * CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT,
+        (index + 1) * CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT
+      )
+  );
 
 function toOptimisticTransaction(change: CloudLedgerPendingChange): CloudLedgerTransaction {
   return {
