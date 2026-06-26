@@ -35,6 +35,13 @@ describe("transaction callers", () => {
     expect(editTransactionSource).not.toContain("processedEmailId");
   });
 
+  test("edit screen does not expose save and delete actions for Cloud Ledger rows", () => {
+    expect(editTransactionSource).toContain('if (tx.source === "cloud_ledger")');
+    expect(editTransactionSource).toMatch(
+      /if \(tx\.source === "cloud_ledger"\) \{\n\s+back\(\);\n\s+return;/
+    );
+  });
+
   test("reclassification opens as a full screen transfer route", () => {
     expect(rootStackRoutesSource).toContain('"reclassify-transaction"');
     expect(rootLayoutSource).toContain("ROOT_STACK_ROUTES.screenLayout.map");

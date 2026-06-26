@@ -80,7 +80,7 @@ export async function startLocalQaSession(profile: LocalQaProfile = "default") {
   if (profile === "home-activity") {
     seedHomeActivityReviewState(db, seed, now);
   }
-  initializeTransactionSession(seed.session.userId);
+  initializeTransactionSession(seed.session.userId, { enableRemoteEffects: false });
   initializeBudgetSession(seed.session.userId);
   await Promise.all([
     loadInitialTransactions(db, seed.session.userId),

@@ -57,6 +57,12 @@ describe("mobile Cloud Ledger bootstrap", () => {
           updatedAt: "2026-06-01T10:02:00.000Z",
         },
       ],
+      transactionProjection: {
+        categorySpending: [{ categoryId: "cat-groceries", total: 15_000 }],
+        dailySpending: [{ date: "2026-06-01", total: 15_000 }],
+        expenseTotal: 15_000,
+        incomeTotal: 0,
+      },
     });
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.getSession).not.toHaveBeenCalled();

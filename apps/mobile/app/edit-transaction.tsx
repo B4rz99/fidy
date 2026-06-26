@@ -47,6 +47,9 @@ const initialDraft: EditTransactionDraft = {
   type: "expense",
 };
 
+const canConvertToTransfer = (source: string): boolean =>
+  source !== "manual" && source !== "cloud_ledger";
+
 function updateDraft(
   draft: EditTransactionDraft,
   action: EditTransactionDraftAction
@@ -90,6 +93,10 @@ export default function EditTransactionScreen() {
       setAccounts(getFinancialAccountsForUser(db, userId));
       const tx = getStoredTransactionById(db, userId, transactionId);
       if (!tx) {
+        back();
+        return;
+      }
+      if (tx.source === "cloud_ledger") {
         back();
         return;
       }
@@ -170,6 +177,8 @@ export default function EditTransactionScreen() {
 
   if (!isLoaded) return null;
 
+  const canConvertDraftToTransfer = canConvertToTransfer(draft.source);
+
   return (
     <TransactionForm
       type={draft.type}
@@ -191,9 +200,9 @@ export default function EditTransactionScreen() {
       onClose={back}
       onSave={handleSave}
       onDelete={handleDelete}
-      extraActionLabel={draft.source === "manual" ? undefined : t("transactions.convertToTransfer")}
+      extraActionLabel={canConvertDraftToTransfer ? t("transactions.convertToTransfer") : undefined}
       onExtraAction={
-        draft.source === "manual" || transactionId == null
+        !canConvertDraftToTransfer || transactionId == null
           ? undefined
           : () =>
               push({

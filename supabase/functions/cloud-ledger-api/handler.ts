@@ -2,6 +2,8 @@ import type {
   CaptureImprovementSample,
   CaptureImprovementSampleAccepted,
   CaptureImprovementSampleOutcome,
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
   CloudLedgerApiResponse,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
@@ -11,6 +13,10 @@ import type {
 } from "./model.ts";
 import type { SupabaseError } from "../_shared/supabase-error.ts";
 import { readCaptureImprovementSample } from "./capture-improvement-sample.ts";
+import {
+  readApplyPendingChangesCommand,
+  type ApplyPendingChangesCommandReadResult,
+} from "./apply-pending-changes-command.ts";
 import {
   readCreateTransactionCommand,
   type CreateTransactionCommandReadResult,
@@ -36,6 +42,10 @@ type LedgerStore = {
     userId: string,
     command: CloudLedgerCreateTransactionCommand
   ): Promise<CloudLedgerCreateTransactionOutcome>;
+  applyPendingChanges(
+    userId: string,
+    command: CloudLedgerApplyPendingChangesCommand
+  ): Promise<CloudLedgerApplyPendingChangesOutcome>;
   retainCaptureImprovementSample(
     userId: string,
     sample: CaptureImprovementSample
@@ -101,6 +111,9 @@ async function routeAuthenticatedRequest(store: LedgerStore, userId: string, bod
   if (action === "createTransaction") {
     return createTransactionResponse(store, userId, readCreateTransactionCommand(body));
   }
+  if (action === "applyPendingChanges") {
+    return applyPendingChangesResponse(store, userId, readApplyPendingChangesCommand(body));
+  }
   if (action === "retainCaptureImprovementSample") {
     if (!hasOnlyAllowedKeys(body, RETAIN_CAPTURE_IMPROVEMENT_SAMPLE_KEYS)) {
       return jsonResponse({ success: false, error: "invalid_capture_improvement_sample" }, 400);
@@ -165,6 +178,36 @@ async function createTransactionResponse(
       createTransactionFailureStatus(outcome)
     );
   }
+  return jsonResponse({
+    success: true,
+    data: outcome,
+  });
+}
+
+async function applyPendingChangesResponse(
+  store: LedgerStore,
+  userId: string,
+  commandResult: ApplyPendingChangesCommandReadResult
+) {
+  if (commandResult.kind === "invalid_pending_change") {
+    return jsonResponse({ success: false, error: "invalid_transaction" }, 400);
+  }
+  if (commandResult.kind === "invalid_transaction_id") {
+    return jsonResponse({ success: false, error: "invalid_transaction_id" }, 400);
+  }
+  if (commandResult.kind === "invalid_ledger_reference") {
+    return jsonResponse({ success: false, error: "invalid_ledger_reference" }, 400);
+  }
+  if (commandResult.kind === "invalid_transaction") {
+    return jsonResponse({ success: false, error: "invalid_transaction" }, 400);
+  }
+  if (commandResult.kind === "pending_change_batch_too_large") {
+    return jsonResponse({ success: false, error: "pending_change_batch_too_large" }, 413);
+  }
+  if (commandResult.kind === "unsupported_command_version") {
+    return jsonResponse({ success: false, error: "unsupported_command_version" }, 400);
+  }
+  const outcome = await store.applyPendingChanges(userId, commandResult.command);
   return jsonResponse({
     success: true,
     data: outcome,

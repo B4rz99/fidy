@@ -1,0 +1,89 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  beginCloudLedgerRuntimeCacheFlush,
+  beginCloudLedgerRuntimeCacheWrite,
+  createCloudLedgerRuntimeCacheWriteAbortSignal,
+  finishCloudLedgerRuntimeCacheWrite,
+  isCloudLedgerRuntimeCacheWriteCurrent,
+  releaseCloudLedgerRuntimeCacheWriteAbortSignal,
+  resetCloudLedgerRuntimeCaches,
+  resumeCloudLedgerRuntimeCacheWrites,
+  suspendCloudLedgerRuntimeCacheWrites,
+} from "@/features/cloud-ledger/runtime.public";
+import { requireUserId } from "@/shared/types/assertions";
+
+describe("Cloud Ledger runtime cache write tokens", () => {
+  beforeEach(() => {
+    resetCloudLedgerRuntimeCaches();
+  });
+
+  it("keeps writes started during logout discard stale until the next runtime session", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const beforeDiscard = beginCloudLedgerRuntimeCacheWrite(userId);
+
+    suspendCloudLedgerRuntimeCacheWrites(userId);
+    const duringDiscard = beginCloudLedgerRuntimeCacheWrite(userId);
+
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, beforeDiscard)).toBe(false);
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, duringDiscard)).toBe(false);
+
+    resumeCloudLedgerRuntimeCacheWrites(userId);
+
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, duringDiscard)).toBe(false);
+    expect(
+      isCloudLedgerRuntimeCacheWriteCurrent(userId, beginCloudLedgerRuntimeCacheWrite(userId))
+    ).toBe(true);
+  });
+
+  it("aborts generation-bound remote work when logout discard suspends writes", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+    const signal = createCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken);
+
+    expect(signal).not.toBeNull();
+    expect(signal?.aborted).toBe(false);
+
+    suspendCloudLedgerRuntimeCacheWrites(userId);
+
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it("makes earlier overlapping writes stale when a newer write starts", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const firstWrite = beginCloudLedgerRuntimeCacheWrite(userId);
+    const firstSignal = createCloudLedgerRuntimeCacheWriteAbortSignal(userId, firstWrite);
+
+    const secondWrite = beginCloudLedgerRuntimeCacheWrite(userId);
+
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, firstWrite)).toBe(false);
+    expect(firstSignal?.aborted).toBe(true);
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, secondWrite)).toBe(true);
+  });
+
+  it("does not let background flushes invalidate an active runtime write", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+
+    expect(beginCloudLedgerRuntimeCacheFlush(userId)).toBeNull();
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)).toBe(true);
+
+    finishCloudLedgerRuntimeCacheWrite(userId, writeToken);
+    const flushToken = beginCloudLedgerRuntimeCacheFlush(userId);
+
+    expect(flushToken).not.toBeNull();
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)).toBe(false);
+    expect(isCloudLedgerRuntimeCacheWriteCurrent(userId, flushToken!)).toBe(true);
+  });
+
+  it("does not abort completed generation-bound remote work after the signal is released", () => {
+    const userId = requireUserId("user-cloud-ledger-runtime");
+    const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+    const signal = createCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken);
+
+    expect(signal).not.toBeNull();
+    releaseCloudLedgerRuntimeCacheWriteAbortSignal(userId, writeToken, signal);
+    suspendCloudLedgerRuntimeCacheWrites(userId);
+
+    expect(signal?.aborted).toBe(false);
+  });
+});

@@ -779,6 +779,8 @@ const es = {
     logoutConfirmTitle: "¿Cerrar sesión?",
     logoutConfirmMessage:
       "Tendrás que iniciar sesión de nuevo para sincronizar o restaurar copias.",
+    logoutPendingChangesConfirmMessage:
+      "Tienes cambios pendientes que aún no han llegado a Cloud Ledger. Cerrar sesión los descartará de este dispositivo.",
     staySignedIn: "Seguir conectado",
     localQaTitle: "QA local",
     localQaDescription:

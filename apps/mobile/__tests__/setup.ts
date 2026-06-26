@@ -5,11 +5,111 @@ type MockImplementation<TArgs extends readonly unknown[] = [], TReturn = void> =
   ...args: TArgs
 ) => TReturn;
 
-const { createMock } = vi.hoisted(() => ({
-  createMock: <TArgs extends readonly unknown[] = [], TReturn = void>(
+const { createMock, expoCryptoAesMock } = vi.hoisted(() => {
+  const createMock = <TArgs extends readonly unknown[] = [], TReturn = void>(
     implementation?: MockImplementation<TArgs, TReturn>
-  ) => vi.fn<MockImplementation<TArgs, TReturn>>(implementation),
-}));
+  ) => vi.fn<MockImplementation<TArgs, TReturn>>(implementation);
+
+  const toBytes = (input: string | Uint8Array | ArrayBuffer): Uint8Array => {
+    if (typeof input === "string") {
+      return Uint8Array.from(Buffer.from(input, "base64"));
+    }
+    if (input instanceof ArrayBuffer) {
+      return new Uint8Array(input);
+    }
+    return input;
+  };
+  const toBase64 = (input: Uint8Array): string => Buffer.from(input).toString("base64");
+  const concatBytes = (left: Uint8Array, right: Uint8Array): Uint8Array => {
+    const combined = new Uint8Array(left.byteLength + right.byteLength);
+    combined.set(left);
+    combined.set(right, left.byteLength);
+    return combined;
+  };
+  const xorWithKeyAndNonce = (bytes: Uint8Array, key: Uint8Array, nonce: Uint8Array): Uint8Array =>
+    Uint8Array.from(
+      bytes,
+      (byte, index) =>
+        byte ^ (key[index % key.byteLength] ?? 0) ^ (nonce[index % nonce.byteLength] ?? 0)
+    );
+
+  class MockAESEncryptionKey {
+    private constructor(readonly keyBytes: Uint8Array) {}
+
+    static import(input: Uint8Array): Promise<MockAESEncryptionKey> {
+      return Promise.resolve(new MockAESEncryptionKey(input.slice()));
+    }
+  }
+
+  class MockAESSealedData {
+    private constructor(
+      readonly nonce: Uint8Array,
+      readonly ciphertextWithTag: Uint8Array,
+      readonly tagLength: number
+    ) {}
+
+    static fromParts(
+      nonce: string | Uint8Array | ArrayBuffer,
+      ciphertext: string | Uint8Array | ArrayBuffer,
+      tag?: string | Uint8Array | ArrayBuffer | number
+    ): MockAESSealedData {
+      const tagLength =
+        typeof tag === "number" || tag === undefined ? (tag ?? 16) : toBytes(tag).byteLength;
+      const ciphertextWithTag =
+        typeof tag === "number" || tag === undefined
+          ? toBytes(ciphertext)
+          : concatBytes(toBytes(ciphertext), toBytes(tag));
+      return new MockAESSealedData(toBytes(nonce), ciphertextWithTag, tagLength);
+    }
+
+    ciphertext(
+      options: { readonly includeTag?: boolean; readonly encoding?: "base64" | "bytes" } = {}
+    ) {
+      const bodyLength = Math.max(0, this.ciphertextWithTag.byteLength - this.tagLength);
+      const bytes = options.includeTag
+        ? this.ciphertextWithTag
+        : this.ciphertextWithTag.slice(0, bodyLength);
+      return Promise.resolve(options.encoding === "base64" ? toBase64(bytes) : bytes);
+    }
+
+    iv(encoding?: "base64" | "bytes") {
+      return Promise.resolve(encoding === "base64" ? toBase64(this.nonce) : this.nonce);
+    }
+  }
+
+  const aesEncryptAsync = createMock(
+    (
+      plaintext: string | Uint8Array | ArrayBuffer,
+      key: MockAESEncryptionKey,
+      options: {
+        readonly nonce?: { readonly bytes?: string | Uint8Array | ArrayBuffer };
+        readonly tagLength?: number;
+      } = {}
+    ) => {
+      const nonce = options.nonce?.bytes ? toBytes(options.nonce.bytes) : new Uint8Array(12);
+      const ciphertext = xorWithKeyAndNonce(toBytes(plaintext), key.keyBytes, nonce);
+      const tag = new Uint8Array(options.tagLength ?? 16).fill(7);
+      return Promise.resolve(
+        MockAESSealedData.fromParts(nonce, concatBytes(ciphertext, tag), tag.byteLength)
+      );
+    }
+  );
+  const aesDecryptAsync = createMock((sealedData: MockAESSealedData, key: MockAESEncryptionKey) => {
+    const bodyLength = Math.max(0, sealedData.ciphertextWithTag.byteLength - sealedData.tagLength);
+    const ciphertext = sealedData.ciphertextWithTag.slice(0, bodyLength);
+    return Promise.resolve(xorWithKeyAndNonce(ciphertext, key.keyBytes, sealedData.nonce));
+  });
+
+  return {
+    createMock,
+    expoCryptoAesMock: {
+      AESEncryptionKey: MockAESEncryptionKey,
+      AESSealedData: MockAESSealedData,
+      aesDecryptAsync,
+      aesEncryptAsync,
+    },
+  };
+});
 
 process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
 process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
@@ -241,9 +341,13 @@ vi.mock("expo-secure-store", () => ({
 
 // Mock expo-crypto
 vi.mock("expo-crypto", () => ({
+  ...expoCryptoAesMock,
+  AESKeySize: { AES128: 128, AES192: 192, AES256: 256 },
   CryptoDigestAlgorithm: { SHA256: "SHA-256" },
   digest: createMock(() => Promise.resolve(new Uint8Array(32))),
-  getRandomBytes: createMock(() => new Uint8Array(32)),
+  getRandomBytes: createMock((byteCount: number) =>
+    Uint8Array.from({ length: byteCount }, (_, index) => index + 1)
+  ),
 }));
 
 // Mock @react-native-community/netinfo

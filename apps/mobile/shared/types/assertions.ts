@@ -8,6 +8,7 @@ import type {
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
+  LedgerChangeId,
   LedgerCursor,
   Month,
   ProcessedSourceEventId,
@@ -166,6 +167,10 @@ function assertFinancialAccountId(value: string): asserts value is FinancialAcco
   assertNonEmptyString(value, "financialAccountId");
 }
 
+function assertLedgerChangeId(value: string): asserts value is LedgerChangeId {
+  assertNonEmptyString(value, "ledgerChangeId");
+}
+
 function assertProcessedSourceEventId(value: string): asserts value is ProcessedSourceEventId {
   assertNonEmptyString(value, "processedSourceEventId");
 }
@@ -242,6 +247,10 @@ export function requireChatSessionId(value: string): ChatSessionId {
 
 export function requireFinancialAccountId(value: string): FinancialAccountId {
   return requireValue(value, assertFinancialAccountId);
+}
+
+export function requireLedgerChangeId(value: string): LedgerChangeId {
+  return requireValue(value, assertLedgerChangeId);
 }
 
 export function requireMonth(value: string): Month {

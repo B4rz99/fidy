@@ -1,5 +1,6 @@
 import { toIsoDate, toMonth } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
+import { upsertStoredTransactionByRepositoryOrder } from "../lib/transaction-order";
 import type { StoredTransaction } from "../schema";
 import type { TransactionActions, TransactionSetState, TransactionState } from "./state";
 
@@ -65,11 +66,19 @@ export function appendTransactionPageSnapshot(
 ): TransactionActions["appendPageSnapshot"] {
   return function appendPageSnapshot(snapshot) {
     set((state) => ({
-      pages: [...state.pages, ...snapshot.pages],
+      pages: [...state.pages, ...filterNewTransactions(state.pages, snapshot.pages)],
       offset: state.offset + snapshot.pages.length,
       hasMore: snapshot.hasMore,
     }));
   };
+}
+
+function filterNewTransactions(
+  existingTransactions: readonly StoredTransaction[],
+  transactionsToAppend: readonly StoredTransaction[]
+): StoredTransaction[] {
+  const existingIds = new Set(existingTransactions.map((transaction) => transaction.id));
+  return transactionsToAppend.filter((transaction) => !existingIds.has(transaction.id));
 }
 
 export function setTransactionAggregateSnapshot(
@@ -101,15 +110,16 @@ export function createHydrateEditingTransaction(
 }
 
 export function addTransactionToCache(set: TransactionSetState): TransactionActions["addToCache"] {
-  return function addToCache(transaction) {
+  return function addToCache(transaction, options) {
     const now = new Date();
+    const countInPagination = options?.countInPagination ?? true;
     set((state) => {
       const isMonthlyExpense = isCurrentMonthExpense(transaction, now);
       const isDailyExpense = isRecentDailyExpense(transaction, now);
 
       return {
-        pages: [transaction, ...state.pages],
-        offset: state.offset + 1,
+        pages: upsertStoredTransactionByRepositoryOrder(state.pages, transaction),
+        offset: countInPagination ? state.offset + 1 : state.offset,
         balance: isMonthlyExpense ? state.balance + transaction.amount : state.balance,
         categorySpending: isMonthlyExpense
           ? upsertCategorySpending(state.categorySpending, transaction)

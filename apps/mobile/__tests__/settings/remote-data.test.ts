@@ -85,4 +85,11 @@ describe("settings remote callers", () => {
     expect(es.settings.deleteAccountWarning).toContain("copias privadas");
     expect(es.settings.deleteAccountWarning).toContain("no se podrán recuperar");
   });
+
+  test("logout pending-change copy says unsent Cloud Ledger work is discarded", () => {
+    expect(en.settings.logoutPendingChangesConfirmMessage).toContain("pending changes");
+    expect(en.settings.logoutPendingChangesConfirmMessage).toContain("discard");
+    expect(es.settings.logoutPendingChangesConfirmMessage).toContain("cambios pendientes");
+    expect(es.settings.logoutPendingChangesConfirmMessage).toContain("descartará");
+  });
 });

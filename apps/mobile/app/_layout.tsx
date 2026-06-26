@@ -92,14 +92,35 @@ export function AuthenticatedShell({
 
   useSubscription(
     () => {
-      void runAuthenticatedBootstrap({ db, enableRemoteEffects, userId }).catch(captureError);
+      let isCurrent = true;
+      void runAuthenticatedBootstrap({
+        db,
+        enableRemoteEffects,
+        isCurrent: () => isCurrent,
+        userId,
+      }).catch(captureError);
+      return () => {
+        isCurrent = false;
+      };
     },
     [db, enableRemoteEffects, onboardingComplete, userId],
     migrationsReady && onboardingComplete
   );
 
   useSubscription(
-    () => subscribeAuthenticatedTransactionRefreshes({ db, enableRemoteEffects, userId }),
+    () => {
+      let isCurrent = true;
+      const unsubscribe = subscribeAuthenticatedTransactionRefreshes({
+        db,
+        enableRemoteEffects,
+        isCurrent: () => isCurrent,
+        userId,
+      });
+      return () => {
+        isCurrent = false;
+        unsubscribe();
+      };
+    },
     [db, enableRemoteEffects, onboardingComplete, userId],
     migrationsReady && onboardingComplete
   );

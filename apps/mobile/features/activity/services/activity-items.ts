@@ -19,15 +19,16 @@ export type StoredActivityItem =
       readonly updatedAt: Date;
       readonly transfer: StoredTransfer;
     };
+type TransactionActivityItem = Extract<StoredActivityItem, { kind: "transaction" }>;
 
 type ActivityItemsInput = {
   readonly transactionRows: readonly TransactionRow[];
+  readonly optimisticTransactions?: readonly StoredTransaction[];
   readonly transferRows: readonly TransferRow[];
   readonly fetchSize: number;
 };
 
-function toTransactionActivityItem(row: TransactionRow): StoredActivityItem {
-  const transaction = toStoredTransaction(row);
+function toStoredTransactionActivityItem(transaction: StoredTransaction): TransactionActivityItem {
   return {
     kind: "transaction",
     id: transaction.id,
@@ -35,6 +36,10 @@ function toTransactionActivityItem(row: TransactionRow): StoredActivityItem {
     updatedAt: transaction.updatedAt,
     transaction,
   };
+}
+
+function toTransactionRowActivityItem(row: TransactionRow): TransactionActivityItem {
+  return toStoredTransactionActivityItem(toStoredTransaction(row));
 }
 
 function toTransferActivityItem(row: TransferRow): StoredActivityItem {
@@ -48,10 +53,22 @@ function toTransferActivityItem(row: TransferRow): StoredActivityItem {
   };
 }
 
+function upsertTransactionActivityItems(
+  localItems: readonly TransactionActivityItem[],
+  optimisticItems: readonly TransactionActivityItem[]
+): readonly TransactionActivityItem[] {
+  return [...new Map([...localItems, ...optimisticItems].map((item) => [item.id, item])).values()];
+}
+
 export function toStoredActivityItems(input: ActivityItemsInput): readonly StoredActivityItem[] {
-  const { transactionRows, transferRows, fetchSize } = input;
+  const { optimisticTransactions = [], transactionRows, transferRows, fetchSize } = input;
+  const transactionItems = upsertTransactionActivityItems(
+    transactionRows.slice(0, fetchSize).map(toTransactionRowActivityItem),
+    optimisticTransactions.map(toStoredTransactionActivityItem)
+  );
+
   return mergeActivityItems(
-    transactionRows.slice(0, fetchSize).map(toTransactionActivityItem),
+    transactionItems,
     transferRows.slice(0, fetchSize).map(toTransferActivityItem)
   );
 }

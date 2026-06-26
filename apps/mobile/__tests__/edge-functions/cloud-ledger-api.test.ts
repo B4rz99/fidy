@@ -1,6 +1,7 @@
 // biome-ignore-all lint/style/useNamingConvention: Cloud Ledger API payloads use snake_case fields
 import { describe, expect, it, vi } from "vitest";
 import { handleCloudLedgerRequest } from "../../../../supabase/functions/cloud-ledger-api/handler";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT } from "../../../../supabase/functions/cloud-ledger-api/model";
 
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
@@ -25,6 +26,18 @@ const CREATE_TRANSACTION_REQUEST_BODY = {
   commandVersion: 1,
   userId: OTHER_USER_ID,
   transaction: CREATE_TRANSACTION_PAYLOAD,
+} as const;
+const APPLY_PENDING_CHANGES_REQUEST_BODY = {
+  action: "applyPendingChanges",
+  commandVersion: 1,
+  changes: [
+    {
+      id: "change-offline-coffee",
+      kind: "createTransaction",
+      commandVersion: 1,
+      transaction: CREATE_TRANSACTION_PAYLOAD,
+    },
+  ],
 } as const;
 const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
   code: "accepted",
@@ -223,6 +236,96 @@ describe("cloud-ledger-api Edge Function", () => {
       data: ACCEPTED_CREATE_TRANSACTION_OUTCOME,
     });
     expect(api.store.createTransaction).toHaveBeenCalledWith(USER_ID, CREATE_TRANSACTION_COMMAND);
+  });
+
+  it("applies pending changes with Ledger Change identities through the authenticated boundary", async () => {
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: [],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(APPLY_PENDING_CHANGES_REQUEST_BODY, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: [],
+        cursor: "ledger:2",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      commandVersion: 1,
+      changes: [
+        {
+          id: "change-offline-coffee",
+          kind: "createTransaction",
+          commandVersion: 1,
+          transaction: CREATE_TRANSACTION_PAYLOAD,
+        },
+      ],
+    });
+  });
+
+  it("rejects oversized pending-change batches before replaying them", async () => {
+    const api = createCloudLedgerApiDeps();
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "applyPendingChanges",
+          commandVersion: 1,
+          changes: Array.from({ length: CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT + 1 }, (_, index) =>
+            pendingChangeRequest(index)
+          ),
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "pending_change_batch_too_large",
+    });
+    expect(api.store.applyPendingChanges).not.toHaveBeenCalled();
+  });
+
+  it("reports permanent pending-change rejections without failing the whole batch", async () => {
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(APPLY_PENDING_CHANGES_REQUEST_BODY, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:2",
+      },
+    });
   });
 
   it("retains Capture Improvement Samples for the authenticated account only", async () => {
@@ -1026,73 +1129,124 @@ function jsonRequest(body: unknown, token?: string) {
   });
 }
 
-function createCloudLedgerApiDeps(
-  options: {
-    readonly authError?: { readonly message: string };
-    readonly bootstrapByUserId?: ReadonlyMap<string, LedgerBootstrapPayload>;
-    readonly createTransactionResult?: unknown;
-    readonly retainCaptureImprovementResult?: unknown;
-    readonly userId?: string;
-  } = {}
-) {
-  const bootstrapByUserId = options.bootstrapByUserId ?? new Map();
-  const store = {
-    bootstrapLedger: vi.fn<(...args: any[]) => any>((userId: string) =>
-      Promise.resolve(
-        bootstrapByUserId.get(userId) ?? {
-          cursor: CURSOR,
-          categories: [],
-          financialAccounts: [],
-          transactions: [],
-          tombstones: [],
-        }
-      )
-    ),
-    createTransaction: vi.fn<(...args: any[]) => any>(() =>
-      Promise.resolve(
-        options.createTransactionResult ?? {
-          code: "accepted",
-          transaction: {
-            id: CLIENT_TRANSACTION_ID,
-            type: "expense",
-            amount: 15_000,
-            currency: "COP",
-            categoryId: null,
-            accountId: "acct-cash",
-            description: null,
-            date: "2026-06-01",
-            updatedAt: "2026-06-01T10:02:00.000Z",
-          },
-          cursor: "ledger:2",
-        }
-      )
-    ),
-    retainCaptureImprovementSample: vi.fn<(...args: any[]) => any>(() =>
-      Promise.resolve(options.retainCaptureImprovementResult ?? { code: "accepted" })
-    ),
-    deleteCaptureImprovementSamples: vi.fn<(...args: any[]) => any>(() =>
-      Promise.resolve({ code: "accepted" })
-    ),
-    setCaptureImprovementPreference: vi.fn<(...args: any[]) => any>(() =>
-      Promise.resolve({ code: "accepted" })
-    ),
+function pendingChangeRequest(index: number) {
+  const suffix = String(index).padStart(2, "0");
+  return {
+    id: `change-offline-${suffix}`,
+    kind: "createTransaction",
+    commandVersion: 1,
+    transaction: {
+      ...CREATE_TRANSACTION_PAYLOAD,
+      id: `txn-offline-${suffix}`,
+    },
   };
+}
+
+type CloudLedgerApiDepsOptions = {
+  readonly authError?: { readonly message: string };
+  readonly bootstrapByUserId?: ReadonlyMap<string, LedgerBootstrapPayload>;
+  readonly applyPendingChangesResult?: unknown;
+  readonly createTransactionResult?: unknown;
+  readonly retainCaptureImprovementResult?: unknown;
+  readonly userId?: string;
+};
+
+function defaultLedgerBootstrapPayload(): LedgerBootstrapPayload {
+  return {
+    cursor: CURSOR,
+    categories: [],
+    financialAccounts: [],
+    transactions: [],
+    tombstones: [],
+  };
+}
+
+function defaultCreateTransactionOutcome() {
+  return {
+    code: "accepted",
+    transaction: {
+      id: CLIENT_TRANSACTION_ID,
+      type: "expense",
+      amount: 15_000,
+      currency: "COP",
+      categoryId: null,
+      accountId: "acct-cash",
+      description: null,
+      date: "2026-06-01",
+      updatedAt: "2026-06-01T10:02:00.000Z",
+    },
+    cursor: "ledger:2",
+  };
+}
+
+function defaultApplyPendingChangesOutcome() {
+  return {
+    code: "accepted",
+    acceptedChangeIds: [],
+    rejectedChangeIds: [],
+    cursor: "ledger:2",
+  };
+}
+
+function createBootstrapLedgerMock(options: CloudLedgerApiDepsOptions) {
+  const bootstrapByUserId = options.bootstrapByUserId ?? new Map();
+  return vi.fn<(...args: any[]) => any>((userId: string) =>
+    Promise.resolve(bootstrapByUserId.get(userId) ?? defaultLedgerBootstrapPayload())
+  );
+}
+
+function createTransactionMock(options: CloudLedgerApiDepsOptions) {
+  const result = options.createTransactionResult ?? defaultCreateTransactionOutcome();
+  return vi.fn<(...args: any[]) => any>(() => Promise.resolve(result));
+}
+
+function createApplyPendingChangesMock(options: CloudLedgerApiDepsOptions) {
+  const result = options.applyPendingChangesResult ?? defaultApplyPendingChangesOutcome();
+  return vi.fn<(...args: any[]) => any>(() => Promise.resolve(result));
+}
+
+function createCaptureImprovementSampleMock(options: CloudLedgerApiDepsOptions) {
+  const result = options.retainCaptureImprovementResult ?? { code: "accepted" };
+  return vi.fn<(...args: any[]) => any>(() => Promise.resolve(result));
+}
+
+function createAcceptedMock() {
+  return vi.fn<(...args: any[]) => any>(() => Promise.resolve({ code: "accepted" }));
+}
+
+function createCloudLedgerApiStore(options: CloudLedgerApiDepsOptions) {
+  return {
+    bootstrapLedger: createBootstrapLedgerMock(options),
+    createTransaction: createTransactionMock(options),
+    applyPendingChanges: createApplyPendingChangesMock(options),
+    retainCaptureImprovementSample: createCaptureImprovementSampleMock(options),
+    deleteCaptureImprovementSamples: createAcceptedMock(),
+    setCaptureImprovementPreference: createAcceptedMock(),
+  };
+}
+
+function createCloudLedgerApiAuth(options: CloudLedgerApiDepsOptions) {
+  return {
+    auth: {
+      getUser: vi.fn<(...args: any[]) => any>(() =>
+        Promise.resolve({
+          data: {
+            user: options.authError === undefined ? { id: options.userId ?? USER_ID } : null,
+          },
+          error: options.authError ?? null,
+        })
+      ),
+    },
+  };
+}
+
+function createCloudLedgerApiDeps(options: CloudLedgerApiDepsOptions = {}) {
+  const store = createCloudLedgerApiStore(options);
 
   return {
     store,
     deps: {
-      auth: {
-        auth: {
-          getUser: vi.fn<(...args: any[]) => any>(() =>
-            Promise.resolve({
-              data: {
-                user: options.authError === undefined ? { id: options.userId ?? USER_ID } : null,
-              },
-              error: options.authError ?? null,
-            })
-          ),
-        },
-      },
+      auth: createCloudLedgerApiAuth(options),
       store,
     },
   };

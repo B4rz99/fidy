@@ -12,7 +12,12 @@ export type TransactionFormInput = {
 };
 
 export type TransactionMutationResult =
-  | { success: true; transaction: StoredTransaction }
+  | {
+      success: true;
+      transaction: StoredTransaction;
+      cacheCommittedTransaction?: boolean;
+      countCachedTransactionInPagination?: boolean;
+    }
   | { success: false; error: string };
 
 type CreateTransactionMutationServiceDeps = {
@@ -35,7 +40,11 @@ type CreateTransactionMutationServiceDeps = {
     readonly now: Date;
   }) => Promise<{ readonly success: true } | { readonly success: false; readonly error: string }>;
   refresh: () => Promise<void>;
-  cacheCommittedTransaction?: (transaction: StoredTransaction) => void;
+  cacheCommittedTransaction?: (
+    transaction: StoredTransaction,
+    options?: { readonly countInPagination?: boolean }
+  ) => void;
+  refreshAfterSave?: boolean;
   resetForm: () => void;
   trackDeleted: () => void;
   trackEdited: (input: { category: string }) => void;
@@ -127,8 +136,14 @@ export function createTransactionMutationService(
         return result;
       }
 
-      deps.cacheCommittedTransaction?.(result.transaction);
-      await deps.refresh();
+      if (result.cacheCommittedTransaction !== false) {
+        deps.cacheCommittedTransaction?.(result.transaction, {
+          countInPagination: result.countCachedTransactionInPagination ?? true,
+        });
+      }
+      if (deps.refreshAfterSave ?? true) {
+        await deps.refresh();
+      }
       return result;
     },
 

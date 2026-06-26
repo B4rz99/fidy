@@ -2,13 +2,15 @@ import type {
   CaptureImprovementSample,
   CaptureImprovementSampleAccepted,
   CaptureImprovementSampleOutcome,
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
   CloudLedgerCreateTransactionOutcome,
   LedgerCursor,
 } from "./model.ts";
 import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
-import { readLedgerCursorSequence } from "./model.ts";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT, readLedgerCursorSequence } from "./model.ts";
 
 type BootstrapRpcArgs = {
   readonly p_user_id: string;
@@ -70,6 +72,12 @@ type SupabaseLike = {
   }>;
 };
 
+type ApplyPendingChangesProgress = {
+  readonly acceptedChangeIds: readonly string[];
+  readonly cursor: string | null;
+  readonly rejectedChangeIds: readonly string[];
+};
+
 const CLOUD_LEDGER_BOOTSTRAP_RPC = "cloud_ledger_bootstrap";
 const CLOUD_LEDGER_CREATE_TRANSACTION_RPC = "cloud_ledger_create_transaction";
 const CLOUD_LEDGER_RETAIN_CAPTURE_IMPROVEMENT_SAMPLE_RPC =
@@ -87,6 +95,8 @@ export function createCloudLedgerStore(supabase: SupabaseLike) {
       bootstrapLedger(supabase, userId, cursor),
     createTransaction: (userId: string, command: CloudLedgerCreateTransactionCommand) =>
       createTransaction(supabase, userId, command),
+    applyPendingChanges: (userId: string, command: CloudLedgerApplyPendingChangesCommand) =>
+      applyPendingChanges(supabase, userId, command),
     retainCaptureImprovementSample: (userId: string, sample: CaptureImprovementSample) =>
       retainCaptureImprovementSample(supabase, userId, sample),
     deleteCaptureImprovementSamples: (userId: string) =>
@@ -136,6 +146,45 @@ async function createTransaction(
     throw new Error("Unable to create Cloud Ledger transaction: missing response");
   }
   return response.data as CloudLedgerCreateTransactionOutcome;
+}
+
+async function applyPendingChanges(
+  supabase: SupabaseLike,
+  userId: string,
+  command: CloudLedgerApplyPendingChangesCommand
+): Promise<CloudLedgerApplyPendingChangesOutcome> {
+  if (command.changes.length > CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT) {
+    throw new Error("Cloud Ledger pending-change batch exceeds the server limit");
+  }
+
+  const outcomes = await command.changes.reduce<Promise<ApplyPendingChangesProgress>>(
+    async (previous, change) => {
+      const accepted = await previous;
+      const outcome = await createTransaction(supabase, userId, {
+        commandVersion: change.commandVersion,
+        transaction: change.transaction,
+      });
+      if (outcome.code !== "accepted") {
+        return {
+          ...accepted,
+          rejectedChangeIds: [...accepted.rejectedChangeIds, change.id],
+        };
+      }
+      return {
+        acceptedChangeIds: [...accepted.acceptedChangeIds, change.id],
+        cursor: outcome.cursor,
+        rejectedChangeIds: accepted.rejectedChangeIds,
+      };
+    },
+    Promise.resolve({ acceptedChangeIds: [], cursor: null, rejectedChangeIds: [] })
+  );
+
+  return {
+    code: "accepted",
+    acceptedChangeIds: outcomes.acceptedChangeIds,
+    rejectedChangeIds: outcomes.rejectedChangeIds,
+    cursor: (outcomes.cursor ?? "ledger:0") as LedgerCursor,
+  };
 }
 
 async function retainCaptureImprovementSample(

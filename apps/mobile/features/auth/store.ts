@@ -1,5 +1,11 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
+import {
+  clearCloudLedgerRuntimeCache,
+  resumeCloudLedgerRuntimeCacheWrites,
+  suspendCloudLedgerRuntimeCacheWrites,
+} from "@/features/cloud-ledger/runtime.public";
+import { discardCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
 import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
 import { useLocalOnboardingState } from "@/features/onboarding/store.public";
 import {
@@ -8,8 +14,15 @@ import {
   type LocalQaSession,
   loadLocalQaSession,
 } from "@/features/qa/session.public";
+import {
+  deletePendingCloudLedgerTransactionShadows,
+  invalidateTransactionSession,
+  resumeTransactionSession,
+} from "@/features/transactions/store.public";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
+import { requireUserId } from "@/shared/types/assertions";
+import type { UserId } from "@/shared/types/branded";
 import { type OAuthProvider, signInWithProvider } from "./provider-sign-in";
 import { cleanupPushTokenBeforeSignOut, signOutRemoteSession } from "./sign-out";
 
@@ -176,6 +189,37 @@ async function signOutLocalQaSession(set: SetAuthState) {
   resetAnalyticsUser();
 }
 
+function getRemoteSessionUserId(): UserId | null {
+  const id = useAuthStore.getState().session?.user?.id;
+  return id === undefined ? null : requireUserId(id);
+}
+
+function suspendCloudLedgerStateBeforeSignOut(): UserId | null {
+  const userId = getRemoteSessionUserId();
+  if (userId === null) {
+    return null;
+  }
+
+  invalidateTransactionSession();
+  suspendCloudLedgerRuntimeCacheWrites(userId);
+  return userId;
+}
+
+async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null): Promise<void> {
+  if (userId === null) return;
+
+  try {
+    await deletePendingCloudLedgerTransactionShadows(userId);
+    await discardCloudLedgerOutbox(userId);
+    clearCloudLedgerRuntimeCache(userId);
+  } catch (err) {
+    resumeCloudLedgerRuntimeCacheWrites(userId);
+    resumeTransactionSession(userId);
+    captureAuthFailure("auth_signout_cloud_ledger_outbox_discard_failed", err);
+    throw err;
+  }
+}
+
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   session: null,
   localQaSession: null,
@@ -244,9 +288,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       return;
     }
 
+    const cloudLedgerSignOutUserId = suspendCloudLedgerStateBeforeSignOut();
     // Clean up push token while session is still valid (RLS needs auth).
     // Capped at 2s so signout isn't blocked indefinitely by network issues.
     await cleanupPushTokenBeforeSignOut();
+    await discardCloudLedgerStateBeforeSignOut(cloudLedgerSignOutUserId);
     await signOutRemoteSession();
     await clearOnboardingAndAuthState(set);
     resetAnalyticsUser();

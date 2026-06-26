@@ -11,5 +11,24 @@
       "parameterCount": 4
     }
   },
-  "violations": []
+  "violations": [
+    {
+      "key": "requireChunkAllocationCoverage@621-711@apps/mobile/features/cloud-ledger/outbox.ts",
+      "file": "apps/mobile/features/cloud-ledger/outbox.ts",
+      "function": "requireChunkAllocationCoverage",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 10,
+      "nloc": 83,
+      "parameterCount": 8
+    },
+    {
+      "key": "requireString@480-561@apps/mobile/features/cloud-ledger/outbox.ts",
+      "file": "apps/mobile/features/cloud-ledger/outbox.ts",
+      "function": "requireString",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 8,
+      "nloc": 69,
+      "parameterCount": 5
+    }
+  ]
 }

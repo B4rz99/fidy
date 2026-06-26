@@ -15,13 +15,20 @@ const isTaskEnabled = <Context>(
   context: Context
 ) => task.isEnabled?.(context) ?? true;
 
+const isBootstrapContextCurrent = <Context>(context: Context): boolean => {
+  const currentCheck = (context as { readonly isCurrent?: unknown }).isCurrent;
+  return typeof currentCheck === "function" ? currentCheck() === true : true;
+};
+
 export async function runBootstrapTasks<Context>(
   context: Context,
   tasks: readonly BootstrapTask<Context>[]
 ): Promise<void> {
   for (const task of tasks) {
+    if (!isBootstrapContextCurrent(context)) return;
     if (!isTaskEnabled(task, context)) continue;
     await task.run(context);
+    if (!isBootstrapContextCurrent(context)) return;
   }
 }
 

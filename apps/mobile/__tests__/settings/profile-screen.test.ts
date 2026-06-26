@@ -19,4 +19,12 @@ describe("Profile screen local QA controls", () => {
     expect(qaToolsSource).toContain('t("settings.localQaOpenTools")');
     expect(qaToolsSource).toContain('router.push("/qa-tools")');
   });
+
+  test("warns that pending Cloud Ledger outbox changes are discarded on logout", () => {
+    expect(source).toContain("hasPendingCloudLedgerOutboxChanges");
+    expect(source).toContain("logoutPendingChangesConfirmMessage");
+    expect(source.indexOf("hasPendingCloudLedgerOutboxChanges")).toBeLessThan(
+      source.indexOf("Alert.alert")
+    );
+  });
 });

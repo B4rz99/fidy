@@ -46,7 +46,8 @@ test("keeps home header actions wired through ScreenLayout", () => {
 });
 
 test("keeps the home activity feed wired to pagination and transaction mutations", () => {
-  expect(activityFeedSource).toContain("activityQueryService.loadPage");
+  expect(activityFeedSource).toContain("activityQueryService");
+  expect(activityFeedSource).toContain("loadPageWithCloudLedgerOptimisticView");
   expect(activityFeedSource).toContain("appendUniqueActivityItems");
   expect(activityFeedSource).toContain("deleteTransaction(db, userId, id)");
   expect(activityFeedSource).toContain('pathname: "/edit-transaction"');
@@ -64,6 +65,14 @@ test("keeps activity item rendering memo-safe for edit and delete handlers", () 
   expect(contentSource).not.toContain("onDelete={() =>");
   expect(activityItemSource).toContain("onEditTransaction={onEditTransaction}");
   expect(activityItemSource).toContain("onDeleteTransaction={onDeleteTransaction}");
+});
+
+test("hides edit and delete actions for Cloud Ledger activity rows", () => {
+  expect(activityItemSource).toContain('tx.source !== "cloud_ledger"');
+  expect(activityItemSource).toContain("onEdit={canMutateTransaction ? handleEdit : undefined}");
+  expect(activityItemSource).toContain(
+    "onDelete={canMutateTransaction ? handleDelete : undefined}"
+  );
 });
 
 test("keeps the home feed aurora background visible behind section headers and row cards", () => {

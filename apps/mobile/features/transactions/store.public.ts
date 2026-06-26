@@ -1,14 +1,18 @@
 export {
   deleteTransaction,
+  deletePendingCloudLedgerTransactionShadows,
   getStoredTransactionById,
   initializeTransactionSession,
+  invalidateTransactionSession,
   loadInitialTransactions,
   loadNextTransactions,
   loadTransactionAggregates,
   loadTransactionIntoForm,
   refreshTransactions,
   removeTransaction,
+  resumeTransactionSession,
   saveCurrentTransaction,
+  persistCloudLedgerRuntimeTransactionShadows,
   updateTransactionDirect,
   useTransactionStore,
 } from "./store";

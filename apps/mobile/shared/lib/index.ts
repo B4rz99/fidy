@@ -55,6 +55,7 @@ export {
   generateFinancialAccountId,
   generateFinancialAccountIdentifierId,
   generateId,
+  generateLedgerChangeId,
   generateMerchantRuleId,
   generateNotificationId,
   generateNotificationSourceId,

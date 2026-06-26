@@ -6,6 +6,7 @@ import type {
   ViewProps,
   ViewStyle,
 } from "react-native";
+import { RAISED_SURFACE_SHADOW } from "@/shared/components/effect-tokens";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
@@ -86,6 +87,6 @@ const styles = StyleSheet.create({
   raised: {
     borderWidth: 1,
     borderCurve: "continuous",
-    boxShadow: "0 3px 6px rgba(0, 0, 0, 0.10)",
+    boxShadow: RAISED_SURFACE_SHADOW,
   },
 });

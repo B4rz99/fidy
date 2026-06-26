@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: Supabase rows use snake_case fields
 import { describe, expect, it, vi } from "vitest";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT } from "../../../../supabase/functions/cloud-ledger-api/model";
 import { createCloudLedgerStore } from "../../../../supabase/functions/cloud-ledger-api/store";
 
 const USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -175,6 +176,68 @@ describe("Cloud Ledger Edge store", () => {
     expect(supabase.schema).not.toHaveBeenCalled();
   });
 
+  it("reports permanent pending-change create rejections in the batch outcome", async () => {
+    const supabase = createLedgerSupabase({
+      createTransactionOutcome: { code: "invalid_ledger_reference" },
+    });
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.applyPendingChanges(USER_ID, {
+      commandVersion: 1,
+      changes: [rejectedPendingCreateChange()],
+    });
+
+    expect(outcome).toEqual({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-rejected-offline-create"],
+      cursor: "ledger:0",
+    });
+  });
+
+  it("continues applying independent pending changes after a rejected create", async () => {
+    const supabase = createLedgerSupabase({
+      createTransactionOutcomes: [
+        { code: "invalid_ledger_reference" },
+        { ...CREATE_TRANSACTION_RPC_DATA, cursor: "ledger:5" },
+      ],
+    });
+    const store = createCloudLedgerStore(supabase.client);
+
+    const outcome = await store.applyPendingChanges(USER_ID, {
+      commandVersion: 1,
+      changes: [rejectedPendingCreateChange(), validPendingCreateChange()],
+    });
+
+    expect(outcome).toEqual({
+      code: "accepted",
+      acceptedChangeIds: ["change-valid-offline-create"],
+      rejectedChangeIds: ["change-rejected-offline-create"],
+      cursor: "ledger:5",
+    });
+    expect(supabase.rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects oversized pending-change batches before replaying transaction RPCs", async () => {
+    const supabase = createLedgerSupabase();
+    const store = createCloudLedgerStore(supabase.client);
+
+    await expect(
+      store.applyPendingChanges(USER_ID, {
+        commandVersion: 1,
+        changes: Array.from({ length: CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT + 1 }, (_, index) =>
+          pendingCreateChange({
+            categoryId: "cat-groceries",
+            changeId: `change-oversized-${index}`,
+            description: "Oversized",
+            transactionId: `txn-oversized-${index}`,
+          })
+        ),
+      })
+    ).rejects.toThrow("Cloud Ledger pending-change batch exceeds");
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
   it("retains Capture Improvement Samples through a service-only account-linked RPC", async () => {
     const supabase = createLedgerSupabase();
     const store = createCloudLedgerStore(supabase.client);
@@ -252,9 +315,56 @@ describe("Cloud Ledger Edge store", () => {
   });
 });
 
-function createLedgerSupabase() {
+function rejectedPendingCreateChange() {
+  return pendingCreateChange({
+    changeId: "change-rejected-offline-create",
+    transactionId: "txn-rejected-offline-create",
+    categoryId: "cat-deleted",
+    description: "Rejected",
+  });
+}
+
+function validPendingCreateChange() {
+  return pendingCreateChange({
+    changeId: "change-valid-offline-create",
+    transactionId: CLIENT_TRANSACTION_ID,
+    categoryId: "cat-groceries",
+    description: "Market",
+  });
+}
+
+function pendingCreateChange(input: {
+  readonly categoryId: string;
+  readonly changeId: string;
+  readonly description: string;
+  readonly transactionId: string;
+}) {
+  return {
+    id: input.changeId,
+    kind: "createTransaction",
+    commandVersion: 1,
+    transaction: {
+      id: input.transactionId,
+      type: "expense",
+      amount: 15_000,
+      currency: "COP",
+      categoryId: input.categoryId,
+      accountId: "acct-cash",
+      description: input.description,
+      date: "2026-06-01",
+    },
+  } as const;
+}
+
+function createLedgerSupabase(
+  options: {
+    readonly createTransactionOutcome?: unknown;
+    readonly createTransactionOutcomes?: readonly unknown[];
+  } = {}
+) {
+  const createTransactionOutcomes = [...(options.createTransactionOutcomes ?? [])];
   const rpc = vi.fn<(...args: any[]) => any>((functionName: string) =>
-    Promise.resolve(ledgerRpcResult(functionName))
+    Promise.resolve(ledgerRpcResult(functionName, options, createTransactionOutcomes))
   );
   const from = vi.fn<(...args: any[]) => any>();
   const schema = vi.fn<(...args: any[]) => any>();
@@ -271,11 +381,19 @@ function createLedgerSupabase() {
   };
 }
 
-function ledgerRpcResult(functionName: string) {
+function ledgerRpcResult(
+  functionName: string,
+  options: {
+    readonly createTransactionOutcome?: unknown;
+  },
+  createTransactionOutcomes: unknown[]
+) {
   return {
     data:
       functionName === "cloud_ledger_create_transaction"
-        ? CREATE_TRANSACTION_RPC_DATA
+        ? (createTransactionOutcomes.shift() ??
+          options.createTransactionOutcome ??
+          CREATE_TRANSACTION_RPC_DATA)
         : functionName === "cloud_ledger_retain_capture_improvement_sample"
           ? { code: "accepted" }
           : functionName === "cloud_ledger_delete_capture_improvement_samples"

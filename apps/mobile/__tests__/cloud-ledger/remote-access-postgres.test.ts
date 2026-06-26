@@ -1,5 +1,5 @@
 // biome-ignore-all lint/style/useNamingConvention: PostgreSQL roles and payloads use snake_case fields
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
@@ -55,14 +55,6 @@ const INVALID_CREATE_CASES: readonly RejectedCreateCase[] = [
     outcome: { code: "unauthorized_transaction_id" },
   },
   {
-    overrides: { transactionId: "txn-bad-account", accountId: "acct-other" },
-    outcome: { code: "invalid_ledger_reference" },
-  },
-  {
-    overrides: { transactionId: "txn-bad-category", categoryId: "cat-other" },
-    outcome: { code: "invalid_ledger_reference" },
-  },
-  {
     overrides: { transactionId: "txn-deleted-account", accountId: "acct-deleted" },
     outcome: { code: "invalid_ledger_reference" },
   },
@@ -71,7 +63,24 @@ const INVALID_CREATE_CASES: readonly RejectedCreateCase[] = [
     outcome: { code: "invalid_ledger_reference" },
   },
   {
+    overrides: {
+      transactionId: "txn-new-account-deleted-category",
+      accountId: "acct-side-effect",
+      categoryId: "cat-deleted",
+    },
+    outcome: { code: "invalid_ledger_reference" },
+  },
+  {
     overrides: { transactionId: "txn-zero", amount: 0 },
+    outcome: { code: "invalid_transaction" },
+  },
+  {
+    overrides: {
+      transactionId: "txn-zero-new-references",
+      amount: 0,
+      accountId: "acct-zero-side-effect",
+      categoryId: "cat-zero-side-effect",
+    },
     outcome: { code: "invalid_transaction" },
   },
   {
@@ -139,6 +148,138 @@ describe("Cloud Ledger Postgres access boundary", () => {
 
     expect(readLedgerCursorSequence(postgres)).toBe("5");
     expect(readCreatedTransactionRowCount(postgres)).toBe("1");
+  });
+
+  postgresIt("seeds local-only ledger references before accepting transaction creates", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-local-only-refs",
+        accountId: "acct-local-only",
+        categoryId: "cat-local-only",
+      })
+    ).toMatchObject({
+      code: "accepted",
+      transaction: {
+        id: "txn-local-only-refs",
+        accountId: "acct-local-only",
+        categoryId: "cat-local-only",
+      },
+      cursor: "ledger:7",
+    });
+
+    expect(readLedgerCursorSequence(postgres)).toBe("7");
+    expect(readRefreshAfterInitialSeed(postgres)).toMatchObject({
+      cursor: "ledger:7",
+      categories: [
+        {
+          id: "cat-local-only",
+          name: "cat-local-only",
+        },
+      ],
+      financialAccounts: [
+        {
+          id: "acct-local-only",
+          name: "acct-local-only",
+          type: "cash",
+          currency: "COP",
+        },
+      ],
+      transactions: [
+        {
+          id: "txn-local-only-refs",
+          accountId: "acct-local-only",
+          categoryId: "cat-local-only",
+        },
+      ],
+    });
+  });
+
+  postgresIt("idempotently seeds shared local-only references for concurrent creates", async () => {
+    const postgres = setupSeededPostgres();
+    const lockedCursor = psqlScalarAsync(
+      postgres,
+      `
+begin;
+select 1
+from ledger.ledger_cursors
+where user_id = '${USER_ID}'::uuid
+for update;
+select pg_sleep(1);
+commit;
+`
+    );
+    await delay(100);
+
+    const outcomes = await Promise.all([
+      createTransactionOutcomeAsync(postgres, {
+        transactionId: "txn-concurrent-local-refs-1",
+        accountId: "acct-concurrent-local",
+        categoryId: "cat-concurrent-local",
+      }),
+      createTransactionOutcomeAsync(postgres, {
+        transactionId: "txn-concurrent-local-refs-2",
+        accountId: "acct-concurrent-local",
+        categoryId: "cat-concurrent-local",
+      }),
+    ]);
+    await lockedCursor;
+
+    expect(outcomes.map((outcome) => outcome.code)).toEqual(["accepted", "accepted"]);
+    expect(outcomes.map((outcome) => outcome.cursor).sort()).toEqual(["ledger:7", "ledger:8"]);
+    expect(readAccountRowCount(postgres, USER_ID, "acct-concurrent-local")).toBe("1");
+    expect(readCategoryRowCount(postgres, USER_ID, "cat-concurrent-local")).toBe("1");
+  });
+
+  postgresIt("seeds built-in categories per user even when another user has the same id", () => {
+    const postgres = setupSeededPostgres();
+    psql(
+      postgres,
+      `
+insert into ledger.categories (
+  user_id, id, name, icon, color, cursor_sequence, updated_at, deleted_at
+) values (
+  '${OTHER_USER_ID}'::uuid, 'cat-shared-built-in', 'Shared built-in', null, null, 10, '2026-06-01T10:00:00Z', null
+);
+`
+    );
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-shared-built-in-category",
+        categoryId: "cat-shared-built-in",
+      })
+    ).toMatchObject({
+      code: "accepted",
+      transaction: {
+        id: "txn-shared-built-in-category",
+        categoryId: "cat-shared-built-in",
+      },
+      cursor: "ledger:6",
+    });
+    expect(readCategoryRowCount(postgres, USER_ID, "cat-shared-built-in")).toBe("1");
+    expect(readCategoryRowCount(postgres, OTHER_USER_ID, "cat-shared-built-in")).toBe("1");
+  });
+
+  postgresIt("seeds local-only accounts per user even when another user has the same id", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-shared-account-id",
+        accountId: "acct-other",
+      })
+    ).toMatchObject({
+      code: "accepted",
+      transaction: {
+        id: "txn-shared-account-id",
+        accountId: "acct-other",
+      },
+      cursor: "ledger:6",
+    });
+    expect(readAccountRowCount(postgres, USER_ID, "acct-other")).toBe("1");
+    expect(readAccountRowCount(postgres, OTHER_USER_ID, "acct-other")).toBe("1");
   });
 
   postgresIt("rebuilds monthly projections for valid totals above integer range", () => {
@@ -248,13 +389,13 @@ function expectRejectedCreatesHaveNoSideEffects(postgres: PostgresHarness) {
       `
 select count(*)
 from ledger.transactions
-where user_id = '${USER_ID}'::uuid
-  and id in (
-    'txn-bad-account',
-    'txn-bad-category',
-    'txn-deleted-account',
-    'txn-deleted-category',
-    'txn-zero',
+	where user_id = '${USER_ID}'::uuid
+	  and id in (
+	    'txn-deleted-account',
+	    'txn-deleted-category',
+	    'txn-new-account-deleted-category',
+	    'txn-zero',
+    'txn-zero-new-references',
     'txn-future',
     'txn-null-version',
     'txn-null-type',
@@ -275,6 +416,9 @@ where user_id = '${USER_ID}'::uuid;
 `
     )
   ).toBe("0");
+  expect(readAccountRowCount(postgres, USER_ID, "acct-side-effect")).toBe("0");
+  expect(readAccountRowCount(postgres, USER_ID, "acct-zero-side-effect")).toBe("0");
+  expect(readCategoryRowCount(postgres, USER_ID, "cat-zero-side-effect")).toBe("0");
 }
 
 function readCreatedTransactionRowCount(postgres: PostgresHarness) {
@@ -285,6 +429,30 @@ select count(*)
 from ledger.transactions
 where user_id = '${USER_ID}'::uuid
   and id = '${CLIENT_TRANSACTION_ID}';
+`
+  );
+}
+
+function readCategoryRowCount(postgres: PostgresHarness, userId: string, categoryId: string) {
+  return psqlScalar(
+    postgres,
+    `
+select count(*)
+from ledger.categories
+where user_id = '${userId}'::uuid
+  and id = '${categoryId}';
+`
+  );
+}
+
+function readAccountRowCount(postgres: PostgresHarness, userId: string, accountId: string) {
+  return psqlScalar(
+    postgres,
+    `
+select count(*)
+from ledger.financial_accounts
+where user_id = '${userId}'::uuid
+  and id = '${accountId}';
 `
   );
 }
@@ -408,7 +576,16 @@ function expectServiceRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) {
   expect(JSON.stringify(payload)).not.toContain("acct-other");
 }
 
-function startPostgres(): PostgresHarness {
+function readRefreshAfterInitialSeed(postgres: PostgresHarness) {
+  return JSON.parse(
+    psqlScalar(
+      postgres,
+      `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 4::bigint)::text;`
+    )
+  );
+}
+
+const startPostgres = (): PostgresHarness => {
   const rootDir = mkdtempSync(join(tmpdir(), "fidy-cloud-ledger-pg-"));
   const dataDir = join(rootDir, "data");
   const socketDir = join(rootDir, "socket");
@@ -445,9 +622,9 @@ function startPostgres(): PostgresHarness {
   };
   harnesses.push(harness);
   return harness;
-}
+};
 
-function stopPostgres(harness: PostgresHarness) {
+const stopPostgres = (harness: PostgresHarness): void => {
   try {
     execFileSync(postgresBinary("pg_ctl"), ["-D", harness.dataDir, "-m", "fast", "stop"], {
       stdio: "ignore",
@@ -455,7 +632,7 @@ function stopPostgres(harness: PostgresHarness) {
   } finally {
     rmSync(harness.rootDir, { force: true, recursive: true });
   }
-}
+};
 
 function setupSupabaseAuthSurface(harness: PostgresHarness) {
   psql(
@@ -578,6 +755,32 @@ select public.cloud_ledger_create_transaction(
   );
 }
 
+async function createTransactionOutcomeAsync(
+  harness: PostgresHarness,
+  overrides: CreateTransactionOverrides = {}
+) {
+  return JSON.parse(
+    await psqlScalarAsync(
+      harness,
+      `
+set role service_role;
+select public.cloud_ledger_create_transaction(
+  '${USER_ID}'::uuid,
+  ${nullableSqlInteger(overrides.commandVersion === undefined ? 1 : overrides.commandVersion)},
+  '${overrides.transactionId ?? CLIENT_TRANSACTION_ID}',
+  ${nullableSqlText(overrides.type === undefined ? "expense" : overrides.type)},
+  ${nullableSqlInteger(overrides.amount === undefined ? 15000 : overrides.amount)},
+  ${nullableSqlText(overrides.currency === undefined ? "COP" : overrides.currency)},
+  ${nullableSqlText(overrides.categoryId === undefined ? "cat-groceries" : overrides.categoryId)},
+  ${nullableSqlText(overrides.accountId === undefined ? "acct-cash" : overrides.accountId)},
+  ${nullableSqlText(overrides.description === undefined ? "Market" : overrides.description)},
+  ${nullableSqlDate(overrides.date === undefined ? "2026-06-01" : overrides.date)}
+)::text;
+`
+    )
+  );
+}
+
 function readLedgerCursorSequence(harness: PostgresHarness) {
   return psqlScalar(
     harness,
@@ -646,4 +849,25 @@ function psqlScalar(harness: PostgresHarness, sql: string): string {
       stdio: ["ignore", "pipe", "pipe"],
     }
   ).trim();
+}
+
+function psqlScalarAsync(harness: PostgresHarness, sql: string): Promise<string> {
+  return new Promise((resolvePromise, reject) => {
+    execFile(
+      postgresBinary("psql"),
+      ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-t", "-A", "-c", sql],
+      { encoding: "utf8", env: harness.env },
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(Object.assign(error, { stdout, stderr }));
+          return;
+        }
+        resolvePromise(stdout.trim());
+      }
+    );
+  });
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
 }

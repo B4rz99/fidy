@@ -1,6 +1,11 @@
 {
   "deferredUpdates": [
     {
+      "name": "@babel/plugin-transform-react-jsx",
+      "until": "2026-07-15",
+      "reason": "Babel 8 should land in a dedicated tooling PR with Expo/Bun transform compatibility verification."
+    },
+    {
       "name": "@react-native-community/datetimepicker",
       "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
@@ -199,6 +204,16 @@
       "name": "expo-web-browser",
       "until": "2026-07-15",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "lucide-react-native",
+      "until": "2026-07-15",
+      "reason": "Native icon package updates should land in a dedicated dependency PR with mobile visual smoke verification."
+    },
+    {
+      "name": "posthog-react-native",
+      "until": "2026-07-15",
+      "reason": "Native analytics SDK updates should land in a dedicated dependency PR with event capture and Expo compatibility verification."
     },
     {
       "name": "eslint",

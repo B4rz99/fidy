@@ -1,5 +1,7 @@
 export type LedgerCursor = string;
 
+export const CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT = 10;
+
 const LEDGER_CURSOR_PATTERN = /^ledger:(0|[1-9]\d*)$/;
 
 export function isLedgerCursor(value: string): value is LedgerCursor {
@@ -86,6 +88,25 @@ export type CloudLedgerCreateTransactionAccepted = {
   readonly cursor: LedgerCursor;
 };
 
+export type CloudLedgerApplyPendingCreateTransactionChange = {
+  readonly id: string;
+  readonly kind: "createTransaction";
+  readonly commandVersion: 1;
+  readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
+};
+
+export type CloudLedgerApplyPendingChangesCommand = {
+  readonly commandVersion: 1;
+  readonly changes: readonly CloudLedgerApplyPendingCreateTransactionChange[];
+};
+
+export type CloudLedgerApplyPendingChangesAccepted = {
+  readonly code: "accepted";
+  readonly acceptedChangeIds: readonly string[];
+  readonly rejectedChangeIds: readonly string[];
+  readonly cursor: LedgerCursor;
+};
+
 export type CloudLedgerCreateTransactionRejected = {
   readonly code:
     | "duplicate_transaction_id"
@@ -99,6 +120,8 @@ export type CloudLedgerCreateTransactionRejected = {
 export type CloudLedgerCreateTransactionOutcome =
   | CloudLedgerCreateTransactionAccepted
   | CloudLedgerCreateTransactionRejected;
+
+export type CloudLedgerApplyPendingChangesOutcome = CloudLedgerApplyPendingChangesAccepted;
 
 export type CaptureImprovementSample = {
   readonly sourceChannel: "email" | "notification" | "wallet";
@@ -139,6 +162,7 @@ export type CloudLedgerApiError =
   | "invalid_ledger_reference"
   | "invalid_transaction"
   | "invalid_transaction_id"
+  | "pending_change_batch_too_large"
   | "unauthorized_transaction_id"
   | "unsupported_command_version"
   | "internal_error";
@@ -146,5 +170,6 @@ export type CloudLedgerApiError =
 export type CloudLedgerApiResponse =
   | { readonly success: true; readonly data: CloudLedgerBootstrapPayload }
   | { readonly success: true; readonly data: CloudLedgerCreateTransactionAccepted }
+  | { readonly success: true; readonly data: CloudLedgerApplyPendingChangesAccepted }
   | { readonly success: true; readonly data: CaptureImprovementSampleAccepted }
   | { readonly success: false; readonly error: CloudLedgerApiError };

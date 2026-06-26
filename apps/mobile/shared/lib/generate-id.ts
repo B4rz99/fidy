@@ -14,6 +14,7 @@ import type {
   EmailParseImprovementSampleId,
   FinancialAccountId,
   FinancialAccountIdentifierId,
+  LedgerChangeId,
   MerchantRuleId,
   NotificationId,
   NotificationSourceId,
@@ -40,6 +41,10 @@ export function generateId(prefix: string): string {
 
 export function generateTransactionId(): TransactionId {
   return generateId("txn") as TransactionId;
+}
+
+export function generateLedgerChangeId(): LedgerChangeId {
+  return generateId("lchg") as LedgerChangeId;
 }
 
 export function generateBudgetId(): BudgetId {
