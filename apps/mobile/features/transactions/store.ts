@@ -4,10 +4,10 @@ import { transactions } from "@/shared/db/schema";
 import { tryGetDb } from "@/shared/db/client";
 import {
   type CloudLedgerCreateTransactionCommand,
-  enqueueCloudLedgerOptimisticCreate,
-  getCloudLedgerOutbox,
   getCloudLedgerRuntimeCache,
 } from "@/features/cloud-ledger/public";
+import { getCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
+import { enqueueCloudLedgerOptimisticCreate } from "@/features/cloud-ledger/runtime-mutations.public";
 import {
   captureWarning,
   generateLedgerChangeId,
@@ -437,6 +437,7 @@ function validateCloudLedgerManualTransaction(
   input: RecordCloudLedgerManualTransactionInput["input"],
   now: Date
 ): CloudLedgerManualTransactionValidation {
+  const description = input.description.trim();
   const amount = parseDigitsToAmount(input.digits);
   if (amount <= 0) return { success: false, error: "amountNotPositive" };
   if (amount > CLOUD_LEDGER_MAX_COP_AMOUNT) {
@@ -447,7 +448,7 @@ function validateCloudLedgerManualTransaction(
   if (toIsoDate(input.date) > toIsoDate(now)) {
     return { success: false, error: "futureDatedTransaction" };
   }
-  if (input.description.length > 200) return { success: false, error: "descriptionTooLong" };
+  if (description.length > 200) return { success: false, error: "descriptionTooLong" };
 
   return {
     success: true,
@@ -456,7 +457,7 @@ function validateCloudLedgerManualTransaction(
       amount,
       categoryId: input.categoryId,
       date: input.date,
-      description: input.description.trim(),
+      description,
       isoDate: toIsoDate(input.date),
       type: input.type,
     },

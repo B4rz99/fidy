@@ -141,9 +141,12 @@ vi.mock("@/features/notifications/public", () => ({
 
 vi.mock("@/features/cloud-ledger/public", () => ({
   clearCloudLedgerRuntimeCache: mockClearCloudLedgerRuntimeCache,
-  discardCloudLedgerOutbox: mockDiscardCloudLedgerOutbox,
   resumeCloudLedgerRuntimeCacheWrites: mockResumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites: mockSuspendCloudLedgerRuntimeCacheWrites,
+}));
+
+vi.mock("@/features/cloud-ledger/outbox.public", () => ({
+  discardCloudLedgerOutbox: mockDiscardCloudLedgerOutbox,
 }));
 
 vi.mock("@/features/transactions/store.public", () => ({

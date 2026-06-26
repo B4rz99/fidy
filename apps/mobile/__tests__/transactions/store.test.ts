@@ -2,15 +2,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
-  CloudLedgerOutboxFailure,
   clearCloudLedgerRuntimeCache,
   createEmptyCloudLedgerCache,
-  enqueueCloudLedgerOptimisticCreate,
-  getCloudLedgerOutbox,
   resetCloudLedgerRuntimeCaches,
   setCloudLedgerRuntimeCache,
   suspendCloudLedgerRuntimeCacheWrites,
 } from "@/features/cloud-ledger/public";
+import {
+  CloudLedgerOutboxFailure,
+  getCloudLedgerOutbox,
+} from "@/features/cloud-ledger/outbox.public";
+import { enqueueCloudLedgerOptimisticCreate } from "@/features/cloud-ledger/runtime-mutations.public";
 import {
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
@@ -63,26 +65,12 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionById: vi.fn<(...args: any[]) => any>().mockReturnValue(null),
 }));
 
-vi.mock("@/features/cloud-ledger/public", async () => {
-  const actual = await vi.importActual<typeof import("@/features/cloud-ledger/public")>(
-    "@/features/cloud-ledger/public"
+vi.mock("@/features/cloud-ledger/outbox.public", async () => {
+  const actual = await vi.importActual<typeof import("@/features/cloud-ledger/outbox.public")>(
+    "@/features/cloud-ledger/outbox.public"
   );
   return {
     ...actual,
-    createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>((input) => {
-      cloudLedgerOutboxCalls.push(input);
-      return Promise.resolve(input.cache);
-    }),
-    enqueueCloudLedgerOptimisticCreate: vi.fn<(...args: any[]) => any>((input) => {
-      cloudLedgerOutboxCalls.push(input);
-      return Promise.resolve({
-        didWriteRuntimeCache: true,
-        flushIfOnline: cloudLedgerFlushIfOnline,
-      });
-    }),
-    flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>((input) =>
-      Promise.resolve(input.cache)
-    ),
     getCloudLedgerOutbox: vi.fn(() => ({
       clear: vi.fn<(...args: any[]) => any>(),
       enqueue: vi.fn<(...args: any[]) => any>(),
@@ -91,6 +79,16 @@ vi.mock("@/features/cloud-ledger/public", async () => {
     })),
   };
 });
+
+vi.mock("@/features/cloud-ledger/runtime-mutations.public", () => ({
+  enqueueCloudLedgerOptimisticCreate: vi.fn<(...args: any[]) => any>((input) => {
+    cloudLedgerOutboxCalls.push(input);
+    return Promise.resolve({
+      didWriteRuntimeCache: true,
+      flushIfOnline: cloudLedgerFlushIfOnline,
+    });
+  }),
+}));
 
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: vi.fn<(...args: any[]) => any>(),
@@ -837,6 +835,26 @@ describe("transaction boundaries", () => {
     expect(useTransactionStore.getState().pages).toEqual([]);
   });
 
+  it("validates Cloud Ledger manual descriptions after trimming whitespace", async () => {
+    const trimmedDescription = "x".repeat(200);
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    useTransactionStore.getState().setDescription(`${trimmedDescription} `);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result.success).toBe(true);
+    expect(cloudLedgerOutboxCalls).toEqual([
+      expect.objectContaining({
+        command: expect.objectContaining({
+          transaction: expect.objectContaining({
+            description: trimmedDescription,
+          }),
+        }),
+      }),
+    ]);
+  });
+
   it("loads the initial transaction snapshot with aggregates", async () => {
     vi.mocked(getTransactionsPaginated).mockReturnValueOnce([makeRow()]);
     vi.mocked(getSpendingByCategoryAggregate).mockReturnValueOnce([
@@ -902,7 +920,7 @@ describe("transaction boundaries", () => {
     expect(useTransactionStore.getState().pages[0]).not.toHaveProperty("pendingChangeId");
   });
 
-  it("does not double-count off-page local Cloud Ledger shadow rows in aggregates", async () => {
+  it("does not double-count off-page local Cloud Ledger shadow rows or force them into a full page", async () => {
     const today = new Date();
     const todayIso = toIsoDate(today);
     const shadowTransaction = makeStoredTransaction({
@@ -946,7 +964,7 @@ describe("transaction boundaries", () => {
       categorySpending: [{ categoryId: "food", total: 4520 }],
       dailySpending: [{ date: todayIso, total: 4520 }],
     });
-    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).toContain(
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).not.toContain(
       shadowTransaction.id
     );
   });
@@ -1206,6 +1224,37 @@ describe("transaction boundaries", () => {
       balance: 18_000,
       categorySpending: [{ categoryId: "food", total: 18_000 }],
       dailySpending: [{ date: "2026-06-15", total: 18_000 }],
+    });
+  });
+
+  it("keeps restored pending Cloud Ledger rows bounded to the loaded page window", async () => {
+    const restoredChanges = Array.from({ length: 35 }, (_, index) => {
+      const timestamp = `2026-06-20T10:${String(59 - index).padStart(2, "0")}:00.000Z`;
+      return pendingCreateFromStoredTransaction(
+        makeStoredTransaction({
+          id: `txn-restored-window-${index}` as TransactionId,
+          amount: (1000 + index) as CopAmount,
+          date: new Date(timestamp),
+          createdAt: new Date(timestamp),
+          updatedAt: new Date(timestamp),
+        })
+      );
+    });
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+      createMockCloudLedgerOutbox(
+        vi.fn<(...args: any[]) => any>().mockResolvedValue(restoredChanges)
+      )
+    );
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState().pages).toHaveLength(30);
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).toEqual(
+      restoredChanges.slice(0, 30).map((change) => change.transaction.id)
+    );
+    expect(useTransactionStore.getState()).toMatchObject({
+      offset: 0,
+      hasMore: false,
     });
   });
 

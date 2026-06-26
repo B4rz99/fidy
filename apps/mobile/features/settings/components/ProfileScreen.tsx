@@ -8,7 +8,7 @@ import {
   useAuthStore,
   useOptionalUserId,
 } from "@/features/auth/public";
-import { hasPendingCloudLedgerOutboxChanges } from "@/features/cloud-ledger/public";
+import { hasPendingCloudLedgerOutboxChanges } from "@/features/cloud-ledger/outbox.public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
 import { Button, Surface, ScreenLayout, TextActionButton } from "@/shared/components";
 import { LogOut } from "@/shared/components/icons";

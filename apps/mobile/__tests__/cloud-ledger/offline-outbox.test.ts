@@ -6,8 +6,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   applyCloudLedgerBootstrap,
   type CloudLedgerCreateTransactionCommand,
-  CloudLedgerOutboxFailure,
   createEmptyCloudLedgerCache,
+} from "@/features/cloud-ledger/public";
+import {
+  CloudLedgerOutboxFailure,
   createEncryptedCloudLedgerOutbox,
   createOfflineCloudLedgerTransaction,
   discardCloudLedgerOutbox,
@@ -18,7 +20,7 @@ import {
   restoreOptimisticCloudLedgerCache,
   type EncryptedCloudLedgerOutboxSnapshot,
   type EncryptedCloudLedgerOutboxStorage,
-} from "@/features/cloud-ledger/public";
+} from "@/features/cloud-ledger/outbox.public";
 import {
   requireCategoryId,
   requireCopAmount,
@@ -340,6 +342,50 @@ describe("mobile Cloud Ledger offline outbox", () => {
 
     failStaleChunkCleanup = false;
     await discardCloudLedgerOutbox(USER_ID);
+    expect([...secureStore.keys()]).toEqual([]);
+  });
+
+  it("does not reuse retained stale chunk generations after a failed discard restore", async () => {
+    const largeChange = pendingCreateChange({
+      changeId: "change-huge-generation-one",
+      command: hugeOfflineCommand(),
+      createdAt: "2026-06-02T10:01:00.000Z",
+    });
+    const smallChange = pendingCreateChange({
+      changeId: "change-small-generation-two",
+      command: offlineCoffeeCommand(),
+      createdAt: "2026-06-02T10:02:00.000Z",
+    });
+    await getCloudLedgerOutbox(USER_ID).enqueue(largeChange);
+    const retainedGenerationOneChunkKey = secureStoreOutboxPayloadChunkKeys().find((key) =>
+      key.endsWith("_generation_1_chunk_1")
+    );
+    expect(retainedGenerationOneChunkKey).toBeDefined();
+
+    let failGenerationOneCleanup = true;
+    vi.mocked(SecureStore.deleteItemAsync).mockImplementation((key: string) => {
+      if (failGenerationOneCleanup && key === retainedGenerationOneChunkKey) {
+        return Promise.reject(new Error("simulated retained generation cleanup failure"));
+      }
+      secureStore.delete(key);
+      return Promise.resolve();
+    });
+
+    await getCloudLedgerOutbox(USER_ID).enqueue(smallChange);
+    await getCloudLedgerOutbox(USER_ID).remove([largeChange.id]);
+    expect(secureStoreOutboxPayloadChunkKeys()).toContain(retainedGenerationOneChunkKey);
+
+    await expect(discardCloudLedgerOutbox(USER_ID)).rejects.toThrow(
+      "simulated retained generation cleanup failure"
+    );
+    resetCloudLedgerOutboxInstances();
+    expect((await getCloudLedgerOutbox(USER_ID).load()).map((change) => change.id)).toEqual([
+      smallChange.id,
+    ]);
+
+    failGenerationOneCleanup = false;
+    await discardCloudLedgerOutbox(USER_ID);
+
     expect([...secureStore.keys()]).toEqual([]);
   });
 
@@ -844,6 +890,22 @@ function largeOfflineCommand(index: number) {
       categoryId: requireCategoryId("cat-groceries"),
       accountId: requireFinancialAccountId("acct-cash"),
       description: `Large offline purchase ${suffix} ${"x".repeat(150)}`,
+      date: requireIsoDate("2026-06-02"),
+    },
+  } as const;
+}
+
+function hugeOfflineCommand() {
+  return {
+    commandVersion: 1,
+    transaction: {
+      id: requireTransactionId("txn-huge-offline-generation-one"),
+      type: "expense",
+      amount: requireCopAmount(21_000),
+      currency: "COP",
+      categoryId: requireCategoryId("cat-groceries"),
+      accountId: requireFinancialAccountId("acct-cash"),
+      description: `Huge offline purchase ${"x".repeat(4_000)}`,
       date: requireIsoDate("2026-06-02"),
     },
   } as const;

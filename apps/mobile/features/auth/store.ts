@@ -2,10 +2,10 @@ import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 import {
   clearCloudLedgerRuntimeCache,
-  discardCloudLedgerOutbox,
   resumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites,
 } from "@/features/cloud-ledger/public";
+import { discardCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
 import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
 import { useLocalOnboardingState } from "@/features/onboarding/store.public";
 import {

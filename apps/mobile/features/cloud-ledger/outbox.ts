@@ -628,9 +628,14 @@ function secureStoreOutboxChunkKeys(
 function nextSecureStoreOutboxGeneration(input: {
   readonly previousManifest: ChunkedSecureStoreOutboxManifest | null;
   readonly stagedAllocation: SecureStoreOutboxChunkAllocation | null;
+  readonly retainedAllocations: readonly SecureStoreOutboxChunkAllocation[];
 }): number {
   return (
-    Math.max(input.previousManifest?.generation ?? 0, input.stagedAllocation?.generation ?? 0) + 1
+    Math.max(
+      input.previousManifest?.generation ?? 0,
+      input.stagedAllocation?.generation ?? 0,
+      ...input.retainedAllocations.map((allocation) => allocation.generation ?? 0)
+    ) + 1
   );
 }
 
@@ -723,7 +728,11 @@ async function writeSecureStoreOutboxPayload(
   ]);
   const chunks = chunkString(payload);
   const activeAllocation = {
-    generation: nextSecureStoreOutboxGeneration({ previousManifest, stagedAllocation }),
+    generation: nextSecureStoreOutboxGeneration({
+      previousManifest,
+      retainedAllocations,
+      stagedAllocation,
+    }),
     chunkCount: chunks.length,
   } satisfies SecureStoreOutboxChunkAllocation;
   const allocatedGenerations = mergeChunkAllocations([

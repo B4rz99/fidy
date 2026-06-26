@@ -1,8 +1,8 @@
 import type {
   CloudLedgerCreateTransactionCommand,
-  CloudLedgerPendingChange,
   CloudLedgerTransaction,
 } from "@/features/cloud-ledger/public";
+import type { CloudLedgerPendingChange } from "@/features/cloud-ledger/outbox.public";
 import { getBuiltInCategoryId } from "@/shared/categories";
 import { parseIsoDate } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
