@@ -110,6 +110,47 @@ describe("Cloud Ledger bootstrap task", () => {
     expect(mocks.flushCloudLedgerOutboxForUser).not.toHaveBeenCalled();
   });
 
+  it("does not start a remote flush when bootstrap becomes stale during restore", async () => {
+    const userId = requireUserId("user-cloud-ledger-bootstrap");
+    let isCurrent = true;
+    mocks.restoreCloudLedgerOptimisticRuntimeState.mockImplementationOnce(() => {
+      isCurrent = false;
+      return Promise.resolve(true);
+    });
+
+    await cloudLedgerBootstrapTask.run({
+      db: {} as never,
+      enableRemoteEffects: true,
+      isCurrent: () => isCurrent,
+      userId,
+    });
+
+    expect(mocks.restoreCloudLedgerOptimisticRuntimeState).toHaveBeenCalledWith(userId);
+    expect(mocks.flushCloudLedgerOutboxForUser).not.toHaveBeenCalled();
+  });
+
+  it("does not persist flushed rows when bootstrap becomes stale during remote flush", async () => {
+    const userId = requireUserId("user-cloud-ledger-bootstrap");
+    const db = {} as never;
+    const flush = createDeferred<boolean>();
+    let isCurrent = true;
+    mocks.flushCloudLedgerOutboxForUser.mockReturnValueOnce(flush.promise);
+
+    await cloudLedgerBootstrapTask.run({
+      db,
+      enableRemoteEffects: true,
+      isCurrent: () => isCurrent,
+      userId,
+    });
+    isCurrent = false;
+    flush.resolve(true);
+    await Promise.resolve();
+
+    expect(mocks.flushCloudLedgerOutboxForUser).toHaveBeenCalledWith(userId);
+    expect(mocks.persistCloudLedgerRuntimeTransactionShadows).not.toHaveBeenCalled();
+    expect(mocks.refreshTransactions).not.toHaveBeenCalled();
+  });
+
   it("keeps compatibility exports for direct restore and flush callers", async () => {
     const userId = requireUserId("user-cloud-ledger-bootstrap");
 
@@ -120,3 +161,13 @@ describe("Cloud Ledger bootstrap task", () => {
     expect(mocks.flushCloudLedgerOutboxForUser).toHaveBeenCalledWith(userId);
   });
 });
+
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, reject, resolve };
+}

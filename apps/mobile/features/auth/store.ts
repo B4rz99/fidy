@@ -194,15 +194,21 @@ function getRemoteSessionUserId(): UserId | null {
   return id === undefined ? null : requireUserId(id);
 }
 
-async function discardCloudLedgerStateBeforeSignOut(): Promise<void> {
+function suspendCloudLedgerStateBeforeSignOut(): UserId | null {
   const userId = getRemoteSessionUserId();
   if (userId === null) {
-    return;
+    return null;
   }
 
+  invalidateTransactionSession();
+  suspendCloudLedgerRuntimeCacheWrites(userId);
+  return userId;
+}
+
+async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null): Promise<void> {
+  if (userId === null) return;
+
   try {
-    invalidateTransactionSession();
-    suspendCloudLedgerRuntimeCacheWrites(userId);
     await deletePendingCloudLedgerTransactionShadows(userId);
     await discardCloudLedgerOutbox(userId);
     clearCloudLedgerRuntimeCache(userId);
@@ -282,10 +288,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       return;
     }
 
+    const cloudLedgerSignOutUserId = suspendCloudLedgerStateBeforeSignOut();
     // Clean up push token while session is still valid (RLS needs auth).
     // Capped at 2s so signout isn't blocked indefinitely by network issues.
     await cleanupPushTokenBeforeSignOut();
-    await discardCloudLedgerStateBeforeSignOut();
+    await discardCloudLedgerStateBeforeSignOut(cloudLedgerSignOutUserId);
     await signOutRemoteSession();
     await clearOnboardingAndAuthState(set);
     resetAnalyticsUser();

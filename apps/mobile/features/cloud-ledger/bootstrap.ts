@@ -13,17 +13,27 @@ import {
 
 export { flushCloudLedgerOutboxForUser };
 
+function isBootstrapContextCurrent(context: AuthenticatedBootstrapContext): boolean {
+  return context.isCurrent?.() ?? true;
+}
+
 export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "cloud-ledger",
-  run: async ({ db, enableRemoteEffects, userId }) => {
+  run: async (context) => {
+    const { db, enableRemoteEffects, userId } = context;
     await restoreCloudLedgerOptimisticState(userId).catch(captureCloudLedgerOutboxRestoreFailure);
+    if (!isBootstrapContextCurrent(context)) {
+      return;
+    }
     if (!enableRemoteEffects) {
       return;
     }
     void flushCloudLedgerOutboxForUser(userId)
       .then((didWriteRuntimeCache) => {
         if (!didWriteRuntimeCache) return;
+        if (!isBootstrapContextCurrent(context)) return;
         persistCloudLedgerRuntimeTransactionShadows(db, userId);
+        if (!isBootstrapContextCurrent(context)) return;
         return refreshTransactions(db, userId);
       })
       .catch(captureCloudLedgerOutboxFlushFailure);
@@ -33,15 +43,21 @@ export const cloudLedgerBootstrapTask: BootstrapTask<AuthenticatedBootstrapConte
 export const cloudLedgerReconnectFlushTask: SubscriptionTask<AuthenticatedBootstrapContext> = {
   id: "cloud-ledger-reconnect-flush",
   isEnabled: ({ enableRemoteEffects }) => enableRemoteEffects,
-  subscribe: ({ db, userId }) =>
+  subscribe: (context) =>
     NetInfo.addEventListener((state) => {
       if (state.isConnected !== true) {
         return;
       }
+      if (!isBootstrapContextCurrent(context)) {
+        return;
+      }
+      const { db, userId } = context;
       void flushCloudLedgerOutboxForUser(userId)
         .then((didWriteRuntimeCache) => {
           if (!didWriteRuntimeCache) return;
+          if (!isBootstrapContextCurrent(context)) return;
           persistCloudLedgerRuntimeTransactionShadows(db, userId);
+          if (!isBootstrapContextCurrent(context)) return;
           return refreshTransactions(db, userId);
         })
         .catch(captureCloudLedgerOutboxFlushFailure);

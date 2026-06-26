@@ -517,6 +517,27 @@ describe("useAuthStore", () => {
     );
   });
 
+  it("signOut suspends Cloud Ledger runtime writes before awaiting push-token cleanup", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    const pushTokenCleanup = createDeferred<void>();
+    mockCleanupCurrentPushToken.mockReturnValueOnce(pushTokenCleanup.promise);
+
+    const signOut = useAuthStore.getState().signOut();
+    await Promise.resolve();
+
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockCleanupCurrentPushToken).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockCleanupCurrentPushToken.mock.invocationCallOrder[0]!
+    );
+
+    pushTokenCleanup.resolve();
+    await signOut;
+  });
+
   it("signOut does not complete when Cloud Ledger outbox discard fails", async () => {
     useAuthStore.setState({
       session: mockSession as never,
