@@ -1,0 +1,33 @@
+apps/mobile/shared/components/CategoryIconButton.tsx
+  s_a015eeb45038bf::t_125f0c37e505c9 10-13,135,138
+apps/mobile/shared/components/effect-tokens.ts
+  s_a015eeb45038bf::t_31e24231f78991 3-4,9
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_a015eeb45038bf::t_d40c73a6aaa9ff 94,212-238
+  s_a015eeb45038bf::t_9967944d379ca8 239-240
+apps/mobile/features/transactions/store.ts
+  s_a015eeb45038bf::t_a6bf6e41683996 500
+apps/mobile/shared/components/RaisedSurface.tsx
+  s_a015eeb45038bf::t_f1a0a9f258d2bc 9,90
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_a015eeb45038bf::t_f714eb168d4bfa 104-109,130-136
+  s_a015eeb45038bf::t_1a896d872e7ffc 137
+apps/mobile/__tests__/transactions/store.test.ts
+  s_a015eeb45038bf::t_76953b2b3c5ccb 583-595
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "912f93050dbe13781f2a162e3e7bfbd3c5d72abe",
+  "prompts": {},
+  "sessions": {
+    "s_a015eeb45038bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef0ee-6255-7d22-b134-845a1e142be7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
