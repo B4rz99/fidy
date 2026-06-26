@@ -1,0 +1,69 @@
+supabase/functions/cloud-ledger-api/apply-pending-changes-command.ts
+  s_6c070d47258744::t_13985dac8cfa4d 68,71-72,78-79,87-102,106,129-136
+  s_6c070d47258744::t_4186758fb0bdea 4,37-41,56-57,69-70,73-77,80-86,118-121,127-128,137-183,188-192
+  s_6c070d47258744::t_4bd4a667fbdca9 25
+  s_6c070d47258744::t_ada8a91e182cb5 193
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_737771690b39b2 1003-1004,1010-1013
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_6c070d47258744::t_25f87210e6b35f 356-393,1096,1104
+  s_6c070d47258744::t_f0d5157b578bb3 496-528,1097,1105
+  s_6c070d47258744::t_d89045323667b9 16-24
+  s_6c070d47258744::t_4bd4a667fbdca9 318-319,321-339,341-344,346-354,442-448,457-494,530-533,535,537-542,544,546-572
+  s_6c070d47258744::t_a5fba9706ebbe7 394-441,1093,1103
+  s_6c070d47258744::t_ecb866cecf88c3 320,340,345,355,689-692,698-699,1052-1054,1076-1092,1094-1095,1098-1102,1106-1122
+  s_6c070d47258744::t_18a33de79b18f5 449-456,495,1055-1075
+  s_6c070d47258744::t_afaf8e89073ffc 529,534,536,543,545,573
+  s_6c070d47258744::t_dce7084c46ede2 1123
+apps/mobile/supabase/migrations/20260626230000_cloud_ledger_pending_change_sets.sql
+  s_6c070d47258744::t_6f0a687f3354de 37,122-123,190-194
+  s_6c070d47258744::t_4ffe47ee95fc76 134-149
+  s_6c070d47258744::t_a10c170830d1ad 19-36,40-92,94-103,129-133,175-189,219-270
+  s_6c070d47258744::t_622c6456c34fcf 150-174
+  s_6c070d47258744::t_5f71adc9de3a43 1-18,38-39,93,104-108,114-121,124-128,195-218,271-272
+  s_6c070d47258744::t_ce5d12fc2bff8b 109-113
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_6c070d47258744::t_7e7838f213c74f 45-50,349-402
+  s_6c070d47258744::t_3206feecf8553d 303-304
+  s_6c070d47258744::t_cd89377a6a63b0 30-44,54-63,264,289-292,1212-1215
+  s_6c070d47258744::t_e09c7d411606c4 403-404
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_6c070d47258744::t_2ce8c7440a6435 12-17
+  s_6c070d47258744::t_3b89efd205aec1 106,110-115,128-131,135-146,149-150,158,277-278,351,362-384
+  s_6c070d47258744::t_59c5fc6012d574 385
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_6c070d47258744::t_ddea6159b42fc7 13-16,110-138
+  s_6c070d47258744::t_b4744af1e999de 139
+supabase/functions/cloud-ledger-api/model.ts
+  s_6c070d47258744::t_d534ef3ce85f85 102-116,127
+  s_6c070d47258744::t_30f6d8c4c1f3a4 134,138-165
+  s_6c070d47258744::t_b17b367357e7d3 95-98,117-122,125-126
+  s_6c070d47258744::t_c97adaa32daaf4 166
+supabase/functions/cloud-ledger-api/store.ts
+  s_6c070d47258744::t_8ed853d4d183c3 33-40,68,77,86,165-171,173-177
+apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts
+  s_6c070d47258744::t_16fa1b3d6a4311 56-73,235,237,241-253,255-256,391-399,410-413,429,467-468
+  s_6c070d47258744::t_f3db260032a72a 199-211,215-218,224-231,261,263-271,281-282
+  s_6c070d47258744::t_ebc8158638b116 456
+  s_6c070d47258744::t_4bd4a667fbdca9 469,471,473-475
+  s_6c070d47258744::t_d99833d13b0965 257,259-260
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_8a31b84bb1078b 84,295-297,319-334
+  s_6c070d47258744::t_ed9c89a3daf7de 335
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "f87fd3eebf2f2de4a7aad715449716969edfa0f1",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
