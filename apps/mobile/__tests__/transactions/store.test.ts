@@ -173,7 +173,7 @@ function recordConflictUpdate(table: unknown, set: unknown) {
   }
 }
 
-function seedCloudLedgerRuntimeWithRemoteReferences() {
+function seedCloudLedgerRuntimeWithRemoteReferences(accountType = "cash") {
   setCloudLedgerRuntimeCache(
     mockUserId,
     applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
@@ -191,7 +191,7 @@ function seedCloudLedgerRuntimeWithRemoteReferences() {
         {
           id: "fa-cloud-remote" as FinancialAccountId,
           name: "Remote account",
-          type: "cash",
+          type: accountType,
           currency: "COP",
           updatedAt: "2026-06-20T10:00:00.000Z" as IsoDateTime,
         },
@@ -1453,6 +1453,28 @@ describe("transaction boundaries", () => {
     persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
 
     expectCloudLedgerRemoteReferencesPersisted();
+  });
+
+  it("normalizes unsupported Cloud Ledger account types before persisting references", () => {
+    seedCloudLedgerRuntimeWithRemoteReferences("investment");
+
+    persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
+
+    expect(insertedFinancialAccountRows).toEqual([
+      expect.objectContaining({
+        id: "fa-cloud-remote",
+        userId: mockUserId,
+        name: "Remote account",
+        kind: "cash",
+      }),
+    ]);
+    expect(insertedTransactionRows).toEqual([
+      expect.objectContaining({
+        id: "txn-cloud-remote-reference",
+        accountId: "fa-cloud-remote",
+        categoryId: "ucat-cloud-remote",
+      }),
+    ]);
   });
 
   it("does not overwrite local account or category metadata when Cloud Ledger references conflict", () => {

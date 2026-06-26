@@ -10,6 +10,7 @@ import {
 } from "@/features/cloud-ledger/public";
 import { getCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
 import { enqueueCloudLedgerOptimisticCreate } from "@/features/cloud-ledger/runtime-mutations.public";
+import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import { DEFAULT_CATEGORY_IDS, getBuiltInCategory } from "@/shared/categories";
 import {
   captureWarning,
@@ -57,6 +58,7 @@ import { useTransactionStore } from "./store/state";
 const PAGE_SIZE = 30;
 const CLOUD_LEDGER_MAX_COP_AMOUNT = 2_147_483_647;
 const CLOUD_LEDGER_TRANSACTION_SOURCE = "cloud_ledger";
+const CLOUD_LEDGER_REFERENCE_FALLBACK_ACCOUNT_KIND = "cash";
 const CLOUD_LEDGER_REFERENCE_FALLBACK_CATEGORY = getBuiltInCategory("other");
 
 let transactionsSessionId = 0;
@@ -386,13 +388,24 @@ function toCloudLedgerFinancialAccountRow(
     deletedAt: null,
     id: account.id,
     isDefault: false,
-    kind: account.type,
+    kind: toCloudLedgerFinancialAccountKind(account),
     name: account.name,
     paymentDueDay: null,
     statementClosingDay: null,
     updatedAt: account.updatedAt,
     userId,
   };
+}
+
+function toCloudLedgerFinancialAccountKind(account: CloudLedgerFinancialAccount): string {
+  try {
+    return readFinancialAccountKind(account.type);
+  } catch {
+    captureWarning("cloud_ledger_shadow_account_reference_kind_normalized", {
+      accountType: account.type,
+    });
+    return CLOUD_LEDGER_REFERENCE_FALLBACK_ACCOUNT_KIND;
+  }
 }
 
 function toCloudLedgerUserCategoryRow(
