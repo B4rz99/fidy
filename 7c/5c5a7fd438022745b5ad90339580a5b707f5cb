@@ -1,0 +1,31 @@
+supabase/functions/cloud-ledger-api/apply-pending-changes-command.ts
+  s_6c070d47258744::t_2136346569c57f 63,100-103,107,148-149,151-158,160-167
+  s_6c070d47258744::t_a99ddd24f9923a 104-106,150,159
+  s_6c070d47258744::t_59e1a232d64aaf 52-53,59-62,210-211
+  s_6c070d47258744::t_95cbd2ce2c4394 168-169
+  s_6c070d47258744::t_cc8c115d8fca4d 212-213
+supabase/functions/cloud-ledger-api/model.ts
+  s_6c070d47258744::t_8065e65ae2bf3e 106-109
+  s_6c070d47258744::t_06c3f81b903afa 145-146
+supabase/functions/cloud-ledger-api/store.ts
+  s_6c070d47258744::t_fffedb18626d4a 36-37
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_6c070d47258744::t_e1c6ede9ebc3a6 615-663
+  s_6c070d47258744::t_deec25be4180ad 488-553
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "7c5c5a7fd438022745b5ad90339580a5b707f5cb",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
