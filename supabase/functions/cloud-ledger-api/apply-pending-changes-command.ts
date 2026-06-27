@@ -27,6 +27,9 @@ type InvalidPendingChangeCode =
 
 const LEDGER_CHANGE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const ISO_CLIENT_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+const LEGACY_V1_DEVICE_ID = "device-legacy-v1";
+const LEGACY_V1_BATCH_ID = "batch-legacy-v1";
+const LEGACY_V1_CLIENT_TIMESTAMP = "1970-01-01T00:00:00.000Z";
 
 export function readApplyPendingChangesCommand(
   body: unknown
@@ -56,8 +59,8 @@ export function readApplyPendingChangesCommand(
         }
       : { kind: "invalid_pending_change" };
   }
-  const deviceId = readEnvelopeId(record.deviceId);
-  const batchId = readEnvelopeId(record.batchId);
+  const deviceId = readLegacyCompatibleEnvelopeId(record.deviceId, LEGACY_V1_DEVICE_ID);
+  const batchId = readLegacyCompatibleEnvelopeId(record.batchId, LEGACY_V1_BATCH_ID);
   if (deviceId === null || batchId === null) {
     return { kind: "invalid_pending_change" };
   }
@@ -105,10 +108,10 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
       readUnsupportedPendingChange(record, record.id, pendingChangeKind, commandVersion)
     );
   }
-  const idempotencyKey = readLedgerChangeIdentity(record.idempotencyKey);
-  const dependencies = readLedgerChangeDependencies(record.dependencies);
-  const expectedVersions = readExpectedVersions(record.expectedVersions);
-  const clientTimestamp = readClientTimestamp(record.clientTimestamp);
+  const idempotencyKey = readLegacyCompatibleIdentity(record.idempotencyKey, record.id);
+  const dependencies = readLegacyCompatibleDependencies(record.dependencies);
+  const expectedVersions = readLegacyCompatibleExpectedVersions(record.expectedVersions);
+  const clientTimestamp = readLegacyCompatibleClientTimestamp(record.clientTimestamp);
   if (
     idempotencyKey === null ||
     dependencies === null ||
@@ -207,6 +210,10 @@ function readEnvelopeId(value: unknown): string | null {
   return typeof value === "string" && isLedgerChangeId(value) ? value : null;
 }
 
+function readLegacyCompatibleEnvelopeId(value: unknown, fallback: string): string | null {
+  return value === undefined ? fallback : readEnvelopeId(value);
+}
+
 function readOptionalEnvelopeId(value: unknown): string | null {
   return value === undefined ? null : readEnvelopeId(value);
 }
@@ -223,11 +230,19 @@ function readLedgerChangeIdentity(value: unknown): string | null {
   return typeof value === "string" && isLedgerChangeId(value) ? value : null;
 }
 
+function readLegacyCompatibleIdentity(value: unknown, fallback: string): string | null {
+  return value === undefined ? fallback : readLedgerChangeIdentity(value);
+}
+
 function readLedgerChangeDependencies(value: unknown): readonly string[] | null {
   if (!Array.isArray(value)) {
     return null;
   }
   return value.every(isLedgerChangeId) ? value : null;
+}
+
+function readLegacyCompatibleDependencies(value: unknown): readonly string[] | null {
+  return value === undefined ? [] : readLedgerChangeDependencies(value);
 }
 
 function readExpectedVersions(value: unknown): readonly CloudLedgerExpectedRecordVersion[] | null {
@@ -236,6 +251,12 @@ function readExpectedVersions(value: unknown): readonly CloudLedgerExpectedRecor
   }
   const versions = value.map(readExpectedVersion);
   return versions.every(isExpectedVersion) ? versions : null;
+}
+
+function readLegacyCompatibleExpectedVersions(
+  value: unknown
+): readonly CloudLedgerExpectedRecordVersion[] | null {
+  return value === undefined ? [] : readExpectedVersions(value);
 }
 
 function readExpectedVersion(value: unknown): CloudLedgerExpectedRecordVersion | null {
@@ -262,6 +283,10 @@ function readExpectedVersion(value: unknown): CloudLedgerExpectedRecordVersion |
 
 function readClientTimestamp(value: unknown): string | null {
   return typeof value === "string" && ISO_CLIENT_TIMESTAMP_PATTERN.test(value) ? value : null;
+}
+
+function readLegacyCompatibleClientTimestamp(value: unknown): string | null {
+  return value === undefined ? LEGACY_V1_CLIENT_TIMESTAMP : readClientTimestamp(value);
 }
 
 function isLedgerChangeId(value: unknown): value is string {

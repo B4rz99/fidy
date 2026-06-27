@@ -341,15 +341,12 @@ function parseApplyPendingChangesAccepted(
   data: CloudLedgerWireApplyPendingChangesAccepted
 ): CloudLedgerApplyPendingChangesAccepted {
   try {
-    if (data.code !== "accepted") {
-      throw new Error("apply pending changes outcome must be accepted");
-    }
     return {
-      code: "accepted",
-      acceptedChangeIds: data.acceptedChangeIds.map(requireLedgerChangeId),
-      rejectedChangeIds: (data.rejectedChangeIds ?? []).map(requireLedgerChangeId),
-      changeOutcomes: (data.changeOutcomes ?? []).map(parsePendingChangeOutcome),
-      cursor: requireLedgerCursor(data.cursor),
+      code: requireAcceptedApplyPendingChangesCode(data.code),
+      acceptedChangeIds: parseLedgerChangeIds(data.acceptedChangeIds),
+      rejectedChangeIds: parseLedgerChangeIds(data.rejectedChangeIds ?? []),
+      changeOutcomes: parsePendingChangeOutcomes(data.changeOutcomes ?? []),
+      cursor: parseApplyPendingChangesCursor(data.cursor),
     };
   } catch (error) {
     throw new CloudLedgerClientFailure(
@@ -357,6 +354,27 @@ function parseApplyPendingChangesAccepted(
       error instanceof Error ? error.message : "Invalid Cloud Ledger response"
     );
   }
+}
+
+function requireAcceptedApplyPendingChangesCode(value: string): "accepted" {
+  if (value === "accepted") {
+    return value;
+  }
+  throw new Error("apply pending changes outcome must be accepted");
+}
+
+function parseLedgerChangeIds(values: readonly string[]): readonly LedgerChangeId[] {
+  return values.map(requireLedgerChangeId);
+}
+
+function parsePendingChangeOutcomes(
+  outcomes: readonly CloudLedgerWirePendingChangeOutcome[]
+): readonly CloudLedgerPendingChangeOutcome[] {
+  return outcomes.map(parsePendingChangeOutcome);
+}
+
+function parseApplyPendingChangesCursor(value: string): LedgerCursor {
+  return requireLedgerCursor(value);
 }
 
 function parsePendingChangeOutcome(
