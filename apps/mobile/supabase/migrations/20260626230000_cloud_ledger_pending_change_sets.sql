@@ -131,6 +131,22 @@ begin
       continue;
     end if;
 
+    if exists (
+      select 1
+      from jsonb_array_elements_text(coalesce(v_change -> 'dependencies', '[]'::jsonb)) as dependencies(change_id)
+      where dependencies.change_id = any(v_rejected_change_ids)
+    ) then
+      v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
+      v_change_outcomes := v_change_outcomes || jsonb_build_array(
+        jsonb_build_object(
+          'changeId', v_change_id,
+          'status', 'repair_required',
+          'code', 'dependency_failed'
+        )
+      );
+      continue;
+    end if;
+
     perform pg_advisory_xact_lock(
       hashtext('cloud_ledger_pending_change'),
       hashtext(p_user_id::text || ':' || v_idempotency_key)
@@ -168,22 +184,6 @@ begin
           'changeId', v_change_id,
           'status', 'accepted',
           'code', 'accepted'
-        )
-      );
-      continue;
-    end if;
-
-    if exists (
-      select 1
-      from jsonb_array_elements_text(coalesce(v_change -> 'dependencies', '[]'::jsonb)) as dependencies(change_id)
-      where dependencies.change_id = any(v_rejected_change_ids)
-    ) then
-      v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
-      v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'repair_required',
-          'code', 'dependency_failed'
         )
       );
       continue;

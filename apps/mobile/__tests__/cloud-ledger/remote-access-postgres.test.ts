@@ -594,6 +594,61 @@ insert into ledger.categories (
     });
   });
 
+  postgresIt("blocks accepted replay when new dependencies failed earlier in the batch", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-b",
+          idempotencyKey: "idem-change-b",
+          transactionId: "txn-change-b",
+          categoryId: "cat-groceries",
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-b"],
+      rejectedChangeIds: [],
+      cursor: "ledger:5",
+    });
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-a",
+        transactionId: "txn-change-a-invalid",
+        categoryId: "cat-deleted",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-b",
+        idempotencyKey: "idem-change-b",
+        transactionId: "txn-change-b",
+        categoryId: "cat-groceries",
+        dependencies: ["change-a"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-a", "change-b"],
+      changeOutcomes: [
+        {
+          changeId: "change-a",
+          status: "repair_required",
+          code: "invalid_ledger_reference",
+        },
+        {
+          changeId: "change-b",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-change-b")).toBe("1");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-change-a-invalid")).toBe("0");
+  });
+
   postgresIt("rejects reused idempotency keys for different changes and blocks dependents", () => {
     const postgres = setupSeededPostgres();
 
