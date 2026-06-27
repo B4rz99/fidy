@@ -81,7 +81,9 @@ const OUTBOX_KEY_BYTES = 32;
 const OUTBOX_KEY_PATTERN = /^[0-9a-f]{64}$/;
 const SECURE_STORE_OUTBOX_CHUNK_SIZE = 1500;
 const CHUNKED_SECURE_STORE_OUTBOX_STORAGE = "chunked-secure-store";
-const CLOUD_LEDGER_MOBILE_DEVICE_ID = "mobile-local-device";
+const CLOUD_LEDGER_DEVICE_ID_BYTES = 16;
+const CLOUD_LEDGER_DEVICE_ID_KEY = "cloud-ledger-device-id";
+const CLOUD_LEDGER_DEVICE_ID_PATTERN = /^device-[0-9a-f]{32}$/;
 const outboxesByUserId = new Map<string, EncryptedCloudLedgerOutbox>();
 
 export class CloudLedgerOutboxFailure extends Error {
@@ -282,6 +284,7 @@ async function flushPendingChanges(
   if (changes.length === 0) {
     return [];
   }
+  const deviceId = getOrCreateCloudLedgerDeviceId();
   return await chunkPendingChanges(changes).reduce<Promise<readonly LedgerChangeId[]>>(
     async (previous, batch) => {
       const acceptedChangeIds = await previous;
@@ -292,7 +295,7 @@ async function flushPendingChanges(
         supabase,
         {
           commandVersion: 1,
-          deviceId: CLOUD_LEDGER_MOBILE_DEVICE_ID,
+          deviceId,
           batchId: pendingChangeBatchId(batch),
           changes: batch.map(toPendingChangeCommand),
         },
@@ -318,6 +321,17 @@ const chunkPendingChanges = (
 
 function pendingChangeBatchId(batch: readonly CloudLedgerPendingChange[]): string {
   return `batch-${batch[0]?.id ?? "empty"}`;
+}
+
+function getOrCreateCloudLedgerDeviceId(): string {
+  const existing = SecureStore.getItem(CLOUD_LEDGER_DEVICE_ID_KEY);
+  if (existing !== null && CLOUD_LEDGER_DEVICE_ID_PATTERN.test(existing)) {
+    return existing;
+  }
+
+  const deviceId = `device-${toHex(Crypto.getRandomBytes(CLOUD_LEDGER_DEVICE_ID_BYTES))}`;
+  SecureStore.setItem(CLOUD_LEDGER_DEVICE_ID_KEY, deviceId);
+  return deviceId;
 }
 
 function toPendingChangeCommand(change: CloudLedgerPendingChange) {

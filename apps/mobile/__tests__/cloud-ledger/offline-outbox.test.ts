@@ -35,6 +35,7 @@ import {
 
 const OUTBOX_KEY = new Uint8Array(Array.from({ length: 32 }, (_, index) => index + 1));
 const USER_ID = requireUserId("user-1");
+const CLOUD_LEDGER_DEVICE_ID = "device-0102030405060708090a0b0c0d0e0f10";
 const SECURE_STORE_KEY_PATTERN = /^[A-Za-z0-9._-]+$/;
 const SECURE_STORE_VALUE_LIMIT_BYTES = 2048;
 const secureStore = new Map<string, string>();
@@ -563,6 +564,75 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(supabase.getSession).not.toHaveBeenCalled();
   });
 
+  it("reuses a durable device id for Pending Change Set flush envelopes", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const firstSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        cursor: "ledger:8",
+      },
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [],
+      },
+    });
+    const secondSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-taxi"],
+        cursor: "ledger:9",
+      },
+      refreshPayload: {
+        cursor: "ledger:9",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [],
+      },
+    });
+
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: firstSupabase.client,
+    });
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-taxi"),
+      command: offlineTaxiCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+      outbox,
+    });
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: secondSupabase.client,
+    });
+
+    expect(secureStore.get("cloud-ledger-device-id")).toBe(CLOUD_LEDGER_DEVICE_ID);
+    expect(firstSupabase.functionsInvoke.mock.calls[0]?.[1].body.deviceId).toBe(
+      CLOUD_LEDGER_DEVICE_ID
+    );
+    expect(secondSupabase.functionsInvoke.mock.calls[0]?.[1].body.deviceId).toBe(
+      CLOUD_LEDGER_DEVICE_ID
+    );
+  });
+
   it("removes accepted pending changes while retaining reported rejected changes", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -1000,7 +1070,7 @@ function expectFlushThroughRemoteApiBoundary(
     body: {
       action: "applyPendingChanges",
       commandVersion: 1,
-      deviceId: "mobile-local-device",
+      deviceId: CLOUD_LEDGER_DEVICE_ID,
       batchId: "batch-change-offline-coffee",
       changes: [
         {
