@@ -20,6 +20,10 @@ type ValidPendingChangeReadResult = {
 type PendingChangeReadResult =
   | ValidPendingChangeReadResult
   | Exclude<ApplyPendingChangesCommandReadResult, { readonly kind: "valid" }>;
+type InvalidPendingChangeCode =
+  | "invalid_ledger_reference"
+  | "invalid_transaction"
+  | "invalid_transaction_id";
 
 const LEDGER_CHANGE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const ISO_CLIENT_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
@@ -107,7 +111,13 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
     transaction: record.transaction,
   });
   if (commandResult.kind !== "valid") {
-    return commandResult;
+    return toInvalidPendingChange(commandResult.kind, {
+      id: record.id,
+      idempotencyKey,
+      dependencies,
+      expectedVersions,
+      clientTimestamp,
+    });
   }
   return {
     kind: "valid",
@@ -122,6 +132,33 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
       transaction: commandResult.command.transaction,
     },
   } as const;
+}
+
+function toInvalidPendingChange(
+  invalidCode: InvalidPendingChangeCode | "unsupported_command_version",
+  envelope: {
+    readonly id: string;
+    readonly idempotencyKey: string;
+    readonly dependencies: readonly string[];
+    readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+    readonly clientTimestamp: string;
+  }
+): PendingChangeReadResult {
+  return invalidCode === "unsupported_command_version"
+    ? { kind: "unsupported_command_version" }
+    : {
+        kind: "valid",
+        change: {
+          id: envelope.id,
+          kind: "invalidPendingChange",
+          commandVersion: 1,
+          idempotencyKey: envelope.idempotencyKey,
+          dependencies: envelope.dependencies,
+          expectedVersions: envelope.expectedVersions,
+          clientTimestamp: envelope.clientTimestamp,
+          invalidCode,
+        },
+      };
 }
 
 function readEnvelopeId(value: unknown): string | null {

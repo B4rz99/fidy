@@ -38,6 +38,7 @@ declare
   v_existing_acceptance ledger.pending_change_acceptances%rowtype;
   v_idempotency_key text;
   v_outcome jsonb;
+  v_repair_code text;
   v_rejected_change_ids text[] := array[]::text[];
 begin
   if p_command_version is distinct from 1 then
@@ -92,6 +93,29 @@ begin
     v_change_id := v_change ->> 'id';
     v_idempotency_key := v_change ->> 'idempotencyKey';
 
+    if v_change ->> 'kind' = 'invalidPendingChange'
+      and nullif(v_change ->> 'commandVersion', '')::integer = 1
+    then
+      v_repair_code := case
+        when v_change ->> 'invalidCode' in (
+          'invalid_ledger_reference',
+          'invalid_transaction',
+          'invalid_transaction_id'
+        )
+        then v_change ->> 'invalidCode'
+        else 'invalid_transaction'
+      end;
+      v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
+      v_change_outcomes := v_change_outcomes || jsonb_build_array(
+        jsonb_build_object(
+          'changeId', v_change_id,
+          'status', 'repair_required',
+          'code', v_repair_code
+        )
+      );
+      continue;
+    end if;
+
     if v_change ->> 'kind' <> 'createTransaction'
       or nullif(v_change ->> 'commandVersion', '')::integer is distinct from 1
     then
@@ -118,6 +142,18 @@ begin
       and ledger.pending_change_acceptances.idempotency_key = v_idempotency_key;
 
     if found then
+      if v_existing_acceptance.change_id <> v_change_id then
+        v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
+        v_change_outcomes := v_change_outcomes || jsonb_build_array(
+          jsonb_build_object(
+            'changeId', v_change_id,
+            'status', 'repair_required',
+            'code', 'duplicate_idempotency_key'
+          )
+        );
+        continue;
+      end if;
+
       v_accepted_change_ids := array_append(v_accepted_change_ids, v_change_id);
       v_cursor_sequence := greatest(v_cursor_sequence, v_existing_acceptance.cursor_sequence);
       v_cursor := 'ledger:' || v_cursor_sequence::text;

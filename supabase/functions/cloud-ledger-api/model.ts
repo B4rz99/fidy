@@ -110,8 +110,23 @@ export type CloudLedgerApplyPendingUnsupportedChange = {
   readonly transaction?: unknown;
 };
 
+export type CloudLedgerApplyPendingInvalidChange = {
+  readonly id: string;
+  readonly kind: "invalidPendingChange";
+  readonly commandVersion: 1;
+  readonly idempotencyKey: string;
+  readonly dependencies: readonly string[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
+  readonly invalidCode:
+    | "invalid_ledger_reference"
+    | "invalid_transaction"
+    | "invalid_transaction_id";
+};
+
 export type CloudLedgerApplyPendingChange =
   | CloudLedgerApplyPendingCreateTransactionChange
+  | CloudLedgerApplyPendingInvalidChange
   | CloudLedgerApplyPendingUnsupportedChange;
 
 export type CloudLedgerExpectedRecordVersion = {
@@ -152,6 +167,7 @@ export type CloudLedgerPendingChangeOutcome =
       readonly code:
         | "dependency_failed"
         | "duplicate_transaction_id"
+        | "duplicate_idempotency_key"
         | "invalid_ledger_reference"
         | "invalid_transaction"
         | "invalid_transaction_id"

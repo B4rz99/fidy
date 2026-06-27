@@ -346,6 +346,89 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
+  it("keeps independent invalid pending changes inside the typed batch outcome path", async () => {
+    const invalidPendingChange = {
+      ...PENDING_CHANGE_REQUEST,
+      id: "change-invalid-amount",
+      idempotencyKey: "idem-invalid-amount",
+      transaction: {
+        ...CREATE_TRANSACTION_PAYLOAD,
+        id: "txn-invalid-amount",
+        amount: 0,
+      },
+    } as const;
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-invalid-amount"],
+        changeOutcomes: [
+          {
+            changeId: "change-invalid-amount",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          changes: [invalidPendingChange, PENDING_CHANGE_REQUEST],
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-invalid-amount"],
+        changeOutcomes: [
+          {
+            changeId: "change-invalid-amount",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      ...APPLY_PENDING_CHANGES_COMMAND,
+      changes: [
+        {
+          id: "change-invalid-amount",
+          kind: "invalidPendingChange",
+          commandVersion: 1,
+          idempotencyKey: "idem-invalid-amount",
+          dependencies: [],
+          expectedVersions: [PENDING_CHANGE_EXPECTED_VERSION],
+          clientTimestamp: "2026-06-01T10:02:00.000Z",
+          invalidCode: "invalid_transaction",
+        },
+        PENDING_CHANGE_REQUEST,
+      ],
+    });
+  });
+
   it("keeps unsupported pending change command versions inside the batch outcome path", async () => {
     const api = createCloudLedgerApiDeps({
       applyPendingChangesResult: {

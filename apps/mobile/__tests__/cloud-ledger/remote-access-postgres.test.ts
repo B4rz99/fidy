@@ -353,6 +353,42 @@ insert into ledger.categories (
     expect(readTransactionRowCount(postgres, USER_ID, "txn-valid-market")).toBe("1");
   });
 
+  postgresIt("partially accepts independent changes after parser-level repair outcomes", () => {
+    const postgres = setupSeededPostgres();
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      invalidPendingChangeJson({
+        changeId: "change-invalid-amount",
+        invalidCode: "invalid_transaction",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-valid-after-parser-repair",
+        transactionId: "txn-valid-after-parser-repair",
+        categoryId: "cat-groceries",
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: ["change-valid-after-parser-repair"],
+      rejectedChangeIds: ["change-invalid-amount"],
+      changeOutcomes: [
+        {
+          changeId: "change-invalid-amount",
+          status: "repair_required",
+          code: "invalid_transaction",
+        },
+        {
+          changeId: "change-valid-after-parser-repair",
+          status: "accepted",
+          code: "accepted",
+        },
+      ],
+      cursor: "ledger:5",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-valid-after-parser-repair")).toBe("1");
+  });
+
   postgresIt("blocks dependent pending changes when a required prior change fails", () => {
     const postgres = setupSeededPostgres();
 
@@ -439,6 +475,62 @@ insert into ledger.categories (
     });
   });
 
+  postgresIt("rejects reused idempotency keys for different changes and blocks dependents", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-original-idempotent",
+          idempotencyKey: "idem-colliding-stable",
+          transactionId: "txn-idem-original",
+          categoryId: "cat-groceries",
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-original-idempotent"],
+      rejectedChangeIds: [],
+      cursor: "ledger:5",
+    });
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-colliding-idempotency",
+        idempotencyKey: "idem-colliding-stable",
+        transactionId: "txn-idem-colliding",
+        categoryId: "cat-groceries",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-dependent-on-collision",
+        transactionId: "txn-dependent-on-collision",
+        categoryId: "cat-groceries",
+        dependencies: ["change-colliding-idempotency"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-colliding-idempotency", "change-dependent-on-collision"],
+      changeOutcomes: [
+        {
+          changeId: "change-colliding-idempotency",
+          status: "repair_required",
+          code: "duplicate_idempotency_key",
+        },
+        {
+          changeId: "change-dependent-on-collision",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-idem-original")).toBe("1");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-idem-colliding")).toBe("0");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-on-collision")).toBe("0");
+  });
+
   postgresIt(
     "serializes concurrent accepted pending-change retries by idempotency key",
     async () => {
@@ -492,6 +584,52 @@ commit;
       });
     }
   );
+
+  postgresIt("serializes concurrent colliding idempotency keys and repairs the loser", async () => {
+    const postgres = setupSeededPostgres();
+
+    const outcomes = await Promise.all([
+      applyPendingChangesOutcomeAsync(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-concurrent-collision-a",
+          idempotencyKey: "idem-concurrent-collision",
+          transactionId: "txn-concurrent-collision-a",
+          categoryId: "cat-groceries",
+        }),
+      ]),
+      applyPendingChangesOutcomeAsync(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-concurrent-collision-b",
+          idempotencyKey: "idem-concurrent-collision",
+          transactionId: "txn-concurrent-collision-b",
+          categoryId: "cat-groceries",
+        }),
+      ]),
+    ]);
+    const acceptedChangeIds = outcomes.flatMap((outcome) => outcome.acceptedChangeIds);
+    const rejectedOutcomes = outcomes.flatMap((outcome) =>
+      outcome.changeOutcomes.filter(
+        (changeOutcome: { readonly status: string }) => changeOutcome.status !== "accepted"
+      )
+    );
+
+    expect(acceptedChangeIds).toHaveLength(1);
+    expect(rejectedOutcomes).toEqual([
+      expect.objectContaining({
+        status: "repair_required",
+        code: "duplicate_idempotency_key",
+      }),
+    ]);
+    expect(
+      Number(readTransactionRowCount(postgres, USER_ID, "txn-concurrent-collision-a")) +
+        Number(readTransactionRowCount(postgres, USER_ID, "txn-concurrent-collision-b"))
+    ).toBe(1);
+    expect(readMonthlyProjection(postgres)).toMatchObject({
+      expenseAmount: 15000,
+      transactionCount: 1,
+      cursorSequence: 5,
+    });
+  });
 
   postgresIt("rejects stale expected versions before applying a pending change", () => {
     const postgres = setupSeededPostgres();
@@ -1114,6 +1252,25 @@ function pendingCreateChangeJson(input: {
       description: "Market",
       date: "2026-06-01",
     },
+  };
+}
+
+function invalidPendingChangeJson(input: {
+  readonly changeId: string;
+  readonly invalidCode:
+    | "invalid_ledger_reference"
+    | "invalid_transaction"
+    | "invalid_transaction_id";
+}) {
+  return {
+    id: input.changeId,
+    kind: "invalidPendingChange",
+    commandVersion: 1,
+    idempotencyKey: `idem-${input.changeId}`,
+    dependencies: [],
+    expectedVersions: [],
+    clientTimestamp: "2026-06-01T10:02:00.000Z",
+    invalidCode: input.invalidCode,
   };
 }
 
