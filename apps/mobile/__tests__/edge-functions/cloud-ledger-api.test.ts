@@ -485,6 +485,72 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
+  it("keeps old unsupported pending changes without v1 metadata inside mixed batch outcomes", async () => {
+    const oldPendingChange = {
+      id: "change-old-metadata",
+      kind: "createTransaction",
+      commandVersion: 0,
+    } as const;
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-old-metadata"],
+        changeOutcomes: [
+          {
+            changeId: "change-old-metadata",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          changes: [oldPendingChange, PENDING_CHANGE_REQUEST],
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-old-metadata"],
+        changeOutcomes: [
+          {
+            changeId: "change-old-metadata",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      ...APPLY_PENDING_CHANGES_COMMAND,
+      changes: [oldPendingChange, PENDING_CHANGE_REQUEST],
+    });
+  });
+
   it("keeps unsupported Pending Change Set envelope versions inside the batch outcome path", async () => {
     const api = createCloudLedgerApiDeps({
       applyPendingChangesResult: {
@@ -543,6 +609,55 @@ describe("cloud-ledger-api Edge Function", () => {
       deviceId: "device-ios-17-pro",
       batchId: "batch-old-envelope",
       changes: [{ id: "change-old-envelope" }, { id: "change-old-envelope-two" }],
+    });
+  });
+
+  it("keeps identifiable old Pending Change Set envelopes without v1 envelope fields inside the batch outcome path", async () => {
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-old"],
+        changeOutcomes: [
+          {
+            changeId: "change-old",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+        ],
+        cursor: "ledger:0",
+      },
+    });
+    const body = {
+      action: "applyPendingChanges",
+      commandVersion: 0,
+      changes: [{ id: "change-old" }],
+    } as const;
+
+    const response = await handleCloudLedgerRequest(jsonRequest(body, "valid-token"), api.deps);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-old"],
+        changeOutcomes: [
+          {
+            changeId: "change-old",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+        ],
+        cursor: "ledger:0",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      commandVersion: 0,
+      deviceId: null,
+      batchId: null,
+      changes: [{ id: "change-old" }],
     });
   });
 

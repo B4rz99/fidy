@@ -39,11 +39,6 @@ export function readApplyPendingChangesCommand(
   if (commandVersion === null || !Array.isArray(record.changes)) {
     return { kind: "invalid_pending_change" };
   }
-  const deviceId = readEnvelopeId(record.deviceId);
-  const batchId = readEnvelopeId(record.batchId);
-  if (deviceId === null || batchId === null) {
-    return { kind: "invalid_pending_change" };
-  }
   if (record.changes.length > CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT) {
     return { kind: "pending_change_batch_too_large" };
   }
@@ -54,12 +49,17 @@ export function readApplyPendingChangesCommand(
           kind: "valid",
           command: {
             commandVersion,
-            deviceId,
-            batchId,
+            deviceId: readOptionalEnvelopeId(record.deviceId),
+            batchId: readOptionalEnvelopeId(record.batchId),
             changes,
           },
         }
       : { kind: "invalid_pending_change" };
+  }
+  const deviceId = readEnvelopeId(record.deviceId);
+  const batchId = readEnvelopeId(record.batchId);
+  if (deviceId === null || batchId === null) {
+    return { kind: "invalid_pending_change" };
   }
 
   const changes = record.changes.map(readPendingChange);
@@ -97,31 +97,25 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
   }
   const pendingChangeKind = readPendingChangeKind(record.kind);
   const commandVersion = readCommandVersion(record.commandVersion);
+  if (pendingChangeKind === null || commandVersion === null) {
+    return { kind: "invalid_pending_change" } as const;
+  }
+  if (commandVersion !== 1 || pendingChangeKind !== "createTransaction") {
+    return toUnsupportedPendingChange(
+      readUnsupportedPendingChange(record, record.id, pendingChangeKind, commandVersion)
+    );
+  }
   const idempotencyKey = readLedgerChangeIdentity(record.idempotencyKey);
   const dependencies = readLedgerChangeDependencies(record.dependencies);
   const expectedVersions = readExpectedVersions(record.expectedVersions);
   const clientTimestamp = readClientTimestamp(record.clientTimestamp);
   if (
-    pendingChangeKind === null ||
-    commandVersion === null ||
     idempotencyKey === null ||
     dependencies === null ||
     expectedVersions === null ||
     clientTimestamp === null
   ) {
     return { kind: "invalid_pending_change" } as const;
-  }
-  if (commandVersion !== 1 || pendingChangeKind !== "createTransaction") {
-    return toUnsupportedPendingChange({
-      id: record.id,
-      kind: pendingChangeKind,
-      commandVersion,
-      idempotencyKey,
-      dependencies,
-      expectedVersions,
-      clientTimestamp,
-      ...("transaction" in record ? { transaction: record.transaction } : {}),
-    });
   }
   const commandResult = readCreateTransactionCommand({
     commandVersion,
@@ -149,6 +143,28 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
       transaction: commandResult.command.transaction,
     },
   } as const;
+}
+
+function readUnsupportedPendingChange(
+  record: Record<string, unknown>,
+  id: string,
+  kind: string,
+  commandVersion: number
+): CloudLedgerApplyPendingChangesCommand["changes"][number] {
+  const idempotencyKey = readLedgerChangeIdentity(record.idempotencyKey);
+  const dependencies = readLedgerChangeDependencies(record.dependencies);
+  const expectedVersions = readExpectedVersions(record.expectedVersions);
+  const clientTimestamp = readClientTimestamp(record.clientTimestamp);
+  return {
+    id,
+    kind,
+    commandVersion,
+    ...(idempotencyKey === null ? {} : { idempotencyKey }),
+    ...(dependencies === null ? {} : { dependencies }),
+    ...(expectedVersions === null ? {} : { expectedVersions }),
+    ...(clientTimestamp === null ? {} : { clientTimestamp }),
+    ...("transaction" in record ? { transaction: record.transaction } : {}),
+  };
 }
 
 function toUnsupportedPendingChange(
@@ -189,6 +205,10 @@ function toInvalidPendingChange(
 
 function readEnvelopeId(value: unknown): string | null {
   return typeof value === "string" && isLedgerChangeId(value) ? value : null;
+}
+
+function readOptionalEnvelopeId(value: unknown): string | null {
+  return value === undefined ? null : readEnvelopeId(value);
 }
 
 function readPendingChangeKind(value: unknown): string | null {

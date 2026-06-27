@@ -103,10 +103,10 @@ export type CloudLedgerApplyPendingUnsupportedChange = {
   readonly id: string;
   readonly kind: string;
   readonly commandVersion: number;
-  readonly idempotencyKey: string;
-  readonly dependencies: readonly string[];
-  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
-  readonly clientTimestamp: string;
+  readonly idempotencyKey?: string;
+  readonly dependencies?: readonly string[];
+  readonly expectedVersions?: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp?: string;
   readonly transaction?: unknown;
 };
 
@@ -142,8 +142,8 @@ export type CloudLedgerExpectedRecordVersion = {
 
 export type CloudLedgerApplyPendingChangesCommand = {
   readonly commandVersion: number;
-  readonly deviceId: string;
-  readonly batchId: string;
+  readonly deviceId: string | null;
+  readonly batchId: string | null;
   readonly changes: readonly CloudLedgerApplyPendingChange[];
 };
 
