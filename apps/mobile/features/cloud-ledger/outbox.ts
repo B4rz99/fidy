@@ -14,6 +14,7 @@ import type { IsoDateTime, LedgerChangeId, UserId } from "@/shared/types/branded
 import {
   applyPendingCloudLedgerChanges,
   CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT,
+  type CloudLedgerApplyPendingChangesAccepted,
 } from "./api-client";
 import {
   refreshCloudLedgerCache,
@@ -52,6 +53,9 @@ export type EncryptedCloudLedgerOutbox = {
     change: CloudLedgerPendingChange
   ) => Promise<readonly CloudLedgerPendingChange[]>;
   readonly remove: (changeIds: readonly LedgerChangeId[]) => Promise<void>;
+  readonly removeAcceptedChanges?: (
+    changesToRemove: readonly CloudLedgerPendingChange[]
+  ) => Promise<void>;
   readonly clear: () => Promise<void>;
 };
 
@@ -132,6 +136,21 @@ export function createEncryptedCloudLedgerOutbox(input: {
         const changeIdSet = new Set(changeIds);
         const changes = (await loadOutboxSnapshot(input.storage, encryptionKey)).changes.filter(
           (change) => !changeIdSet.has(change.id)
+        );
+        if (changes.length === 0) {
+          await input.storage.clear();
+          return;
+        }
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes,
+        });
+      }),
+    removeAcceptedChanges: (changesToRemove) =>
+      serializeMutation(async () => {
+        const changes = removePendingChangeOccurrences(
+          (await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
+          changesToRemove
         );
         if (changes.length === 0) {
           await input.storage.clear();
@@ -244,7 +263,7 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  const acceptedChangeIds = await flushPendingChanges(
+  const acceptedChanges = await flushPendingChanges(
     input.supabase,
     changes,
     input.abortSignal,
@@ -257,7 +276,11 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  await input.outbox.remove(acceptedChangeIds);
+  if (input.outbox.removeAcceptedChanges === undefined) {
+    await input.outbox.remove(acceptedChanges.map((change) => change.id));
+  } else {
+    await input.outbox.removeAcceptedChanges(acceptedChanges);
+  }
   return restoreOptimisticCloudLedgerCache({
     cache: refreshedCache,
     outbox: input.outbox,
@@ -280,16 +303,16 @@ async function flushPendingChanges(
   changes: readonly CloudLedgerPendingChange[],
   abortSignal?: AbortSignal,
   shouldContinue?: () => boolean
-): Promise<readonly LedgerChangeId[]> {
+): Promise<readonly CloudLedgerPendingChange[]> {
   if (changes.length === 0) {
     return [];
   }
   const deviceId = getOrCreateCloudLedgerDeviceId();
-  return await chunkPendingChanges(changes).reduce<Promise<readonly LedgerChangeId[]>>(
+  return await chunkPendingChanges(changes).reduce<Promise<readonly CloudLedgerPendingChange[]>>(
     async (previous, batch) => {
-      const acceptedChangeIds = await previous;
+      const acceptedChanges = await previous;
       if (shouldContinue?.() === false) {
-        return acceptedChangeIds;
+        return acceptedChanges;
       }
       const outcome = await applyPendingCloudLedgerChanges(
         supabase,
@@ -301,7 +324,7 @@ async function flushPendingChanges(
         },
         { signal: abortSignal }
       );
-      return [...acceptedChangeIds, ...outcome.acceptedChangeIds];
+      return [...acceptedChanges, ...acceptedPendingChanges(batch, outcome)];
     },
     Promise.resolve([])
   );
@@ -345,6 +368,89 @@ function toPendingChangeCommand(change: CloudLedgerPendingChange) {
     clientTimestamp: change.createdAt,
     transaction: change.transaction,
   } as const;
+}
+
+function acceptedPendingChanges(
+  batch: readonly CloudLedgerPendingChange[],
+  outcome: CloudLedgerApplyPendingChangesAccepted
+): readonly CloudLedgerPendingChange[] {
+  const acceptedFromOutcomes = acceptedPendingChangesFromOutcomes(batch, outcome);
+  return acceptedFromOutcomes ?? acceptedPendingChangesById(batch, outcome.acceptedChangeIds);
+}
+
+function acceptedPendingChangesFromOutcomes(
+  batch: readonly CloudLedgerPendingChange[],
+  outcome: CloudLedgerApplyPendingChangesAccepted
+): readonly CloudLedgerPendingChange[] | null {
+  if (outcome.changeOutcomes.length !== batch.length) {
+    return null;
+  }
+  if (
+    outcome.changeOutcomes.some(
+      (changeOutcome, index) => changeOutcome.changeId !== batch[index]?.id
+    )
+  ) {
+    return null;
+  }
+  return outcome.changeOutcomes.flatMap((changeOutcome, index) => {
+    const change = batch[index];
+    return changeOutcome.status === "accepted" && change !== undefined ? [change] : [];
+  });
+}
+
+function acceptedPendingChangesById(
+  batch: readonly CloudLedgerPendingChange[],
+  acceptedChangeIds: readonly LedgerChangeId[]
+): readonly CloudLedgerPendingChange[] {
+  const remainingAcceptedCounts = acceptedChangeIds.reduce(
+    (counts, changeId) => counts.set(changeId, (counts.get(changeId) ?? 0) + 1),
+    new Map<LedgerChangeId, number>()
+  );
+  return batch.filter((change) => {
+    const remainingCount = remainingAcceptedCounts.get(change.id) ?? 0;
+    if (remainingCount <= 0) {
+      return false;
+    }
+    remainingAcceptedCounts.set(change.id, remainingCount - 1);
+    return true;
+  });
+}
+
+function removePendingChangeOccurrences(
+  queued: readonly CloudLedgerPendingChange[],
+  changesToRemove: readonly CloudLedgerPendingChange[]
+): readonly CloudLedgerPendingChange[] {
+  const remainingRemovals = [...changesToRemove];
+  return queued.filter((queuedChange) => {
+    const removalIndex = remainingRemovals.findIndex((changeToRemove) =>
+      isSamePendingChange(changeToRemove, queuedChange)
+    );
+    if (removalIndex === -1) {
+      return true;
+    }
+    remainingRemovals.splice(removalIndex, 1);
+    return false;
+  });
+}
+
+function isSamePendingChange(
+  left: CloudLedgerPendingChange,
+  right: CloudLedgerPendingChange
+): boolean {
+  return (
+    left.id === right.id &&
+    left.kind === right.kind &&
+    left.commandVersion === right.commandVersion &&
+    left.createdAt === right.createdAt &&
+    left.transaction.id === right.transaction.id &&
+    left.transaction.type === right.transaction.type &&
+    left.transaction.amount === right.transaction.amount &&
+    left.transaction.currency === right.transaction.currency &&
+    left.transaction.categoryId === right.transaction.categoryId &&
+    left.transaction.accountId === right.transaction.accountId &&
+    left.transaction.description === right.transaction.description &&
+    left.transaction.date === right.transaction.date
+  );
 }
 
 function toOptimisticTransaction(change: CloudLedgerPendingChange): CloudLedgerTransaction {

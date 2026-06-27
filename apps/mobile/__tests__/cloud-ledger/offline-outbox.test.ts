@@ -678,6 +678,73 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect((await outbox.load()).map((change) => change.id)).toEqual(["change-offline-coffee"]);
   });
 
+  it("retains a duplicate local change id when only one occurrence is accepted", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const duplicateChangeId = "change-duplicate-local";
+    await outbox.enqueue(
+      pendingCreateChange({
+        changeId: duplicateChangeId,
+        command: offlineCoffeeCommand(),
+        createdAt: "2026-06-02T10:03:00.000Z",
+      })
+    );
+    await outbox.enqueue(
+      pendingCreateChange({
+        changeId: duplicateChangeId,
+        command: offlineTaxiCommand(),
+        createdAt: "2026-06-02T10:04:00.000Z",
+      })
+    );
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [duplicateChangeId],
+        rejectedChangeIds: [duplicateChangeId],
+        changeOutcomes: [
+          {
+            changeId: duplicateChangeId,
+            status: "accepted",
+            code: "accepted",
+          },
+          {
+            changeId: duplicateChangeId,
+            status: "repair_required",
+            code: "duplicate_change_id",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: {
+        cursor: "ledger:8",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [],
+      },
+    });
+
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: supabase.client,
+    });
+
+    const remaining = await outbox.load();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]).toMatchObject({
+      id: duplicateChangeId,
+      transaction: {
+        id: "txn-20260622-taxi",
+        description: "Taxi",
+      },
+    });
+    expect(storage.readRaw()).not.toBeNull();
+  });
+
   it("flushes large pending create sets in bounded Remote API batches", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
