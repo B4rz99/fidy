@@ -85,6 +85,7 @@ export type CloudLedgerPendingChangeOutcome =
       readonly status: "repair_required";
       readonly code:
         | "dependency_failed"
+        | "duplicate_change_id"
         | "duplicate_transaction_id"
         | "duplicate_idempotency_key"
         | "invalid_ledger_reference"

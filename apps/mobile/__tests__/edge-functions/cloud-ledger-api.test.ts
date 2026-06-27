@@ -346,6 +346,75 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
+  it("returns typed outcomes for duplicate pending change ids in a batch", async () => {
+    const duplicateChange = {
+      ...PENDING_CHANGE_REQUEST,
+      idempotencyKey: "idem-offline-coffee-duplicate",
+      transaction: {
+        ...CREATE_TRANSACTION_PAYLOAD,
+        id: "txn-api-duplicate-change",
+      },
+    } as const;
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-offline-coffee"],
+        changeOutcomes: [
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "repair_required",
+            code: "duplicate_change_id",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          changes: [PENDING_CHANGE_REQUEST, duplicateChange],
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-offline-coffee"],
+        changeOutcomes: [
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "repair_required",
+            code: "duplicate_change_id",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      ...APPLY_PENDING_CHANGES_COMMAND,
+      changes: [PENDING_CHANGE_REQUEST, duplicateChange],
+    });
+  });
+
   it("keeps independent invalid pending changes inside the typed batch outcome path", async () => {
     const invalidPendingChange = {
       ...PENDING_CHANGE_REQUEST,

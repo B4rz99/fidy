@@ -828,6 +828,121 @@ insert into ledger.categories (
   });
 
   postgresIt(
+    "rejects duplicate change ids with different idempotency keys and blocks dependents",
+    () => {
+      const postgres = setupSeededPostgres();
+
+      const outcome = applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-duplicate-id",
+          idempotencyKey: "idem-duplicate-id-original",
+          transactionId: "txn-duplicate-id-original",
+          categoryId: "cat-groceries",
+        }),
+        pendingCreateChangeJson({
+          changeId: "change-duplicate-id",
+          idempotencyKey: "idem-duplicate-id-conflict",
+          transactionId: "txn-duplicate-id-conflict",
+          categoryId: "cat-groceries",
+        }),
+        pendingCreateChangeJson({
+          changeId: "change-dependent-on-duplicate-id",
+          transactionId: "txn-dependent-on-duplicate-id",
+          categoryId: "cat-groceries",
+          dependencies: ["change-duplicate-id"],
+        }),
+      ]);
+
+      expect(outcome).toMatchObject({
+        code: "accepted",
+        acceptedChangeIds: ["change-duplicate-id"],
+        rejectedChangeIds: ["change-duplicate-id", "change-dependent-on-duplicate-id"],
+        changeOutcomes: [
+          {
+            changeId: "change-duplicate-id",
+            status: "accepted",
+            code: "accepted",
+          },
+          {
+            changeId: "change-duplicate-id",
+            status: "repair_required",
+            code: "duplicate_change_id",
+          },
+          {
+            changeId: "change-dependent-on-duplicate-id",
+            status: "repair_required",
+            code: "dependency_failed",
+          },
+        ],
+        cursor: "ledger:5",
+      });
+      expect(readTransactionRowCount(postgres, USER_ID, "txn-duplicate-id-original")).toBe("1");
+      expect(readTransactionRowCount(postgres, USER_ID, "txn-duplicate-id-conflict")).toBe("0");
+      expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-on-duplicate-id")).toBe("0");
+      expect(readAcceptedChangeRowCount(postgres, USER_ID, "change-duplicate-id")).toBe("1");
+    }
+  );
+
+  postgresIt("rejects later change id reuse with a new idempotency key", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-durable-identity",
+          idempotencyKey: "idem-durable-identity-original",
+          transactionId: "txn-durable-identity-original",
+          categoryId: "cat-groceries",
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-durable-identity"],
+      rejectedChangeIds: [],
+      cursor: "ledger:5",
+    });
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-durable-identity",
+        idempotencyKey: "idem-durable-identity-conflict",
+        transactionId: "txn-durable-identity-conflict",
+        categoryId: "cat-groceries",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-dependent-on-durable-identity",
+        transactionId: "txn-dependent-on-durable-identity",
+        categoryId: "cat-groceries",
+        dependencies: ["change-durable-identity"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-durable-identity", "change-dependent-on-durable-identity"],
+      changeOutcomes: [
+        {
+          changeId: "change-durable-identity",
+          status: "repair_required",
+          code: "duplicate_change_id",
+        },
+        {
+          changeId: "change-dependent-on-durable-identity",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-durable-identity-original")).toBe("1");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-durable-identity-conflict")).toBe("0");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-on-durable-identity")).toBe(
+      "0"
+    );
+    expect(readAcceptedChangeRowCount(postgres, USER_ID, "change-durable-identity")).toBe("1");
+  });
+
+  postgresIt(
     "serializes concurrent accepted pending-change retries by idempotency key",
     async () => {
       const postgres = setupSeededPostgres();
@@ -1130,6 +1245,18 @@ select count(*)
 from ledger.transactions
 where user_id = '${userId}'::uuid
   and id = '${transactionId}';
+`
+  );
+}
+
+function readAcceptedChangeRowCount(postgres: PostgresHarness, userId: string, changeId: string) {
+  return psqlScalar(
+    postgres,
+    `
+select count(*)
+from ledger.pending_change_acceptances
+where user_id = '${userId}'::uuid
+  and change_id = '${changeId}';
 `
   );
 }

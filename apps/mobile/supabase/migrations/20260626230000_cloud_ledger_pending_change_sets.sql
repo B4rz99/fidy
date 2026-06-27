@@ -11,7 +11,8 @@ create table if not exists ledger.pending_change_acceptances (
   payload_fingerprint text not null check (length(payload_fingerprint) = 32),
   cursor_sequence bigint not null check (cursor_sequence >= 0),
   accepted_at timestamptz not null default now(),
-  primary key (user_id, idempotency_key)
+  primary key (user_id, idempotency_key),
+  unique (user_id, change_id)
 );
 
 alter table ledger.pending_change_acceptances enable row level security;
@@ -57,10 +58,12 @@ declare
   v_cursor text := 'ledger:0';
   v_cursor_sequence bigint := 0;
   v_existing_acceptance ledger.pending_change_acceptances%rowtype;
+  v_existing_change_acceptance ledger.pending_change_acceptances%rowtype;
   v_idempotency_key text;
   v_outcome jsonb;
   v_repair_code text;
   v_rejected_change_ids text[] := array[]::text[];
+  v_seen_change_ids text[] := array[]::text[];
   v_seen_idempotency_keys text[] := array[]::text[];
 begin
   if p_command_version is distinct from 1 then
@@ -114,6 +117,21 @@ begin
   loop
     v_change_id := v_change ->> 'id';
     v_idempotency_key := v_change ->> 'idempotencyKey';
+
+    if v_change_id is not null then
+      if v_change_id = any(v_seen_change_ids) then
+        v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
+        v_change_outcomes := v_change_outcomes || jsonb_build_array(
+          ledger.pending_change_outcome(
+            v_change_id,
+            'repair_required',
+            'duplicate_change_id'
+          )
+        );
+        continue;
+      end if;
+      v_seen_change_ids := array_append(v_seen_change_ids, v_change_id);
+    end if;
 
     if v_idempotency_key is not null then
       if v_idempotency_key = any(v_seen_idempotency_keys) then
@@ -188,6 +206,10 @@ begin
       hashtext('cloud_ledger_pending_change'),
       hashtext(p_user_id::text || ':' || v_idempotency_key)
     );
+    perform pg_advisory_xact_lock(
+      hashtext('cloud_ledger_pending_change_id'),
+      hashtext(p_user_id::text || ':' || v_change_id)
+    );
 
     select ledger.pending_change_acceptances.*
     into v_existing_acceptance
@@ -218,6 +240,20 @@ begin
       v_cursor := 'ledger:' || v_cursor_sequence::text;
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
         ledger.pending_change_outcome(v_change_id, 'accepted', 'accepted')
+      );
+      continue;
+    end if;
+
+    select ledger.pending_change_acceptances.*
+    into v_existing_change_acceptance
+    from ledger.pending_change_acceptances
+    where ledger.pending_change_acceptances.user_id = p_user_id
+      and ledger.pending_change_acceptances.change_id = v_change_id;
+
+    if found then
+      v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
+      v_change_outcomes := v_change_outcomes || jsonb_build_array(
+        ledger.pending_change_outcome(v_change_id, 'repair_required', 'duplicate_change_id')
       );
       continue;
     end if;
