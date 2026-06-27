@@ -1,0 +1,21 @@
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_6c070d47258744::t_57e7c11adf1eab 597-651
+apps/mobile/supabase/migrations/20260626230000_cloud_ledger_pending_change_sets.sql
+  s_6c070d47258744::t_0a92479fca0df5 134-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "ae14fa6a860dc4fd7559177face7c14f7b6985e1",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
