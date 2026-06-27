@@ -17,6 +17,26 @@ create table if not exists ledger.pending_change_acceptances (
 alter table ledger.pending_change_acceptances enable row level security;
 alter table ledger.pending_change_acceptances force row level security;
 
+create or replace function ledger.pending_change_outcome(
+  p_change_id text,
+  p_status text,
+  p_code text
+)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'changeId', p_change_id,
+    'status', p_status,
+    'code', p_code
+  );
+$$;
+
+revoke execute on function ledger.pending_change_outcome(text, text, text)
+  from public, anon, authenticated;
+
 create or replace function public.cloud_ledger_apply_pending_changes(
   p_user_id uuid,
   p_command_version integer,
@@ -46,10 +66,10 @@ begin
   if p_command_version is distinct from 1 then
     select coalesce(
       jsonb_agg(
-        jsonb_build_object(
-          'changeId', value ->> 'id',
-          'status', 'requires_app_update',
-          'code', 'unsupported_command_version'
+        ledger.pending_change_outcome(
+          value ->> 'id',
+          'requires_app_update',
+          'unsupported_command_version'
         )
         order by ordinality
       ),
@@ -99,10 +119,10 @@ begin
       if v_idempotency_key = any(v_seen_idempotency_keys) then
         v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
         v_change_outcomes := v_change_outcomes || jsonb_build_array(
-          jsonb_build_object(
-            'changeId', v_change_id,
-            'status', 'repair_required',
-            'code', 'duplicate_idempotency_key'
+          ledger.pending_change_outcome(
+            v_change_id,
+            'repair_required',
+            'duplicate_idempotency_key'
           )
         );
         continue;
@@ -124,11 +144,7 @@ begin
       end;
       v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'repair_required',
-          'code', v_repair_code
-        )
+        ledger.pending_change_outcome(v_change_id, 'repair_required', v_repair_code)
       );
       continue;
     end if;
@@ -138,10 +154,10 @@ begin
     then
       v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'requires_app_update',
-          'code', 'unsupported_command_version'
+        ledger.pending_change_outcome(
+          v_change_id,
+          'requires_app_update',
+          'unsupported_command_version'
         )
       );
       continue;
@@ -163,11 +179,7 @@ begin
     ) then
       v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'repair_required',
-          'code', 'dependency_failed'
-        )
+        ledger.pending_change_outcome(v_change_id, 'repair_required', 'dependency_failed')
       );
       continue;
     end if;
@@ -192,10 +204,10 @@ begin
       then
         v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
         v_change_outcomes := v_change_outcomes || jsonb_build_array(
-          jsonb_build_object(
-            'changeId', v_change_id,
-            'status', 'repair_required',
-            'code', 'duplicate_idempotency_key'
+          ledger.pending_change_outcome(
+            v_change_id,
+            'repair_required',
+            'duplicate_idempotency_key'
           )
         );
         continue;
@@ -205,11 +217,7 @@ begin
       v_cursor_sequence := greatest(v_cursor_sequence, v_existing_acceptance.cursor_sequence);
       v_cursor := 'ledger:' || v_cursor_sequence::text;
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'accepted',
-          'code', 'accepted'
-        )
+        ledger.pending_change_outcome(v_change_id, 'accepted', 'accepted')
       );
       continue;
     end if;
@@ -230,11 +238,7 @@ begin
     ) then
       v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'repair_required',
-          'code', 'stale_expected_version'
-        )
+        ledger.pending_change_outcome(v_change_id, 'repair_required', 'stale_expected_version')
       );
       continue;
     end if;
@@ -286,20 +290,12 @@ begin
       )
       on conflict (user_id, idempotency_key) do nothing;
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'accepted',
-          'code', 'accepted'
-        )
+        ledger.pending_change_outcome(v_change_id, 'accepted', 'accepted')
       );
     else
       v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
       v_change_outcomes := v_change_outcomes || jsonb_build_array(
-        jsonb_build_object(
-          'changeId', v_change_id,
-          'status', 'repair_required',
-          'code', v_outcome ->> 'code'
-        )
+        ledger.pending_change_outcome(v_change_id, 'repair_required', v_outcome ->> 'code')
       );
     end if;
   end loop;

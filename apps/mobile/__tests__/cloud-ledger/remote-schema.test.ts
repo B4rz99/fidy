@@ -113,6 +113,10 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).toContain("create table if not exists ledger.pending_change_acceptances");
     expect(sql).toContain("primary key (user_id, idempotency_key)");
     expect(sql).toContain("alter table ledger.pending_change_acceptances force row level security");
+    expect(sql).toContain("create or replace function ledger.pending_change_outcome");
+    expect(sql).toContain(
+      "revoke execute on function ledger.pending_change_outcome(text, text, text)"
+    );
     expect(sql).toContain("create or replace function public.cloud_ledger_apply_pending_changes");
     expect(sql).toMatch(
       /revoke execute on function public\.cloud_ledger_apply_pending_changes\([\s\S]*?jsonb\s*\) from public, anon, authenticated/
@@ -130,10 +134,14 @@ describe("Cloud Ledger remote schema", () => {
 
     expect(sql).toContain("pg_advisory_xact_lock");
     expect(sql).toContain("idempotency_key = v_idempotency_key");
-    expect(sql).toContain("'code', 'dependency_failed'");
-    expect(sql).toContain("'code', 'stale_expected_version'");
-    expect(sql).toContain("'status', 'requires_app_update'");
-    expect(sql).toContain("'code', 'unsupported_command_version'");
+    expect(sql).toContain(
+      "ledger.pending_change_outcome(v_change_id, 'repair_required', 'dependency_failed')"
+    );
+    expect(sql).toContain(
+      "ledger.pending_change_outcome(v_change_id, 'repair_required', 'stale_expected_version')"
+    );
+    expect(sql).toContain("'requires_app_update'");
+    expect(sql).toContain("'unsupported_command_version'");
     expect(sql).not.toContain("raise notice");
   });
 

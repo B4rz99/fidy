@@ -2,15 +2,18 @@ import type {
   CaptureImprovementSample,
   CaptureImprovementSampleAccepted,
   CaptureImprovementSampleOutcome,
-  CloudLedgerApplyPendingChangesCommand,
-  CloudLedgerApplyPendingChangesOutcome,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
   CloudLedgerCreateTransactionOutcome,
   LedgerCursor,
 } from "./model.ts";
+import type {
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
+} from "./pending-change-set-model.ts";
 import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
-import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT, readLedgerCursorSequence } from "./model.ts";
+import { readLedgerCursorSequence } from "./model.ts";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT } from "./pending-change-set-model.ts";
 
 type BootstrapRpcArgs = {
   readonly p_user_id: string;

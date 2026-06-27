@@ -2,7 +2,7 @@ import {
   CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT,
   type CloudLedgerApplyPendingChangesCommand,
   type CloudLedgerExpectedRecordVersion,
-} from "./model.ts";
+} from "./pending-change-set-model.ts";
 import { readCreateTransactionCommand } from "./create-transaction-command.ts";
 
 export type ApplyPendingChangesCommandReadResult =
