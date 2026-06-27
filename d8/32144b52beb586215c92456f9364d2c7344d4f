@@ -1,0 +1,29 @@
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_6c070d47258744::t_a6268b8a0c297e 830-879,940-941
+  s_6c070d47258744::t_8ac1b37e4a0641 880-939
+  s_6c070d47258744::t_61dc0348b81349 1249-1264
+apps/mobile/supabase/migrations/20260626230000_cloud_ledger_pending_change_sets.sql
+  s_6c070d47258744::t_2fbe6e015a34db 14-15,61,66,121-135,209-212,247-256,259
+  s_6c070d47258744::t_90c3f9ad1ef7ff 257-258
+  s_6c070d47258744::t_dd886047a92620 260
+supabase/functions/cloud-ledger-api/pending-change-set-model.ts
+  s_6c070d47258744::t_3213d5ad59f4ca 88
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_6c070d47258744::t_f90cc96139d5e1 349-417
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d832144b52beb586215c92456f9364d2c7344d4f",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
