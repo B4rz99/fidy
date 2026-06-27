@@ -485,6 +485,67 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
+  it("keeps unsupported Pending Change Set envelope versions inside the batch outcome path", async () => {
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-old-envelope", "change-old-envelope-two"],
+        changeOutcomes: [
+          {
+            changeId: "change-old-envelope",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+          {
+            changeId: "change-old-envelope-two",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+        ],
+        cursor: "ledger:0",
+      },
+    });
+    const body = {
+      action: "applyPendingChanges",
+      commandVersion: 0,
+      deviceId: "device-ios-17-pro",
+      batchId: "batch-old-envelope",
+      changes: [{ id: "change-old-envelope" }, { id: "change-old-envelope-two" }],
+    } as const;
+
+    const response = await handleCloudLedgerRequest(jsonRequest(body, "valid-token"), api.deps);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-old-envelope", "change-old-envelope-two"],
+        changeOutcomes: [
+          {
+            changeId: "change-old-envelope",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+          {
+            changeId: "change-old-envelope-two",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+        ],
+        cursor: "ledger:0",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      commandVersion: 0,
+      deviceId: "device-ios-17-pro",
+      batchId: "batch-old-envelope",
+      changes: [{ id: "change-old-envelope" }, { id: "change-old-envelope-two" }],
+    });
+  });
+
   it("keeps unsupported pending change kinds inside the batch outcome path", async () => {
     const unsupportedKindChange = {
       id: "change-unsupported-kind",

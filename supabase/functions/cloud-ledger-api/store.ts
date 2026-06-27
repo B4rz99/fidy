@@ -32,7 +32,7 @@ type CreateTransactionRpcArgs = {
 
 type ApplyPendingChangesRpcArgs = {
   readonly p_user_id: string;
-  readonly p_command_version: 1;
+  readonly p_command_version: number;
   readonly p_device_id: string;
   readonly p_batch_id: string;
   readonly p_changes: CloudLedgerApplyPendingChangesCommand["changes"];

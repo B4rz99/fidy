@@ -41,6 +41,7 @@ declare
   v_outcome jsonb;
   v_repair_code text;
   v_rejected_change_ids text[] := array[]::text[];
+  v_seen_idempotency_keys text[] := array[]::text[];
 begin
   if p_command_version is distinct from 1 then
     select coalesce(
@@ -94,6 +95,21 @@ begin
     v_change_id := v_change ->> 'id';
     v_idempotency_key := v_change ->> 'idempotencyKey';
 
+    if v_idempotency_key is not null then
+      if v_idempotency_key = any(v_seen_idempotency_keys) then
+        v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
+        v_change_outcomes := v_change_outcomes || jsonb_build_array(
+          jsonb_build_object(
+            'changeId', v_change_id,
+            'status', 'repair_required',
+            'code', 'duplicate_idempotency_key'
+          )
+        );
+        continue;
+      end if;
+      v_seen_idempotency_keys := array_append(v_seen_idempotency_keys, v_idempotency_key);
+    end if;
+
     if v_change ->> 'kind' = 'invalidPendingChange'
       and nullif(v_change ->> 'commandVersion', '')::integer = 1
     then
@@ -135,6 +151,15 @@ begin
       select 1
       from jsonb_array_elements_text(coalesce(v_change -> 'dependencies', '[]'::jsonb)) as dependencies(change_id)
       where dependencies.change_id = any(v_rejected_change_ids)
+        or not (
+          dependencies.change_id = any(v_accepted_change_ids)
+          or exists (
+            select 1
+            from ledger.pending_change_acceptances
+            where ledger.pending_change_acceptances.user_id = p_user_id
+              and ledger.pending_change_acceptances.change_id = dependencies.change_id
+          )
+        )
     ) then
       v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
       v_change_outcomes := v_change_outcomes || jsonb_build_array(

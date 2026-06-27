@@ -427,6 +427,73 @@ insert into ledger.categories (
     expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-valid")).toBe("0");
   });
 
+  postgresIt("blocks pending changes whose dependencies have not been accepted yet", () => {
+    const postgres = setupSeededPostgres();
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-out-of-order-dependent",
+        transactionId: "txn-out-of-order-dependent",
+        categoryId: "cat-groceries",
+        dependencies: ["change-out-of-order-invalid"],
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-out-of-order-invalid",
+        transactionId: "txn-out-of-order-invalid",
+        categoryId: "cat-deleted",
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-out-of-order-dependent", "change-out-of-order-invalid"],
+      changeOutcomes: [
+        {
+          changeId: "change-out-of-order-dependent",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+        {
+          changeId: "change-out-of-order-invalid",
+          status: "repair_required",
+          code: "invalid_ledger_reference",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-out-of-order-dependent")).toBe("0");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-out-of-order-invalid")).toBe("0");
+  });
+
+  postgresIt("blocks pending changes whose dependencies are missing from the ledger", () => {
+    const postgres = setupSeededPostgres();
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-missing-dependent",
+        transactionId: "txn-missing-dependent",
+        categoryId: "cat-groceries",
+        dependencies: ["change-missing-prerequisite"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-missing-dependent"],
+      changeOutcomes: [
+        {
+          changeId: "change-missing-dependent",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-missing-dependent")).toBe("0");
+  });
+
   postgresIt("retries accepted pending changes idempotently by change identity", () => {
     const postgres = setupSeededPostgres();
 
@@ -703,6 +770,61 @@ insert into ledger.categories (
     expect(readTransactionRowCount(postgres, USER_ID, "txn-idem-original")).toBe("1");
     expect(readTransactionRowCount(postgres, USER_ID, "txn-idem-colliding")).toBe("0");
     expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-on-collision")).toBe("0");
+  });
+
+  postgresIt("rejects same-batch idempotency key reuse after a failed change", () => {
+    const postgres = setupSeededPostgres();
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-duplicate-key-invalid",
+        idempotencyKey: "idem-same-batch-reused",
+        transactionId: "txn-duplicate-key-invalid",
+        categoryId: "cat-deleted",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-duplicate-key-valid",
+        idempotencyKey: "idem-same-batch-reused",
+        transactionId: "txn-duplicate-key-valid",
+        categoryId: "cat-groceries",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-dependent-on-duplicate-key",
+        transactionId: "txn-dependent-on-duplicate-key",
+        categoryId: "cat-groceries",
+        dependencies: ["change-duplicate-key-valid"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: [
+        "change-duplicate-key-invalid",
+        "change-duplicate-key-valid",
+        "change-dependent-on-duplicate-key",
+      ],
+      changeOutcomes: [
+        {
+          changeId: "change-duplicate-key-invalid",
+          status: "repair_required",
+          code: "invalid_ledger_reference",
+        },
+        {
+          changeId: "change-duplicate-key-valid",
+          status: "repair_required",
+          code: "duplicate_idempotency_key",
+        },
+        {
+          changeId: "change-dependent-on-duplicate-key",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-duplicate-key-valid")).toBe("0");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-on-duplicate-key")).toBe("0");
   });
 
   postgresIt(

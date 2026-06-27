@@ -35,8 +35,9 @@ export function readApplyPendingChangesCommand(
     return { kind: "invalid_pending_change" };
   }
   const record = body as Record<string, unknown>;
-  if (record.commandVersion !== 1 || !Array.isArray(record.changes)) {
-    return { kind: "unsupported_command_version" };
+  const commandVersion = readCommandVersion(record.commandVersion);
+  if (commandVersion === null || !Array.isArray(record.changes)) {
+    return { kind: "invalid_pending_change" };
   }
   const deviceId = readEnvelopeId(record.deviceId);
   const batchId = readEnvelopeId(record.batchId);
@@ -45,6 +46,20 @@ export function readApplyPendingChangesCommand(
   }
   if (record.changes.length > CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT) {
     return { kind: "pending_change_batch_too_large" };
+  }
+  if (commandVersion !== 1) {
+    const changes = record.changes.map(readUnsupportedEnvelopeChange);
+    return changes.every(isUnsupportedEnvelopeChange)
+      ? {
+          kind: "valid",
+          command: {
+            commandVersion,
+            deviceId,
+            batchId,
+            changes,
+          },
+        }
+      : { kind: "invalid_pending_change" };
   }
 
   const changes = record.changes.map(readPendingChange);
@@ -62,6 +77,14 @@ export function readApplyPendingChangesCommand(
       changes: changes.filter(isValidPendingChange).map((change) => change.change),
     },
   };
+}
+
+function readUnsupportedEnvelopeChange(value: unknown): { readonly id: string } | null {
+  if (value === null || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  return isLedgerChangeId(record.id) ? { id: record.id } : null;
 }
 
 function readPendingChange(value: unknown): PendingChangeReadResult {
@@ -235,4 +258,10 @@ function isValidPendingChange(
   result: PendingChangeReadResult
 ): result is ValidPendingChangeReadResult {
   return result.kind === "valid";
+}
+
+function isUnsupportedEnvelopeChange(
+  value: { readonly id: string } | null
+): value is { readonly id: string } {
+  return value !== null;
 }
