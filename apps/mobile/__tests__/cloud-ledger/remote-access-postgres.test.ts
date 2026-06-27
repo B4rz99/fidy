@@ -450,7 +450,7 @@ insert into ledger.categories (
         pendingCreateChangeJson({
           changeId: "change-idempotent-create",
           idempotencyKey: "idem-stable-create",
-          transactionId: "txn-idempotent-mutated",
+          transactionId: "txn-idempotent-original",
           categoryId: "cat-groceries",
         }),
       ])
@@ -467,7 +467,126 @@ insert into ledger.categories (
       cursor: "ledger:5",
     });
     expect(readTransactionRowCount(postgres, USER_ID, "txn-idempotent-original")).toBe("1");
-    expect(readTransactionRowCount(postgres, USER_ID, "txn-idempotent-mutated")).toBe("0");
+    expect(readMonthlyProjection(postgres)).toMatchObject({
+      expenseAmount: 15000,
+      transactionCount: 1,
+      cursorSequence: 5,
+    });
+  });
+
+  postgresIt("rejects idempotent retries that change the accepted target record", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-mutated-target",
+          idempotencyKey: "idem-mutated-target",
+          transactionId: "txn-mutated-target-original",
+          categoryId: "cat-groceries",
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-mutated-target"],
+      rejectedChangeIds: [],
+      cursor: "ledger:5",
+    });
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-mutated-target",
+        idempotencyKey: "idem-mutated-target",
+        transactionId: "txn-mutated-target-different",
+        categoryId: "cat-groceries",
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-dependent-on-mutated-target",
+        transactionId: "txn-dependent-on-mutated-target",
+        categoryId: "cat-groceries",
+        dependencies: ["change-mutated-target"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-mutated-target", "change-dependent-on-mutated-target"],
+      changeOutcomes: [
+        {
+          changeId: "change-mutated-target",
+          status: "repair_required",
+          code: "duplicate_idempotency_key",
+        },
+        {
+          changeId: "change-dependent-on-mutated-target",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-mutated-target-original")).toBe("1");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-mutated-target-different")).toBe("0");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-on-mutated-target")).toBe("0");
+  });
+
+  postgresIt("rejects idempotent retries that change the accepted payload", () => {
+    const postgres = setupSeededPostgres();
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingCreateChangeJson({
+          changeId: "change-mutated-payload",
+          idempotencyKey: "idem-mutated-payload",
+          transactionId: "txn-mutated-payload",
+          categoryId: "cat-groceries",
+          amount: 15000,
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-mutated-payload"],
+      rejectedChangeIds: [],
+      cursor: "ledger:5",
+    });
+
+    const outcome = applyPendingChangesOutcome(postgres, [
+      pendingCreateChangeJson({
+        changeId: "change-mutated-payload",
+        idempotencyKey: "idem-mutated-payload",
+        transactionId: "txn-mutated-payload",
+        categoryId: "cat-groceries",
+        amount: 16000,
+      }),
+      pendingCreateChangeJson({
+        changeId: "change-dependent-on-mutated-payload",
+        transactionId: "txn-dependent-on-mutated-payload",
+        categoryId: "cat-groceries",
+        dependencies: ["change-mutated-payload"],
+      }),
+    ]);
+
+    expect(outcome).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-mutated-payload", "change-dependent-on-mutated-payload"],
+      changeOutcomes: [
+        {
+          changeId: "change-mutated-payload",
+          status: "repair_required",
+          code: "duplicate_idempotency_key",
+        },
+        {
+          changeId: "change-dependent-on-mutated-payload",
+          status: "repair_required",
+          code: "dependency_failed",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-mutated-payload")).toBe("1");
+    expect(readTransactionRowCount(postgres, USER_ID, "txn-dependent-on-mutated-payload")).toBe(
+      "0"
+    );
     expect(readMonthlyProjection(postgres)).toMatchObject({
       expenseAmount: 15000,
       transactionCount: 1,
@@ -562,7 +681,7 @@ commit;
           pendingCreateChangeJson({
             changeId: "change-concurrent-idempotent",
             idempotencyKey: "idem-concurrent-stable",
-            transactionId: "txn-concurrent-idempotent-mutated",
+            transactionId: "txn-concurrent-idempotent-original",
             categoryId: "cat-groceries",
           }),
         ]),
@@ -573,10 +692,9 @@ commit;
         ["change-concurrent-idempotent"],
         ["change-concurrent-idempotent"],
       ]);
-      expect(
-        Number(readTransactionRowCount(postgres, USER_ID, "txn-concurrent-idempotent-original")) +
-          Number(readTransactionRowCount(postgres, USER_ID, "txn-concurrent-idempotent-mutated"))
-      ).toBe(1);
+      expect(readTransactionRowCount(postgres, USER_ID, "txn-concurrent-idempotent-original")).toBe(
+        "1"
+      );
       expect(readMonthlyProjection(postgres)).toMatchObject({
         expenseAmount: 15000,
         transactionCount: 1,
@@ -1230,6 +1348,7 @@ function pendingCreateChangeJson(input: {
   readonly changeId: string;
   readonly idempotencyKey?: string;
   readonly transactionId: string;
+  readonly amount?: number;
   readonly categoryId: string | null;
   readonly dependencies?: readonly string[];
   readonly expectedVersions?: readonly unknown[];
@@ -1245,7 +1364,7 @@ function pendingCreateChangeJson(input: {
     transaction: {
       id: input.transactionId,
       type: "expense",
-      amount: 15000,
+      amount: input.amount ?? 15000,
       currency: "COP",
       categoryId: input.categoryId,
       accountId: "acct-cash",

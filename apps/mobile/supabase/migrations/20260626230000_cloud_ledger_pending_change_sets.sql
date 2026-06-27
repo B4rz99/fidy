@@ -8,6 +8,7 @@ create table if not exists ledger.pending_change_acceptances (
   outcome_code text not null check (outcome_code = 'accepted'),
   record_type text check (record_type is null or record_type in ('transaction')),
   record_id text check (record_id is null or length(trim(record_id)) > 0),
+  payload_fingerprint text not null check (length(payload_fingerprint) = 32),
   cursor_sequence bigint not null check (cursor_sequence >= 0),
   accepted_at timestamptz not null default now(),
   primary key (user_id, idempotency_key)
@@ -142,7 +143,12 @@ begin
       and ledger.pending_change_acceptances.idempotency_key = v_idempotency_key;
 
     if found then
-      if v_existing_acceptance.change_id <> v_change_id then
+      if v_existing_acceptance.change_id <> v_change_id
+        or v_existing_acceptance.record_type is distinct from 'transaction'
+        or v_existing_acceptance.record_id is distinct from v_change #>> '{transaction,id}'
+        or v_existing_acceptance.payload_fingerprint is distinct from
+          md5((v_change -> 'transaction')::text)
+      then
         v_rejected_change_ids := array_append(v_rejected_change_ids, v_change_id);
         v_change_outcomes := v_change_outcomes || jsonb_build_array(
           jsonb_build_object(
@@ -238,6 +244,7 @@ begin
         outcome_code,
         record_type,
         record_id,
+        payload_fingerprint,
         cursor_sequence
       ) values (
         p_user_id,
@@ -249,6 +256,7 @@ begin
         'accepted',
         'transaction',
         v_change #>> '{transaction,id}',
+        md5((v_change -> 'transaction')::text),
         replace(v_cursor, 'ledger:', '')::bigint
       )
       on conflict (user_id, idempotency_key) do nothing;

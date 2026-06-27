@@ -485,6 +485,76 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
+  it("keeps unsupported pending change kinds inside the batch outcome path", async () => {
+    const unsupportedKindChange = {
+      id: "change-unsupported-kind",
+      kind: "deleteTransaction",
+      commandVersion: 1,
+      idempotencyKey: "idem-unsupported-kind",
+      dependencies: [],
+      expectedVersions: [],
+      clientTimestamp: "2026-06-01T10:02:00.000Z",
+    } as const;
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-unsupported-kind"],
+        changeOutcomes: [
+          {
+            changeId: "change-unsupported-kind",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          changes: [unsupportedKindChange, PENDING_CHANGE_REQUEST],
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-unsupported-kind"],
+        changeOutcomes: [
+          {
+            changeId: "change-unsupported-kind",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      ...APPLY_PENDING_CHANGES_COMMAND,
+      changes: [unsupportedKindChange, PENDING_CHANGE_REQUEST],
+    });
+  });
+
   it("retains Capture Improvement Samples for the authenticated account only", async () => {
     const api = createCloudLedgerApiDeps();
 

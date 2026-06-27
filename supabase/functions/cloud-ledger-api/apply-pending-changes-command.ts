@@ -88,23 +88,17 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
   ) {
     return { kind: "invalid_pending_change" } as const;
   }
-  if (commandVersion !== 1) {
-    return {
-      kind: "valid",
-      change: {
-        id: record.id,
-        kind: pendingChangeKind,
-        commandVersion,
-        idempotencyKey,
-        dependencies,
-        expectedVersions,
-        clientTimestamp,
-        ...("transaction" in record ? { transaction: record.transaction } : {}),
-      },
-    } as const;
-  }
-  if (pendingChangeKind !== "createTransaction") {
-    return { kind: "invalid_pending_change" } as const;
+  if (commandVersion !== 1 || pendingChangeKind !== "createTransaction") {
+    return toUnsupportedPendingChange({
+      id: record.id,
+      kind: pendingChangeKind,
+      commandVersion,
+      idempotencyKey,
+      dependencies,
+      expectedVersions,
+      clientTimestamp,
+      ...("transaction" in record ? { transaction: record.transaction } : {}),
+    });
   }
   const commandResult = readCreateTransactionCommand({
     commandVersion,
@@ -132,6 +126,15 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
       transaction: commandResult.command.transaction,
     },
   } as const;
+}
+
+function toUnsupportedPendingChange(
+  change: CloudLedgerApplyPendingChangesCommand["changes"][number]
+): PendingChangeReadResult {
+  return {
+    kind: "valid",
+    change,
+  };
 }
 
 function toInvalidPendingChange(
