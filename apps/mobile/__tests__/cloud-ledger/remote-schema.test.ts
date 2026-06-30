@@ -14,6 +14,10 @@ const PENDING_CHANGE_SET_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260626230000_cloud_ledger_pending_change_sets.sql"
 );
+const TRANSACTION_EDIT_DELETE_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260630153000_cloud_ledger_transaction_edit_delete.sql"
+);
 const CAPTURE_IMPROVEMENT_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql"
@@ -142,6 +146,32 @@ describe("Cloud Ledger remote schema", () => {
     );
     expect(sql).toContain("'requires_app_update'");
     expect(sql).toContain("'unsupported_command_version'");
+    expect(sql).not.toContain("raise notice");
+  });
+
+  it("supports transaction amend/delete with tombstones and minimal edit history in Postgres", () => {
+    const sql = readFileSync(TRANSACTION_EDIT_DELETE_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("create table if not exists ledger.transaction_edit_history");
+    expect(sql).toContain("action text not null check (action in ('amend', 'delete'))");
+    expect(sql).toContain("alter table ledger.transaction_edit_history force row level security");
+    expect(sql).toContain("create or replace function ledger.apply_transaction_amend");
+    expect(sql).toContain("create or replace function ledger.apply_transaction_delete");
+    expect(sql).toContain("record_version = v_existing_transaction.record_version + 1");
+    expect(sql).toContain("insert into ledger.tombstones");
+    expect(sql).toContain("on conflict (user_id, record_type, record_id) do update");
+    expect(sql).toContain("insert into ledger.transaction_edit_history");
+    expect(sql).toContain(
+      "v_change_kind not in ('createtransaction', 'amendtransaction', 'deletetransaction')"
+    );
+    expect(sql).toContain(
+      "ledger.pending_change_outcome(v_change_id, 'repair_required', 'stale_expected_version')"
+    );
+    expect(sql).toContain("revoke execute on function ledger.apply_transaction_amend");
+    expect(sql).toContain("revoke execute on function ledger.apply_transaction_delete");
+    expect(sql).toContain(
+      "revoke all on table ledger.transaction_edit_history from public, anon, authenticated"
+    );
     expect(sql).not.toContain("raise notice");
   });
 

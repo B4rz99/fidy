@@ -23,7 +23,9 @@ export {
 export type {
   CloudLedgerApplyPendingChangesAccepted,
   CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingAmendTransactionChange,
   CloudLedgerApplyPendingCreateTransactionChange,
+  CloudLedgerApplyPendingDeleteTransactionChange,
   CloudLedgerClientFailureCode,
 } from "./api-client";
 export {

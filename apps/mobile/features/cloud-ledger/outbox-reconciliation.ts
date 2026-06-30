@@ -57,12 +57,31 @@ function consumeKey(counts: Map<string, number>, key: string): boolean {
 }
 
 function pendingChangeKey(change: CloudLedgerPendingChange): string {
+  return change.kind === "deleteTransaction"
+    ? [
+        change.id,
+        change.kind,
+        change.commandVersion,
+        change.createdAt,
+        change.transactionId,
+        change.expectedVersion,
+      ].join(KEY_SEPARATOR)
+    : pendingTransactionChangeKey(change);
+}
+
+function pendingTransactionChangeKey(
+  change: Extract<
+    CloudLedgerPendingChange,
+    { readonly kind: "amendTransaction" | "createTransaction" }
+  >
+): string {
   const transaction = change.transaction;
   return [
     change.id,
     change.kind,
     change.commandVersion,
     change.createdAt,
+    "expectedVersion" in change ? change.expectedVersion : "",
     transaction.id,
     transaction.type,
     transaction.amount,

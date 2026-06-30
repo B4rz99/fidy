@@ -209,6 +209,7 @@ function seedCloudLedgerRuntimeWithRemoteReferences(accountType = "cash") {
           description: "Remote refs",
           date: "2026-06-20" as IsoDate,
           updatedAt: "2026-06-20T10:02:00.000Z" as IsoDateTime,
+          version: 1,
         },
       ],
       tombstones: [],
@@ -954,6 +955,7 @@ describe("transaction boundaries", () => {
             description: visibleTransaction.description,
             date: toIsoDate(visibleTransaction.date),
             updatedAt: toIsoDateTime(visibleTransaction.updatedAt),
+            version: 1,
           },
         ],
         tombstones: [],
@@ -1295,6 +1297,7 @@ describe("transaction boundaries", () => {
             description: "Accepted coffee",
             date: acceptedDate,
             updatedAt: "2026-06-02T10:04:00.000Z" as IsoDateTime,
+            version: 1,
           },
         ],
         tombstones: [],
@@ -1334,6 +1337,7 @@ describe("transaction boundaries", () => {
         description: `Accepted history ${index}`,
         date: historyDate,
         updatedAt: `2026-06-20T10:${minute}:00.000Z` as IsoDateTime,
+        version: 1,
       };
     });
     setCloudLedgerRuntimeCache(
@@ -1402,6 +1406,7 @@ describe("transaction boundaries", () => {
           {
             ...restoredPendingChange.transaction,
             updatedAt: restoredPendingChange.createdAt as IsoDateTime,
+            version: 1,
           },
         ],
         tombstones: [],
@@ -1485,6 +1490,7 @@ describe("transaction boundaries", () => {
             description: "Remote uncategorized",
             date: "2026-06-12" as IsoDate,
             updatedAt: "2026-06-12T10:00:00.000Z" as IsoDateTime,
+            version: 1,
           },
         ],
         tombstones: [],

@@ -42,6 +42,27 @@ const PENDING_CHANGE_REQUEST = {
   clientTimestamp: "2026-06-01T10:02:00.000Z",
   transaction: CREATE_TRANSACTION_PAYLOAD,
 } as const;
+const AMEND_TRANSACTION_PAYLOAD = {
+  ...CREATE_TRANSACTION_PAYLOAD,
+  amount: 19_000,
+  description: "Market corrected",
+} as const;
+const AMEND_PENDING_CHANGE_REQUEST = {
+  id: "change-amend-market",
+  kind: "amendTransaction",
+  commandVersion: 1,
+  idempotencyKey: "idem-amend-market",
+  dependencies: [],
+  expectedVersions: [
+    {
+      recordType: "transaction",
+      recordId: CLIENT_TRANSACTION_ID,
+      version: 1,
+    },
+  ],
+  clientTimestamp: "2026-06-01T10:05:00.000Z",
+  transaction: AMEND_TRANSACTION_PAYLOAD,
+} as const;
 const LEGACY_V1_PENDING_CHANGE_REQUEST = {
   id: "change-legacy-v1",
   kind: "createTransaction",
@@ -105,6 +126,7 @@ const ACCEPTED_CREATE_TRANSACTION_OUTCOME = {
   code: "accepted",
   transaction: {
     ...CREATE_TRANSACTION_PAYLOAD,
+    version: 1,
     updatedAt: "2026-06-01T10:02:00.000Z",
   },
   cursor: "ledger:2",
@@ -161,6 +183,7 @@ const AUTHENTICATED_BOOTSTRAP_PAYLOAD: LedgerBootstrapPayload = {
       accountId: "acct-cash",
       description: "Market",
       date: "2026-06-01",
+      version: 3,
       updatedAt: "2026-06-01T10:00:00.000Z",
     },
   ],
@@ -181,6 +204,7 @@ const OTHER_USER_BOOTSTRAP_PAYLOAD: LedgerBootstrapPayload = {
       accountId: "acct-other",
       description: "Private",
       date: "2026-06-02",
+      version: 1,
       updatedAt: "2026-06-02T10:00:00.000Z",
     },
   ],
@@ -560,6 +584,92 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
+  it("keeps invalid amend pending changes inside the typed batch outcome path", async () => {
+    const invalidAmend = {
+      ...AMEND_PENDING_CHANGE_REQUEST,
+      transaction: {
+        ...AMEND_TRANSACTION_PAYLOAD,
+        amount: 0,
+      },
+    } as const;
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-amend-market"],
+        changeOutcomes: [
+          {
+            changeId: "change-amend-market",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          changes: [invalidAmend, PENDING_CHANGE_REQUEST],
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        code: "accepted",
+        acceptedChangeIds: ["change-offline-coffee"],
+        rejectedChangeIds: ["change-amend-market"],
+        changeOutcomes: [
+          {
+            changeId: "change-amend-market",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+          {
+            changeId: "change-offline-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+    });
+    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
+      ...APPLY_PENDING_CHANGES_COMMAND,
+      changes: [
+        {
+          id: "change-amend-market",
+          kind: "invalidPendingChange",
+          commandVersion: 1,
+          idempotencyKey: "idem-amend-market",
+          dependencies: [],
+          expectedVersions: [
+            {
+              recordType: "transaction",
+              recordId: CLIENT_TRANSACTION_ID,
+              version: 1,
+            },
+          ],
+          clientTimestamp: "2026-06-01T10:05:00.000Z",
+          invalidCode: "invalid_transaction",
+        },
+        PENDING_CHANGE_REQUEST,
+      ],
+    });
+  });
+
   it("keeps unsupported pending change command versions inside the batch outcome path", async () => {
     const api = createCloudLedgerApiDeps({
       applyPendingChangesResult: {
@@ -795,7 +905,7 @@ describe("cloud-ledger-api Edge Function", () => {
   it("keeps unsupported pending change kinds inside the batch outcome path", async () => {
     const unsupportedKindChange = {
       id: "change-unsupported-kind",
-      kind: "deleteTransaction",
+      kind: "archiveTransaction",
       commandVersion: 1,
       idempotencyKey: "idem-unsupported-kind",
       dependencies: [],
@@ -1711,6 +1821,7 @@ function defaultCreateTransactionOutcome() {
       accountId: "acct-cash",
       description: null,
       date: "2026-06-01",
+      version: 1,
       updatedAt: "2026-06-01T10:02:00.000Z",
     },
     cursor: "ledger:2",

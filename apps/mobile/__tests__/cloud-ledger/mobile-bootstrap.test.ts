@@ -54,6 +54,7 @@ describe("mobile Cloud Ledger bootstrap", () => {
           accountId: "acct-cash",
           description: "Market",
           date: "2026-06-01",
+          version: 3,
           updatedAt: "2026-06-01T10:02:00.000Z",
         },
       ],
@@ -84,6 +85,7 @@ describe("mobile Cloud Ledger bootstrap", () => {
             accountId: "acct-cash",
             description: "Refund",
             date: "2026-06-02",
+            version: 1,
             updatedAt: "2026-06-02T10:02:00.000Z",
           },
         ],
@@ -119,6 +121,7 @@ describe("mobile Cloud Ledger bootstrap", () => {
       accountId: "acct-cash",
       description: "Coffee",
       date: "2026-06-02",
+      version: 1,
       updatedAt: "2026-06-02T10:02:00.000Z",
     };
     const supabase = createCloudLedgerSupabase({
@@ -489,6 +492,7 @@ function defaultBootstrapPayload(): WirePayload {
         accountId: "acct-cash",
         description: "Market",
         date: "2026-06-01",
+        version: 3,
         updatedAt: "2026-06-01T10:02:00.000Z",
       },
     ],

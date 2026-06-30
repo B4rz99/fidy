@@ -175,6 +175,7 @@ begin
           'accountId', v_existing_transaction.account_id,
           'description', v_existing_transaction.description,
           'date', v_existing_transaction.date::text,
+          'version', v_existing_transaction.record_version,
           'updatedAt', to_char(
             v_existing_transaction.updated_at at time zone 'UTC',
             'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
@@ -401,6 +402,7 @@ begin
       'accountId', p_account_id,
       'description', p_description,
       'date', p_date::text,
+      'version', 1,
       'updatedAt', to_char(
         v_updated_at at time zone 'UTC',
         'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'

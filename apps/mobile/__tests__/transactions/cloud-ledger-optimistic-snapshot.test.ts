@@ -53,6 +53,7 @@ describe("Cloud Ledger optimistic transaction snapshots", () => {
             description: transaction.description,
             date: requireIsoDate("2026-06-02"),
             updatedAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+            version: 1,
           },
         ],
         tombstones: [],
@@ -180,5 +181,6 @@ function storedTransactionToCloudLedgerTransaction(transaction: StoredTransactio
     description: transaction.description,
     date: requireIsoDate(transaction.createdAt.toISOString().slice(0, 10)),
     updatedAt: requireIsoDateTime(transaction.updatedAt.toISOString()),
+    version: 1,
   };
 }

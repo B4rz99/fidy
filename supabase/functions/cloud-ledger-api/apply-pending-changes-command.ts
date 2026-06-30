@@ -3,7 +3,11 @@ import {
   type CloudLedgerApplyPendingChangesCommand,
   type CloudLedgerExpectedRecordVersion,
 } from "./pending-change-set-model.ts";
-import { readCreateTransactionCommand } from "./create-transaction-command.ts";
+import {
+  readCloudLedgerTransactionId,
+  readCreateTransactionCommand,
+  type CreateTransactionCommandReadResult,
+} from "./create-transaction-command.ts";
 
 export type ApplyPendingChangesCommandReadResult =
   | { readonly kind: "valid"; readonly command: CloudLedgerApplyPendingChangesCommand }
@@ -24,6 +28,13 @@ type InvalidPendingChangeCode =
   | "invalid_ledger_reference"
   | "invalid_transaction"
   | "invalid_transaction_id";
+type PendingChangeEnvelope = {
+  readonly id: string;
+  readonly idempotencyKey: string;
+  readonly dependencies: readonly string[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
+};
 
 const LEDGER_CHANGE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const ISO_CLIENT_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
@@ -98,17 +109,104 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
   if (!isLedgerChangeId(record.id)) {
     return { kind: "invalid_pending_change" } as const;
   }
+  const id = record.id;
   const pendingChangeKind = readPendingChangeKind(record.kind);
   const commandVersion = readCommandVersion(record.commandVersion);
   if (pendingChangeKind === null || commandVersion === null) {
     return { kind: "invalid_pending_change" } as const;
   }
-  if (commandVersion !== 1 || pendingChangeKind !== "createTransaction") {
+  if (commandVersion !== 1) {
     return toUnsupportedPendingChange(
-      readUnsupportedPendingChange(record, record.id, pendingChangeKind, commandVersion)
+      readUnsupportedPendingChange(record, id, pendingChangeKind, commandVersion)
     );
   }
-  const idempotencyKey = readLegacyCompatibleIdentity(record.idempotencyKey, record.id);
+
+  if (pendingChangeKind === "createTransaction") {
+    return readCreateTransactionPendingChange(record, id);
+  }
+  if (pendingChangeKind === "amendTransaction") {
+    return readAmendTransactionPendingChange(record, id);
+  }
+  if (pendingChangeKind === "deleteTransaction") {
+    return readDeleteTransactionPendingChange(record, id);
+  }
+  return toUnsupportedPendingChange(
+    readUnsupportedPendingChange(record, id, pendingChangeKind, commandVersion)
+  );
+}
+
+function readCreateTransactionPendingChange(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeReadResult {
+  const envelope = readLegacyCompatiblePendingChangeEnvelope(record, id);
+  if (envelope === null) {
+    return { kind: "invalid_pending_change" } as const;
+  }
+  const commandResult = readCreateTransactionCommand({
+    commandVersion: 1,
+    transaction: record.transaction,
+  });
+  if (commandResult.kind !== "valid") {
+    return toInvalidPendingChange(commandResult.kind, envelope);
+  }
+  return {
+    kind: "valid",
+    change: {
+      ...envelope,
+      kind: "createTransaction",
+      commandVersion: 1,
+      transaction: commandResult.command.transaction,
+    },
+  } as const;
+}
+
+function readAmendTransactionPendingChange(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeReadResult {
+  const envelope = readStrictPendingChangeEnvelope(record, id);
+  if (envelope === null) {
+    return { kind: "invalid_pending_change" } as const;
+  }
+  const commandResult = readCreateTransactionCommand({
+    commandVersion: 1,
+    transaction: record.transaction,
+  });
+  if (commandResult.kind !== "valid") {
+    return toInvalidPendingChange(commandResult.kind, envelope);
+  }
+  return toTransactionMutationChange("amendTransaction", envelope, commandResult);
+}
+
+function readDeleteTransactionPendingChange(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeReadResult {
+  const envelope = readStrictPendingChangeEnvelope(record, id);
+  if (envelope === null) {
+    return { kind: "invalid_pending_change" } as const;
+  }
+  const transactionId = readCloudLedgerTransactionId(record.transactionId);
+  if (transactionId === null) {
+    return toInvalidPendingChange("invalid_transaction_id", envelope);
+  }
+  return {
+    kind: "valid",
+    change: {
+      ...envelope,
+      kind: "deleteTransaction",
+      commandVersion: 1,
+      transactionId,
+    },
+  } as const;
+}
+
+function readLegacyCompatiblePendingChangeEnvelope(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeEnvelope | null {
+  const idempotencyKey = readLegacyCompatibleIdentity(record.idempotencyKey, id);
   const dependencies = readLegacyCompatibleDependencies(record.dependencies);
   const expectedVersions = readLegacyCompatibleExpectedVersions(record.expectedVersions);
   const clientTimestamp = readLegacyCompatibleClientTimestamp(record.clientTimestamp);
@@ -118,31 +216,50 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
     expectedVersions === null ||
     clientTimestamp === null
   ) {
-    return { kind: "invalid_pending_change" } as const;
+    return null;
   }
-  const commandResult = readCreateTransactionCommand({
-    commandVersion,
-    transaction: record.transaction,
-  });
-  if (commandResult.kind !== "valid") {
-    return toInvalidPendingChange(commandResult.kind, {
-      id: record.id,
-      idempotencyKey,
-      dependencies,
-      expectedVersions,
-      clientTimestamp,
-    });
-  }
+  return {
+    id,
+    idempotencyKey,
+    dependencies,
+    expectedVersions,
+    clientTimestamp,
+  };
+}
+
+function readStrictPendingChangeEnvelope(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeEnvelope | null {
+  const idempotencyKey = readLedgerChangeIdentity(record.idempotencyKey);
+  const dependencies = readLedgerChangeDependencies(record.dependencies);
+  const expectedVersions = readExpectedVersions(record.expectedVersions);
+  const clientTimestamp = readClientTimestamp(record.clientTimestamp);
+  return idempotencyKey === null ||
+    dependencies === null ||
+    expectedVersions === null ||
+    clientTimestamp === null
+    ? null
+    : {
+        id,
+        idempotencyKey,
+        dependencies,
+        expectedVersions,
+        clientTimestamp,
+      };
+}
+
+function toTransactionMutationChange(
+  kind: "amendTransaction",
+  envelope: PendingChangeEnvelope,
+  commandResult: Extract<CreateTransactionCommandReadResult, { readonly kind: "valid" }>
+): PendingChangeReadResult {
   return {
     kind: "valid",
     change: {
-      id: record.id,
-      kind: "createTransaction",
+      ...envelope,
+      kind,
       commandVersion: 1,
-      idempotencyKey,
-      dependencies,
-      expectedVersions,
-      clientTimestamp,
       transaction: commandResult.command.transaction,
     },
   } as const;

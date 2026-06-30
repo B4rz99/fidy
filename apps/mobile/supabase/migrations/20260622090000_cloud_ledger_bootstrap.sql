@@ -169,6 +169,7 @@ transaction_rows as (
         'accountId', ledger.transactions.account_id,
         'description', ledger.transactions.description,
         'date', ledger.transactions.date::text,
+        'version', ledger.transactions.record_version,
         'updatedAt', to_char(
           ledger.transactions.updated_at at time zone 'UTC',
           'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'

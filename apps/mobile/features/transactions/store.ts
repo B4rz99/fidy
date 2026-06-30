@@ -431,7 +431,7 @@ export async function deletePendingCloudLedgerTransactionShadows(userId: UserId)
   let pendingTransactionIds: readonly TransactionId[];
   try {
     pendingTransactionIds = (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
-      change.kind === "createTransaction" ? [change.transaction.id] : []
+      change.kind === "deleteTransaction" ? [change.transactionId] : [change.transaction.id]
     );
   } catch (error) {
     captureWarning("cloud_ledger_shadow_transaction_delete_failed", {
@@ -496,7 +496,9 @@ async function isCloudLedgerTransactionReadOnly(
   }
   try {
     return (await getCloudLedgerOutbox(userId).load()).some(
-      (change) => change.kind === "createTransaction" && change.transaction.id === transactionId
+      (change) =>
+        (change.kind === "deleteTransaction" ? change.transactionId : change.transaction.id) ===
+        transactionId
     );
   } catch (error) {
     captureWarning("cloud_ledger_read_only_outbox_lookup_failed", {
