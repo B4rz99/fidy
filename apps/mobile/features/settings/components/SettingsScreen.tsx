@@ -24,6 +24,7 @@ import {
   Shield,
   Sparkles,
   Tag,
+  TriangleAlert,
   Wallet,
   Wrench,
 } from "@/shared/components/icons";
@@ -176,6 +177,11 @@ export function SettingsScreen() {
             icon={Bell}
             label={t("settings.notifications")}
             onPress={() => push("/notification-preferences")}
+          />
+          <SettingsRow
+            icon={TriangleAlert}
+            label={t("cloudLedger.repair.settingsRow")}
+            onPress={() => push("/ledger-repair")}
             isLast
           />
         </SettingsSection>

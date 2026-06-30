@@ -25,6 +25,10 @@ const REPAIR_REASON_COPY_KEYS: Record<
     title: "cloudLedger.repair.dependencyFailure.title",
     body: "cloudLedger.repair.dependencyFailure.body",
   },
+  duplicateChange: {
+    title: "cloudLedger.repair.duplicateChange.title",
+    body: "cloudLedger.repair.duplicateChange.body",
+  },
   invalidTransaction: {
     title: "cloudLedger.repair.invalidTransaction.title",
     body: "cloudLedger.repair.invalidTransaction.body",
@@ -36,6 +40,14 @@ const REPAIR_REASON_COPY_KEYS: Record<
   staleConflict: {
     title: "cloudLedger.repair.staleConflict.title",
     body: "cloudLedger.repair.staleConflict.body",
+  },
+  unauthorizedTransaction: {
+    title: "cloudLedger.repair.unauthorizedTransaction.title",
+    body: "cloudLedger.repair.unauthorizedTransaction.body",
+  },
+  unresolvedFailure: {
+    title: "cloudLedger.repair.unresolvedFailure.title",
+    body: "cloudLedger.repair.unresolvedFailure.body",
   },
   unsupportedCommandVersion: {
     title: "cloudLedger.repair.unsupportedCommandVersion.title",

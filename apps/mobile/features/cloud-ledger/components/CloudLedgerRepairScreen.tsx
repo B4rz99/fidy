@@ -1,0 +1,89 @@
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { useOptionalUserId } from "@/features/auth/public";
+import { ScreenLayout } from "@/shared/components";
+import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
+import { showErrorToast } from "@/shared/lib";
+import type { LedgerChangeId, UserId } from "@/shared/types/branded";
+import {
+  getCloudLedgerOutbox,
+  loadCloudLedgerRepairItems,
+  retryCloudLedgerRepairItem,
+  type CloudLedgerRepairItem,
+} from "../outbox";
+import {
+  discardCloudLedgerRepairItemForUser,
+  flushCloudLedgerOutboxForUser,
+} from "../runtime-mutations.public";
+import { CloudLedgerRepairList } from "./CloudLedgerRepairList";
+
+export function CloudLedgerRepairScreen() {
+  const { back, push } = useRouter();
+  const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const [items, setItems] = useState<readonly CloudLedgerRepairItem[] | null>(null);
+  const { run: guardedAction } = useAsyncGuard();
+
+  const reloadItems = async (currentUserId: UserId | null) => {
+    setItems(currentUserId === null ? [] : await loadRepairItemsForUser(currentUserId));
+  };
+
+  useMountEffect(() => {
+    void reloadItems(userId).catch(() => {
+      setItems([]);
+      showErrorToast(t("cloudLedger.repair.actionFailed"));
+    });
+  });
+
+  const runRepairAction = (action: (currentUserId: UserId) => Promise<void>) => {
+    void guardedAction(async () => {
+      if (userId === null) {
+        return;
+      }
+      try {
+        await action(userId);
+        await reloadItems(userId);
+      } catch {
+        showErrorToast(t("cloudLedger.repair.actionFailed"));
+      }
+    });
+  };
+
+  const handleRetry = (changeId: LedgerChangeId) =>
+    runRepairAction(async (currentUserId) => {
+      await retryCloudLedgerRepairItem(getCloudLedgerOutbox(currentUserId), changeId);
+      await flushCloudLedgerOutboxForUser(currentUserId);
+    });
+
+  const handleDiscard = (changeId: LedgerChangeId) =>
+    runRepairAction(async (currentUserId) => {
+      const didDiscard = await discardCloudLedgerRepairItemForUser(currentUserId, changeId);
+      if (!didDiscard) {
+        throw new Error("ledger repair discard failed");
+      }
+    });
+
+  const handleEditAndResubmit = (changeId: LedgerChangeId) => {
+    push({
+      pathname: "/ledger-repair-transaction",
+      params: { changeId },
+    });
+  };
+
+  return (
+    <ScreenLayout variant="sub" title={t("cloudLedger.repair.screenTitle")} onBack={back}>
+      {items === null ? null : (
+        <CloudLedgerRepairList
+          items={items}
+          onDiscard={handleDiscard}
+          onEditAndResubmit={handleEditAndResubmit}
+          onRetry={handleRetry}
+        />
+      )}
+    </ScreenLayout>
+  );
+}
+
+async function loadRepairItemsForUser(userId: UserId): Promise<readonly CloudLedgerRepairItem[]> {
+  return await loadCloudLedgerRepairItems(getCloudLedgerOutbox(userId));
+}

@@ -838,9 +838,17 @@ describe("mobile Cloud Ledger offline outbox", () => {
       "change-stale-amend-coffee",
       "change-stale-delete-taxi",
     ]);
-    expect((await loadCloudLedgerRepairItems(outbox)).map((item) => item.id)).toEqual([
-      "change-stale-amend-coffee",
-      "change-stale-delete-taxi",
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-stale-amend-coffee",
+        kind: "amendTransaction",
+        actions: ["editAndResubmit", "discard"],
+      }),
+      expect.objectContaining({
+        id: "change-stale-delete-taxi",
+        kind: "deleteTransaction",
+        actions: ["discard"],
+      }),
     ]);
     expect(reconciledCache.transactions).toEqual([amendedCoffee]);
   });
@@ -1453,20 +1461,26 @@ describe("mobile Cloud Ledger offline outbox", () => {
       encryptionKey: OUTBOX_KEY,
       storage: storage.adapter,
     });
-    await outbox.enqueue(
-      pendingCreateChange({
-        changeId: "change-parent-invalid",
-        command: offlineCoffeeCommand(),
-        createdAt: "2026-06-02T10:03:00.000Z",
-      })
-    );
-    await outbox.enqueue(
-      pendingCreateChange({
-        changeId: "change-child-blocked",
-        command: offlineTaxiCommand(),
-        createdAt: "2026-06-02T10:04:00.000Z",
-      })
-    );
+    const parentCache = await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-parent-invalid"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const amendedCoffee = acceptedCoffeeLedgerTransaction({
+      description: "Coffee child amend",
+      version: 2,
+      updatedAt: "2026-06-02T10:04:00.000Z",
+    });
+    const optimisticCache = await amendOfflineCloudLedgerTransaction({
+      cache: parentCache,
+      changeId: requireLedgerChangeId("change-child-blocked"),
+      createdAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transaction: amendedCoffee,
+    });
     const failedSupabase = createCloudLedgerSupabase({
       createTransactionPayload: {
         code: "accepted",
@@ -1503,7 +1517,7 @@ describe("mobile Cloud Ledger offline outbox", () => {
     });
 
     const repairCache = await flushPendingCloudLedgerChanges({
-      cache: createSeededLedgerCache(),
+      cache: optimisticCache,
       outbox,
       supabase: failedSupabase.client,
     });
@@ -1524,6 +1538,32 @@ describe("mobile Cloud Ledger offline outbox", () => {
         parentChangeId: "change-parent-invalid",
       }),
     ]);
+    expect(failedSupabase.functionsInvoke).toHaveBeenCalledWith(
+      "cloud-ledger-api",
+      expect.objectContaining({
+        body: expect.objectContaining({
+          action: "applyPendingChanges",
+          changes: [
+            expect.objectContaining({
+              id: "change-parent-invalid",
+              dependencies: [],
+            }),
+            expect.objectContaining({
+              id: "change-child-blocked",
+              dependencies: ["change-parent-invalid"],
+            }),
+          ],
+        }),
+      })
+    );
+
+    await retryCloudLedgerRepairItem(outbox, requireLedgerChangeId("change-child-blocked"));
+    await flushPendingCloudLedgerChanges({
+      cache: repairCache,
+      outbox,
+      supabase: acceptedSupabase.client,
+    });
+
     expect(acceptedSupabase.functionsInvoke).not.toHaveBeenCalled();
   });
 
@@ -1587,6 +1627,103 @@ describe("mobile Cloud Ledger offline outbox", () => {
         actions: ["discard"],
       }),
     ]);
+    expect(acceptedSupabase.functionsInvoke).not.toHaveBeenCalled();
+  });
+
+  it("surfaces terminal backend repair outcomes and holds them from automatic retry", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const pendingChanges = [
+      {
+        changeId: "change-duplicate-change-id",
+        code: "duplicate_change_id",
+        expectedReason: "duplicateChange",
+      },
+      {
+        changeId: "change-duplicate-transaction-id",
+        code: "duplicate_transaction_id",
+        expectedReason: "duplicateChange",
+      },
+      {
+        changeId: "change-duplicate-idempotency-key",
+        code: "duplicate_idempotency_key",
+        expectedReason: "duplicateChange",
+      },
+      {
+        changeId: "change-unauthorized-transaction-id",
+        code: "unauthorized_transaction_id",
+        expectedReason: "unauthorizedTransaction",
+      },
+    ] as const;
+    await pendingChanges.reduce<Promise<void>>(
+      (previous, pending, index) =>
+        previous.then(async () => {
+          await outbox.enqueue(
+            pendingCreateChange({
+              changeId: pending.changeId,
+              command: largeOfflineCommand(index),
+              createdAt: `2026-06-02T10:${String(index + 10).padStart(2, "0")}:00.000Z`,
+            })
+          );
+        }),
+      Promise.resolve()
+    );
+    const failedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: pendingChanges.map((pending) => pending.changeId),
+        changeOutcomes: pendingChanges.map((pending) => ({
+          changeId: pending.changeId,
+          status: "repair_required",
+          code: pending.code,
+        })),
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+    const acceptedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: pendingChanges.map((pending) => pending.changeId),
+        rejectedChangeIds: [],
+        changeOutcomes: pendingChanges.map((pending) => ({
+          changeId: pending.changeId,
+          status: "accepted",
+          code: "accepted",
+        })),
+        cursor: "ledger:9",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:9"),
+    });
+
+    const repairCache = await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: failedSupabase.client,
+    });
+    await flushPendingCloudLedgerChanges({
+      cache: repairCache,
+      outbox,
+      supabase: acceptedSupabase.client,
+    });
+
+    expect(
+      (await loadCloudLedgerRepairItems(outbox)).map((item) => ({
+        id: item.id,
+        reason: item.reason,
+        actions: item.actions,
+      }))
+    ).toEqual(
+      pendingChanges.map((pending) => ({
+        id: pending.changeId,
+        reason: pending.expectedReason,
+        actions: ["discard"],
+      }))
+    );
     expect(acceptedSupabase.functionsInvoke).not.toHaveBeenCalled();
   });
 

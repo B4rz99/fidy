@@ -21,6 +21,7 @@ import {
   parsePendingChange,
   toPendingChangeCommand,
   toTransactionCommandPayload,
+  withPendingChangeDependencies,
   type CloudLedgerPendingChange,
 } from "./pending-changes";
 export { applyPendingLedgerChanges } from "./pending-changes";
@@ -69,9 +70,12 @@ export type CloudLedgerOutboxFailureCode = "invalid_encrypted_outbox";
 export type CloudLedgerRepairAction = "discard" | "editAndResubmit" | "retry";
 export type CloudLedgerRepairReason =
   | "dependencyFailure"
+  | "duplicateChange"
   | "invalidTransaction"
   | "retryableFailure"
   | "staleConflict"
+  | "unauthorizedTransaction"
+  | "unresolvedFailure"
   | "unsupportedCommandVersion";
 export type CloudLedgerRepairState = {
   readonly changeId: LedgerChangeId;
@@ -165,7 +169,8 @@ export function createEncryptedCloudLedgerOutbox(input: {
     enqueue: (change) =>
       serializeMutation(async () => {
         const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
-        const changes = [...snapshot.changes, change];
+        const changeWithDependencies = withPendingChangeDependencies(change, snapshot.changes);
+        const changes = [...snapshot.changes, changeWithDependencies];
         await writeOutboxSnapshot(input.storage, encryptionKey, {
           version: CLOUD_LEDGER_OUTBOX_VERSION,
           changes,
@@ -480,8 +485,9 @@ export async function flushPendingCloudLedgerChanges(input: {
   readonly shouldContinue?: () => boolean;
 }): Promise<CloudLedgerCache> {
   const changes = await input.outbox.load();
-  const repairChangeIds = new Set(
-    (await loadCloudLedgerRepairItems(input.outbox)).map((item) => item.id)
+  const repairChangeIds = dependencyBlockedChangeIds(
+    changes,
+    new Set((await loadCloudLedgerRepairItems(input.outbox)).map((item) => item.id))
   );
   const retryAttempts = new Map(
     (await (input.outbox.loadAutoRetryAttempts?.() ?? Promise.resolve([]))).map((retry) => [
@@ -521,6 +527,24 @@ export async function flushPendingCloudLedgerChanges(input: {
     cache: refreshedCache,
     outbox: input.outbox,
   });
+}
+
+function dependencyBlockedChangeIds(
+  changes: readonly CloudLedgerPendingChange[],
+  blockedIds: ReadonlySet<LedgerChangeId>
+): ReadonlySet<LedgerChangeId> {
+  const nextBlockedIds = new Set([
+    ...blockedIds,
+    ...changes
+      .filter((change) => !blockedIds.has(change.id))
+      .filter((change) =>
+        (change.dependencies ?? []).some((dependency) => blockedIds.has(dependency))
+      )
+      .map((change) => change.id),
+  ]);
+  return nextBlockedIds.size === blockedIds.size
+    ? blockedIds
+    : dependencyBlockedChangeIds(changes, nextBlockedIds);
 }
 
 async function flushPendingChanges(
@@ -590,21 +614,25 @@ function repairStatesFromOutcome(
   );
   return batchOutcomes
     .filter((changeOutcome) => shouldSurfaceRepairOutcome(changeOutcome, retryAttempts))
-    .map((changeOutcome) => repairStateFromOutcome(batchOutcomes, changeOutcome, retryAttempts));
+    .map((changeOutcome) =>
+      repairStateFromOutcome(batch, batchOutcomes, changeOutcome, retryAttempts)
+    );
 }
 
 function repairStateFromOutcome(
+  batch: readonly CloudLedgerPendingChange[],
   batchOutcomes: readonly CloudLedgerPendingChangeOutcome[],
   outcome: CloudLedgerPendingChangeOutcome,
   retryAttempts: ReadonlyMap<LedgerChangeId, number>
 ): CloudLedgerRepairState {
-  const parentChangeId = parentProblemChangeId(batchOutcomes, outcome, retryAttempts);
+  const parentChangeId = parentProblemChangeId(batch, batchOutcomes, outcome, retryAttempts);
   return parentChangeId === undefined
     ? { changeId: outcome.changeId, outcome }
     : { changeId: outcome.changeId, outcome, parentChangeId };
 }
 
 function parentProblemChangeId(
+  batch: readonly CloudLedgerPendingChange[],
   batchOutcomes: readonly CloudLedgerPendingChangeOutcome[],
   outcome: CloudLedgerPendingChangeOutcome,
   retryAttempts: ReadonlyMap<LedgerChangeId, number>
@@ -612,17 +640,14 @@ function parentProblemChangeId(
   if (outcome.code !== "dependency_failed") {
     return undefined;
   }
-  const dependencyIndex = batchOutcomes.findIndex(
-    (candidate) => candidate.changeId === outcome.changeId
+  const dependencies = batch.find((change) => change.id === outcome.changeId)?.dependencies ?? [];
+  const surfacedParentIds = new Set(
+    batchOutcomes
+      .filter((candidate) => candidate.changeId !== outcome.changeId)
+      .filter((candidate) => shouldSurfaceRepairOutcome(candidate, retryAttempts))
+      .map((candidate) => candidate.changeId)
   );
-  const parentCandidates = batchOutcomes
-    .slice(0, Math.max(0, dependencyIndex))
-    .filter(
-      (candidate) =>
-        candidate.code !== "dependency_failed" &&
-        shouldSurfaceRepairOutcome(candidate, retryAttempts)
-    );
-  return parentCandidates[parentCandidates.length - 1]?.changeId;
+  return dependencies.find((dependency) => surfacedParentIds.has(dependency)) ?? dependencies[0];
 }
 
 function shouldSurfaceRepairOutcome(
@@ -663,7 +688,7 @@ function repairItemsFromSnapshot(
   const changesById = new Map(snapshot.changes.map((change) => [change.id, change]));
   return snapshot.repairs.flatMap((repair) => {
     const change = changesById.get(repair.changeId);
-    const presentation = repairPresentation(repair.outcome);
+    const presentation = change === undefined ? null : repairPresentation(change, repair.outcome);
     return change === undefined || presentation === null
       ? []
       : [
@@ -682,6 +707,7 @@ function repairItemsFromSnapshot(
 }
 
 function repairPresentation(
+  change: CloudLedgerPendingChange,
   outcome: CloudLedgerPendingChangeOutcome
 ): Pick<CloudLedgerRepairItem, "actions" | "reason"> | null {
   if (outcome.status === "retryable") {
@@ -691,19 +717,38 @@ function repairPresentation(
     return { reason: "unsupportedCommandVersion", actions: ["discard"] };
   }
   if (outcome.code === "stale_expected_version") {
-    return { reason: "staleConflict", actions: ["editAndResubmit", "discard"] };
+    return { reason: "staleConflict", actions: editableRepairActions(change) };
   }
   if (outcome.code === "dependency_failed") {
     return { reason: "dependencyFailure", actions: ["discard"] };
+  }
+  if (
+    outcome.code === "duplicate_change_id" ||
+    outcome.code === "duplicate_idempotency_key" ||
+    outcome.code === "duplicate_transaction_id"
+  ) {
+    return { reason: "duplicateChange", actions: ["discard"] };
+  }
+  if (outcome.code === "unauthorized_transaction_id") {
+    return { reason: "unauthorizedTransaction", actions: ["discard"] };
   }
   if (
     outcome.code === "invalid_ledger_reference" ||
     outcome.code === "invalid_transaction" ||
     outcome.code === "invalid_transaction_id"
   ) {
-    return { reason: "invalidTransaction", actions: ["editAndResubmit", "discard"] };
+    return { reason: "invalidTransaction", actions: editableRepairActions(change) };
+  }
+  if (outcome.status === "repair_required") {
+    return { reason: "unresolvedFailure", actions: ["discard"] };
   }
   return null;
+}
+
+function editableRepairActions(
+  change: CloudLedgerPendingChange
+): readonly CloudLedgerRepairAction[] {
+  return change.kind === "deleteTransaction" ? ["discard"] : ["editAndResubmit", "discard"];
 }
 
 function mergeRepairStates(

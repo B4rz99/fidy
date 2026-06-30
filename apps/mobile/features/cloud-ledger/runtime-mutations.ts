@@ -2,11 +2,17 @@ import NetInfo from "@react-native-community/netinfo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "@/shared/db/supabase";
 import type { IsoDateTime, LedgerChangeId, TransactionId, UserId } from "@/shared/types/branded";
-import type { CloudLedgerCreateTransactionCommand, CloudLedgerTransaction } from "./cache";
+import {
+  createEmptyCloudLedgerCache,
+  refreshCloudLedgerCache,
+  type CloudLedgerCreateTransactionCommand,
+  type CloudLedgerTransaction,
+} from "./cache";
 import {
   amendOfflineCloudLedgerTransaction,
   createOfflineCloudLedgerTransaction,
   deleteOfflineCloudLedgerTransaction,
+  discardCloudLedgerRepairItem,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   restoreOptimisticCloudLedgerCache,
@@ -57,6 +63,44 @@ export async function flushCloudLedgerOutboxForUser(userId: UserId): Promise<boo
     return false;
   }
   return flushCloudLedgerOutboxIfCurrent(userId, writeToken, getSupabase());
+}
+
+export async function discardCloudLedgerRepairItemForUser(
+  userId: UserId,
+  changeId: LedgerChangeId
+): Promise<boolean> {
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+  try {
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    const supabase = getSupabase();
+    if (!(await hasSupabaseSessionForUser(supabase, userId))) {
+      return false;
+    }
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    const acceptedCache = await refreshCloudLedgerCache(supabase, createEmptyCloudLedgerCache());
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    const outbox = getCloudLedgerOutbox(userId);
+    await discardCloudLedgerRepairItem(outbox, changeId);
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    return setCloudLedgerRuntimeCacheIfCurrent(
+      userId,
+      writeToken,
+      await restoreOptimisticCloudLedgerCache({
+        cache: acceptedCache,
+        outbox,
+      })
+    );
+  } finally {
+    finishCloudLedgerRuntimeCacheWrite(userId, writeToken);
+  }
 }
 
 export async function enqueueCloudLedgerOptimisticCreate(input: {

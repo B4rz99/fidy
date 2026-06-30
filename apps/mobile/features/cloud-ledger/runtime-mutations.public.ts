@@ -3,6 +3,7 @@ export type {
   CloudLedgerOptimisticMutationResult,
 } from "./runtime-mutations";
 export {
+  discardCloudLedgerRepairItemForUser,
   enqueueCloudLedgerOptimisticAmend,
   enqueueCloudLedgerOptimisticCreate,
   enqueueCloudLedgerOptimisticDelete,

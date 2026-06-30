@@ -1,6 +1,7 @@
 import NetInfo from "@react-native-community/netinfo";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  discardCloudLedgerRepairItemForUser,
   enqueueCloudLedgerOptimisticAmend,
   enqueueCloudLedgerOptimisticCreate,
   enqueueCloudLedgerOptimisticDelete,
@@ -21,23 +22,28 @@ import { getSupabase } from "@/shared/db/supabase";
 
 const mocks = vi.hoisted(() => {
   const cache = { cursor: null, transactions: [] };
+  const emptyCache = { cursor: null, transactions: [], source: "empty" };
   const outbox = { id: "outbox" };
   const writeToken = { generation: 1 };
   const abortSignal = new AbortController().signal;
   return {
     abortSignal,
     cache,
+    emptyCache,
     flushedCache: { cursor: "flushed", transactions: [] },
     optimisticCache: { cursor: "optimistic", transactions: [] },
     outbox,
+    refreshedRepairBaseCache: { cursor: "refreshed-repair-base", transactions: [] },
     writeToken,
     flushToken: { generation: 2 },
     beginCloudLedgerRuntimeCacheFlush: vi.fn<(...args: any[]) => any>(),
     beginCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     createCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
     amendOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
+    createEmptyCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
     deleteOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
+    discardCloudLedgerRepairItem: vi.fn<(...args: any[]) => any>(),
     finishCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerOutbox: vi.fn<(...args: any[]) => any>(),
@@ -45,6 +51,7 @@ const mocks = vi.hoisted(() => {
     getSupabase: vi.fn<(...args: any[]) => any>(),
     isCloudLedgerRuntimeCacheWriteCurrent: vi.fn<(...args: any[]) => any>(),
     releaseCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
+    refreshCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     restoreOptimisticCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     resumeCloudLedgerRuntimeCacheWrites: vi.fn<(...args: any[]) => any>(),
     setCloudLedgerRuntimeCacheIfCurrent: vi.fn<(...args: any[]) => any>(),
@@ -61,9 +68,15 @@ vi.mock("@/features/cloud-ledger/outbox", () => ({
   amendOfflineCloudLedgerTransaction: mocks.amendOfflineCloudLedgerTransaction,
   createOfflineCloudLedgerTransaction: mocks.createOfflineCloudLedgerTransaction,
   deleteOfflineCloudLedgerTransaction: mocks.deleteOfflineCloudLedgerTransaction,
+  discardCloudLedgerRepairItem: mocks.discardCloudLedgerRepairItem,
   flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
   restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
+}));
+
+vi.mock("@/features/cloud-ledger/cache", () => ({
+  createEmptyCloudLedgerCache: mocks.createEmptyCloudLedgerCache,
+  refreshCloudLedgerCache: mocks.refreshCloudLedgerCache,
 }));
 
 vi.mock("@/features/cloud-ledger/runtime", () => ({
@@ -93,12 +106,15 @@ describe("Cloud Ledger runtime mutations", () => {
     mocks.beginCloudLedgerRuntimeCacheWrite.mockReturnValue(mocks.writeToken);
     mocks.createCloudLedgerRuntimeCacheWriteAbortSignal.mockReturnValue(mocks.abortSignal);
     mocks.amendOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
+    mocks.createEmptyCloudLedgerCache.mockReturnValue(mocks.emptyCache);
     mocks.createOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
     mocks.deleteOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
+    mocks.discardCloudLedgerRepairItem.mockResolvedValue(undefined);
     mocks.flushPendingCloudLedgerChanges.mockResolvedValue(mocks.flushedCache);
     mocks.getCloudLedgerOutbox.mockReturnValue(mocks.outbox);
     mocks.getCloudLedgerRuntimeCache.mockReturnValue(mocks.cache);
     mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValue(true);
+    mocks.refreshCloudLedgerCache.mockResolvedValue(mocks.refreshedRepairBaseCache);
     mocks.restoreOptimisticCloudLedgerCache.mockResolvedValue(mocks.optimisticCache);
     mocks.setCloudLedgerRuntimeCacheIfCurrent.mockReturnValue(true);
     vi.mocked(NetInfo.fetch).mockResolvedValue({ isConnected: true } as never);
@@ -133,6 +149,25 @@ describe("Cloud Ledger runtime mutations", () => {
 
     await expect(restoreCloudLedgerOptimisticRuntimeState(userId)).resolves.toBe(false);
 
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.optimisticCache
+    );
+  });
+
+  it("discards a repair item by rebuilding runtime state from a fresh accepted cache", async () => {
+    const changeId = "ledger-change-discard" as LedgerChangeId;
+
+    await expect(discardCloudLedgerRepairItemForUser(userId, changeId)).resolves.toBe(true);
+
+    expect(mocks.createEmptyCloudLedgerCache).toHaveBeenCalled();
+    expect(mocks.refreshCloudLedgerCache).toHaveBeenCalledWith(expect.anything(), mocks.emptyCache);
+    expect(mocks.discardCloudLedgerRepairItem).toHaveBeenCalledWith(mocks.outbox, changeId);
+    expect(mocks.restoreOptimisticCloudLedgerCache).toHaveBeenCalledWith({
+      cache: mocks.refreshedRepairBaseCache,
+      outbox: mocks.outbox,
+    });
     expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
       userId,
       mocks.writeToken,

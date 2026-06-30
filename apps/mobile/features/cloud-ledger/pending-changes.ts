@@ -20,6 +20,7 @@ export type CloudLedgerPendingCreateTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "createTransaction";
   readonly commandVersion: 1;
+  readonly dependencies?: readonly LedgerChangeId[];
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
   readonly createdAt: IsoDateTime;
 };
@@ -28,6 +29,7 @@ export type CloudLedgerPendingAmendTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "amendTransaction";
   readonly commandVersion: 1;
+  readonly dependencies?: readonly LedgerChangeId[];
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
   readonly expectedVersion: number;
   readonly createdAt: IsoDateTime;
@@ -37,6 +39,7 @@ export type CloudLedgerPendingDeleteTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "deleteTransaction";
   readonly commandVersion: 1;
+  readonly dependencies?: readonly LedgerChangeId[];
   readonly transactionId: TransactionId;
   readonly expectedVersion: number;
   readonly createdAt: IsoDateTime;
@@ -65,7 +68,7 @@ export function toPendingChangeCommand(
     id: change.id,
     commandVersion: change.commandVersion,
     idempotencyKey: change.id,
-    dependencies: [],
+    dependencies: change.dependencies ?? [],
     expectedVersions: expectedVersionsForPendingChange(change),
     clientTimestamp: change.createdAt,
   } as const;
@@ -92,8 +95,24 @@ export function toTransactionCommandPayload(
   };
 }
 
+export function withPendingChangeDependencies(
+  change: CloudLedgerPendingChange,
+  existingChanges: readonly CloudLedgerPendingChange[]
+): CloudLedgerPendingChange {
+  const targetTransactionId = pendingChangeTransactionId(change);
+  const dependencies = uniqueLedgerChangeIds([
+    ...(change.dependencies ?? []),
+    ...existingChanges
+      .filter((existing) => existing.id !== change.id)
+      .filter((existing) => pendingChangeTransactionId(existing) === targetTransactionId)
+      .map((existing) => existing.id),
+  ]);
+  return { ...change, dependencies };
+}
+
 export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
   const record = requireRecord(value, "pending change");
+  const dependencies = parseLedgerChangeDependencies(record.dependencies);
   if (record.commandVersion !== 1) {
     throw new Error("pending change command version must be supported");
   }
@@ -102,6 +121,7 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "createTransaction",
       commandVersion: 1,
+      dependencies,
       transaction: parseCreateTransaction(record.transaction),
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
     };
@@ -111,6 +131,7 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "amendTransaction",
       commandVersion: 1,
+      dependencies,
       transaction: parseCreateTransaction(record.transaction),
       expectedVersion: requirePositiveInteger(record.expectedVersion, "expectedVersion"),
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
@@ -121,6 +142,7 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "deleteTransaction",
       commandVersion: 1,
+      dependencies,
       transactionId: requireTransactionId(requireString(record.transactionId, "transactionId")),
       expectedVersion: requirePositiveInteger(record.expectedVersion, "expectedVersion"),
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
@@ -144,6 +166,14 @@ function expectedVersionsForPendingChange(change: CloudLedgerPendingChange): rea
           version: change.expectedVersion,
         },
       ];
+}
+
+function pendingChangeTransactionId(change: CloudLedgerPendingChange): TransactionId {
+  return change.kind === "deleteTransaction" ? change.transactionId : change.transaction.id;
+}
+
+function uniqueLedgerChangeIds(changeIds: readonly LedgerChangeId[]): readonly LedgerChangeId[] {
+  return [...new Map(changeIds.map((changeId) => [changeId, changeId])).values()];
 }
 
 function applyPendingLedgerChange(
@@ -203,6 +233,14 @@ function parseDescription(value: unknown): string | null {
   return requireString(value, "transaction.description");
 }
 
+function parseLedgerChangeDependencies(value: unknown): readonly LedgerChangeId[] {
+  return value === undefined
+    ? []
+    : requireArray(value, "dependencies").map((dependency) =>
+        requireLedgerChangeId(requireString(dependency, "dependency"))
+      );
+}
+
 function requireTransactionType(value: unknown): "income" | "expense" {
   if (value === "income" || value === "expense") {
     return value;
@@ -222,6 +260,13 @@ function requireRecord(value: unknown, label: string): Record<string, unknown> {
     return value as Record<string, unknown>;
   }
   throw new Error(`${label} must be an object`);
+}
+
+function requireArray(value: unknown, label: string): readonly unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  throw new Error(`${label} must be an array`);
 }
 
 function requireString(value: unknown, label: string): string {
