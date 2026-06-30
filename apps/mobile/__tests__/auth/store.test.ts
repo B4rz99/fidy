@@ -10,7 +10,7 @@ const {
   mockClearCloudLedgerRuntimeCache,
   mockCleanupCurrentPushToken,
   mockDiscardCloudLedgerOutbox,
-  mockDeletePendingCloudLedgerTransactionShadows,
+  mockDeleteCloudLedgerTransactionCache,
   mockInvalidateTransactionSession,
   mockResumeTransactionSession,
   mockResumeCloudLedgerRuntimeCacheWrites,
@@ -24,7 +24,7 @@ const {
   const mockClearCloudLedgerRuntimeCache = vi.fn<(...args: any[]) => any>();
   const mockCleanupCurrentPushToken = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockDiscardCloudLedgerOutbox = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
-  const mockDeletePendingCloudLedgerTransactionShadows = vi.fn<(...args: any[]) => any>(() =>
+  const mockDeleteCloudLedgerTransactionCache = vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve()
   );
   const mockInvalidateTransactionSession = vi.fn<(...args: any[]) => any>();
@@ -58,7 +58,7 @@ const {
     mockClearCloudLedgerRuntimeCache,
     mockCleanupCurrentPushToken,
     mockDiscardCloudLedgerOutbox,
-    mockDeletePendingCloudLedgerTransactionShadows,
+    mockDeleteCloudLedgerTransactionCache,
     mockInvalidateTransactionSession,
     mockResumeTransactionSession,
     mockResumeCloudLedgerRuntimeCacheWrites,
@@ -150,7 +150,7 @@ vi.mock("@/features/cloud-ledger/outbox.public", () => ({
 }));
 
 vi.mock("@/features/transactions/store.public", () => ({
-  deletePendingCloudLedgerTransactionShadows: mockDeletePendingCloudLedgerTransactionShadows,
+  deleteCloudLedgerTransactionCache: mockDeleteCloudLedgerTransactionCache,
   invalidateTransactionSession: mockInvalidateTransactionSession,
   resumeTransactionSession: mockResumeTransactionSession,
 }));
@@ -499,7 +499,7 @@ describe("useAuthStore", () => {
 
     expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
-    expect(mockDeletePendingCloudLedgerTransactionShadows).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
     expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
@@ -507,11 +507,11 @@ describe("useAuthStore", () => {
       mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!
     );
     expect(mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!).toBeLessThan(
-      mockDeletePendingCloudLedgerTransactionShadows.mock.invocationCallOrder[0]!
+      mockDeleteCloudLedgerTransactionCache.mock.invocationCallOrder[0]!
     );
-    expect(
-      mockDeletePendingCloudLedgerTransactionShadows.mock.invocationCallOrder[0]!
-    ).toBeLessThan(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!);
+    expect(mockDeleteCloudLedgerTransactionCache.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!
+    );
     expect(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!).toBeLessThan(
       mockClearCloudLedgerRuntimeCache.mock.invocationCallOrder[0]!
     );
@@ -556,27 +556,27 @@ describe("useAuthStore", () => {
     expect(useAuthStore.getState().session).toEqual(mockSession);
   });
 
-  it("signOut discards raw Cloud Ledger outbox state after shadow cleanup handles unreadable state", async () => {
+  it("signOut discards raw Cloud Ledger outbox state after local cache cleanup handles unreadable state", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
     });
-    mockDeletePendingCloudLedgerTransactionShadows.mockResolvedValueOnce(undefined);
+    mockDeleteCloudLedgerTransactionCache.mockResolvedValueOnce(undefined);
 
     await useAuthStore.getState().signOut();
 
-    expect(mockDeletePendingCloudLedgerTransactionShadows).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
     expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockSignOut).toHaveBeenCalled();
   });
 
-  it("signOut preserves Cloud Ledger outbox state when shadow cleanup fails", async () => {
+  it("signOut preserves Cloud Ledger outbox state when local cache cleanup fails", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
     });
-    mockDeletePendingCloudLedgerTransactionShadows.mockRejectedValueOnce(
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(
       new Error("local shadow delete failed")
     );
 

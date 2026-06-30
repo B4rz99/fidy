@@ -15,7 +15,7 @@ import {
   loadLocalQaSession,
 } from "@/features/qa/session.public";
 import {
-  deletePendingCloudLedgerTransactionShadows,
+  deleteCloudLedgerTransactionCache,
   invalidateTransactionSession,
   resumeTransactionSession,
 } from "@/features/transactions/store.public";
@@ -209,7 +209,7 @@ async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null): Prom
   if (userId === null) return;
 
   try {
-    await deletePendingCloudLedgerTransactionShadows(userId);
+    await deleteCloudLedgerTransactionCache(userId);
     await discardCloudLedgerOutbox(userId);
     clearCloudLedgerRuntimeCache(userId);
   } catch (err) {

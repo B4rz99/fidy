@@ -26,7 +26,7 @@ import {
   getTransactionsPaginated,
 } from "@/features/transactions/lib/repository";
 import {
-  deletePendingCloudLedgerTransactionShadows,
+  deleteCloudLedgerTransactionCache,
   deleteTransaction,
   getStoredTransactionById,
   initializeTransactionSession,
@@ -126,14 +126,17 @@ const insertedUserCategoryRows: unknown[] = [];
 const financialAccountConflictUpdates: unknown[] = [];
 const userCategoryConflictUpdates: unknown[] = [];
 const deletedTransactionScopes: unknown[] = [];
+const deletedFinancialAccountScopes: unknown[] = [];
+const deletedUserCategoryScopes: unknown[] = [];
 let canUseSelectedAccount = true;
 const mockDb = {
   transaction: vi.fn<(...args: any[]) => any>((fn: (tx: unknown) => unknown) => fn(mockDb)),
-  select: () => ({
-    from: () => ({
+  select: (fields?: unknown) => ({
+    from: (table: unknown) => ({
       where: () => ({
+        all: () => recordSelectedRows(table, fields),
         limit: () => ({
-          all: () => (canUseSelectedAccount ? [{ id: "usable-row" }] : []),
+          all: () => recordSelectedRows(table, fields),
         }),
       }),
     }),
@@ -156,10 +159,10 @@ const mockDb = {
       }),
     }),
   }),
-  delete: () => ({
+  delete: (table: unknown) => ({
     where: (scope: unknown) => ({
       run: () => {
-        deletedTransactionScopes.push(scope);
+        recordDeletedScope(table, scope);
       },
     }),
   }),
@@ -200,6 +203,34 @@ function recordConflictUpdate(table: unknown, set: unknown) {
   }
   if (table === userCategories) {
     userCategoryConflictUpdates.push(set);
+  }
+}
+
+function recordSelectedRows(table: unknown, fields: unknown) {
+  if (table === transactions && isCloudLedgerReferenceSelection(fields)) {
+    return insertedTransactionRows.map((row) => ({
+      accountId: (row as { readonly accountId: unknown }).accountId,
+      categoryId: (row as { readonly categoryId: unknown }).categoryId,
+    }));
+  }
+  return canUseSelectedAccount ? [{ id: "usable-row" }] : [];
+}
+
+function isCloudLedgerReferenceSelection(fields: unknown): boolean {
+  return (
+    typeof fields === "object" && fields !== null && "accountId" in fields && "categoryId" in fields
+  );
+}
+
+function recordDeletedScope(table: unknown, scope: unknown) {
+  if (table === transactions) {
+    deletedTransactionScopes.push(scope);
+  }
+  if (table === financialAccounts) {
+    deletedFinancialAccountScopes.push(scope);
+  }
+  if (table === userCategories) {
+    deletedUserCategoryScopes.push(scope);
   }
 }
 
@@ -555,6 +586,8 @@ describe("transaction boundaries", () => {
     financialAccountConflictUpdates.length = 0;
     userCategoryConflictUpdates.length = 0;
     deletedTransactionScopes.length = 0;
+    deletedFinancialAccountScopes.length = 0;
+    deletedUserCategoryScopes.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
     mockTryGetDb.mockReturnValue(mockDb);
@@ -1901,7 +1934,7 @@ describe("transaction boundaries", () => {
     expectCloudLedgerReferenceMetadataPreserved();
   });
 
-  it("deletes local Cloud Ledger shadows for pending outbox creates on discard", async () => {
+  it("deletes local Cloud Ledger shadows without reading pending outbox state", async () => {
     const pendingTransaction = makeStoredTransaction({
       id: "tx-pending-cloud-ledger-shadow-discard" as TransactionId,
     });
@@ -1910,13 +1943,13 @@ describe("transaction boundaries", () => {
       .mockResolvedValue([pendingCreateFromStoredTransaction(pendingTransaction)]);
     vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
 
-    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+    await deleteCloudLedgerTransactionCache(mockUserId);
 
-    expect(load).toHaveBeenCalled();
+    expect(load).not.toHaveBeenCalled();
     expect(deletedTransactionScopes).toHaveLength(1);
   });
 
-  it("preserves local Cloud Ledger shadows for pending outbox amends on discard", async () => {
+  it("deletes committed Cloud Ledger shadows even when pending outbox only has amends", async () => {
     const pendingTransaction = makeStoredTransaction({
       id: "tx-pending-cloud-ledger-amend-discard" as TransactionId,
       source: "cloud_ledger",
@@ -1926,21 +1959,35 @@ describe("transaction boundaries", () => {
       .mockResolvedValue([pendingAmendFromStoredTransaction(pendingTransaction)]);
     vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
 
-    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+    await deleteCloudLedgerTransactionCache(mockUserId);
 
-    expect(load).toHaveBeenCalled();
-    expect(deletedTransactionScopes).toHaveLength(0);
+    expect(load).not.toHaveBeenCalled();
+    expect(deletedTransactionScopes).toHaveLength(1);
   });
 
-  it("deletes all local Cloud Ledger shadows when pending outbox cleanup cannot read the outbox", async () => {
+  it("deletes persisted Cloud Ledger account and category references when runtime cache is cleared", async () => {
+    seedCloudLedgerRuntimeWithRemoteReferences();
+    persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
+    expectCloudLedgerRemoteReferencesPersisted();
+    deletedTransactionScopes.length = 0;
+    clearCloudLedgerRuntimeCache(mockUserId);
+
+    await deleteCloudLedgerTransactionCache(mockUserId);
+
+    expect(deletedTransactionScopes).toHaveLength(1);
+    expect(deletedFinancialAccountScopes).toHaveLength(1);
+    expect(deletedUserCategoryScopes).toHaveLength(1);
+  });
+
+  it("deletes all local Cloud Ledger shadows when pending outbox state is unreadable", async () => {
     const load = vi
       .fn<(...args: any[]) => any>()
       .mockRejectedValue(new CloudLedgerOutboxFailure("invalid_encrypted_outbox", "corrupt"));
     vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
 
-    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+    await deleteCloudLedgerTransactionCache(mockUserId);
 
-    expect(load).toHaveBeenCalled();
+    expect(load).not.toHaveBeenCalled();
     expect(deletedTransactionScopes).toHaveLength(1);
   });
 
