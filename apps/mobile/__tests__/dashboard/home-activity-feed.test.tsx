@@ -45,6 +45,7 @@ vi.mock("@/features/activity/query.public", () => ({
 }));
 
 vi.mock("@/features/transactions/cloud-ledger.public", () => ({
+  loadCloudLedgerOptimisticTransactionOverlay: vi.fn<(...args: any[]) => any>(),
   loadCloudLedgerOptimisticTransactions: vi.fn<(...args: any[]) => any>(),
 }));
 

@@ -9,10 +9,12 @@ import {
   createEmptyCloudLedgerCache,
 } from "@/features/cloud-ledger/public";
 import {
+  amendOfflineCloudLedgerTransaction,
   CloudLedgerOutboxFailure,
   createEncryptedCloudLedgerOutbox,
   createOfflineCloudLedgerTransaction,
   discardCloudLedgerOutbox,
+  deleteOfflineCloudLedgerTransaction,
   getCloudLedgerOutbox,
   flushPendingCloudLedgerChanges,
   hasPendingCloudLedgerOutboxChanges,
@@ -89,6 +91,7 @@ describe("mobile Cloud Ledger offline outbox", () => {
       accountId: "acct-cash",
       description: "Coffee",
       date: "2026-06-02",
+      version: 1,
       updatedAt: "2026-06-02T10:03:00.000Z",
     });
     expect(optimisticTransaction).not.toHaveProperty("commitStatus");
@@ -564,6 +567,279 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(supabase.getSession).not.toHaveBeenCalled();
   });
 
+  it("amends accepted transactions offline and reconciles the accepted edit after flush", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = createAcceptedCoffeeLedgerCache();
+    const amendedTransaction = acceptedCoffeeLedgerTransaction({
+      amount: 19_000,
+      description: "Coffee corrected",
+      version: 2,
+      updatedAt: "2026-06-02T10:05:00.000Z",
+    });
+    const amendedTransactionCommand = {
+      id: amendedTransaction.id,
+      type: amendedTransaction.type,
+      amount: amendedTransaction.amount,
+      currency: amendedTransaction.currency,
+      categoryId: amendedTransaction.categoryId,
+      accountId: amendedTransaction.accountId,
+      description: amendedTransaction.description,
+      date: amendedTransaction.date,
+    } as const;
+    const optimisticCache = await amendOfflineCloudLedgerTransaction({
+      cache,
+      changeId: requireLedgerChangeId("change-amend-coffee"),
+      createdAt: requireIsoDateTime("2026-06-02T10:05:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transaction: amendedTransaction,
+    });
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-amend-coffee"],
+        rejectedChangeIds: [],
+        changeOutcomes: [
+          {
+            changeId: "change-amend-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:9",
+      },
+      refreshPayload: {
+        cursor: "ledger:9",
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          acceptedCoffeeTransaction({ description: "Coffee accepted corrected", version: 2 }),
+        ],
+        tombstones: [],
+      },
+    });
+
+    expect(optimisticCache.transactions).toEqual([amendedTransaction]);
+    expect(optimisticCache.transactionProjection).toMatchObject({
+      categorySpending: [{ categoryId: "cat-groceries", total: 19_000 }],
+      dailySpending: [{ date: "2026-06-02", total: 19_000 }],
+      expenseTotal: 19_000,
+      incomeTotal: 0,
+    });
+    expect(JSON.stringify(storage.readRaw())).not.toContain("Coffee corrected");
+
+    const reconciledCache = await flushPendingCloudLedgerChanges({
+      cache: optimisticCache,
+      outbox,
+      supabase: supabase.client,
+    });
+
+    expect(supabase.functionsInvoke).toHaveBeenNthCalledWith(1, "cloud-ledger-api", {
+      body: {
+        action: "applyPendingChanges",
+        commandVersion: 1,
+        deviceId: CLOUD_LEDGER_DEVICE_ID,
+        batchId: "batch-change-amend-coffee",
+        changes: [
+          {
+            id: "change-amend-coffee",
+            kind: "amendTransaction",
+            commandVersion: 1,
+            idempotencyKey: "change-amend-coffee",
+            dependencies: [],
+            expectedVersions: [
+              {
+                recordType: "transaction",
+                recordId: "txn-20260622-client",
+                version: 1,
+              },
+            ],
+            clientTimestamp: "2026-06-02T10:05:00.000Z",
+            transaction: amendedTransactionCommand,
+          },
+        ],
+      },
+    });
+    expect(reconciledCache.transactions).toEqual([
+      acceptedCoffeeLedgerTransaction({
+        description: "Coffee accepted corrected",
+        version: 2,
+        updatedAt: "2026-06-02T10:04:00.000Z",
+      }),
+    ]);
+    expect(await outbox.load()).toEqual([]);
+  });
+
+  it("deletes accepted transactions offline and reconciles the tombstone after flush", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = createAcceptedCoffeeLedgerCache();
+    const optimisticCache = await deleteOfflineCloudLedgerTransaction({
+      cache,
+      changeId: requireLedgerChangeId("change-delete-coffee"),
+      createdAt: requireIsoDateTime("2026-06-02T10:06:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transactionId: requireTransactionId("txn-20260622-client"),
+    });
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-delete-coffee"],
+        rejectedChangeIds: [],
+        changeOutcomes: [
+          {
+            changeId: "change-delete-coffee",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:9",
+      },
+      refreshPayload: {
+        cursor: "ledger:9",
+        categories: [],
+        financialAccounts: [],
+        transactions: [],
+        tombstones: [
+          {
+            recordType: "transaction",
+            recordId: "txn-20260622-client",
+            deletedAt: "2026-06-02T10:06:00.000Z",
+          },
+        ],
+      },
+    });
+
+    expect(optimisticCache.transactions).toEqual([]);
+    expect(optimisticCache.transactionProjection).toMatchObject({
+      categorySpending: [],
+      dailySpending: [],
+      expenseTotal: 0,
+      incomeTotal: 0,
+    });
+    expect(JSON.stringify(storage.readRaw())).not.toContain("txn-20260622-client");
+
+    const reconciledCache = await flushPendingCloudLedgerChanges({
+      cache: optimisticCache,
+      outbox,
+      supabase: supabase.client,
+    });
+
+    expect(supabase.functionsInvoke).toHaveBeenNthCalledWith(1, "cloud-ledger-api", {
+      body: {
+        action: "applyPendingChanges",
+        commandVersion: 1,
+        deviceId: CLOUD_LEDGER_DEVICE_ID,
+        batchId: "batch-change-delete-coffee",
+        changes: [
+          {
+            id: "change-delete-coffee",
+            kind: "deleteTransaction",
+            commandVersion: 1,
+            idempotencyKey: "change-delete-coffee",
+            dependencies: [],
+            expectedVersions: [
+              {
+                recordType: "transaction",
+                recordId: "txn-20260622-client",
+                version: 1,
+              },
+            ],
+            clientTimestamp: "2026-06-02T10:06:00.000Z",
+            transactionId: "txn-20260622-client",
+          },
+        ],
+      },
+    });
+    expect(reconciledCache.transactions).toEqual([]);
+    expect(await outbox.load()).toEqual([]);
+  });
+
+  it("drops stale amend and delete conflicts after server rejection so they are not replayed", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = createAcceptedCoffeeAndTaxiLedgerCache();
+    const amendedCoffee = acceptedCoffeeLedgerTransaction({
+      amount: 19_000,
+      description: "Coffee stale correction",
+      version: 2,
+      updatedAt: "2026-06-02T10:05:00.000Z",
+    });
+    const optimisticAmendCache = await amendOfflineCloudLedgerTransaction({
+      cache,
+      changeId: requireLedgerChangeId("change-stale-amend-coffee"),
+      createdAt: requireIsoDateTime("2026-06-02T10:05:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transaction: amendedCoffee,
+    });
+    const optimisticDeleteCache = await deleteOfflineCloudLedgerTransaction({
+      cache: optimisticAmendCache,
+      changeId: requireLedgerChangeId("change-stale-delete-taxi"),
+      createdAt: requireIsoDateTime("2026-06-02T10:06:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transactionId: requireTransactionId("txn-20260622-taxi"),
+    });
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-stale-amend-coffee", "change-stale-delete-taxi"],
+        changeOutcomes: [
+          {
+            changeId: "change-stale-amend-coffee",
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+          {
+            changeId: "change-stale-delete-taxi",
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+        ],
+        cursor: "ledger:10",
+      },
+      refreshPayload: {
+        cursor: "ledger:10",
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          acceptedCoffeeTransaction({ description: "Coffee accepted elsewhere", version: 2 }),
+          acceptedTaxiTransaction(),
+        ],
+        tombstones: [],
+      },
+    });
+
+    const reconciledCache = await flushPendingCloudLedgerChanges({
+      cache: optimisticDeleteCache,
+      outbox,
+      supabase: supabase.client,
+    });
+
+    expect((await outbox.load()).map((change) => change.id)).toEqual([]);
+    expect(reconciledCache.transactions).toEqual([
+      acceptedCoffeeLedgerTransaction({
+        description: "Coffee accepted elsewhere",
+        version: 2,
+        updatedAt: "2026-06-02T10:04:00.000Z",
+      }),
+      acceptedTaxiLedgerTransaction(),
+    ]);
+  });
+
   it("reuses a durable device id for Pending Change Set flush envelopes", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -1037,6 +1313,26 @@ function createSeededLedgerCache() {
   });
 }
 
+function createAcceptedCoffeeLedgerCache() {
+  return applyCloudLedgerBootstrap(createSeededLedgerCache(), {
+    cursor: requireLedgerCursor("ledger:8"),
+    categories: [],
+    financialAccounts: [],
+    transactions: [acceptedCoffeeLedgerTransaction()],
+    tombstones: [],
+  });
+}
+
+function createAcceptedCoffeeAndTaxiLedgerCache() {
+  return applyCloudLedgerBootstrap(createSeededLedgerCache(), {
+    cursor: requireLedgerCursor("ledger:8"),
+    categories: [],
+    financialAccounts: [],
+    transactions: [acceptedCoffeeLedgerTransaction(), acceptedTaxiLedgerTransaction()],
+    tombstones: [],
+  });
+}
+
 function offlineCoffeeCommand() {
   return {
     commandVersion: 1,
@@ -1116,7 +1412,34 @@ function pendingCreateChange(input: {
   } as const;
 }
 
-function acceptedCoffeeTransaction() {
+function acceptedCoffeeLedgerTransaction(
+  overrides: Partial<{
+    readonly amount: number;
+    readonly description: string;
+    readonly version: number;
+    readonly updatedAt: string;
+  }> = {}
+) {
+  return {
+    id: requireTransactionId("txn-20260622-client"),
+    type: "expense" as const,
+    amount: requireCopAmount(overrides.amount ?? 18_000),
+    currency: "COP" as const,
+    categoryId: requireCategoryId("cat-groceries"),
+    accountId: requireFinancialAccountId("acct-cash"),
+    description: overrides.description ?? "Coffee accepted",
+    date: requireIsoDate("2026-06-02"),
+    version: overrides.version ?? 1,
+    updatedAt: requireIsoDateTime(overrides.updatedAt ?? "2026-06-02T10:04:00.000Z"),
+  };
+}
+
+function acceptedCoffeeTransaction(
+  overrides: Partial<{
+    readonly description: string;
+    readonly version: number;
+  }> = {}
+) {
   return {
     id: "txn-20260622-client",
     type: "expense",
@@ -1124,8 +1447,39 @@ function acceptedCoffeeTransaction() {
     currency: "COP",
     categoryId: "cat-groceries",
     accountId: "acct-cash",
-    description: "Coffee accepted",
+    description: overrides.description ?? "Coffee accepted",
     date: "2026-06-02",
+    version: overrides.version ?? 1,
+    updatedAt: "2026-06-02T10:04:00.000Z",
+  };
+}
+
+function acceptedTaxiLedgerTransaction() {
+  return {
+    id: requireTransactionId("txn-20260622-taxi"),
+    type: "expense" as const,
+    amount: requireCopAmount(12_000),
+    currency: "COP" as const,
+    categoryId: requireCategoryId("cat-groceries"),
+    accountId: requireFinancialAccountId("acct-cash"),
+    description: "Taxi accepted",
+    date: requireIsoDate("2026-06-02"),
+    version: 1,
+    updatedAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+  };
+}
+
+function acceptedTaxiTransaction() {
+  return {
+    id: "txn-20260622-taxi",
+    type: "expense",
+    amount: 12_000,
+    currency: "COP",
+    categoryId: "cat-groceries",
+    accountId: "acct-cash",
+    description: "Taxi accepted",
+    date: "2026-06-02",
+    version: 1,
     updatedAt: "2026-06-02T10:04:00.000Z",
   };
 }

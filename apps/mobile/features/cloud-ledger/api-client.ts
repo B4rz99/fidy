@@ -72,6 +72,7 @@ type CloudLedgerWireTransaction = {
   readonly accountId: string;
   readonly description: string | null;
   readonly date: string;
+  readonly version: number;
   readonly updatedAt: string;
 };
 
@@ -132,6 +133,28 @@ export type CloudLedgerApplyPendingCreateTransactionChange = {
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
 };
 
+export type CloudLedgerApplyPendingAmendTransactionChange = {
+  readonly id: LedgerChangeId;
+  readonly kind: "amendTransaction";
+  readonly commandVersion: 1;
+  readonly idempotencyKey: LedgerChangeId;
+  readonly dependencies: readonly LedgerChangeId[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
+  readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
+};
+
+export type CloudLedgerApplyPendingDeleteTransactionChange = {
+  readonly id: LedgerChangeId;
+  readonly kind: "deleteTransaction";
+  readonly commandVersion: 1;
+  readonly idempotencyKey: LedgerChangeId;
+  readonly dependencies: readonly LedgerChangeId[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
+  readonly transactionId: TransactionId;
+};
+
 export type CloudLedgerExpectedRecordVersion = {
   readonly recordType: "transaction";
   readonly recordId: TransactionId;
@@ -148,7 +171,11 @@ export type CloudLedgerApplyPendingChangesCommand = {
   readonly commandVersion: 1;
   readonly deviceId: string;
   readonly batchId: string;
-  readonly changes: readonly CloudLedgerApplyPendingCreateTransactionChange[];
+  readonly changes: readonly (
+    | CloudLedgerApplyPendingAmendTransactionChange
+    | CloudLedgerApplyPendingCreateTransactionChange
+    | CloudLedgerApplyPendingDeleteTransactionChange
+  )[];
 };
 
 export type CloudLedgerApplyPendingChangesAccepted = {
@@ -431,6 +458,7 @@ function parseTransaction(row: CloudLedgerWireTransaction): CloudLedgerTransacti
     accountId: requireFinancialAccountId(row.accountId),
     description: row.description,
     date: requireIsoDate(row.date),
+    version: requirePositiveInteger(row.version, "transaction.version"),
     updatedAt: requireIsoDateTime(row.updatedAt),
   };
 }
@@ -468,6 +496,13 @@ function requireNonEmptyRecordId(value: string): string {
     throw new Error("tombstone record id must be a non-empty string");
   }
   return value;
+}
+
+function requirePositiveInteger(value: number, label: string): number {
+  if (Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  throw new Error(`${label} must be a positive integer`);
 }
 
 function throwIfTransportError(error: RemoteErrorLike | null) {

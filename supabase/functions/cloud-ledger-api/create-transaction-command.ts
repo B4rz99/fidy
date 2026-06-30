@@ -26,7 +26,7 @@ export function readCreateTransactionCommand(body: unknown): CreateTransactionCo
     return { kind: "invalid_transaction" };
   }
   const transactionRecord = transaction as Record<string, unknown>;
-  const id = readClientTransactionId(transactionRecord.id);
+  const id = readCloudLedgerTransactionId(transactionRecord.id);
   if (id === null) {
     return { kind: "invalid_transaction_id" };
   }
@@ -68,7 +68,7 @@ export function readCreateTransactionCommand(body: unknown): CreateTransactionCo
   };
 }
 
-function readClientTransactionId(value: unknown): string | null {
+export function readCloudLedgerTransactionId(value: unknown): string | null {
   return typeof value === "string" && CLIENT_TRANSACTION_ID_PATTERN.test(value) ? value : null;
 }
 

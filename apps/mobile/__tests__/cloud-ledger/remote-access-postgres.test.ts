@@ -17,10 +17,15 @@ const PENDING_CHANGE_SET_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260626230000_cloud_ledger_pending_change_sets.sql"
 );
+const TRANSACTION_EDIT_DELETE_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260630153000_cloud_ledger_transaction_edit_delete.sql"
+);
 const MIGRATIONS = [
   BOOTSTRAP_MIGRATION,
   CREATE_TRANSACTION_MIGRATION,
   PENDING_CHANGE_SET_MIGRATION,
+  TRANSACTION_EDIT_DELETE_MIGRATION,
 ] as const;
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
@@ -147,6 +152,36 @@ describe("Cloud Ledger Postgres access boundary", () => {
       expectRebuiltMonthlyProjection(postgres);
     }
   );
+
+  postgresIt("upgrades existing Cloud Ledger RPCs to return transaction versions", () => {
+    const postgres = setupSeededPostgres();
+    installLegacyTransactionResponseRpcs(postgres);
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-upgraded-rpc-version",
+      }).transaction
+    ).not.toHaveProperty("version");
+
+    applyMigrationFile(postgres, TRANSACTION_EDIT_DELETE_MIGRATION);
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-upgraded-rpc-version",
+      }).transaction
+    ).toMatchObject({
+      id: "txn-upgraded-rpc-version",
+      version: 1,
+    });
+    expect(readRefreshAfterSequence(postgres, 4)).toMatchObject({
+      transactions: [
+        {
+          id: "txn-upgraded-rpc-version",
+          version: 1,
+        },
+      ],
+    });
+  });
 
   postgresIt("accepts repeated matching transaction creates without advancing the cursor", () => {
     const postgres = setupSeededPostgres();
@@ -1120,6 +1155,352 @@ commit;
   );
 
   postgresIt(
+    "accepts transaction amend changes and refreshes the accepted Cloud Ledger view",
+    () => {
+      const postgres = setupSeededPostgres();
+
+      expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+
+      const outcome = applyPendingChangesOutcome(postgres, [
+        pendingAmendChangeJson({
+          changeId: "change-amend-market",
+          transactionId: CLIENT_TRANSACTION_ID,
+          amount: 19000,
+          description: "Market corrected",
+          expectedVersion: 1,
+        }),
+      ]);
+
+      expect(outcome).toMatchObject({
+        code: "accepted",
+        acceptedChangeIds: ["change-amend-market"],
+        rejectedChangeIds: [],
+        changeOutcomes: [
+          {
+            changeId: "change-amend-market",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:6",
+      });
+      expect(readRefreshAfterSequence(postgres, 5)).toMatchObject({
+        cursor: "ledger:6",
+        transactions: [
+          {
+            id: CLIENT_TRANSACTION_ID,
+            amount: 19000,
+            description: "Market corrected",
+          },
+        ],
+        tombstones: [],
+      });
+      expect(readMonthlyProjection(postgres)).toMatchObject({
+        expenseAmount: 19000,
+        transactionCount: 1,
+        cursorSequence: 6,
+      });
+    }
+  );
+
+  postgresIt("seeds local-only ledger references before accepting transaction amends", () => {
+    const postgres = setupSeededPostgres();
+
+    expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingAmendChangeJson({
+          accountId: "acct-amend-local-only",
+          amount: 19000,
+          categoryId: "cat-amend-local-only",
+          changeId: "change-amend-local-only-refs",
+          description: "Market corrected",
+          expectedVersion: 1,
+          transactionId: CLIENT_TRANSACTION_ID,
+        }),
+      ])
+    ).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: ["change-amend-local-only-refs"],
+      rejectedChangeIds: [],
+      cursor: "ledger:8",
+    });
+
+    expect(readLedgerCursorSequence(postgres)).toBe("8");
+    expect(readRefreshAfterSequence(postgres, 5)).toMatchObject({
+      cursor: "ledger:8",
+      categories: [
+        {
+          id: "cat-amend-local-only",
+          name: "cat-amend-local-only",
+        },
+      ],
+      financialAccounts: [
+        {
+          id: "acct-amend-local-only",
+          name: "acct-amend-local-only",
+          type: "cash",
+          currency: "COP",
+        },
+      ],
+      transactions: [
+        {
+          id: CLIENT_TRANSACTION_ID,
+          accountId: "acct-amend-local-only",
+          categoryId: "cat-amend-local-only",
+        },
+      ],
+    });
+  });
+
+  postgresIt(
+    "accepts transaction delete changes as tombstones and replays them idempotently",
+    () => {
+      const postgres = setupSeededPostgres();
+
+      expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+
+      const deleteChange = pendingDeleteChangeJson({
+        changeId: "change-delete-market",
+        transactionId: CLIENT_TRANSACTION_ID,
+        expectedVersion: 1,
+      });
+      const outcome = applyPendingChangesOutcome(postgres, [deleteChange]);
+
+      expect(outcome).toMatchObject({
+        code: "accepted",
+        acceptedChangeIds: ["change-delete-market"],
+        rejectedChangeIds: [],
+        changeOutcomes: [
+          {
+            changeId: "change-delete-market",
+            status: "accepted",
+            code: "accepted",
+          },
+        ],
+        cursor: "ledger:6",
+      });
+      expect(readRefreshAfterSequence(postgres, 5)).toMatchObject({
+        cursor: "ledger:6",
+        transactions: [],
+        tombstones: [
+          {
+            recordType: "transaction",
+            recordId: CLIENT_TRANSACTION_ID,
+          },
+        ],
+      });
+      expect(readMonthlyProjection(postgres)).toMatchObject({
+        expenseAmount: 0,
+        transactionCount: 0,
+        cursorSequence: 6,
+      });
+
+      expect(applyPendingChangesOutcome(postgres, [deleteChange])).toMatchObject({
+        code: "accepted",
+        acceptedChangeIds: ["change-delete-market"],
+        rejectedChangeIds: [],
+        cursor: "ledger:6",
+      });
+      expect(readLedgerCursorSequence(postgres)).toBe("6");
+      expect(readTombstoneRowCount(postgres, USER_ID, CLIENT_TRANSACTION_ID)).toBe("1");
+    }
+  );
+
+  postgresIt("rejects stale amend and delete changes as Ledger Conflicts", () => {
+    const postgres = setupSeededPostgres();
+
+    expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingAmendChangeJson({
+          changeId: "change-first-amend-market",
+          transactionId: CLIENT_TRANSACTION_ID,
+          amount: 19000,
+          description: "Market corrected",
+          expectedVersion: 1,
+        }),
+      ])
+    ).toMatchObject({
+      acceptedChangeIds: ["change-first-amend-market"],
+      rejectedChangeIds: [],
+      cursor: "ledger:6",
+    });
+
+    const staleAmend = applyPendingChangesOutcome(postgres, [
+      pendingAmendChangeJson({
+        changeId: "change-stale-amend-market",
+        transactionId: CLIENT_TRANSACTION_ID,
+        amount: 21000,
+        description: "Market stale amend",
+        expectedVersion: 1,
+      }),
+    ]);
+    const staleDelete = applyPendingChangesOutcome(postgres, [
+      pendingDeleteChangeJson({
+        changeId: "change-stale-delete-market",
+        transactionId: CLIENT_TRANSACTION_ID,
+        expectedVersion: 1,
+      }),
+    ]);
+
+    expect(staleAmend).toMatchObject({
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-stale-amend-market"],
+      changeOutcomes: [
+        {
+          changeId: "change-stale-amend-market",
+          status: "repair_required",
+          code: "stale_expected_version",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(staleDelete).toMatchObject({
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-stale-delete-market"],
+      changeOutcomes: [
+        {
+          changeId: "change-stale-delete-market",
+          status: "repair_required",
+          code: "stale_expected_version",
+        },
+      ],
+      cursor: "ledger:0",
+    });
+    expect(readRefreshAfterSequence(postgres, 5)).toMatchObject({
+      cursor: "ledger:6",
+      transactions: [
+        {
+          id: CLIENT_TRANSACTION_ID,
+          amount: 19000,
+          description: "Market corrected",
+        },
+      ],
+      tombstones: [],
+    });
+    expect(readLedgerCursorSequence(postgres)).toBe("6");
+  });
+
+  postgresIt(
+    "serializes two-device concurrent edit/delete and rejects the stale loser",
+    async () => {
+      const postgres = setupSeededPostgres();
+
+      expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+
+      const outcomes = await Promise.all([
+        applyPendingChangesOutcomeAsyncWithEnvelope(postgres, {
+          batchId: "batch-device-a-amend",
+          changes: [
+            pendingAmendChangeJson({
+              changeId: "change-device-a-amend",
+              transactionId: CLIENT_TRANSACTION_ID,
+              amount: 19000,
+              description: "Device A amend",
+              expectedVersion: 1,
+            }),
+          ],
+          deviceId: "device-a",
+        }),
+        applyPendingChangesOutcomeAsyncWithEnvelope(postgres, {
+          batchId: "batch-device-b-delete",
+          changes: [
+            pendingDeleteChangeJson({
+              changeId: "change-device-b-delete",
+              transactionId: CLIENT_TRANSACTION_ID,
+              expectedVersion: 1,
+            }),
+          ],
+          deviceId: "device-b",
+        }),
+      ]);
+
+      expect(outcomes.flatMap((outcome) => outcome.acceptedChangeIds)).toHaveLength(1);
+      expect(
+        outcomes.flatMap((outcome) =>
+          outcome.changeOutcomes.filter(
+            (changeOutcome: { readonly code: string }) =>
+              changeOutcome.code === "stale_expected_version"
+          )
+        )
+      ).toHaveLength(1);
+      expect(readLedgerCursorSequence(postgres)).toBe("6");
+      expect(
+        Number(readAcceptedChangeRowCount(postgres, USER_ID, "change-device-a-amend")) +
+          Number(readAcceptedChangeRowCount(postgres, USER_ID, "change-device-b-delete"))
+      ).toBe(1);
+    }
+  );
+
+  postgresIt(
+    "records minimal Ledger Edit History for accepted amend and delete transitions",
+    () => {
+      const postgres = setupSeededPostgres();
+
+      expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+      expect(readTransactionEditHistoryRows(postgres)).toEqual([]);
+
+      expect(
+        applyPendingChangesOutcome(postgres, [
+          pendingAmendChangeJson({
+            changeId: "change-history-amend",
+            transactionId: CLIENT_TRANSACTION_ID,
+            amount: 19000,
+            description: "Market corrected",
+            expectedVersion: 1,
+          }),
+        ])
+      ).toMatchObject({
+        acceptedChangeIds: ["change-history-amend"],
+        cursor: "ledger:6",
+      });
+      const deleteChange = pendingDeleteChangeJson({
+        changeId: "change-history-delete",
+        transactionId: CLIENT_TRANSACTION_ID,
+        expectedVersion: 2,
+      });
+      expect(applyPendingChangesOutcome(postgres, [deleteChange])).toMatchObject({
+        acceptedChangeIds: ["change-history-delete"],
+        cursor: "ledger:7",
+      });
+      expect(applyPendingChangesOutcome(postgres, [deleteChange])).toMatchObject({
+        acceptedChangeIds: ["change-history-delete"],
+        cursor: "ledger:7",
+      });
+
+      expect(readTransactionEditHistoryRows(postgres)).toEqual([
+        {
+          action: "amend",
+          newPayload: expect.objectContaining({
+            amount: 19000,
+            description: "Market corrected",
+          }),
+          newRecordVersion: 2,
+          previousPayload: expect.objectContaining({
+            amount: 15000,
+            description: "Market",
+          }),
+          previousRecordVersion: 1,
+          transactionId: CLIENT_TRANSACTION_ID,
+        },
+        {
+          action: "delete",
+          newPayload: null,
+          newRecordVersion: 3,
+          previousPayload: expect.objectContaining({
+            amount: 19000,
+            description: "Market corrected",
+          }),
+          previousRecordVersion: 2,
+          transactionId: CLIENT_TRANSACTION_ID,
+        },
+      ]);
+    }
+  );
+
+  postgresIt(
     "rejects invalid transaction creates without partial cursor or projection writes",
     () => {
       const postgres = setupSeededPostgres();
@@ -1152,6 +1533,7 @@ function expectAcceptedCreateOutcome(outcome: unknown) {
       accountId: "acct-cash",
       description: "Market",
       date: "2026-06-01",
+      version: 1,
       updatedAt: expect.stringMatching(/^2026-|\d{4}-/),
     },
     cursor: "ledger:5",
@@ -1258,6 +1640,45 @@ from ledger.pending_change_acceptances
 where user_id = '${userId}'::uuid
   and change_id = '${changeId}';
 `
+  );
+}
+
+function readTombstoneRowCount(postgres: PostgresHarness, userId: string, recordId: string) {
+  return psqlScalar(
+    postgres,
+    `
+select count(*)
+from ledger.tombstones
+where user_id = '${userId}'::uuid
+  and record_type = 'transaction'
+  and record_id = '${recordId}';
+`
+  );
+}
+
+function readTransactionEditHistoryRows(postgres: PostgresHarness) {
+  return JSON.parse(
+    psqlScalar(
+      postgres,
+      `
+select coalesce(
+  jsonb_agg(
+    jsonb_build_object(
+      'action', action,
+      'transactionId', transaction_id,
+      'previousRecordVersion', previous_record_version,
+      'newRecordVersion', new_record_version,
+      'previousPayload', previous_payload,
+      'newPayload', new_payload
+    )
+    order by cursor_sequence
+  ),
+  '[]'::jsonb
+)::text
+from ledger.transaction_edit_history
+where user_id = '${USER_ID}'::uuid;
+`
+    )
   );
 }
 
@@ -1405,10 +1826,14 @@ function expectServiceRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) {
 }
 
 function readRefreshAfterInitialSeed(postgres: PostgresHarness) {
+  return readRefreshAfterSequence(postgres, 4);
+}
+
+function readRefreshAfterSequence(postgres: PostgresHarness, sequence: number) {
   return JSON.parse(
     psqlScalar(
       postgres,
-      `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 4::bigint)::text;`
+      `set role service_role; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, ${sequence}::bigint)::text;`
     )
   );
 }
@@ -1477,10 +1902,14 @@ create table auth.users (id uuid primary key);
 
 function applyMigration(harness: PostgresHarness) {
   MIGRATIONS.forEach((migration) => {
-    execFileSync(postgresBinary("psql"), ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-f", migration], {
-      env: harness.env,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    applyMigrationFile(harness, migration);
+  });
+}
+
+function applyMigrationFile(harness: PostgresHarness, migration: string) {
+  execFileSync(postgresBinary("psql"), ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-f", migration], {
+    env: harness.env,
+    stdio: ["ignore", "pipe", "pipe"],
   });
 }
 
@@ -1521,6 +1950,193 @@ insert into ledger.tombstones (
 ) values
   ('${USER_ID}'::uuid, 'transaction', 'txn-user', 4, '2026-06-02T11:00:00Z'),
   ('${OTHER_USER_ID}'::uuid, 'transaction', 'txn-other-hidden', 8, '2026-06-02T11:00:00Z');
+`
+  );
+}
+
+function installLegacyTransactionResponseRpcs(harness: PostgresHarness) {
+  psql(
+    harness,
+    `
+create or replace function public.cloud_ledger_bootstrap(
+  p_user_id uuid,
+  p_after_sequence bigint default null
+)
+returns jsonb
+language sql
+security definer
+set search_path = ''
+as $$
+with cursor_state as (
+  select coalesce(
+    (
+      select ledger.ledger_cursors.latest_sequence
+      from ledger.ledger_cursors
+      where ledger.ledger_cursors.user_id = p_user_id
+    ),
+    0
+  ) as latest_sequence
+),
+transaction_rows as (
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', ledger.transactions.id,
+        'type', ledger.transactions.type,
+        'amount', ledger.transactions.amount,
+        'currency', ledger.transactions.currency,
+        'categoryId', ledger.transactions.category_id,
+        'accountId', ledger.transactions.account_id,
+        'description', ledger.transactions.description,
+        'date', ledger.transactions.date::text,
+        'updatedAt', to_char(
+          ledger.transactions.updated_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      )
+      order by ledger.transactions.cursor_sequence, ledger.transactions.id
+    ),
+    '[]'::jsonb
+  ) as rows
+  from ledger.transactions
+  where ledger.transactions.user_id = p_user_id
+    and ledger.transactions.deleted_at is null
+    and (
+      p_after_sequence is null
+      or ledger.transactions.cursor_sequence > p_after_sequence
+    )
+)
+select jsonb_build_object(
+  'cursor', 'ledger:' || cursor_state.latest_sequence::text,
+  'categories', '[]'::jsonb,
+  'financialAccounts', '[]'::jsonb,
+  'transactions', transaction_rows.rows,
+  'tombstones', '[]'::jsonb
+)
+from cursor_state, transaction_rows;
+$$;
+
+create or replace function public.cloud_ledger_create_transaction(
+  p_user_id uuid,
+  p_command_version integer,
+  p_transaction_id text,
+  p_type text,
+  p_amount integer,
+  p_currency text,
+  p_category_id text,
+  p_account_id text,
+  p_description text,
+  p_date date
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_current_sequence bigint;
+  v_existing_transaction ledger.transactions%rowtype;
+  v_next_sequence bigint;
+  v_updated_at timestamptz := now();
+begin
+  select ledger.transactions.*
+  into v_existing_transaction
+  from ledger.transactions
+  where ledger.transactions.user_id = p_user_id
+    and ledger.transactions.id = p_transaction_id;
+
+  if found then
+    select coalesce(
+      (
+        select ledger.ledger_cursors.latest_sequence
+        from ledger.ledger_cursors
+        where ledger.ledger_cursors.user_id = p_user_id
+      ),
+      v_existing_transaction.cursor_sequence
+    )
+    into v_current_sequence;
+
+    return jsonb_build_object(
+      'code', 'accepted',
+      'transaction', jsonb_build_object(
+        'id', v_existing_transaction.id,
+        'type', v_existing_transaction.type,
+        'amount', v_existing_transaction.amount,
+        'currency', v_existing_transaction.currency,
+        'categoryId', v_existing_transaction.category_id,
+        'accountId', v_existing_transaction.account_id,
+        'description', v_existing_transaction.description,
+        'date', v_existing_transaction.date::text,
+        'updatedAt', to_char(
+          v_existing_transaction.updated_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      ),
+      'cursor', 'ledger:' || v_current_sequence::text
+    );
+  end if;
+
+  select ledger.ledger_cursors.latest_sequence + 1
+  into v_next_sequence
+  from ledger.ledger_cursors
+  where ledger.ledger_cursors.user_id = p_user_id
+  for update;
+
+  insert into ledger.transactions (
+    user_id,
+    id,
+    type,
+    amount,
+    currency,
+    category_id,
+    account_id,
+    description,
+    date,
+    record_version,
+    cursor_sequence,
+    created_at,
+    updated_at
+  ) values (
+    p_user_id,
+    p_transaction_id,
+    p_type,
+    p_amount,
+    p_currency,
+    p_category_id,
+    p_account_id,
+    p_description,
+    p_date,
+    1,
+    v_next_sequence,
+    v_updated_at,
+    v_updated_at
+  );
+
+  update ledger.ledger_cursors
+  set latest_sequence = v_next_sequence,
+      updated_at = v_updated_at
+  where ledger.ledger_cursors.user_id = p_user_id;
+
+  return jsonb_build_object(
+    'code', 'accepted',
+    'transaction', jsonb_build_object(
+      'id', p_transaction_id,
+      'type', p_type,
+      'amount', p_amount,
+      'currency', p_currency,
+      'categoryId', p_category_id,
+      'accountId', p_account_id,
+      'description', p_description,
+      'date', p_date::text,
+      'updatedAt', to_char(
+        v_updated_at at time zone 'UTC',
+        'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+      )
+    ),
+    'cursor', 'ledger:' || v_next_sequence::text
+  );
+end;
+$$;
 `
   );
 }
@@ -1631,6 +2247,21 @@ async function applyPendingChangesOutcomeAsync(
   harness: PostgresHarness,
   changes: readonly unknown[]
 ) {
+  return applyPendingChangesOutcomeAsyncWithEnvelope(harness, {
+    batchId: "batch-20260601-offline",
+    changes,
+    deviceId: "device-ios-17-pro",
+  });
+}
+
+async function applyPendingChangesOutcomeAsyncWithEnvelope(
+  harness: PostgresHarness,
+  input: {
+    readonly batchId: string;
+    readonly changes: readonly unknown[];
+    readonly deviceId: string;
+  }
+) {
   return JSON.parse(
     await psqlScalarAsync(
       harness,
@@ -1639,9 +2270,9 @@ set role service_role;
 select public.cloud_ledger_apply_pending_changes(
   '${USER_ID}'::uuid,
   1,
-  'device-ios-17-pro',
-  'batch-20260601-offline',
-  ${jsonbSql(changes)}
+  '${input.deviceId}',
+  '${input.batchId}',
+  ${jsonbSql(input.changes)}
 )::text;
 `
     )
@@ -1675,6 +2306,65 @@ function pendingCreateChangeJson(input: {
       description: "Market",
       date: "2026-06-01",
     },
+  };
+}
+
+function pendingAmendChangeJson(input: {
+  readonly accountId?: string;
+  readonly changeId: string;
+  readonly categoryId?: string | null;
+  readonly transactionId: string;
+  readonly amount: number;
+  readonly description: string;
+  readonly expectedVersion: number;
+}) {
+  return {
+    id: input.changeId,
+    kind: "amendTransaction",
+    commandVersion: 1,
+    idempotencyKey: `idem-${input.changeId}`,
+    dependencies: [],
+    expectedVersions: [
+      {
+        recordType: "transaction",
+        recordId: input.transactionId,
+        version: input.expectedVersion,
+      },
+    ],
+    clientTimestamp: "2026-06-01T10:05:00.000Z",
+    transaction: {
+      id: input.transactionId,
+      type: "expense",
+      amount: input.amount,
+      currency: "COP",
+      categoryId: input.categoryId ?? "cat-groceries",
+      accountId: input.accountId ?? "acct-cash",
+      description: input.description,
+      date: "2026-06-01",
+    },
+  };
+}
+
+function pendingDeleteChangeJson(input: {
+  readonly changeId: string;
+  readonly transactionId: string;
+  readonly expectedVersion: number;
+}) {
+  return {
+    id: input.changeId,
+    kind: "deleteTransaction",
+    commandVersion: 1,
+    idempotencyKey: `idem-${input.changeId}`,
+    dependencies: [],
+    expectedVersions: [
+      {
+        recordType: "transaction",
+        recordId: input.transactionId,
+        version: input.expectedVersion,
+      },
+    ],
+    clientTimestamp: "2026-06-01T10:06:00.000Z",
+    transactionId: input.transactionId,
   };
 }
 

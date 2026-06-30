@@ -96,10 +96,6 @@ export default function EditTransactionScreen() {
         back();
         return;
       }
-      if (tx.source === "cloud_ledger") {
-        back();
-        return;
-      }
 
       setDraft({
         type: "update",

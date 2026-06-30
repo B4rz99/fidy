@@ -1,7 +1,9 @@
 import NetInfo from "@react-native-community/netinfo";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  enqueueCloudLedgerOptimisticAmend,
   enqueueCloudLedgerOptimisticCreate,
+  enqueueCloudLedgerOptimisticDelete,
   flushCloudLedgerOutboxForUser,
   restoreCloudLedgerOptimisticRuntimeState,
 } from "@/features/cloud-ledger/runtime-mutations";
@@ -33,7 +35,9 @@ const mocks = vi.hoisted(() => {
     beginCloudLedgerRuntimeCacheFlush: vi.fn<(...args: any[]) => any>(),
     beginCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     createCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
+    amendOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
     createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
+    deleteOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
     finishCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerOutbox: vi.fn<(...args: any[]) => any>(),
@@ -54,7 +58,9 @@ vi.mock("@react-native-community/netinfo", () => ({
 }));
 
 vi.mock("@/features/cloud-ledger/outbox", () => ({
+  amendOfflineCloudLedgerTransaction: mocks.amendOfflineCloudLedgerTransaction,
   createOfflineCloudLedgerTransaction: mocks.createOfflineCloudLedgerTransaction,
+  deleteOfflineCloudLedgerTransaction: mocks.deleteOfflineCloudLedgerTransaction,
   flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
   restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
@@ -86,7 +92,9 @@ describe("Cloud Ledger runtime mutations", () => {
     mocks.beginCloudLedgerRuntimeCacheFlush.mockReturnValue(mocks.flushToken);
     mocks.beginCloudLedgerRuntimeCacheWrite.mockReturnValue(mocks.writeToken);
     mocks.createCloudLedgerRuntimeCacheWriteAbortSignal.mockReturnValue(mocks.abortSignal);
+    mocks.amendOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
     mocks.createOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
+    mocks.deleteOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
     mocks.flushPendingCloudLedgerChanges.mockResolvedValue(mocks.flushedCache);
     mocks.getCloudLedgerOutbox.mockReturnValue(mocks.outbox);
     mocks.getCloudLedgerRuntimeCache.mockReturnValue(mocks.cache);
@@ -226,6 +234,59 @@ describe("Cloud Ledger runtime mutations", () => {
     expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
   });
 
+  it("enqueues optimistic amend with the accepted transaction version", async () => {
+    const result = await enqueueCloudLedgerOptimisticAmend({
+      userId,
+      changeId: "ledger-change-amend" as LedgerChangeId,
+      transaction: makeAcceptedTransaction({ version: 3 }),
+      expectedVersion: 3,
+      createdAt: "2026-06-20T10:05:00.000Z" as IsoDateTime,
+    });
+
+    expect(result.didWriteRuntimeCache).toBe(true);
+    expect(mocks.amendOfflineCloudLedgerTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cache: mocks.cache,
+        outbox: mocks.outbox,
+        expectedVersion: 3,
+        transaction: expect.objectContaining({
+          id: "txn-1",
+          version: 3,
+        }),
+      })
+    );
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.optimisticCache
+    );
+  });
+
+  it("enqueues optimistic delete with the accepted transaction version", async () => {
+    const result = await enqueueCloudLedgerOptimisticDelete({
+      userId,
+      changeId: "ledger-change-delete" as LedgerChangeId,
+      transactionId: "txn-1" as TransactionId,
+      expectedVersion: 4,
+      createdAt: "2026-06-20T10:06:00.000Z" as IsoDateTime,
+    });
+
+    expect(result.didWriteRuntimeCache).toBe(true);
+    expect(mocks.deleteOfflineCloudLedgerTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cache: mocks.cache,
+        outbox: mocks.outbox,
+        expectedVersion: 4,
+        transactionId: "txn-1",
+      })
+    );
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.optimisticCache
+    );
+  });
+
   it("does not flush another user's outbox when the Supabase session changes before flush", async () => {
     vi.mocked(getSupabase).mockReturnValueOnce({
       auth: {
@@ -287,5 +348,13 @@ function makeCreateCommand() {
       id: "txn-1" as TransactionId,
       type: "expense" as const,
     },
+  };
+}
+
+function makeAcceptedTransaction(overrides: { readonly version: number }) {
+  return {
+    ...makeCreateCommand().transaction,
+    updatedAt: "2026-06-20T10:00:00.000Z" as IsoDateTime,
+    version: overrides.version,
   };
 }

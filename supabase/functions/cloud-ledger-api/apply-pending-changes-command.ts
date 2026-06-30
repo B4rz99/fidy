@@ -3,7 +3,11 @@ import {
   type CloudLedgerApplyPendingChangesCommand,
   type CloudLedgerExpectedRecordVersion,
 } from "./pending-change-set-model.ts";
-import { readCreateTransactionCommand } from "./create-transaction-command.ts";
+import {
+  readCloudLedgerTransactionId,
+  readCreateTransactionCommand,
+  type CreateTransactionCommandReadResult,
+} from "./create-transaction-command.ts";
 
 export type ApplyPendingChangesCommandReadResult =
   | { readonly kind: "valid"; readonly command: CloudLedgerApplyPendingChangesCommand }
@@ -24,13 +28,16 @@ type InvalidPendingChangeCode =
   | "invalid_ledger_reference"
   | "invalid_transaction"
   | "invalid_transaction_id";
+type PendingChangeEnvelope = {
+  readonly id: string;
+  readonly idempotencyKey: string;
+  readonly dependencies: readonly string[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
+};
 
 const LEDGER_CHANGE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const ISO_CLIENT_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
-const LEGACY_V1_DEVICE_ID = "device-legacy-v1";
-const LEGACY_V1_BATCH_ID = "batch-legacy-v1";
-const LEGACY_V1_CLIENT_TIMESTAMP = "1970-01-01T00:00:00.000Z";
-
 export function readApplyPendingChangesCommand(
   body: unknown
 ): ApplyPendingChangesCommandReadResult {
@@ -59,8 +66,8 @@ export function readApplyPendingChangesCommand(
         }
       : { kind: "invalid_pending_change" };
   }
-  const deviceId = readLegacyCompatibleEnvelopeId(record.deviceId, LEGACY_V1_DEVICE_ID);
-  const batchId = readLegacyCompatibleEnvelopeId(record.batchId, LEGACY_V1_BATCH_ID);
+  const deviceId = readEnvelopeId(record.deviceId);
+  const batchId = readEnvelopeId(record.batchId);
   if (deviceId === null || batchId === null) {
     return { kind: "invalid_pending_change" };
   }
@@ -98,51 +105,132 @@ function readPendingChange(value: unknown): PendingChangeReadResult {
   if (!isLedgerChangeId(record.id)) {
     return { kind: "invalid_pending_change" } as const;
   }
+  const id = record.id;
   const pendingChangeKind = readPendingChangeKind(record.kind);
   const commandVersion = readCommandVersion(record.commandVersion);
   if (pendingChangeKind === null || commandVersion === null) {
     return { kind: "invalid_pending_change" } as const;
   }
-  if (commandVersion !== 1 || pendingChangeKind !== "createTransaction") {
+  if (commandVersion !== 1) {
     return toUnsupportedPendingChange(
-      readUnsupportedPendingChange(record, record.id, pendingChangeKind, commandVersion)
+      readUnsupportedPendingChange(record, id, pendingChangeKind, commandVersion)
     );
   }
-  const idempotencyKey = readLegacyCompatibleIdentity(record.idempotencyKey, record.id);
-  const dependencies = readLegacyCompatibleDependencies(record.dependencies);
-  const expectedVersions = readLegacyCompatibleExpectedVersions(record.expectedVersions);
-  const clientTimestamp = readLegacyCompatibleClientTimestamp(record.clientTimestamp);
-  if (
-    idempotencyKey === null ||
-    dependencies === null ||
-    expectedVersions === null ||
-    clientTimestamp === null
-  ) {
+
+  if (pendingChangeKind === "createTransaction") {
+    return readCreateTransactionPendingChange(record, id);
+  }
+  if (pendingChangeKind === "amendTransaction") {
+    return readAmendTransactionPendingChange(record, id);
+  }
+  if (pendingChangeKind === "deleteTransaction") {
+    return readDeleteTransactionPendingChange(record, id);
+  }
+  return toUnsupportedPendingChange(
+    readUnsupportedPendingChange(record, id, pendingChangeKind, commandVersion)
+  );
+}
+
+function readCreateTransactionPendingChange(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeReadResult {
+  const envelope = readStrictPendingChangeEnvelope(record, id);
+  if (envelope === null) {
     return { kind: "invalid_pending_change" } as const;
   }
   const commandResult = readCreateTransactionCommand({
-    commandVersion,
+    commandVersion: 1,
     transaction: record.transaction,
   });
   if (commandResult.kind !== "valid") {
-    return toInvalidPendingChange(commandResult.kind, {
-      id: record.id,
-      idempotencyKey,
-      dependencies,
-      expectedVersions,
-      clientTimestamp,
-    });
+    return toInvalidPendingChange(commandResult.kind, envelope);
   }
   return {
     kind: "valid",
     change: {
-      id: record.id,
+      ...envelope,
       kind: "createTransaction",
       commandVersion: 1,
-      idempotencyKey,
-      dependencies,
-      expectedVersions,
-      clientTimestamp,
+      transaction: commandResult.command.transaction,
+    },
+  } as const;
+}
+
+function readAmendTransactionPendingChange(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeReadResult {
+  const envelope = readStrictPendingChangeEnvelope(record, id);
+  if (envelope === null) {
+    return { kind: "invalid_pending_change" } as const;
+  }
+  const commandResult = readCreateTransactionCommand({
+    commandVersion: 1,
+    transaction: record.transaction,
+  });
+  if (commandResult.kind !== "valid") {
+    return toInvalidPendingChange(commandResult.kind, envelope);
+  }
+  return toTransactionMutationChange("amendTransaction", envelope, commandResult);
+}
+
+function readDeleteTransactionPendingChange(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeReadResult {
+  const envelope = readStrictPendingChangeEnvelope(record, id);
+  if (envelope === null) {
+    return { kind: "invalid_pending_change" } as const;
+  }
+  const transactionId = readCloudLedgerTransactionId(record.transactionId);
+  if (transactionId === null) {
+    return toInvalidPendingChange("invalid_transaction_id", envelope);
+  }
+  return {
+    kind: "valid",
+    change: {
+      ...envelope,
+      kind: "deleteTransaction",
+      commandVersion: 1,
+      transactionId,
+    },
+  } as const;
+}
+
+function readStrictPendingChangeEnvelope(
+  record: Record<string, unknown>,
+  id: string
+): PendingChangeEnvelope | null {
+  const idempotencyKey = readLedgerChangeIdentity(record.idempotencyKey);
+  const dependencies = readLedgerChangeDependencies(record.dependencies);
+  const expectedVersions = readExpectedVersions(record.expectedVersions);
+  const clientTimestamp = readClientTimestamp(record.clientTimestamp);
+  return idempotencyKey === null ||
+    dependencies === null ||
+    expectedVersions === null ||
+    clientTimestamp === null
+    ? null
+    : {
+        id,
+        idempotencyKey,
+        dependencies,
+        expectedVersions,
+        clientTimestamp,
+      };
+}
+
+function toTransactionMutationChange(
+  kind: "amendTransaction",
+  envelope: PendingChangeEnvelope,
+  commandResult: Extract<CreateTransactionCommandReadResult, { readonly kind: "valid" }>
+): PendingChangeReadResult {
+  return {
+    kind: "valid",
+    change: {
+      ...envelope,
+      kind,
+      commandVersion: 1,
       transaction: commandResult.command.transaction,
     },
   } as const;
@@ -210,10 +298,6 @@ function readEnvelopeId(value: unknown): string | null {
   return typeof value === "string" && isLedgerChangeId(value) ? value : null;
 }
 
-function readLegacyCompatibleEnvelopeId(value: unknown, fallback: string): string | null {
-  return value === undefined ? fallback : readEnvelopeId(value);
-}
-
 function readOptionalEnvelopeId(value: unknown): string | null {
   return value === undefined ? null : readEnvelopeId(value);
 }
@@ -230,19 +314,11 @@ function readLedgerChangeIdentity(value: unknown): string | null {
   return typeof value === "string" && isLedgerChangeId(value) ? value : null;
 }
 
-function readLegacyCompatibleIdentity(value: unknown, fallback: string): string | null {
-  return value === undefined ? fallback : readLedgerChangeIdentity(value);
-}
-
 function readLedgerChangeDependencies(value: unknown): readonly string[] | null {
   if (!Array.isArray(value)) {
     return null;
   }
   return value.every(isLedgerChangeId) ? value : null;
-}
-
-function readLegacyCompatibleDependencies(value: unknown): readonly string[] | null {
-  return value === undefined ? [] : readLedgerChangeDependencies(value);
 }
 
 function readExpectedVersions(value: unknown): readonly CloudLedgerExpectedRecordVersion[] | null {
@@ -251,12 +327,6 @@ function readExpectedVersions(value: unknown): readonly CloudLedgerExpectedRecor
   }
   const versions = value.map(readExpectedVersion);
   return versions.every(isExpectedVersion) ? versions : null;
-}
-
-function readLegacyCompatibleExpectedVersions(
-  value: unknown
-): readonly CloudLedgerExpectedRecordVersion[] | null {
-  return value === undefined ? [] : readExpectedVersions(value);
 }
 
 function readExpectedVersion(value: unknown): CloudLedgerExpectedRecordVersion | null {
@@ -283,10 +353,6 @@ function readExpectedVersion(value: unknown): CloudLedgerExpectedRecordVersion |
 
 function readClientTimestamp(value: unknown): string | null {
   return typeof value === "string" && ISO_CLIENT_TIMESTAMP_PATTERN.test(value) ? value : null;
-}
-
-function readLegacyCompatibleClientTimestamp(value: unknown): string | null {
-  return value === undefined ? LEGACY_V1_CLIENT_TIMESTAMP : readClientTimestamp(value);
 }
 
 function isLedgerChangeId(value: unknown): value is string {

@@ -1,17 +1,21 @@
 export type {
   CloudLedgerOutboxFailureCode,
   CloudLedgerPendingChange,
+  CloudLedgerPendingAmendTransaction,
   CloudLedgerPendingCreateTransaction,
+  CloudLedgerPendingDeleteTransaction,
   EncryptedCloudLedgerOutbox,
   EncryptedCloudLedgerOutboxSnapshot,
   EncryptedCloudLedgerOutboxStorage,
 } from "./outbox";
 export {
   applyPendingLedgerChanges,
+  amendOfflineCloudLedgerTransaction,
   CloudLedgerOutboxFailure,
   createEncryptedCloudLedgerOutbox,
   createOfflineCloudLedgerTransaction,
   createSecureStoreCloudLedgerOutboxStorage,
+  deleteOfflineCloudLedgerTransaction,
   discardCloudLedgerOutbox,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,

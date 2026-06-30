@@ -13,6 +13,28 @@ export type CloudLedgerApplyPendingCreateTransactionChange = {
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
 };
 
+export type CloudLedgerApplyPendingAmendTransactionChange = {
+  readonly id: string;
+  readonly kind: "amendTransaction";
+  readonly commandVersion: 1;
+  readonly idempotencyKey: string;
+  readonly dependencies: readonly string[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
+  readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
+};
+
+export type CloudLedgerApplyPendingDeleteTransactionChange = {
+  readonly id: string;
+  readonly kind: "deleteTransaction";
+  readonly commandVersion: 1;
+  readonly idempotencyKey: string;
+  readonly dependencies: readonly string[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp: string;
+  readonly transactionId: string;
+};
+
 export type CloudLedgerApplyPendingUnsupportedChange = {
   readonly id: string;
   readonly kind: string;
@@ -43,7 +65,9 @@ export type CloudLedgerApplyPendingInvalidChange = {
 };
 
 export type CloudLedgerApplyPendingChange =
+  | CloudLedgerApplyPendingAmendTransactionChange
   | CloudLedgerApplyPendingCreateTransactionChange
+  | CloudLedgerApplyPendingDeleteTransactionChange
   | CloudLedgerApplyPendingInvalidChange
   | CloudLedgerApplyPendingUnsupportedEnvelopeChange
   | CloudLedgerApplyPendingUnsupportedChange;

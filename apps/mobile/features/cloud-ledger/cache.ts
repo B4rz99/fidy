@@ -36,6 +36,7 @@ export type CloudLedgerTransaction = {
   readonly accountId: FinancialAccountId;
   readonly description: string | null;
   readonly date: IsoDate;
+  readonly version: number;
   readonly updatedAt: IsoDateTime;
 };
 

@@ -1,38 +1,32 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
-import {
-  requireCategoryId,
-  requireCopAmount,
-  requireFinancialAccountId,
-  requireIsoDate,
-  requireIsoDateTime,
-  requireLedgerChangeId,
-  requireTransactionId,
-} from "@/shared/types/assertions";
-import type { IsoDateTime, LedgerChangeId, UserId } from "@/shared/types/branded";
+import type { IsoDateTime, LedgerChangeId, TransactionId, UserId } from "@/shared/types/branded";
 import {
   applyPendingCloudLedgerChanges,
   CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT,
 } from "./api-client";
 import {
   refreshCloudLedgerCache,
-  withTransactionProjection,
   type CloudLedgerCache,
   type CloudLedgerCreateTransactionCommand,
   type CloudLedgerTransaction,
 } from "./cache";
-import { acceptedPendingChanges, removePendingChangeOccurrences } from "./outbox-reconciliation";
-
-export type CloudLedgerPendingCreateTransaction = {
-  readonly id: LedgerChangeId;
-  readonly kind: "createTransaction";
-  readonly commandVersion: 1;
-  readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
-  readonly createdAt: IsoDateTime;
-};
-
-export type CloudLedgerPendingChange = CloudLedgerPendingCreateTransaction;
+import * as outboxReconciliation from "./outbox-reconciliation";
+import {
+  applyPendingLedgerChanges,
+  parsePendingChange,
+  toPendingChangeCommand,
+  toTransactionCommandPayload,
+  type CloudLedgerPendingChange,
+} from "./pending-changes";
+export { applyPendingLedgerChanges } from "./pending-changes";
+export type {
+  CloudLedgerPendingAmendTransaction,
+  CloudLedgerPendingChange,
+  CloudLedgerPendingCreateTransaction,
+  CloudLedgerPendingDeleteTransaction,
+} from "./pending-changes";
 
 export type EncryptedCloudLedgerOutboxSnapshot = {
   readonly version: typeof CLOUD_LEDGER_OUTBOX_VERSION;
@@ -148,7 +142,7 @@ export function createEncryptedCloudLedgerOutbox(input: {
       }),
     removeAcceptedChanges: (changesToRemove) =>
       serializeMutation(async () => {
-        const changes = removePendingChangeOccurrences(
+        const changes = outboxReconciliation.removePendingChangeOccurrences(
           (await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
           changesToRemove
         );
@@ -245,6 +239,44 @@ export async function createOfflineCloudLedgerTransaction(input: {
   return applyPendingLedgerChanges(input.cache, changes);
 }
 
+export async function amendOfflineCloudLedgerTransaction(input: {
+  readonly cache: CloudLedgerCache;
+  readonly changeId: LedgerChangeId;
+  readonly createdAt: IsoDateTime;
+  readonly expectedVersion: number;
+  readonly outbox: EncryptedCloudLedgerOutbox;
+  readonly transaction: CloudLedgerTransaction;
+}): Promise<CloudLedgerCache> {
+  const changes = await input.outbox.enqueue({
+    id: input.changeId,
+    kind: "amendTransaction",
+    commandVersion: 1,
+    transaction: toTransactionCommandPayload(input.transaction),
+    expectedVersion: input.expectedVersion,
+    createdAt: input.createdAt,
+  });
+  return applyPendingLedgerChanges(input.cache, changes);
+}
+
+export async function deleteOfflineCloudLedgerTransaction(input: {
+  readonly cache: CloudLedgerCache;
+  readonly changeId: LedgerChangeId;
+  readonly createdAt: IsoDateTime;
+  readonly expectedVersion: number;
+  readonly outbox: EncryptedCloudLedgerOutbox;
+  readonly transactionId: TransactionId;
+}): Promise<CloudLedgerCache> {
+  const changes = await input.outbox.enqueue({
+    id: input.changeId,
+    kind: "deleteTransaction",
+    commandVersion: 1,
+    transactionId: input.transactionId,
+    expectedVersion: input.expectedVersion,
+    createdAt: input.createdAt,
+  });
+  return applyPendingLedgerChanges(input.cache, changes);
+}
+
 export async function restoreOptimisticCloudLedgerCache(input: {
   readonly cache: CloudLedgerCache;
   readonly outbox: EncryptedCloudLedgerOutbox;
@@ -263,7 +295,7 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  const acceptedChanges = await flushPendingChanges(
+  const removableChanges = await flushPendingChanges(
     input.supabase,
     changes,
     input.abortSignal,
@@ -277,25 +309,14 @@ export async function flushPendingCloudLedgerChanges(input: {
     return applyPendingLedgerChanges(input.cache, changes);
   }
   if (input.outbox.removeAcceptedChanges === undefined) {
-    await input.outbox.remove(acceptedChanges.map((change) => change.id));
+    await input.outbox.remove(removableChanges.map((change) => change.id));
   } else {
-    await input.outbox.removeAcceptedChanges(acceptedChanges);
+    await input.outbox.removeAcceptedChanges(removableChanges);
   }
   return restoreOptimisticCloudLedgerCache({
     cache: refreshedCache,
     outbox: input.outbox,
   });
-}
-
-export function applyPendingLedgerChanges(
-  cache: CloudLedgerCache,
-  changes: readonly CloudLedgerPendingChange[]
-): CloudLedgerCache {
-  const optimisticTransactions = changes.map(toOptimisticTransaction);
-  return {
-    ...cache,
-    ...withTransactionProjection(upsertTransactions(cache.transactions, optimisticTransactions)),
-  };
 }
 
 async function flushPendingChanges(
@@ -310,9 +331,9 @@ async function flushPendingChanges(
   const deviceId = getOrCreateCloudLedgerDeviceId();
   return await chunkPendingChanges(changes).reduce<Promise<readonly CloudLedgerPendingChange[]>>(
     async (previous, batch) => {
-      const acceptedChanges = await previous;
+      const removableChanges = await previous;
       if (shouldContinue?.() === false) {
-        return acceptedChanges;
+        return removableChanges;
       }
       const outcome = await applyPendingCloudLedgerChanges(
         supabase,
@@ -324,7 +345,7 @@ async function flushPendingChanges(
         },
         { signal: abortSignal }
       );
-      return [...acceptedChanges, ...acceptedPendingChanges(batch, outcome)];
+      return removablePendingChanges(removableChanges, batch, outcome);
     },
     Promise.resolve([])
   );
@@ -355,37 +376,6 @@ function getOrCreateCloudLedgerDeviceId(): string {
   const deviceId = `device-${toHex(Crypto.getRandomBytes(CLOUD_LEDGER_DEVICE_ID_BYTES))}`;
   SecureStore.setItem(CLOUD_LEDGER_DEVICE_ID_KEY, deviceId);
   return deviceId;
-}
-
-function toPendingChangeCommand(change: CloudLedgerPendingChange) {
-  return {
-    id: change.id,
-    kind: change.kind,
-    commandVersion: change.commandVersion,
-    idempotencyKey: change.id,
-    dependencies: [],
-    expectedVersions: [],
-    clientTimestamp: change.createdAt,
-    transaction: change.transaction,
-  } as const;
-}
-
-function toOptimisticTransaction(change: CloudLedgerPendingChange): CloudLedgerTransaction {
-  return {
-    ...change.transaction,
-    updatedAt: change.createdAt,
-  };
-}
-
-function upsertTransactions(
-  existing: readonly CloudLedgerTransaction[],
-  incoming: readonly CloudLedgerTransaction[]
-): readonly CloudLedgerTransaction[] {
-  return [
-    ...new Map(
-      [...existing, ...incoming].map((transaction) => [transaction.id, transaction])
-    ).values(),
-  ];
 }
 
 async function loadOutboxSnapshot(
@@ -458,61 +448,6 @@ function parseOutboxSnapshot(value: unknown): CloudLedgerOutboxSnapshot {
     version: CLOUD_LEDGER_OUTBOX_VERSION,
     changes: requireArray(record.changes, "changes").map(parsePendingChange),
   };
-}
-
-function parsePendingChange(value: unknown): CloudLedgerPendingChange {
-  const record = requireRecord(value, "pending change");
-  if (record.kind !== "createTransaction" || record.commandVersion !== 1) {
-    throw new Error("pending change command must be createTransaction v1");
-  }
-  return {
-    id: requireLedgerChangeId(requireString(record.id, "id")),
-    kind: "createTransaction",
-    commandVersion: 1,
-    transaction: parseCreateTransaction(record.transaction),
-    createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
-  };
-}
-
-function parseCreateTransaction(
-  value: unknown
-): CloudLedgerCreateTransactionCommand["transaction"] {
-  const record = requireRecord(value, "transaction");
-  return {
-    id: requireTransactionId(requireString(record.id, "transaction.id")),
-    type: requireTransactionType(record.type),
-    amount: requireCopAmount(requireNumber(record.amount, "transaction.amount")),
-    currency: requireCopCurrency(record.currency),
-    categoryId: parseCategoryId(record.categoryId),
-    accountId: requireFinancialAccountId(requireString(record.accountId, "transaction.accountId")),
-    description: parseDescription(record.description),
-    date: requireIsoDate(requireString(record.date, "transaction.date")),
-  };
-}
-
-function parseCategoryId(value: unknown) {
-  return value === null ? null : requireCategoryId(requireString(value, "transaction.categoryId"));
-}
-
-function parseDescription(value: unknown): string | null {
-  if (value === null) {
-    return null;
-  }
-  return requireString(value, "transaction.description");
-}
-
-function requireTransactionType(value: unknown): "income" | "expense" {
-  if (value === "income" || value === "expense") {
-    return value;
-  }
-  throw new Error("transaction.type must be income or expense");
-}
-
-function requireCopCurrency(value: unknown): "COP" {
-  if (value === "COP") {
-    return "COP";
-  }
-  throw new Error("transaction.currency must be COP");
 }
 
 function requireRecord(value: unknown, label: string): Record<string, unknown> {
@@ -931,4 +866,16 @@ function toHex(value: Uint8Array): string {
 
 function fromHex(value: string): Uint8Array {
   return Uint8Array.from(value.match(/.{1,2}/g) ?? [], (byte) => Number.parseInt(byte, 16));
+}
+
+function removablePendingChanges(
+  previousChanges: readonly CloudLedgerPendingChange[],
+  batch: readonly CloudLedgerPendingChange[],
+  outcome: Parameters<typeof outboxReconciliation.acceptedPendingChanges>[1]
+): readonly CloudLedgerPendingChange[] {
+  return [
+    ...previousChanges,
+    ...outboxReconciliation.acceptedPendingChanges(batch, outcome),
+    ...outboxReconciliation.terminalRejectedPendingChanges(batch, outcome),
+  ];
 }

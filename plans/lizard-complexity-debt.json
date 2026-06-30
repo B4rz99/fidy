@@ -13,7 +13,7 @@
   },
   "violations": [
     {
-      "key": "?@464-478@apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts",
+      "key": "?@468-482@apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts",
       "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-store.test.ts",
       "function": "?",
       "thresholdProfile": "default",
@@ -22,7 +22,25 @@
       "parameterCount": 1
     },
     {
-      "key": "(anonymous)@411-478@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "key": "(anonymous)@1311-1384@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "function": "(anonymous)",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 71,
+      "parameterCount": 0
+    },
+    {
+      "key": "(anonymous)@1439-1500@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "function": "(anonymous)",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 59,
+      "parameterCount": 0
+    },
+    {
+      "key": "(anonymous)@405-472@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -31,7 +49,7 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@480-560@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "key": "(anonymous)@474-554@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -40,7 +58,16 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@544-598@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "key": "(anonymous)@557-640@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "function": "(anonymous)",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 82,
+      "parameterCount": 0
+    },
+    {
+      "key": "(anonymous)@579-633@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -49,16 +76,7 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@563-617@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
-      "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
-      "function": "(anonymous)",
-      "thresholdProfile": "default",
-      "cyclomaticComplexity": 1,
-      "nloc": 53,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@600-662@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "key": "(anonymous)@635-697@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -67,16 +85,16 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@619-683@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "key": "(anonymous)@643-697@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
       "cyclomaticComplexity": 1,
-      "nloc": 63,
+      "nloc": 53,
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@664-717@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "key": "(anonymous)@699-752@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -85,7 +103,25 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@685-744@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "key": "(anonymous)@699-763@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "function": "(anonymous)",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 63,
+      "parameterCount": 0
+    },
+    {
+      "key": "(anonymous)@754-808@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "function": "(anonymous)",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 52,
+      "parameterCount": 0
+    },
+    {
+      "key": "(anonymous)@765-824@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -94,7 +130,7 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@719-773@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "key": "(anonymous)@810-863@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -103,16 +139,7 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@775-828@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
-      "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
-      "function": "(anonymous)",
-      "thresholdProfile": "default",
-      "cyclomaticComplexity": 1,
-      "nloc": 52,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@795-863@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
+      "key": "(anonymous)@875-943@apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "file": "apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -121,7 +148,7 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@886-943@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "key": "(anonymous)@921-978@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
@@ -130,7 +157,25 @@
       "parameterCount": 0
     },
     {
-      "key": "pendingCreateChangeJson@1651-1679@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "key": "consumeKey@50-94@apps/mobile/features/cloud-ledger/outbox-reconciliation.ts",
+      "file": "apps/mobile/features/cloud-ledger/outbox-reconciliation.ts",
+      "function": "consumeKey",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 10,
+      "nloc": 43,
+      "parameterCount": 3
+    },
+    {
+      "key": "installLegacyTransactionResponseRpcs@1957-2142@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
+      "function": "installLegacyTransactionResponseRpcs",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 186,
+      "parameterCount": 1
+    },
+    {
+      "key": "pendingCreateChangeJson@2282-2310@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "function": "pendingCreateChangeJson",
       "thresholdProfile": "default",
@@ -139,7 +184,16 @@
       "parameterCount": 1
     },
     {
-      "key": "requireChunkAllocationCoverage@673-763@apps/mobile/features/cloud-ledger/outbox.ts",
+      "key": "readCategoryId@466-515@apps/mobile/features/cloud-ledger/api-client.ts",
+      "file": "apps/mobile/features/cloud-ledger/api-client.ts",
+      "function": "readCategoryId",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 9,
+      "nloc": 44,
+      "parameterCount": 2
+    },
+    {
+      "key": "requireChunkAllocationCoverage@608-698@apps/mobile/features/cloud-ledger/outbox.ts",
       "file": "apps/mobile/features/cloud-ledger/outbox.ts",
       "function": "requireChunkAllocationCoverage",
       "thresholdProfile": "default",
@@ -148,13 +202,31 @@
       "parameterCount": 8
     },
     {
-      "key": "requireString@532-613@apps/mobile/features/cloud-ledger/outbox.ts",
+      "key": "requireIsoDateTime@596-666@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "function": "requireIsoDateTime",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 68,
+      "parameterCount": 0
+    },
+    {
+      "key": "requireString@467-548@apps/mobile/features/cloud-ledger/outbox.ts",
       "file": "apps/mobile/features/cloud-ledger/outbox.ts",
       "function": "requireString",
       "thresholdProfile": "default",
       "cyclomaticComplexity": 8,
       "nloc": 69,
       "parameterCount": 5
+    },
+    {
+      "key": "requireTransactionId@690-761@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "function": "requireTransactionId",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 69,
+      "parameterCount": 0
     }
   ]
 }

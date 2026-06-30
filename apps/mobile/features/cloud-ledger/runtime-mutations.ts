@@ -1,10 +1,12 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "@/shared/db/supabase";
-import type { IsoDateTime, LedgerChangeId, UserId } from "@/shared/types/branded";
-import type { CloudLedgerCreateTransactionCommand } from "./cache";
+import type { IsoDateTime, LedgerChangeId, TransactionId, UserId } from "@/shared/types/branded";
+import type { CloudLedgerCreateTransactionCommand, CloudLedgerTransaction } from "./cache";
 import {
+  amendOfflineCloudLedgerTransaction,
   createOfflineCloudLedgerTransaction,
+  deleteOfflineCloudLedgerTransaction,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   restoreOptimisticCloudLedgerCache,
@@ -25,6 +27,11 @@ import {
 export type CloudLedgerOptimisticCreateResult = {
   readonly didWriteRuntimeCache: boolean;
   readonly flushIfOnline: () => Promise<void>;
+};
+export type CloudLedgerOptimisticMutationResult = CloudLedgerOptimisticCreateResult;
+type EnqueueCloudLedgerOptimisticMutationInput = {
+  readonly userId: UserId;
+  readonly applyOfflineChange: () => Promise<ReturnType<typeof getCloudLedgerRuntimeCache>>;
 };
 
 export async function restoreCloudLedgerOptimisticRuntimeState(userId: UserId): Promise<boolean> {
@@ -58,42 +65,106 @@ export async function enqueueCloudLedgerOptimisticCreate(input: {
   readonly command: CloudLedgerCreateTransactionCommand;
   readonly createdAt: IsoDateTime;
 }): Promise<CloudLedgerOptimisticCreateResult> {
+  return enqueueCloudLedgerOptimisticMutation({
+    userId: input.userId,
+    applyOfflineChange: () =>
+      createOfflineCloudLedgerTransaction({
+        cache: getCloudLedgerRuntimeCache(input.userId),
+        changeId: input.changeId,
+        command: input.command,
+        createdAt: input.createdAt,
+        outbox: getCloudLedgerOutbox(input.userId),
+      }),
+  });
+}
+
+async function enqueueCloudLedgerOptimisticMutation(
+  input: EnqueueCloudLedgerOptimisticMutationInput
+): Promise<CloudLedgerOptimisticMutationResult> {
   const writeToken = beginCloudLedgerRuntimeCacheWrite(input.userId);
   try {
     if (!isCloudLedgerRuntimeCacheWriteCurrent(input.userId, writeToken)) {
-      return {
-        didWriteRuntimeCache: false,
-        flushIfOnline: async () => undefined,
-      };
+      return inactiveCloudLedgerOptimisticMutation();
     }
-    const optimisticCache = await createOfflineCloudLedgerTransaction({
-      cache: getCloudLedgerRuntimeCache(input.userId),
-      changeId: input.changeId,
-      command: input.command,
-      createdAt: input.createdAt,
-      outbox: getCloudLedgerOutbox(input.userId),
-    });
+    const optimisticCache = await input.applyOfflineChange();
     const didWriteRuntimeCache = setCloudLedgerRuntimeCacheIfCurrent(
       input.userId,
       writeToken,
       optimisticCache
     );
 
-    return {
-      didWriteRuntimeCache,
-      flushIfOnline: async () => {
-        if (!didWriteRuntimeCache) {
-          return;
-        }
-        await flushCloudLedgerOutboxAfterOptimisticCreate(input.userId, writeToken);
-      },
-    };
+    return cloudLedgerOptimisticMutationResult(input.userId, writeToken, didWriteRuntimeCache);
   } finally {
     finishCloudLedgerRuntimeCacheWrite(input.userId, writeToken);
   }
 }
 
-async function flushCloudLedgerOutboxAfterOptimisticCreate(
+function inactiveCloudLedgerOptimisticMutation(): CloudLedgerOptimisticMutationResult {
+  return {
+    didWriteRuntimeCache: false,
+    flushIfOnline: async () => undefined,
+  };
+}
+
+function cloudLedgerOptimisticMutationResult(
+  userId: UserId,
+  writeToken: CloudLedgerRuntimeCacheWriteToken,
+  didWriteRuntimeCache: boolean
+): CloudLedgerOptimisticMutationResult {
+  return {
+    didWriteRuntimeCache,
+    flushIfOnline: async () => {
+      if (!didWriteRuntimeCache) {
+        return;
+      }
+      await flushCloudLedgerOutboxAfterOptimisticMutation(userId, writeToken);
+    },
+  };
+}
+
+export async function enqueueCloudLedgerOptimisticAmend(input: {
+  readonly userId: UserId;
+  readonly changeId: LedgerChangeId;
+  readonly transaction: CloudLedgerTransaction;
+  readonly expectedVersion: number;
+  readonly createdAt: IsoDateTime;
+}): Promise<CloudLedgerOptimisticMutationResult> {
+  return enqueueCloudLedgerOptimisticMutation({
+    userId: input.userId,
+    applyOfflineChange: () =>
+      amendOfflineCloudLedgerTransaction({
+        cache: getCloudLedgerRuntimeCache(input.userId),
+        changeId: input.changeId,
+        createdAt: input.createdAt,
+        expectedVersion: input.expectedVersion,
+        outbox: getCloudLedgerOutbox(input.userId),
+        transaction: input.transaction,
+      }),
+  });
+}
+
+export async function enqueueCloudLedgerOptimisticDelete(input: {
+  readonly userId: UserId;
+  readonly changeId: LedgerChangeId;
+  readonly transactionId: TransactionId;
+  readonly expectedVersion: number;
+  readonly createdAt: IsoDateTime;
+}): Promise<CloudLedgerOptimisticMutationResult> {
+  return enqueueCloudLedgerOptimisticMutation({
+    userId: input.userId,
+    applyOfflineChange: () =>
+      deleteOfflineCloudLedgerTransaction({
+        cache: getCloudLedgerRuntimeCache(input.userId),
+        changeId: input.changeId,
+        createdAt: input.createdAt,
+        expectedVersion: input.expectedVersion,
+        outbox: getCloudLedgerOutbox(input.userId),
+        transactionId: input.transactionId,
+      }),
+  });
+}
+
+async function flushCloudLedgerOutboxAfterOptimisticMutation(
   userId: UserId,
   writeToken: CloudLedgerRuntimeCacheWriteToken
 ): Promise<void> {

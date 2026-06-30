@@ -14,7 +14,11 @@ import {
   CloudLedgerOutboxFailure,
   getCloudLedgerOutbox,
 } from "@/features/cloud-ledger/outbox.public";
-import { enqueueCloudLedgerOptimisticCreate } from "@/features/cloud-ledger/runtime-mutations.public";
+import {
+  enqueueCloudLedgerOptimisticAmend,
+  enqueueCloudLedgerOptimisticCreate,
+  enqueueCloudLedgerOptimisticDelete,
+} from "@/features/cloud-ledger/runtime-mutations.public";
 import {
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
@@ -84,7 +88,21 @@ vi.mock("@/features/cloud-ledger/outbox.public", async () => {
 });
 
 vi.mock("@/features/cloud-ledger/runtime-mutations.public", () => ({
+  enqueueCloudLedgerOptimisticAmend: vi.fn<(...args: any[]) => any>((input) => {
+    cloudLedgerOutboxCalls.push(input);
+    return Promise.resolve({
+      didWriteRuntimeCache: true,
+      flushIfOnline: cloudLedgerFlushIfOnline,
+    });
+  }),
   enqueueCloudLedgerOptimisticCreate: vi.fn<(...args: any[]) => any>((input) => {
+    cloudLedgerOutboxCalls.push(input);
+    return Promise.resolve({
+      didWriteRuntimeCache: true,
+      flushIfOnline: cloudLedgerFlushIfOnline,
+    });
+  }),
+  enqueueCloudLedgerOptimisticDelete: vi.fn<(...args: any[]) => any>((input) => {
     cloudLedgerOutboxCalls.push(input);
     return Promise.resolve({
       didWriteRuntimeCache: true,
@@ -102,6 +120,7 @@ vi.mock("@/shared/db/client", () => ({
 }));
 
 const insertedTransactionRows: unknown[] = [];
+const updatedTransactionRows: unknown[] = [];
 const insertedFinancialAccountRows: unknown[] = [];
 const insertedUserCategoryRows: unknown[] = [];
 const financialAccountConflictUpdates: unknown[] = [];
@@ -144,10 +163,13 @@ const mockDb = {
       },
     }),
   }),
-  update: () => ({
-    set: () => ({
+  update: (table: unknown) => ({
+    set: (row: unknown) => ({
       where: () => ({
-        run: () => ({ changes: 1 }),
+        run: () => {
+          recordUpdatedRow(table, row);
+          return { changes: 1 };
+        },
       }),
     }),
   }),
@@ -163,6 +185,12 @@ function recordInsertedRow(table: unknown, row: unknown) {
   }
   if (table === userCategories) {
     insertedUserCategoryRows.push(row);
+  }
+}
+
+function recordUpdatedRow(table: unknown, row: unknown) {
+  if (table === transactions) {
+    updatedTransactionRows.push(row);
   }
 }
 
@@ -209,6 +237,7 @@ function seedCloudLedgerRuntimeWithRemoteReferences(accountType = "cash") {
           description: "Remote refs",
           date: "2026-06-20" as IsoDate,
           updatedAt: "2026-06-20T10:02:00.000Z" as IsoDateTime,
+          version: 1,
         },
       ],
       tombstones: [],
@@ -317,6 +346,39 @@ function pendingCreateFromStoredTransaction(transaction: StoredTransaction) {
   } as const;
 }
 
+function pendingDeleteFromStoredTransaction(transaction: StoredTransaction) {
+  return {
+    id: "change-delete-pending",
+    kind: "deleteTransaction",
+    commandVersion: 1,
+    createdAt: transaction.updatedAt.toISOString(),
+    transactionId: transaction.id,
+    expectedVersion: 1,
+  } as const;
+}
+
+function pendingAmendFromStoredTransaction(transaction: StoredTransaction) {
+  return {
+    id: "change-amend-pending",
+    kind: "amendTransaction",
+    commandVersion: 1,
+    createdAt: transaction.updatedAt.toISOString(),
+    expectedVersion: 1,
+    transaction: {
+      id: transaction.id,
+      type: transaction.type,
+      amount: transaction.amount,
+      currency: "COP",
+      categoryId: transaction.categoryId,
+      accountId: transaction.accountId,
+      description: transaction.description || null,
+      date: toIsoDate(transaction.date),
+      version: 2,
+      updatedAt: transaction.updatedAt.toISOString(),
+    },
+  } as const;
+}
+
 function createMockCloudLedgerOutbox(
   load = vi.fn<(...args: any[]) => any>().mockResolvedValue([])
 ) {
@@ -337,6 +399,46 @@ function seedVisibleTransactionSnapshot(transaction: StoredTransaction) {
     categorySpending: [{ categoryId: transaction.categoryId, total: transaction.amount }],
     dailySpending: [{ date: toIsoDate(transaction.date), total: transaction.amount }],
   });
+}
+
+function makeVisibleTransactionRowsForDate(input: {
+  readonly date: IsoDate;
+  readonly prefix: string;
+}) {
+  return Array.from({ length: 30 }, (_, index) =>
+    makeRow({
+      id: `${input.prefix}-${index}` as TransactionId,
+      date: input.date,
+      createdAt: `${input.date}T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+      updatedAt: `${input.date}T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+    })
+  );
+}
+
+function mockAggregateForSingleTransaction(transaction: StoredTransaction, date: IsoDate) {
+  vi.mocked(getSpendingByCategoryAggregate).mockReturnValueOnce([
+    { categoryId: transaction.categoryId, total: transaction.amount },
+  ]);
+  vi.mocked(getDailySpendingAggregate).mockReturnValueOnce([{ date, total: transaction.amount }]);
+}
+
+function mockStoredCloudLedgerShadowLookup(transaction: StoredTransaction, date: IsoDate) {
+  vi.mocked(getTransactionById).mockImplementation((_, id) =>
+    id === transaction.id
+      ? makeRow({
+          id: transaction.id,
+          amount: transaction.amount,
+          date,
+          source: "cloud_ledger",
+        })
+      : null
+  );
+}
+
+function mockCloudLedgerOutboxChanges(changes: readonly unknown[]) {
+  vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(
+    createMockCloudLedgerOutbox(vi.fn<(...args: any[]) => any>().mockResolvedValue(changes))
+  );
 }
 
 function mockCloudLedgerOutboxLoadFailure(message: string) {
@@ -405,7 +507,21 @@ describe("transaction boundaries", () => {
     vi.mocked(getTransactionById).mockReturnValue(null);
     vi.mocked(getSupabase).mockReturnValue(createMockSupabase());
     vi.mocked(getCloudLedgerOutbox).mockImplementation(() => createMockCloudLedgerOutbox());
+    vi.mocked(enqueueCloudLedgerOptimisticAmend).mockImplementation((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return Promise.resolve({
+        didWriteRuntimeCache: true,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      });
+    });
     vi.mocked(enqueueCloudLedgerOptimisticCreate).mockImplementation((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return Promise.resolve({
+        didWriteRuntimeCache: true,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      });
+    });
+    vi.mocked(enqueueCloudLedgerOptimisticDelete).mockImplementation((input) => {
       cloudLedgerOutboxCalls.push(input);
       return Promise.resolve({
         didWriteRuntimeCache: true,
@@ -415,6 +531,7 @@ describe("transaction boundaries", () => {
     cloudLedgerFlushIfOnline.mockReset();
     cloudLedgerFlushIfOnline.mockResolvedValue(undefined);
     insertedTransactionRows.length = 0;
+    updatedTransactionRows.length = 0;
     insertedFinancialAccountRows.length = 0;
     insertedUserCategoryRows.length = 0;
     financialAccountConflictUpdates.length = 0;
@@ -643,6 +760,166 @@ describe("transaction boundaries", () => {
         },
       })
     ).resolves.toEqual({ success: false, error: "cloudLedgerMutationUnsupported" });
+  });
+
+  it("amends accepted Cloud Ledger transactions through the optimistic Remote API outbox", async () => {
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:12" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            id: "txn-accepted-cloud-edit" as TransactionId,
+            type: "expense",
+            amount: 1000 as CopAmount,
+            currency: "COP",
+            categoryId: "food" as CategoryId,
+            accountId: "fa-default-user-1" as FinancialAccountId,
+            description: "Lunch",
+            date: "2026-03-04" as IsoDate,
+            updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+            version: 3,
+          },
+        ],
+        tombstones: [],
+      })
+    );
+
+    const result = await updateTransactionDirect({
+      db: mockDb,
+      userId: mockUserId,
+      id: "txn-accepted-cloud-edit" as TransactionId,
+      fields: {
+        type: "expense",
+        digits: "9999",
+        categoryId: "food" as CategoryId,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        description: "Edited remotely",
+        date: new Date("2026-03-04T00:00:00.000Z"),
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(enqueueCloudLedgerOptimisticAmend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedVersion: 3,
+        transaction: expect.objectContaining({
+          id: "txn-accepted-cloud-edit",
+          amount: 9999,
+          description: "Edited remotely",
+          version: 3,
+        }),
+      })
+    );
+    expect(cloudLedgerFlushIfOnline).toHaveBeenCalledTimes(1);
+  });
+
+  it("rewrites local Cloud Ledger shadows after an online stale amend rejection", async () => {
+    const serverTransaction = {
+      id: "txn-accepted-cloud-stale-edit" as TransactionId,
+      type: "expense" as const,
+      amount: 1000 as CopAmount,
+      currency: "COP" as const,
+      categoryId: "food" as CategoryId,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      description: "Lunch from server",
+      date: "2026-03-04" as IsoDate,
+      updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+      version: 4,
+    };
+    const serverCache = applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+      cursor: "ledger:12" as LedgerCursor,
+      categories: [],
+      financialAccounts: [],
+      transactions: [serverTransaction],
+      tombstones: [],
+    });
+    setCloudLedgerRuntimeCache(mockUserId, serverCache);
+    vi.mocked(getTransactionById).mockImplementation((_, id) =>
+      id === serverTransaction.id
+        ? makeRow({
+            id: serverTransaction.id,
+            amount: serverTransaction.amount,
+            description: serverTransaction.description,
+            source: "cloud_ledger",
+          })
+        : null
+    );
+    cloudLedgerFlushIfOnline.mockImplementationOnce(async () => {
+      setCloudLedgerRuntimeCache(mockUserId, serverCache);
+    });
+
+    const result = await updateTransactionDirect({
+      db: mockDb,
+      userId: mockUserId,
+      id: serverTransaction.id,
+      fields: {
+        type: "expense",
+        digits: "9999",
+        categoryId: "food" as CategoryId,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        description: "Rejected optimistic edit",
+        date: new Date("2026-03-04T00:00:00.000Z"),
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(updatedTransactionRows).toContainEqual(
+      expect.objectContaining({
+        id: serverTransaction.id,
+        amount: 9999,
+        description: "Rejected optimistic edit",
+      })
+    );
+    await vi.waitFor(() => {
+      expect(updatedTransactionRows).toContainEqual(
+        expect.objectContaining({
+          id: serverTransaction.id,
+          amount: serverTransaction.amount,
+          description: serverTransaction.description,
+        })
+      );
+    });
+  });
+
+  it("deletes accepted Cloud Ledger transactions through the optimistic Remote API outbox", async () => {
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:12" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            id: "txn-accepted-cloud-delete" as TransactionId,
+            type: "expense",
+            amount: 1000 as CopAmount,
+            currency: "COP",
+            categoryId: "food" as CategoryId,
+            accountId: "fa-default-user-1" as FinancialAccountId,
+            description: "Lunch",
+            date: "2026-03-04" as IsoDate,
+            updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+            version: 4,
+          },
+        ],
+        tombstones: [],
+      })
+    );
+
+    await expect(
+      deleteTransaction(mockDb, mockUserId, "txn-accepted-cloud-delete" as TransactionId)
+    ).resolves.toBeUndefined();
+
+    expect(enqueueCloudLedgerOptimisticDelete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedVersion: 4,
+        transactionId: "txn-accepted-cloud-delete",
+      })
+    );
+    expect(cloudLedgerFlushIfOnline).toHaveBeenCalledTimes(1);
   });
 
   it("allows local deletes for ordinary rows when encrypted Cloud Ledger outbox is unreadable", async () => {
@@ -954,6 +1231,7 @@ describe("transaction boundaries", () => {
             description: visibleTransaction.description,
             date: toIsoDate(visibleTransaction.date),
             updatedAt: toIsoDateTime(visibleTransaction.updatedAt),
+            version: 1,
           },
         ],
         tombstones: [],
@@ -1175,6 +1453,39 @@ describe("transaction boundaries", () => {
     );
   });
 
+  it("subtracts off-page pending-deleted Cloud Ledger shadow rows from initial aggregates", async () => {
+    const today = new Date();
+    const todayIso = toIsoDate(today);
+    const deletedShadow = makeStoredTransaction({
+      id: "tx-shadow-off-page-delete" as TransactionId,
+      amount: 4520 as CopAmount,
+      date: today,
+      createdAt: new Date(`${todayIso}T08:00:00.000Z`),
+      updatedAt: new Date(`${todayIso}T08:00:00.000Z`),
+      source: "cloud_ledger",
+    });
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce(
+      makeVisibleTransactionRowsForDate({
+        date: todayIso,
+        prefix: "tx-visible-delete-window",
+      })
+    );
+    mockAggregateForSingleTransaction(deletedShadow, todayIso);
+    mockStoredCloudLedgerShadowLookup(deletedShadow, todayIso);
+    mockCloudLedgerOutboxChanges([pendingDeleteFromStoredTransaction(deletedShadow)]);
+
+    await loadInitialTransactions(mockDb, mockUserId);
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      balance: 0,
+      categorySpending: [],
+      dailySpending: [],
+    });
+    expect(useTransactionStore.getState().pages.map((transaction) => transaction.id)).not.toContain(
+      deletedShadow.id
+    );
+  });
+
   it("does not apply a delayed initial optimistic load after the transaction session is invalidated", async () => {
     const delayedPendingTransaction = makeStoredTransaction({
       id: "tx-delayed-discarded-pending" as TransactionId,
@@ -1295,6 +1606,7 @@ describe("transaction boundaries", () => {
             description: "Accepted coffee",
             date: acceptedDate,
             updatedAt: "2026-06-02T10:04:00.000Z" as IsoDateTime,
+            version: 1,
           },
         ],
         tombstones: [],
@@ -1334,6 +1646,7 @@ describe("transaction boundaries", () => {
         description: `Accepted history ${index}`,
         date: historyDate,
         updatedAt: `2026-06-20T10:${minute}:00.000Z` as IsoDateTime,
+        version: 1,
       };
     });
     setCloudLedgerRuntimeCache(
@@ -1402,6 +1715,7 @@ describe("transaction boundaries", () => {
           {
             ...restoredPendingChange.transaction,
             updatedAt: restoredPendingChange.createdAt as IsoDateTime,
+            version: 1,
           },
         ],
         tombstones: [],
@@ -1485,6 +1799,7 @@ describe("transaction boundaries", () => {
             description: "Remote uncategorized",
             date: "2026-06-12" as IsoDate,
             updatedAt: "2026-06-12T10:00:00.000Z" as IsoDateTime,
+            version: 1,
           },
         ],
         tombstones: [],
@@ -1577,6 +1892,22 @@ describe("transaction boundaries", () => {
 
     expect(load).toHaveBeenCalled();
     expect(deletedTransactionScopes).toHaveLength(1);
+  });
+
+  it("preserves local Cloud Ledger shadows for pending outbox amends on discard", async () => {
+    const pendingTransaction = makeStoredTransaction({
+      id: "tx-pending-cloud-ledger-amend-discard" as TransactionId,
+      source: "cloud_ledger",
+    });
+    const load = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue([pendingAmendFromStoredTransaction(pendingTransaction)]);
+    vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
+
+    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+
+    expect(load).toHaveBeenCalled();
+    expect(deletedTransactionScopes).toHaveLength(0);
   });
 
   it("deletes all local Cloud Ledger shadows when pending outbox cleanup cannot read the outbox", async () => {
