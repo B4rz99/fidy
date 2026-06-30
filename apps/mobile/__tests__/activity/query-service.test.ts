@@ -389,6 +389,47 @@ describe("activity query service", () => {
     ]);
   });
 
+  it("preserves activity pagination when pending-deleted rows are filtered out", async () => {
+    const pendingDeletedId = "tx-cloud-pending-delete-window" as TransactionId;
+    const transactionRows = Array.from({ length: 32 }, (_, index) =>
+      makeTransactionRow({
+        id: (index === 0 ? pendingDeletedId : `tx-activity-page-${index}`) as TransactionId,
+        date: "2026-04-20" as IsoDate,
+        createdAt: `2026-04-20T10:${String(59 - index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+        updatedAt: `2026-04-20T10:${String(59 - index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+        source: index === 0 ? "cloud_ledger" : "manual",
+      })
+    );
+    const getTransactionsPaginated = vi.fn<(...args: any[]) => any>(({ limit }) =>
+      transactionRows.slice(0, limit)
+    );
+    const service = createActivityQueryService({
+      getTransactionsPaginated,
+      getTransfersPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+      loadCloudLedgerOptimisticTransactions: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+        deletedTransactionIds: [pendingDeletedId],
+        transactions: [],
+      }),
+    });
+
+    const snapshot = await service.loadPageWithCloudLedgerOptimisticView({
+      db: {} as never,
+      userId: USER_ID,
+      pageSize: 30,
+      offset: 0,
+    });
+
+    expect(snapshot.hasMore).toBe(true);
+    expect(snapshot.pages).toHaveLength(30);
+    expect(snapshot.pages.map((item) => item.id)).not.toContain(pendingDeletedId);
+    expect(getTransactionsPaginated).toHaveBeenCalledWith({
+      db: expect.anything(),
+      userId: USER_ID,
+      limit: 32,
+      offset: 0,
+    });
+  });
+
   it("keeps ordinary home activity when encrypted Cloud Ledger outbox optimistic loading fails", async () => {
     const outboxFailure = new Error("decrypt failed");
     outboxFailure.name = "CloudLedgerOutboxFailure";

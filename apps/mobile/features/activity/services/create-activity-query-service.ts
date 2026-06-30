@@ -40,7 +40,9 @@ type LoadActivityPageRequest = LoadActivityPageInput & {
 };
 
 function loadActivityPage(input: LoadActivityPageRequest): ActivityPageSnapshot {
-  const fetchSize = input.offset + input.pageSize + 1;
+  const pendingDeletedTransactionCount =
+    input.cloudLedgerOverlay?.deletedTransactionIds.length ?? 0;
+  const fetchSize = input.offset + input.pageSize + 1 + pendingDeletedTransactionCount;
   const mergedItems = toStoredActivityItems({
     deletedTransactionIds: input.cloudLedgerOverlay?.deletedTransactionIds,
     optimisticTransactions: input.cloudLedgerOverlay?.transactions,

@@ -29,6 +29,9 @@ type ApplyCloudLedgerTransactionsOptions = {
   readonly getTransactionIncludedInAggregate?: (
     transaction: StoredTransaction
   ) => StoredTransaction | null;
+  readonly getTransactionIncludedInAggregateById?: (
+    transactionId: TransactionId
+  ) => StoredTransaction | null;
   readonly isTransactionIncludedInAggregate?: (transaction: StoredTransaction) => boolean;
   readonly isTransactionIncludedInPageOffset?: (transaction: StoredTransaction) => boolean;
   readonly pageWindowSize?: number;
@@ -194,6 +197,23 @@ const shouldInsertTransactionIntoPages = (
   hasPageWindowCapacity(snapshot.pages, pageWindowSize) ||
   sortsIntoVisibleWindow(snapshot.pages, transaction);
 
+function deletedAggregateTransactions(input: {
+  readonly options: ApplyCloudLedgerTransactionsOptions;
+  readonly removedPageTransactions: readonly StoredTransaction[];
+  readonly transactionIds: readonly TransactionId[];
+}): readonly StoredTransaction[] {
+  const removedPageTransactionsById = new Map(
+    input.removedPageTransactions.map((transaction) => [transaction.id, transaction])
+  );
+  return input.transactionIds.flatMap((transactionId) => {
+    const removedPageTransaction = removedPageTransactionsById.get(transactionId);
+    if (removedPageTransaction !== undefined) return [removedPageTransaction];
+    const aggregateTransaction =
+      input.options.getTransactionIncludedInAggregateById?.(transactionId);
+    return aggregateTransaction == null ? [] : [aggregateTransaction];
+  });
+}
+
 const trimPagesToWindow = (
   pages: readonly StoredTransaction[],
   pageWindowSize: number | undefined
@@ -300,6 +320,11 @@ function removeDeletedCloudLedgerTransactionsFromSnapshot(
   const removedTransactions = snapshot.pages.filter((transaction) =>
     deletedIds.has(transaction.id)
   );
+  const aggregateTransactions = deletedAggregateTransactions({
+    options,
+    removedPageTransactions: removedTransactions,
+    transactionIds,
+  });
   const removedPageOffsetCount = removedTransactions.filter(
     runtime.isTransactionIncludedInPageOffset
   ).length;
@@ -309,7 +334,7 @@ function removeDeletedCloudLedgerTransactionsFromSnapshot(
     offset: Math.max(0, snapshot.offset - removedPageOffsetCount),
   };
 
-  return removedTransactions
+  return aggregateTransactions
     .filter((transaction) => options.isTransactionIncludedInAggregate?.(transaction) !== false)
     .reduce<TransactionSnapshot>(
       (currentSnapshot, transaction) =>
@@ -419,11 +444,10 @@ export async function applyCloudLedgerOptimisticView(
   const restoredTransactions = restoredChanges.flatMap((change) =>
     pendingCloudLedgerChangeToStoredTransactions(userId, change)
   );
-  const runtimeSnapshot = applyCloudLedgerTransactionsToSnapshot(
-    snapshot,
-    runtimeTransactions,
-    options
-  );
+  const runtimeSnapshot = applyCloudLedgerTransactionsToSnapshot(snapshot, runtimeTransactions, {
+    ...options,
+    aggregateReplacementTransactionIds,
+  });
   const optimisticSnapshot = applyCloudLedgerTransactionsToSnapshot(
     runtimeSnapshot,
     excludeTransactionsById(restoredTransactions, runtimeTransactions),

@@ -215,6 +215,54 @@ describe("Cloud Ledger optimistic transaction snapshots", () => {
     expect(snapshot.dailySpending).toEqual([]);
   });
 
+  it("subtracts restored pending deletes from aggregates when the row is outside the visible page", async () => {
+    const transaction = cloudLedgerStoredTransaction();
+    await deleteOfflineCloudLedgerTransaction({
+      cache: applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: requireLedgerCursor("ledger:9"),
+        categories: [],
+        financialAccounts: [],
+        transactions: [storedTransactionToCloudLedgerTransaction(transaction)],
+        tombstones: [],
+      }),
+      changeId: requireLedgerChangeId("change-delete-cloud-ledger-off-page"),
+      createdAt: requireIsoDateTime("2026-06-02T10:06:00.000Z"),
+      expectedVersion: 1,
+      outbox: getCloudLedgerOutbox(USER_ID),
+      transactionId: transaction.id,
+    });
+    resetCloudLedgerOutboxInstances();
+
+    const snapshot = await applyCloudLedgerOptimisticView(
+      {
+        balance: transaction.amount,
+        categorySpending: [{ categoryId: transaction.categoryId, total: transaction.amount }],
+        dailySpending: [
+          {
+            date: requireIsoDate("2026-06-02"),
+            total: transaction.amount,
+          },
+        ],
+        hasMore: true,
+        offset: 30,
+        pages: [],
+      },
+      USER_ID,
+      {
+        getTransactionIncludedInAggregateById: (transactionId) =>
+          transactionId === transaction.id ? transaction : null,
+        isTransactionIncludedInAggregate: () => true,
+        pageWindowSize: 30,
+      }
+    );
+
+    expect(snapshot.pages).toEqual([]);
+    expect(snapshot.offset).toBe(30);
+    expect(snapshot.balance).toBe(0);
+    expect(snapshot.categorySpending).toEqual([]);
+    expect(snapshot.dailySpending).toEqual([]);
+  });
+
   it("adjusts aggregates when restored pending amends replace persisted Cloud Ledger rows", async () => {
     const originalTransaction = cloudLedgerStoredTransaction();
     const amendedAmount = requireCopAmount(25_000);
@@ -257,6 +305,81 @@ describe("Cloud Ledger optimistic transaction snapshots", () => {
       },
       USER_ID,
       {
+        isTransactionIncludedInAggregate: () => true,
+        pageWindowSize: 1,
+      }
+    );
+
+    expect(snapshot.pages).toEqual([
+      expect.objectContaining({
+        id: originalTransaction.id,
+        amount: amendedAmount,
+      }),
+    ]);
+    expect(snapshot.balance).toBe(amendedAmount);
+    expect(snapshot.categorySpending).toEqual([
+      { categoryId: originalTransaction.categoryId, total: amendedAmount },
+    ]);
+    expect(snapshot.dailySpending).toEqual([
+      { date: requireIsoDate("2026-06-02"), total: amendedAmount },
+    ]);
+  });
+
+  it("adjusts aggregates when runtime-restored pending amends replace persisted Cloud Ledger rows", async () => {
+    const originalTransaction = cloudLedgerStoredTransaction();
+    const amendedAmount = requireCopAmount(25_000);
+    const amendedTransaction = {
+      ...storedTransactionToCloudLedgerTransaction(originalTransaction),
+      amount: amendedAmount,
+      updatedAt: requireIsoDateTime("2026-06-02T10:07:00.000Z"),
+      version: 2,
+    };
+    await amendOfflineCloudLedgerTransaction({
+      cache: applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: requireLedgerCursor("ledger:9"),
+        categories: [],
+        financialAccounts: [],
+        transactions: [storedTransactionToCloudLedgerTransaction(originalTransaction)],
+        tombstones: [],
+      }),
+      changeId: requireLedgerChangeId("change-amend-cloud-ledger-runtime"),
+      createdAt: requireIsoDateTime("2026-06-02T10:07:00.000Z"),
+      expectedVersion: 1,
+      outbox: getCloudLedgerOutbox(USER_ID),
+      transaction: amendedTransaction,
+    });
+    setCloudLedgerRuntimeCache(
+      USER_ID,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: requireLedgerCursor("ledger:9"),
+        categories: [],
+        financialAccounts: [],
+        transactions: [amendedTransaction],
+        tombstones: [],
+      })
+    );
+    resetCloudLedgerOutboxInstances();
+
+    const snapshot = await applyCloudLedgerOptimisticView(
+      {
+        balance: originalTransaction.amount,
+        categorySpending: [
+          { categoryId: originalTransaction.categoryId, total: originalTransaction.amount },
+        ],
+        dailySpending: [
+          {
+            date: requireIsoDate("2026-06-02"),
+            total: originalTransaction.amount,
+          },
+        ],
+        hasMore: false,
+        offset: 1,
+        pages: [originalTransaction],
+      },
+      USER_ID,
+      {
+        getTransactionIncludedInAggregate: (candidate) =>
+          candidate.id === originalTransaction.id ? originalTransaction : null,
         isTransactionIncludedInAggregate: () => true,
         pageWindowSize: 1,
       }

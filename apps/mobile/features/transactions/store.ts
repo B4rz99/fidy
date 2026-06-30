@@ -8,7 +8,10 @@ import {
   type CloudLedgerFinancialAccount,
   type CloudLedgerTransaction,
 } from "@/features/cloud-ledger/public";
-import { getCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
+import {
+  getCloudLedgerOutbox,
+  type CloudLedgerPendingChange,
+} from "@/features/cloud-ledger/outbox.public";
 import { getCloudLedgerRuntimeCache } from "@/features/cloud-ledger/runtime.public";
 import {
   enqueueCloudLedgerOptimisticAmend,
@@ -324,7 +327,9 @@ async function amendCloudLedgerTransactionWithRemoteOutbox(input: {
   ) {
     persistCloudLedgerTransactionShadow(input.db, storedTransaction);
   }
-  flushCloudLedgerOutboxIfWritten(input.userId, optimisticAmend);
+  flushCloudLedgerOutboxIfWritten(input.userId, optimisticAmend, () => {
+    persistCloudLedgerRuntimeTransactionShadowsIfActive(input.db, input.userId, input.sessionId);
+  });
 
   return {
     success: true,
@@ -352,7 +357,9 @@ async function deleteCloudLedgerTransactionWithRemoteOutbox(input: {
   ) {
     deleteCloudLedgerTransactionShadows(input.db, input.userId, [input.transaction.id]);
   }
-  flushCloudLedgerOutboxIfWritten(input.userId, optimisticDelete);
+  flushCloudLedgerOutboxIfWritten(input.userId, optimisticDelete, () => {
+    persistCloudLedgerRuntimeTransactionShadowsIfActive(input.db, input.userId, input.sessionId);
+  });
 
   return { success: true };
 }
@@ -379,14 +386,30 @@ function flushCloudLedgerOutboxIfWritten(
   optimisticMutation: {
     readonly didWriteRuntimeCache: boolean;
     readonly flushIfOnline: () => Promise<void>;
-  }
+  },
+  afterFlush?: () => void
 ): void {
   if (optimisticMutation.didWriteRuntimeCache) {
-    void optimisticMutation.flushIfOnline().catch((error) => {
-      captureWarning("cloud_ledger_outbox_flush_failed", {
-        errorType: getErrorType(error),
+    void optimisticMutation
+      .flushIfOnline()
+      .then(() => {
+        afterFlush?.();
+      })
+      .catch((error) => {
+        captureWarning("cloud_ledger_outbox_flush_failed", {
+          errorType: getErrorType(error),
+        });
       });
-    });
+  }
+}
+
+function persistCloudLedgerRuntimeTransactionShadowsIfActive(
+  db: AnyDb,
+  userId: UserId,
+  sessionId: number
+): void {
+  if (isActiveTransactionSession(userId, sessionId)) {
+    persistCloudLedgerRuntimeTransactionShadows(db, userId);
   }
 }
 
@@ -564,8 +587,8 @@ export async function deletePendingCloudLedgerTransactionShadows(userId: UserId)
 
   let pendingTransactionIds: readonly TransactionId[];
   try {
-    pendingTransactionIds = (await getCloudLedgerOutbox(userId).load()).flatMap((change) =>
-      change.kind === "deleteTransaction" ? [change.transactionId] : [change.transaction.id]
+    pendingTransactionIds = (await getCloudLedgerOutbox(userId).load()).flatMap(
+      pendingCloudLedgerShadowTransactionIdsToDelete
     );
   } catch (error) {
     captureWarning("cloud_ledger_shadow_transaction_delete_failed", {
@@ -575,6 +598,14 @@ export async function deletePendingCloudLedgerTransactionShadows(userId: UserId)
     return;
   }
   deleteCloudLedgerTransactionShadows(db, userId, pendingTransactionIds);
+}
+
+function pendingCloudLedgerShadowTransactionIdsToDelete(
+  change: CloudLedgerPendingChange
+): readonly TransactionId[] {
+  if (change.kind === "createTransaction") return [change.transaction.id];
+  if (change.kind === "deleteTransaction") return [change.transactionId];
+  return [];
 }
 
 const cloudLedgerShadowRowsForUser = (userId: UserId) =>
@@ -804,6 +835,8 @@ async function applyInitialCloudLedgerOptimisticView({
     return await applyCloudLedgerOptimisticView(snapshot, userId, {
       getTransactionIncludedInAggregate: (transaction) =>
         queryService.getStoredTransaction({ db, userId, transactionId: transaction.id }),
+      getTransactionIncludedInAggregateById: (transactionId) =>
+        queryService.getStoredTransaction({ db, userId, transactionId }),
       isTransactionIncludedInAggregate: (transaction) =>
         isPersistedActiveTransaction(db, userId, transaction.id),
       pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
@@ -916,6 +949,8 @@ async function applyRefreshCloudLedgerOptimisticView({
     return await applyCloudLedgerOptimisticView(snapshot, userId, {
       getTransactionIncludedInAggregate: (transaction) =>
         queryService.getStoredTransaction({ db, userId, transactionId: transaction.id }),
+      getTransactionIncludedInAggregateById: (transactionId) =>
+        queryService.getStoredTransaction({ db, userId, transactionId }),
       isTransactionIncludedInAggregate: (transaction) =>
         isPersistedActiveTransaction(db, userId, transaction.id),
       pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
