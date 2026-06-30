@@ -22,6 +22,7 @@ function makeTransactionRow(
     date: IsoDate;
     createdAt: IsoDateTime;
     updatedAt: IsoDateTime;
+    source: "cloud_ledger" | "manual";
   }> = {}
 ) {
   return {
@@ -349,6 +350,43 @@ describe("activity query service", () => {
     });
     expect(cloudLedgerItem.transaction).not.toHaveProperty("commitStatus");
     expect(cloudLedgerItem.transaction).not.toHaveProperty("pendingChangeId");
+  });
+
+  it("hides restored pending-deleted Cloud Ledger rows from home activity", async () => {
+    const pendingDeletedId = "tx-cloud-pending-delete" as TransactionId;
+    const loadCloudLedgerOptimisticTransactions = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({
+        deletedTransactionIds: [pendingDeletedId],
+        transactions: [],
+      });
+    const service = createActivityQueryService({
+      getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([
+        makeTransactionRow({
+          id: pendingDeletedId,
+          date: "2026-04-20" as IsoDate,
+          source: "cloud_ledger",
+          updatedAt: "2026-04-20T10:00:00.000Z" as IsoDateTime,
+        }),
+        ...MERGED_TRANSACTION_ROWS,
+      ]),
+      getTransfersPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue(MERGED_TRANSFER_ROWS),
+      loadCloudLedgerOptimisticTransactions,
+    });
+
+    const snapshot = await service.loadPageWithCloudLedgerOptimisticView({
+      db: {} as never,
+      userId: USER_ID,
+      pageSize: 30,
+      offset: 0,
+    });
+
+    expect(loadCloudLedgerOptimisticTransactions).toHaveBeenCalledWith(USER_ID);
+    expect(snapshot.pages.map((item) => `${item.kind}:${item.id}`)).toEqual([
+      "transfer:tr-newest",
+      "transaction:tx-newer",
+      "transaction:tx-older",
+    ]);
   });
 
   it("keeps ordinary home activity when encrypted Cloud Ledger outbox optimistic loading fails", async () => {

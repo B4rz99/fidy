@@ -5,7 +5,7 @@ import {
   createActivityQueryService,
   type StoredActivityItem,
 } from "@/features/activity/query.public";
-import { loadCloudLedgerOptimisticTransactions } from "@/features/transactions/cloud-ledger.public";
+import { loadCloudLedgerOptimisticTransactionOverlay } from "@/features/transactions/cloud-ledger.public";
 import { deleteTransaction } from "@/features/transactions/store.public";
 import { Alert } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
@@ -14,7 +14,9 @@ import { toIsoDate } from "@/shared/lib";
 import type { TransactionId, UserId } from "@/shared/types/branded";
 import { getActivityAccountNames } from "../../lib/get-activity-account-names";
 
-const activityQueryService = createActivityQueryService({ loadCloudLedgerOptimisticTransactions });
+const activityQueryService = createActivityQueryService({
+  loadCloudLedgerOptimisticTransactions: loadCloudLedgerOptimisticTransactionOverlay,
+});
 
 type HomeActivityFeedState = {
   readonly activityHasMore: boolean;

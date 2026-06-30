@@ -5,6 +5,7 @@ import {
   createEmptyCloudLedgerCache,
 } from "@/features/cloud-ledger/public";
 import {
+  amendOfflineCloudLedgerTransaction,
   deleteOfflineCloudLedgerTransaction,
   getCloudLedgerOutbox,
   resetCloudLedgerOutboxInstances,
@@ -16,6 +17,7 @@ import {
 import {
   applyCloudLedgerOptimisticView,
   applyRuntimeCloudLedgerTransactions,
+  loadCloudLedgerOptimisticTransactionOverlay,
 } from "@/features/transactions/services/cloud-ledger-optimistic-snapshot";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import {
@@ -211,6 +213,92 @@ describe("Cloud Ledger optimistic transaction snapshots", () => {
     expect(snapshot.balance).toBe(0);
     expect(snapshot.categorySpending).toEqual([]);
     expect(snapshot.dailySpending).toEqual([]);
+  });
+
+  it("adjusts aggregates when restored pending amends replace persisted Cloud Ledger rows", async () => {
+    const originalTransaction = cloudLedgerStoredTransaction();
+    const amendedAmount = requireCopAmount(25_000);
+    await amendOfflineCloudLedgerTransaction({
+      cache: applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: requireLedgerCursor("ledger:9"),
+        categories: [],
+        financialAccounts: [],
+        transactions: [storedTransactionToCloudLedgerTransaction(originalTransaction)],
+        tombstones: [],
+      }),
+      changeId: requireLedgerChangeId("change-amend-cloud-ledger-visible"),
+      createdAt: requireIsoDateTime("2026-06-02T10:07:00.000Z"),
+      expectedVersion: 1,
+      outbox: getCloudLedgerOutbox(USER_ID),
+      transaction: {
+        ...storedTransactionToCloudLedgerTransaction(originalTransaction),
+        amount: amendedAmount,
+        updatedAt: requireIsoDateTime("2026-06-02T10:07:00.000Z"),
+        version: 2,
+      },
+    });
+    resetCloudLedgerOutboxInstances();
+
+    const snapshot = await applyCloudLedgerOptimisticView(
+      {
+        balance: originalTransaction.amount,
+        categorySpending: [
+          { categoryId: originalTransaction.categoryId, total: originalTransaction.amount },
+        ],
+        dailySpending: [
+          {
+            date: requireIsoDate("2026-06-02"),
+            total: originalTransaction.amount,
+          },
+        ],
+        hasMore: false,
+        offset: 1,
+        pages: [originalTransaction],
+      },
+      USER_ID,
+      {
+        isTransactionIncludedInAggregate: () => true,
+        pageWindowSize: 1,
+      }
+    );
+
+    expect(snapshot.pages).toEqual([
+      expect.objectContaining({
+        id: originalTransaction.id,
+        amount: amendedAmount,
+      }),
+    ]);
+    expect(snapshot.balance).toBe(amendedAmount);
+    expect(snapshot.categorySpending).toEqual([
+      { categoryId: originalTransaction.categoryId, total: amendedAmount },
+    ]);
+    expect(snapshot.dailySpending).toEqual([
+      { date: requireIsoDate("2026-06-02"), total: amendedAmount },
+    ]);
+  });
+
+  it("carries restored pending delete ids for activity overlays", async () => {
+    const transaction = cloudLedgerStoredTransaction();
+    await deleteOfflineCloudLedgerTransaction({
+      cache: applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: requireLedgerCursor("ledger:9"),
+        categories: [],
+        financialAccounts: [],
+        transactions: [storedTransactionToCloudLedgerTransaction(transaction)],
+        tombstones: [],
+      }),
+      changeId: requireLedgerChangeId("change-delete-cloud-ledger-activity"),
+      createdAt: requireIsoDateTime("2026-06-02T10:06:00.000Z"),
+      expectedVersion: 1,
+      outbox: getCloudLedgerOutbox(USER_ID),
+      transactionId: transaction.id,
+    });
+    resetCloudLedgerOutboxInstances();
+
+    const overlay = await loadCloudLedgerOptimisticTransactionOverlay(USER_ID);
+
+    expect(overlay.transactions).toEqual([]);
+    expect(overlay.deletedTransactionIds).toEqual([transaction.id]);
   });
 });
 

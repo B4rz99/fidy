@@ -763,6 +763,83 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(await outbox.load()).toEqual([]);
   });
 
+  it("drops stale amend and delete conflicts after server rejection so they are not replayed", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = createAcceptedCoffeeAndTaxiLedgerCache();
+    const amendedCoffee = acceptedCoffeeLedgerTransaction({
+      amount: 19_000,
+      description: "Coffee stale correction",
+      version: 2,
+      updatedAt: "2026-06-02T10:05:00.000Z",
+    });
+    const optimisticAmendCache = await amendOfflineCloudLedgerTransaction({
+      cache,
+      changeId: requireLedgerChangeId("change-stale-amend-coffee"),
+      createdAt: requireIsoDateTime("2026-06-02T10:05:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transaction: amendedCoffee,
+    });
+    const optimisticDeleteCache = await deleteOfflineCloudLedgerTransaction({
+      cache: optimisticAmendCache,
+      changeId: requireLedgerChangeId("change-stale-delete-taxi"),
+      createdAt: requireIsoDateTime("2026-06-02T10:06:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transactionId: requireTransactionId("txn-20260622-taxi"),
+    });
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-stale-amend-coffee", "change-stale-delete-taxi"],
+        changeOutcomes: [
+          {
+            changeId: "change-stale-amend-coffee",
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+          {
+            changeId: "change-stale-delete-taxi",
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+        ],
+        cursor: "ledger:10",
+      },
+      refreshPayload: {
+        cursor: "ledger:10",
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          acceptedCoffeeTransaction({ description: "Coffee accepted elsewhere", version: 2 }),
+          acceptedTaxiTransaction(),
+        ],
+        tombstones: [],
+      },
+    });
+
+    const reconciledCache = await flushPendingCloudLedgerChanges({
+      cache: optimisticDeleteCache,
+      outbox,
+      supabase: supabase.client,
+    });
+
+    expect((await outbox.load()).map((change) => change.id)).toEqual([]);
+    expect(reconciledCache.transactions).toEqual([
+      acceptedCoffeeLedgerTransaction({
+        description: "Coffee accepted elsewhere",
+        version: 2,
+        updatedAt: "2026-06-02T10:04:00.000Z",
+      }),
+      acceptedTaxiLedgerTransaction(),
+    ]);
+  });
+
   it("reuses a durable device id for Pending Change Set flush envelopes", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -1246,6 +1323,16 @@ function createAcceptedCoffeeLedgerCache() {
   });
 }
 
+function createAcceptedCoffeeAndTaxiLedgerCache() {
+  return applyCloudLedgerBootstrap(createSeededLedgerCache(), {
+    cursor: requireLedgerCursor("ledger:8"),
+    categories: [],
+    financialAccounts: [],
+    transactions: [acceptedCoffeeLedgerTransaction(), acceptedTaxiLedgerTransaction()],
+    tombstones: [],
+  });
+}
+
 function offlineCoffeeCommand() {
   return {
     commandVersion: 1,
@@ -1363,6 +1450,36 @@ function acceptedCoffeeTransaction(
     description: overrides.description ?? "Coffee accepted",
     date: "2026-06-02",
     version: overrides.version ?? 1,
+    updatedAt: "2026-06-02T10:04:00.000Z",
+  };
+}
+
+function acceptedTaxiLedgerTransaction() {
+  return {
+    id: requireTransactionId("txn-20260622-taxi"),
+    type: "expense" as const,
+    amount: requireCopAmount(12_000),
+    currency: "COP" as const,
+    categoryId: requireCategoryId("cat-groceries"),
+    accountId: requireFinancialAccountId("acct-cash"),
+    description: "Taxi accepted",
+    date: requireIsoDate("2026-06-02"),
+    version: 1,
+    updatedAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+  };
+}
+
+function acceptedTaxiTransaction() {
+  return {
+    id: "txn-20260622-taxi",
+    type: "expense",
+    amount: 12_000,
+    currency: "COP",
+    categoryId: "cat-groceries",
+    accountId: "acct-cash",
+    description: "Taxi accepted",
+    date: "2026-06-02",
+    version: 1,
     updatedAt: "2026-06-02T10:04:00.000Z",
   };
 }

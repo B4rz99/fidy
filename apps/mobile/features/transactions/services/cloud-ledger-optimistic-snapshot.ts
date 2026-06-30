@@ -25,6 +25,9 @@ import type {
 
 type TransactionSnapshot = TransactionPageSnapshot & TransactionAggregateSnapshot;
 type ApplyCloudLedgerTransactionsOptions = {
+  readonly getTransactionIncludedInAggregate?: (
+    transaction: StoredTransaction
+  ) => StoredTransaction | null;
   readonly isTransactionIncludedInAggregate?: (transaction: StoredTransaction) => boolean;
   readonly isTransactionIncludedInPageOffset?: (transaction: StoredTransaction) => boolean;
   readonly pageWindowSize?: number;
@@ -32,6 +35,10 @@ type ApplyCloudLedgerTransactionsOptions = {
 type ApplyCloudLedgerTransactionsRuntime = {
   readonly isTransactionIncludedInPageOffset: (transaction: StoredTransaction) => boolean;
   readonly now: Date;
+};
+export type CloudLedgerOptimisticTransactionOverlay = {
+  readonly deletedTransactionIds: readonly TransactionId[];
+  readonly transactions: readonly StoredTransaction[];
 };
 
 const addCopAmount = (left: number, right: number): CopAmount => requireCopAmount(left + right);
@@ -114,9 +121,9 @@ function upsertCloudLedgerTransaction(
   isTransactionIncludedInPageOffset: (transaction: StoredTransaction) => boolean
 ): {
   readonly snapshot: TransactionSnapshot;
-  readonly didExistInPages: boolean;
+  readonly replacedTransaction: StoredTransaction | null;
 } {
-  const didExistInPages = snapshot.pages.some((page) => page.id === transaction.id);
+  const replacedTransaction = snapshot.pages.find((page) => page.id === transaction.id) ?? null;
   const shouldInsertIntoPages = shouldInsertTransactionIntoPages(
     snapshot,
     transaction,
@@ -140,7 +147,7 @@ function upsertCloudLedgerTransaction(
       pages,
       offset: Math.max(0, snapshot.offset - droppedCommittedPageCount),
     },
-    didExistInPages,
+    replacedTransaction,
   };
 }
 
@@ -203,9 +210,39 @@ function addCloudLedgerTransactionToSnapshot(
     options.pageWindowSize,
     runtime.isTransactionIncludedInPageOffset
   );
-  return options.isTransactionIncludedInAggregate?.(transaction) === true
-    ? cloudLedgerSnapshot.snapshot
-    : addCloudLedgerTransactionToAggregates(cloudLedgerSnapshot.snapshot, transaction, runtime.now);
+  const aggregateTransaction =
+    options.getTransactionIncludedInAggregate?.(transaction) ??
+    cloudLedgerSnapshot.replacedTransaction;
+
+  if (options.isTransactionIncludedInAggregate?.(transaction) === true) {
+    return aggregateTransaction == null
+      ? cloudLedgerSnapshot.snapshot
+      : replaceCloudLedgerTransactionInAggregates(
+          cloudLedgerSnapshot.snapshot,
+          aggregateTransaction,
+          transaction,
+          runtime.now
+        );
+  }
+
+  return addCloudLedgerTransactionToAggregates(
+    cloudLedgerSnapshot.snapshot,
+    transaction,
+    runtime.now
+  );
+}
+
+function replaceCloudLedgerTransactionInAggregates(
+  snapshot: TransactionSnapshot,
+  previousTransaction: StoredTransaction,
+  nextTransaction: StoredTransaction,
+  now: Date
+): TransactionSnapshot {
+  return addCloudLedgerTransactionToAggregates(
+    removeCloudLedgerTransactionFromAggregates(snapshot, previousTransaction, now),
+    nextTransaction,
+    now
+  );
 }
 
 function addCloudLedgerTransactionToAggregates(
@@ -301,14 +338,24 @@ export async function loadRestoredCloudLedgerPendingTransactions(
 export async function loadCloudLedgerOptimisticTransactions(
   userId: UserId
 ): Promise<readonly StoredTransaction[]> {
+  return (await loadCloudLedgerOptimisticTransactionOverlay(userId)).transactions;
+}
+
+export async function loadCloudLedgerOptimisticTransactionOverlay(
+  userId: UserId
+): Promise<CloudLedgerOptimisticTransactionOverlay> {
   const runtimeTransactions = loadRuntimeCloudLedgerTransactions(userId);
-  return [
-    ...runtimeTransactions,
-    ...excludeTransactionsById(
-      await loadRestoredCloudLedgerPendingTransactions(userId),
-      runtimeTransactions
-    ),
-  ];
+  const restoredChanges = await loadRestoredCloudLedgerPendingChanges(userId);
+  const restoredTransactions = restoredChanges.flatMap((change) =>
+    pendingCloudLedgerChangeToStoredTransactions(userId, change)
+  );
+  return {
+    deletedTransactionIds: restoredChanges.flatMap(pendingCloudLedgerChangeToDeletedTransactionIds),
+    transactions: [
+      ...runtimeTransactions,
+      ...excludeTransactionsById(restoredTransactions, runtimeTransactions),
+    ],
+  };
 }
 
 function excludeTransactionsById(

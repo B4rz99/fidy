@@ -12,7 +12,7 @@ import {
   type CloudLedgerCreateTransactionCommand,
   type CloudLedgerTransaction,
 } from "./cache";
-import { acceptedPendingChanges, removePendingChangeOccurrences } from "./outbox-reconciliation";
+import * as outboxReconciliation from "./outbox-reconciliation";
 import {
   applyPendingLedgerChanges,
   parsePendingChange,
@@ -142,7 +142,7 @@ export function createEncryptedCloudLedgerOutbox(input: {
       }),
     removeAcceptedChanges: (changesToRemove) =>
       serializeMutation(async () => {
-        const changes = removePendingChangeOccurrences(
+        const changes = outboxReconciliation.removePendingChangeOccurrences(
           (await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
           changesToRemove
         );
@@ -295,7 +295,7 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  const acceptedChanges = await flushPendingChanges(
+  const removableChanges = await flushPendingChanges(
     input.supabase,
     changes,
     input.abortSignal,
@@ -309,9 +309,9 @@ export async function flushPendingCloudLedgerChanges(input: {
     return applyPendingLedgerChanges(input.cache, changes);
   }
   if (input.outbox.removeAcceptedChanges === undefined) {
-    await input.outbox.remove(acceptedChanges.map((change) => change.id));
+    await input.outbox.remove(removableChanges.map((change) => change.id));
   } else {
-    await input.outbox.removeAcceptedChanges(acceptedChanges);
+    await input.outbox.removeAcceptedChanges(removableChanges);
   }
   return restoreOptimisticCloudLedgerCache({
     cache: refreshedCache,
@@ -331,9 +331,9 @@ async function flushPendingChanges(
   const deviceId = getOrCreateCloudLedgerDeviceId();
   return await chunkPendingChanges(changes).reduce<Promise<readonly CloudLedgerPendingChange[]>>(
     async (previous, batch) => {
-      const acceptedChanges = await previous;
+      const removableChanges = await previous;
       if (shouldContinue?.() === false) {
-        return acceptedChanges;
+        return removableChanges;
       }
       const outcome = await applyPendingCloudLedgerChanges(
         supabase,
@@ -345,7 +345,7 @@ async function flushPendingChanges(
         },
         { signal: abortSignal }
       );
-      return [...acceptedChanges, ...acceptedPendingChanges(batch, outcome)];
+      return removablePendingChanges(removableChanges, batch, outcome);
     },
     Promise.resolve([])
   );
@@ -866,4 +866,16 @@ function toHex(value: Uint8Array): string {
 
 function fromHex(value: string): Uint8Array {
   return Uint8Array.from(value.match(/.{1,2}/g) ?? [], (byte) => Number.parseInt(byte, 16));
+}
+
+function removablePendingChanges(
+  previousChanges: readonly CloudLedgerPendingChange[],
+  batch: readonly CloudLedgerPendingChange[],
+  outcome: Parameters<typeof outboxReconciliation.acceptedPendingChanges>[1]
+): readonly CloudLedgerPendingChange[] {
+  return [
+    ...previousChanges,
+    ...outboxReconciliation.acceptedPendingChanges(batch, outcome),
+    ...outboxReconciliation.terminalRejectedPendingChanges(batch, outcome),
+  ];
 }

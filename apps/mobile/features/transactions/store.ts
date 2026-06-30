@@ -800,7 +800,10 @@ async function applyInitialCloudLedgerOptimisticView({
   if (!canUseCloudLedgerTransactionEffects(userId, sessionId)) return snapshot;
 
   try {
+    const queryService = createTransactionQueryService();
     return await applyCloudLedgerOptimisticView(snapshot, userId, {
+      getTransactionIncludedInAggregate: (transaction) =>
+        queryService.getStoredTransaction({ db, userId, transactionId: transaction.id }),
       isTransactionIncludedInAggregate: (transaction) =>
         isPersistedActiveTransaction(db, userId, transaction.id),
       pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
@@ -909,7 +912,10 @@ async function applyRefreshCloudLedgerOptimisticView({
   if (!canUseCloudLedgerTransactionEffects(userId, sessionId)) return snapshot;
 
   try {
+    const queryService = createTransactionQueryService();
     return await applyCloudLedgerOptimisticView(snapshot, userId, {
+      getTransactionIncludedInAggregate: (transaction) =>
+        queryService.getStoredTransaction({ db, userId, transactionId: transaction.id }),
       isTransactionIncludedInAggregate: (transaction) =>
         isPersistedActiveTransaction(db, userId, transaction.id),
       pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
@@ -918,7 +924,10 @@ async function applyRefreshCloudLedgerOptimisticView({
     captureWarning("transactions_refresh_cloud_ledger_overlay_failed", {
       errorType: getErrorType(error),
     });
+    const queryService = createTransactionQueryService();
     return applyRuntimeCloudLedgerTransactions(snapshot, userId, {
+      getTransactionIncludedInAggregate: (transaction) =>
+        queryService.getStoredTransaction({ db, userId, transactionId: transaction.id }),
       isTransactionIncludedInAggregate: (transaction) =>
         isPersistedActiveTransaction(db, userId, transaction.id),
       pageWindowSize: Math.max(snapshot.offset, PAGE_SIZE),
