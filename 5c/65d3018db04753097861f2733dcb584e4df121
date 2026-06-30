@@ -1,0 +1,57 @@
+apps/mobile/__tests__/activity/query-service.test.ts
+  s_6c070d47258744::t_bc30466af5b1e2 25,355-389
+  s_6c070d47258744::t_801dda0c707687 390-391
+apps/mobile/features/transactions/cloud-ledger.public.ts
+  s_6c070d47258744::t_c71f488511f4f0 1-4
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_3c74a0427db57b 15,145,348
+  s_6c070d47258744::t_bd0269e3b59143 870-881
+  s_6c070d47258744::t_b7d4c139569402 298,312,314,334,336
+apps/mobile/features/transactions/store.ts
+  s_6c070d47258744::t_d8f2b01f148b7f 803,805-806,915,917-918,927,929-930
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_6c070d47258744::t_4304ba906864a3 39-42,341-346,348-358
+  s_6c070d47258744::t_82544c930bd25a 228-232
+  s_6c070d47258744::t_91e7189c865aab 28-30,124,126,150,213-227,233-245
+apps/mobile/__tests__/transactions/cloud-ledger-optimistic-snapshot.test.ts
+  s_6c070d47258744::t_f013a3e0883238 20,278-302
+  s_6c070d47258744::t_ca2adcdaab6a6d 8,217-277
+apps/mobile/__tests__/dashboard/home-activity-feed.test.tsx
+  s_6c070d47258744::t_8c549f4771dfb3 48
+apps/mobile/features/dashboard/components/home-screen/useHomeActivityFeed.ts
+  s_6c070d47258744::t_acdb12a12d419c 8,17-19
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_cb80f817c7decb 766-842
+  s_6c070d47258744::t_2187e564627668 1326-1335,1457-1482,1484-1485
+  s_6c070d47258744::t_fb3cc145268002 1483
+  s_6c070d47258744::t_00c71ed8faa8a1 1486
+apps/mobile/features/activity/services/activity-items.ts
+  s_6c070d47258744::t_9b5b40684eceed 6,28,65-73,75-81,83-86
+apps/mobile/features/cloud-ledger/outbox-reconciliation.ts
+  s_6c070d47258744::t_d1385cc1101f80 2-5,39-40,42-52,56-57,59,64,66,69-71,73-74,77,80
+  s_6c070d47258744::t_82544c930bd25a 60-62
+  s_6c070d47258744::t_20bb6733c5f9d0 114
+  s_6c070d47258744::t_ff181b76ae5f6f 117-151
+  s_6c070d47258744::t_f9a87c2dad7b71 8-11,13
+  s_6c070d47258744::t_60408a9216a35c 15,18,28,30,33,36,38,41,53,55,58,63,65,67-68,72,75-76,78-79,81-87,94,96,113,115-116
+apps/mobile/features/activity/services/create-activity-query-service.ts
+  s_6c070d47258744::t_8b27fb7a8c6916 78-80
+  s_6c070d47258744::t_ece5434fb892b0 6,29,32-35,37,45-46,75-77,87-88,91-93,95,97,102,124
+  s_6c070d47258744::t_e9a515d2d750ae 81-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "5c65d3018db04753097861f2733dcb584e4df121",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
