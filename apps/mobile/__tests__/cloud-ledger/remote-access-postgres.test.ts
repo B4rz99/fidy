@@ -21,11 +21,16 @@ const TRANSACTION_EDIT_DELETE_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260630153000_cloud_ledger_transaction_edit_delete.sql"
 );
+const OBSERVABILITY_SECURITY_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260630170000_cloud_ledger_observability_security.sql"
+);
 const MIGRATIONS = [
   BOOTSTRAP_MIGRATION,
   CREATE_TRANSACTION_MIGRATION,
   PENDING_CHANGE_SET_MIGRATION,
   TRANSACTION_EDIT_DELETE_MIGRATION,
+  OBSERVABILITY_SECURITY_MIGRATION,
 ] as const;
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
@@ -138,6 +143,18 @@ describe("Cloud Ledger Postgres access boundary", () => {
       expectBlankLedgerIdentifiersRejected(postgres);
       expectTransactionMoneyAndDateConstraints(postgres);
       expectServiceRoleReadsOnlyScopedBootstrap(postgres);
+    }
+  );
+
+  postgresIt(
+    "lets the narrow Cloud Ledger API role execute boundary RPCs without direct ledger access",
+    () => {
+      const postgres = setupSeededPostgres();
+
+      expectLedgerApiRoleCannotReadLedger(postgres);
+      expectLedgerApiRoleReadsOnlyScopedBootstrap(postgres);
+      expectLedgerApiRoleRejectsCrossUserTransactionIdentity(postgres);
+      expectLedgerApiRoleCannotExecuteInternalLedgerHelpers(postgres);
     }
   );
 
@@ -1823,6 +1840,73 @@ function expectServiceRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) {
   });
   expect(JSON.stringify(payload)).not.toContain("txn-other");
   expect(JSON.stringify(payload)).not.toContain("acct-other");
+}
+
+function expectLedgerApiRoleCannotReadLedger(postgres: PostgresHarness) {
+  const ledgerApiError = psqlFails(
+    postgres,
+    "set role ledger_api; select count(*) from ledger.transactions;"
+  );
+
+  expect(ledgerApiError).toMatch(/permission denied/);
+}
+
+function expectLedgerApiRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) {
+  const payload = JSON.parse(
+    psqlScalar(
+      postgres,
+      `set role ledger_api; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 1::bigint)::text;`
+    )
+  );
+
+  expect(payload).toMatchObject({
+    cursor: "ledger:4",
+    transactions: [],
+    tombstones: [
+      {
+        recordType: "transaction",
+        recordId: "txn-user",
+      },
+    ],
+  });
+  expect(JSON.stringify(payload)).not.toContain("txn-other");
+  expect(JSON.stringify(payload)).not.toContain("acct-other");
+}
+
+function expectLedgerApiRoleRejectsCrossUserTransactionIdentity(postgres: PostgresHarness) {
+  const outcome = JSON.parse(
+    psqlScalar(
+      postgres,
+      `
+set role ledger_api;
+select public.cloud_ledger_create_transaction(
+  '${USER_ID}'::uuid,
+  1,
+  'txn-other',
+  'expense',
+  1,
+  'COP',
+  null,
+  'acct-cash',
+  'Denied',
+  '2026-06-01'::date
+)::text;
+`
+    )
+  );
+
+  expect(outcome).toEqual({ code: "unauthorized_transaction_id" });
+  expect(readTransactionRowCount(postgres, USER_ID, "txn-other")).toBe("0");
+  expect(readTransactionRowCount(postgres, OTHER_USER_ID, "txn-other")).toBe("1");
+}
+
+function expectLedgerApiRoleCannotExecuteInternalLedgerHelpers(postgres: PostgresHarness) {
+  const internalHelperError = psqlFails(
+    postgres,
+    "set role ledger_api; select ledger.pending_change_outcome('change-a', 'accepted', 'accepted');"
+  );
+
+  expect(internalHelperError).toMatch(/permission denied/);
 }
 
 function readRefreshAfterInitialSeed(postgres: PostgresHarness) {

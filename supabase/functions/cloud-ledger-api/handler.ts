@@ -25,6 +25,7 @@ import {
 } from "./create-transaction-command.ts";
 import { isLedgerCursor } from "./model.ts";
 import { readRequiredString } from "./request-readers.ts";
+import { buildCloudLedgerCommandTelemetryEvent, type CloudLedgerTelemetry } from "./telemetry.ts";
 
 type AuthClient = {
   readonly auth: {
@@ -66,22 +67,36 @@ const SET_CAPTURE_IMPROVEMENT_PREFERENCE_KEYS = new Set(["action", "enabled", "u
 export type CloudLedgerApiDeps = {
   readonly auth: AuthClient;
   readonly store: LedgerStore;
+  readonly telemetry?: CloudLedgerTelemetry;
+  readonly now?: () => number;
+  readonly createCorrelationId?: () => string;
 };
 
 export async function handleCloudLedgerRequest(
   request: Request,
   deps: CloudLedgerApiDeps
 ): Promise<Response> {
+  const startedAt = readNow(deps);
+  const correlationId = readCorrelationId(request, deps);
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return withCorrelationId(
+      new Response(null, { status: 204, headers: corsHeaders() }),
+      correlationId
+    );
   }
   if (request.method !== "POST") {
-    return jsonResponse({ success: false, error: "method_not_allowed" }, 405);
+    return withCorrelationId(
+      jsonResponse({ success: false, error: "method_not_allowed" }, 405),
+      correlationId
+    );
   }
 
   const authHeader = request.headers.get("Authorization");
   if (authHeader === null) {
-    return jsonResponse({ success: false, error: "missing_auth" }, 401);
+    return withCorrelationId(
+      jsonResponse({ success: false, error: "missing_auth" }, 401),
+      correlationId
+    );
   }
 
   const token = authHeader.replace("Bearer ", "");
@@ -91,14 +106,57 @@ export async function handleCloudLedgerRequest(
   } = await deps.auth.auth.getUser(token);
 
   if (error !== null || user === null) {
-    return jsonResponse({ success: false, error: "invalid_auth" }, 401);
+    return withCorrelationId(
+      jsonResponse({ success: false, error: "invalid_auth" }, 401),
+      correlationId
+    );
   }
 
   const body = await readJsonBody(request);
+  const response = await routeAuthenticatedRequestSafely(deps.store, user.id, body);
+  await recordCommandTelemetry(deps, {
+    authenticatedUserId: user.id,
+    body,
+    correlationId,
+    latencyMs: Math.max(0, readNow(deps) - startedAt),
+    response,
+  });
+  return withCorrelationId(response, correlationId);
+}
+
+async function routeAuthenticatedRequestSafely(store: LedgerStore, userId: string, body: unknown) {
   try {
-    return await routeAuthenticatedRequest(deps.store, user.id, body);
+    return await routeAuthenticatedRequest(store, userId, body);
   } catch {
     return jsonResponse({ success: false, error: "internal_error" }, 500);
+  }
+}
+
+async function recordCommandTelemetry(
+  deps: CloudLedgerApiDeps,
+  input: {
+    readonly authenticatedUserId: string;
+    readonly body: unknown;
+    readonly correlationId: string;
+    readonly latencyMs: number;
+    readonly response: Response;
+  }
+) {
+  if (deps.telemetry === undefined) {
+    return;
+  }
+  try {
+    await deps.telemetry.recordCommand(
+      buildCloudLedgerCommandTelemetryEvent({
+        authenticatedUserId: input.authenticatedUserId,
+        body: input.body,
+        correlationId: input.correlationId,
+        latencyMs: input.latencyMs,
+        responseBody: await readResponseBody(input.response),
+      })
+    );
+  } catch {
+    return;
   }
 }
 
@@ -287,6 +345,14 @@ async function readJsonBody(request: Request): Promise<unknown> {
   }
 }
 
+async function readResponseBody(response: Response): Promise<unknown> {
+  try {
+    return await response.clone().json();
+  } catch {
+    return null;
+  }
+}
+
 function readAction(body: unknown) {
   return readRequiredString(body, "action");
 }
@@ -316,6 +382,27 @@ function readOptionalCursor(body: unknown): LedgerCursor | null | undefined {
     return null;
   }
   return typeof value === "string" && isLedgerCursor(value.trim()) ? value.trim() : undefined;
+}
+
+function readNow(deps: CloudLedgerApiDeps): number {
+  return deps.now?.() ?? Date.now();
+}
+
+function readCorrelationId(request: Request, deps: CloudLedgerApiDeps): string {
+  const header = request.headers.get("X-Correlation-Id") ?? request.headers.get("X-Request-Id");
+  return header !== null && header.trim().length > 0
+    ? header.trim()
+    : (deps.createCorrelationId?.() ?? crypto.randomUUID());
+}
+
+function withCorrelationId(response: Response, correlationId: string): Response {
+  const headers = new Headers(response.headers);
+  headers.set("X-Correlation-Id", correlationId);
+  return new Response(response.body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+  });
 }
 
 function jsonResponse(body: CloudLedgerApiResponse, status = 200): Response {

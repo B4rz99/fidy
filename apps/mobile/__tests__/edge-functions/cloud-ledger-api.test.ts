@@ -332,6 +332,107 @@ describe("cloud-ledger-api Edge Function", () => {
     );
   });
 
+  it("records redacted command telemetry with retry and repair metadata", async () => {
+    const recordCommand = vi.fn();
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-sensitive-repair", "change-sensitive-retry"],
+        changeOutcomes: [
+          {
+            changeId: "change-sensitive-repair",
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+          {
+            changeId: "change-sensitive-retry",
+            status: "retryable",
+            code: "retryable_failure",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+      telemetry: { recordCommand },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          changes: [
+            {
+              ...PENDING_CHANGE_REQUEST,
+              id: "change-sensitive-repair",
+              idempotencyKey: "idem-sensitive-repair",
+              transaction: {
+                ...CREATE_TRANSACTION_PAYLOAD,
+                id: "txn-sensitive-repair",
+                amount: 50_000,
+                description: "EXITO market card *1234",
+              },
+            },
+            {
+              ...PENDING_CHANGE_REQUEST,
+              id: "change-sensitive-retry",
+              idempotencyKey: "idem-sensitive-retry",
+              transaction: {
+                ...CREATE_TRANSACTION_PAYLOAD,
+                id: "txn-sensitive-retry",
+                amount: 51_000,
+                description: "Retry EXITO card *5678",
+              },
+            },
+          ],
+        },
+        "valid-token",
+        "corr-issue-542"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Correlation-Id")).toBe("corr-issue-542");
+    expect(recordCommand).toHaveBeenCalledWith({
+      action: "applyPendingChanges",
+      acceptedChangeIds: [],
+      authenticatedUserId: USER_ID,
+      batchId: "batch-20260601-offline",
+      changeIds: ["change-sensitive-repair", "change-sensitive-retry"],
+      changeOutcomes: [
+        {
+          changeId: "change-sensitive-repair",
+          code: "stale_expected_version",
+          status: "repair_required",
+        },
+        {
+          changeId: "change-sensitive-retry",
+          code: "retryable_failure",
+          status: "retryable",
+        },
+      ],
+      commandVersion: 1,
+      correlationId: "corr-issue-542",
+      deviceId: "device-ios-17-pro",
+      latencyMs: expect.any(Number),
+      outcomeCode: "accepted",
+      rejectedChangeIds: ["change-sensitive-repair", "change-sensitive-retry"],
+      retryableChangeIds: ["change-sensitive-retry"],
+      repairRequiredChangeIds: ["change-sensitive-repair"],
+      requiresAppUpdateChangeIds: [],
+      status: "success",
+    });
+    const telemetryPayload = JSON.stringify(recordCommand.mock.calls);
+    expect(telemetryPayload).not.toContain("50000");
+    expect(telemetryPayload).not.toContain("EXITO");
+    expect(telemetryPayload).not.toContain("market");
+    expect(telemetryPayload).not.toContain("1234");
+    expect(telemetryPayload).not.toContain("5678");
+    expect(telemetryPayload).not.toContain("amount");
+    expect(telemetryPayload).not.toContain("description");
+    expect(telemetryPayload).not.toContain("accountId");
+  });
+
   it("rejects oversized pending-change batches before replaying them", async () => {
     const api = createCloudLedgerApiDeps();
 
@@ -1732,12 +1833,13 @@ function optionsRequest() {
   return new Request("http://localhost/cloud-ledger-api", { method: "OPTIONS" });
 }
 
-function jsonRequest(body: unknown, token?: string) {
+function jsonRequest(body: unknown, token?: string, correlationId?: string) {
   return new Request("http://localhost/cloud-ledger-api", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(token === undefined ? {} : { Authorization: `Bearer ${token}` }),
+      ...(correlationId === undefined ? {} : { "X-Correlation-Id": correlationId }),
     },
     body: JSON.stringify(body),
   });
@@ -1766,6 +1868,7 @@ type CloudLedgerApiDepsOptions = {
   readonly applyPendingChangesResult?: unknown;
   readonly createTransactionResult?: unknown;
   readonly retainCaptureImprovementResult?: unknown;
+  readonly telemetry?: { readonly recordCommand: (event: unknown) => void };
   readonly userId?: string;
 };
 
@@ -1867,6 +1970,7 @@ function createCloudLedgerApiDeps(options: CloudLedgerApiDepsOptions = {}) {
     deps: {
       auth: createCloudLedgerApiAuth(options),
       store,
+      ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
     },
   };
 }
