@@ -63,44 +63,21 @@ const AMEND_PENDING_CHANGE_REQUEST = {
   clientTimestamp: "2026-06-01T10:05:00.000Z",
   transaction: AMEND_TRANSACTION_PAYLOAD,
 } as const;
-const LEGACY_V1_PENDING_CHANGE_REQUEST = {
-  id: "change-legacy-v1",
+const V1_PENDING_CHANGE_WITHOUT_METADATA = {
+  id: "change-missing-v1-metadata",
   kind: "createTransaction",
   commandVersion: 1,
   transaction: {
     ...CREATE_TRANSACTION_PAYLOAD,
-    id: "txn-legacy-v1",
+    id: "txn-missing-v1-metadata",
   },
 } as const;
-const LEGACY_V1_NORMALIZED_PENDING_CHANGE_REQUEST = {
-  ...LEGACY_V1_PENDING_CHANGE_REQUEST,
-  idempotencyKey: "change-legacy-v1",
-  dependencies: [],
-  expectedVersions: [],
-  clientTimestamp: "1970-01-01T00:00:00.000Z",
-} as const;
-const LEGACY_V1_ACCEPTED_PENDING_CHANGES_RESULT = {
-  code: "accepted",
-  acceptedChangeIds: ["change-legacy-v1", "change-offline-coffee"],
-  rejectedChangeIds: [],
-  changeOutcomes: [
-    {
-      changeId: "change-legacy-v1",
-      status: "accepted",
-      code: "accepted",
-    },
-    {
-      changeId: "change-offline-coffee",
-      status: "accepted",
-      code: "accepted",
-    },
-  ],
-  cursor: "ledger:2",
-} as const;
-const LEGACY_V1_APPLY_PENDING_CHANGES_BODY = {
+const V1_APPLY_PENDING_CHANGES_WITHOUT_METADATA_BODY = {
   action: "applyPendingChanges",
   commandVersion: 1,
-  changes: [LEGACY_V1_PENDING_CHANGE_REQUEST, PENDING_CHANGE_REQUEST],
+  deviceId: "device-ios-17-pro",
+  batchId: "batch-20260601-offline",
+  changes: [V1_PENDING_CHANGE_WITHOUT_METADATA, PENDING_CHANGE_REQUEST],
 } as const;
 const UNSUPPORTED_PENDING_CHANGE_REQUEST = {
   ...PENDING_CHANGE_REQUEST,
@@ -409,27 +386,20 @@ describe("cloud-ledger-api Edge Function", () => {
     });
   });
 
-  it("accepts legacy v1 pending-change envelopes without new metadata", async () => {
-    const api = createCloudLedgerApiDeps({
-      applyPendingChangesResult: LEGACY_V1_ACCEPTED_PENDING_CHANGES_RESULT,
-    });
+  it("rejects v1 pending changes without current metadata before ledger access", async () => {
+    const api = createCloudLedgerApiDeps();
 
     const response = await handleCloudLedgerRequest(
-      jsonRequest(LEGACY_V1_APPLY_PENDING_CHANGES_BODY, "valid-token"),
+      jsonRequest(V1_APPLY_PENDING_CHANGES_WITHOUT_METADATA_BODY, "valid-token"),
       api.deps
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      success: true,
-      data: LEGACY_V1_ACCEPTED_PENDING_CHANGES_RESULT,
+      success: false,
+      error: "invalid_transaction",
     });
-    expect(api.store.applyPendingChanges).toHaveBeenCalledWith(USER_ID, {
-      commandVersion: 1,
-      deviceId: "device-legacy-v1",
-      batchId: "batch-legacy-v1",
-      changes: [LEGACY_V1_NORMALIZED_PENDING_CHANGE_REQUEST, PENDING_CHANGE_REQUEST],
-    });
+    expect(api.store.applyPendingChanges).not.toHaveBeenCalled();
   });
 
   it("returns typed outcomes for duplicate pending change ids in a batch", async () => {
