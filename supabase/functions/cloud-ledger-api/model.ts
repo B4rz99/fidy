@@ -1,6 +1,20 @@
+import type { CloudLedgerApplyPendingChangesAccepted } from "./pending-change-set-model.ts";
+
 export type LedgerCursor = string;
 
-export const CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT = 10;
+export { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT } from "./pending-change-set-model.ts";
+export type {
+  CloudLedgerApplyPendingChange,
+  CloudLedgerApplyPendingChangesAccepted,
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
+  CloudLedgerApplyPendingCreateTransactionChange,
+  CloudLedgerApplyPendingInvalidChange,
+  CloudLedgerApplyPendingUnsupportedChange,
+  CloudLedgerApplyPendingUnsupportedEnvelopeChange,
+  CloudLedgerExpectedRecordVersion,
+  CloudLedgerPendingChangeOutcome,
+} from "./pending-change-set-model.ts";
 
 const LEDGER_CURSOR_PATTERN = /^ledger:(0|[1-9]\d*)$/;
 
@@ -88,25 +102,6 @@ export type CloudLedgerCreateTransactionAccepted = {
   readonly cursor: LedgerCursor;
 };
 
-export type CloudLedgerApplyPendingCreateTransactionChange = {
-  readonly id: string;
-  readonly kind: "createTransaction";
-  readonly commandVersion: 1;
-  readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
-};
-
-export type CloudLedgerApplyPendingChangesCommand = {
-  readonly commandVersion: 1;
-  readonly changes: readonly CloudLedgerApplyPendingCreateTransactionChange[];
-};
-
-export type CloudLedgerApplyPendingChangesAccepted = {
-  readonly code: "accepted";
-  readonly acceptedChangeIds: readonly string[];
-  readonly rejectedChangeIds: readonly string[];
-  readonly cursor: LedgerCursor;
-};
-
 export type CloudLedgerCreateTransactionRejected = {
   readonly code:
     | "duplicate_transaction_id"
@@ -120,8 +115,6 @@ export type CloudLedgerCreateTransactionRejected = {
 export type CloudLedgerCreateTransactionOutcome =
   | CloudLedgerCreateTransactionAccepted
   | CloudLedgerCreateTransactionRejected;
-
-export type CloudLedgerApplyPendingChangesOutcome = CloudLedgerApplyPendingChangesAccepted;
 
 export type CaptureImprovementSample = {
   readonly sourceChannel: "email" | "notification" | "wallet";

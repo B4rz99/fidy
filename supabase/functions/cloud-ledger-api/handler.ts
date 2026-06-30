@@ -2,8 +2,6 @@ import type {
   CaptureImprovementSample,
   CaptureImprovementSampleAccepted,
   CaptureImprovementSampleOutcome,
-  CloudLedgerApplyPendingChangesCommand,
-  CloudLedgerApplyPendingChangesOutcome,
   CloudLedgerApiResponse,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
@@ -11,6 +9,10 @@ import type {
   CloudLedgerCreateTransactionRejected,
   LedgerCursor,
 } from "./model.ts";
+import type {
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
+} from "./pending-change-set-model.ts";
 import type { SupabaseError } from "../_shared/supabase-error.ts";
 import { readCaptureImprovementSample } from "./capture-improvement-sample.ts";
 import {

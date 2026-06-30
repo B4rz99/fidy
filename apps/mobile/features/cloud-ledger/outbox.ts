@@ -22,6 +22,7 @@ import {
   type CloudLedgerCreateTransactionCommand,
   type CloudLedgerTransaction,
 } from "./cache";
+import { acceptedPendingChanges, removePendingChangeOccurrences } from "./outbox-reconciliation";
 
 export type CloudLedgerPendingCreateTransaction = {
   readonly id: LedgerChangeId;
@@ -52,6 +53,9 @@ export type EncryptedCloudLedgerOutbox = {
     change: CloudLedgerPendingChange
   ) => Promise<readonly CloudLedgerPendingChange[]>;
   readonly remove: (changeIds: readonly LedgerChangeId[]) => Promise<void>;
+  readonly removeAcceptedChanges?: (
+    changesToRemove: readonly CloudLedgerPendingChange[]
+  ) => Promise<void>;
   readonly clear: () => Promise<void>;
 };
 
@@ -81,6 +85,9 @@ const OUTBOX_KEY_BYTES = 32;
 const OUTBOX_KEY_PATTERN = /^[0-9a-f]{64}$/;
 const SECURE_STORE_OUTBOX_CHUNK_SIZE = 1500;
 const CHUNKED_SECURE_STORE_OUTBOX_STORAGE = "chunked-secure-store";
+const CLOUD_LEDGER_DEVICE_ID_BYTES = 16;
+const CLOUD_LEDGER_DEVICE_ID_KEY = "cloud-ledger-device-id";
+const CLOUD_LEDGER_DEVICE_ID_PATTERN = /^device-[0-9a-f]{32}$/;
 const outboxesByUserId = new Map<string, EncryptedCloudLedgerOutbox>();
 
 export class CloudLedgerOutboxFailure extends Error {
@@ -129,6 +136,21 @@ export function createEncryptedCloudLedgerOutbox(input: {
         const changeIdSet = new Set(changeIds);
         const changes = (await loadOutboxSnapshot(input.storage, encryptionKey)).changes.filter(
           (change) => !changeIdSet.has(change.id)
+        );
+        if (changes.length === 0) {
+          await input.storage.clear();
+          return;
+        }
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes,
+        });
+      }),
+    removeAcceptedChanges: (changesToRemove) =>
+      serializeMutation(async () => {
+        const changes = removePendingChangeOccurrences(
+          (await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
+          changesToRemove
         );
         if (changes.length === 0) {
           await input.storage.clear();
@@ -241,7 +263,7 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  const acceptedChangeIds = await flushPendingChanges(
+  const acceptedChanges = await flushPendingChanges(
     input.supabase,
     changes,
     input.abortSignal,
@@ -254,7 +276,11 @@ export async function flushPendingCloudLedgerChanges(input: {
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  await input.outbox.remove(acceptedChangeIds);
+  if (input.outbox.removeAcceptedChanges === undefined) {
+    await input.outbox.remove(acceptedChanges.map((change) => change.id));
+  } else {
+    await input.outbox.removeAcceptedChanges(acceptedChanges);
+  }
   return restoreOptimisticCloudLedgerCache({
     cache: refreshedCache,
     outbox: input.outbox,
@@ -277,30 +303,28 @@ async function flushPendingChanges(
   changes: readonly CloudLedgerPendingChange[],
   abortSignal?: AbortSignal,
   shouldContinue?: () => boolean
-): Promise<readonly LedgerChangeId[]> {
+): Promise<readonly CloudLedgerPendingChange[]> {
   if (changes.length === 0) {
     return [];
   }
-  return await chunkPendingChanges(changes).reduce<Promise<readonly LedgerChangeId[]>>(
+  const deviceId = getOrCreateCloudLedgerDeviceId();
+  return await chunkPendingChanges(changes).reduce<Promise<readonly CloudLedgerPendingChange[]>>(
     async (previous, batch) => {
-      const acceptedChangeIds = await previous;
+      const acceptedChanges = await previous;
       if (shouldContinue?.() === false) {
-        return acceptedChangeIds;
+        return acceptedChanges;
       }
       const outcome = await applyPendingCloudLedgerChanges(
         supabase,
         {
           commandVersion: 1,
-          changes: batch.map((change) => ({
-            id: change.id,
-            kind: change.kind,
-            commandVersion: change.commandVersion,
-            transaction: change.transaction,
-          })),
+          deviceId,
+          batchId: pendingChangeBatchId(batch),
+          changes: batch.map(toPendingChangeCommand),
         },
         { signal: abortSignal }
       );
-      return [...acceptedChangeIds, ...outcome.acceptedChangeIds];
+      return [...acceptedChanges, ...acceptedPendingChanges(batch, outcome)];
     },
     Promise.resolve([])
   );
@@ -317,6 +341,34 @@ const chunkPendingChanges = (
         (index + 1) * CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT
       )
   );
+
+function pendingChangeBatchId(batch: readonly CloudLedgerPendingChange[]): string {
+  return `batch-${batch[0]?.id ?? "empty"}`;
+}
+
+function getOrCreateCloudLedgerDeviceId(): string {
+  const existing = SecureStore.getItem(CLOUD_LEDGER_DEVICE_ID_KEY);
+  if (existing !== null && CLOUD_LEDGER_DEVICE_ID_PATTERN.test(existing)) {
+    return existing;
+  }
+
+  const deviceId = `device-${toHex(Crypto.getRandomBytes(CLOUD_LEDGER_DEVICE_ID_BYTES))}`;
+  SecureStore.setItem(CLOUD_LEDGER_DEVICE_ID_KEY, deviceId);
+  return deviceId;
+}
+
+function toPendingChangeCommand(change: CloudLedgerPendingChange) {
+  return {
+    id: change.id,
+    kind: change.kind,
+    commandVersion: change.commandVersion,
+    idempotencyKey: change.id,
+    dependencies: [],
+    expectedVersions: [],
+    clientTimestamp: change.createdAt,
+    transaction: change.transaction,
+  } as const;
+}
 
 function toOptimisticTransaction(change: CloudLedgerPendingChange): CloudLedgerTransaction {
   return {

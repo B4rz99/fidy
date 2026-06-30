@@ -2,15 +2,18 @@ import type {
   CaptureImprovementSample,
   CaptureImprovementSampleAccepted,
   CaptureImprovementSampleOutcome,
-  CloudLedgerApplyPendingChangesCommand,
-  CloudLedgerApplyPendingChangesOutcome,
   CloudLedgerBootstrapPayload,
   CloudLedgerCreateTransactionCommand,
   CloudLedgerCreateTransactionOutcome,
   LedgerCursor,
 } from "./model.ts";
+import type {
+  CloudLedgerApplyPendingChangesCommand,
+  CloudLedgerApplyPendingChangesOutcome,
+} from "./pending-change-set-model.ts";
 import { throwIfError, type SupabaseError } from "../_shared/supabase-error.ts";
-import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT, readLedgerCursorSequence } from "./model.ts";
+import { readLedgerCursorSequence } from "./model.ts";
+import { CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT } from "./pending-change-set-model.ts";
 
 type BootstrapRpcArgs = {
   readonly p_user_id: string;
@@ -28,6 +31,14 @@ type CreateTransactionRpcArgs = {
   readonly p_account_id: string;
   readonly p_description: string | null;
   readonly p_date: string;
+};
+
+type ApplyPendingChangesRpcArgs = {
+  readonly p_user_id: string;
+  readonly p_command_version: number;
+  readonly p_device_id: string | null;
+  readonly p_batch_id: string | null;
+  readonly p_changes: CloudLedgerApplyPendingChangesCommand["changes"];
 };
 
 type RetainCaptureImprovementSampleRpcArgs = {
@@ -57,6 +68,7 @@ type SupabaseLike = {
     functionName: string,
     args:
       | BootstrapRpcArgs
+      | ApplyPendingChangesRpcArgs
       | CreateTransactionRpcArgs
       | DeleteCaptureImprovementSamplesRpcArgs
       | RetainCaptureImprovementSampleRpcArgs
@@ -65,6 +77,7 @@ type SupabaseLike = {
     readonly data:
       | CaptureImprovementSampleAccepted
       | CaptureImprovementSampleOutcome
+      | CloudLedgerApplyPendingChangesOutcome
       | CloudLedgerBootstrapPayload
       | CloudLedgerCreateTransactionOutcome
       | null;
@@ -72,13 +85,8 @@ type SupabaseLike = {
   }>;
 };
 
-type ApplyPendingChangesProgress = {
-  readonly acceptedChangeIds: readonly string[];
-  readonly cursor: string | null;
-  readonly rejectedChangeIds: readonly string[];
-};
-
 const CLOUD_LEDGER_BOOTSTRAP_RPC = "cloud_ledger_bootstrap";
+const CLOUD_LEDGER_APPLY_PENDING_CHANGES_RPC = "cloud_ledger_apply_pending_changes";
 const CLOUD_LEDGER_CREATE_TRANSACTION_RPC = "cloud_ledger_create_transaction";
 const CLOUD_LEDGER_RETAIN_CAPTURE_IMPROVEMENT_SAMPLE_RPC =
   "cloud_ledger_retain_capture_improvement_sample";
@@ -157,34 +165,19 @@ async function applyPendingChanges(
     throw new Error("Cloud Ledger pending-change batch exceeds the server limit");
   }
 
-  const outcomes = await command.changes.reduce<Promise<ApplyPendingChangesProgress>>(
-    async (previous, change) => {
-      const accepted = await previous;
-      const outcome = await createTransaction(supabase, userId, {
-        commandVersion: change.commandVersion,
-        transaction: change.transaction,
-      });
-      if (outcome.code !== "accepted") {
-        return {
-          ...accepted,
-          rejectedChangeIds: [...accepted.rejectedChangeIds, change.id],
-        };
-      }
-      return {
-        acceptedChangeIds: [...accepted.acceptedChangeIds, change.id],
-        cursor: outcome.cursor,
-        rejectedChangeIds: accepted.rejectedChangeIds,
-      };
-    },
-    Promise.resolve({ acceptedChangeIds: [], cursor: null, rejectedChangeIds: [] })
-  );
+  const response = await supabase.rpc(CLOUD_LEDGER_APPLY_PENDING_CHANGES_RPC, {
+    p_batch_id: command.batchId,
+    p_changes: command.changes,
+    p_command_version: command.commandVersion,
+    p_device_id: command.deviceId,
+    p_user_id: userId,
+  });
 
-  return {
-    code: "accepted",
-    acceptedChangeIds: outcomes.acceptedChangeIds,
-    rejectedChangeIds: outcomes.rejectedChangeIds,
-    cursor: (outcomes.cursor ?? "ledger:0") as LedgerCursor,
-  };
+  throwIfError(response.error, "apply Cloud Ledger pending changes");
+  if (response.data === null) {
+    throw new Error("Unable to apply Cloud Ledger pending changes: missing response");
+  }
+  return response.data as CloudLedgerApplyPendingChangesOutcome;
 }
 
 async function retainCaptureImprovementSample(
