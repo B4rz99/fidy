@@ -1,0 +1,39 @@
+apps/mobile/package.json
+  s_6c070d47258744::t_193918099cc1d9 100
+package.json
+  s_6c070d47258744::t_193918099cc1d9 57-58
+plans/lizard-complexity-debt.json
+  s_6c070d47258744::t_f503b27a143bd3 16,25-43,52,61-62,66,70-71,75,79,88,93,97,106,111,115,124-133,142,151,160-178,187-196,205-214,221-229
+apps/mobile/features/transactions/services/cloud-ledger-transaction-adapter.ts
+  s_6c070d47258744::t_2e994ff7564529 8,82-85
+  s_6c070d47258744::t_833a222a5fdd01 86-87
+apps/mobile/__tests__/transactions/cloud-ledger-optimistic-snapshot.test.ts
+  s_6c070d47258744::t_2b5d6707294317 1,7-11,16-19,27,34,37-38,40-54,61,169-214
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_6c070d47258744::t_ef5d647279be8b 1206-1256,2313,2315,2340-2341
+apps/mobile/supabase/migrations/20260630153000_cloud_ledger_transaction_edit_delete.sql
+  s_6c070d47258744::t_de2cde017184d2 558-559,613-648,664-762
+  s_6c070d47258744::t_7bea23969bfbb9 763
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_6c070d47258744::t_061846b989cf5b 8,16,82-109,231-259,263-265,267-273,275-280,287-292,296,359-365,371,373,376-387
+  s_6c070d47258744::t_06b25599eb84f9 1-4,266,274
+  s_6c070d47258744::t_48f0c32aed1b3f 260-262
+bun.lock
+  s_6c070d47258744::t_f18777cf2169cb 12-13,102,732,734,736,738,740,742,744,746,748,750,752,754,756,758,760,762,764,766,768,782,784,786,788,790,792,794,796,798,800,802,804,806,808,810,812,814,816,818,1104,2286,2288,2748,3256,3258,3260,3578,3580,3582,3896,3898,3900,3902,3906-3907,4122,4124,4126,4128,4130,4132,4134,4136,4138,4140,4144-4145,4374,4376,4378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "39bc73f531d23d7ff28add11fac08018d86a0234",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
