@@ -130,6 +130,38 @@ const en = {
     deleteFailed: "Transaction was not deleted. Check your connection and try again.",
   },
 
+  cloudLedger: {
+    repair: {
+      actions: {
+        discard: "Discard change",
+        editAndResubmit: "Edit and resubmit",
+        retry: "Retry sync",
+      },
+      emptyTitle: "No ledger repairs",
+      emptyBody: "Pending changes that need your review will appear here.",
+      dependencyFailure: {
+        title: "Blocked by another change",
+        body: "Fix the parent repair item first. This local change cannot sync until that problem is resolved.",
+      },
+      invalidTransaction: {
+        title: "Transaction needs changes",
+        body: "Fix the transaction details before resubmitting this local change.",
+      },
+      retryableFailure: {
+        title: "Sync did not finish",
+        body: "Fidy retried this change automatically. You can try again or discard the local change.",
+      },
+      staleConflict: {
+        title: "Transaction changed elsewhere",
+        body: "Review the latest version, then edit and resubmit your local change.",
+      },
+      unsupportedCommandVersion: {
+        title: "Update required",
+        body: "Update Fidy before this local change can be synced.",
+      },
+    },
+  },
+
   transfers: {
     title: "New transfer",
     reclassifyTitle: "Convert to transfer",

@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
+import { requireLedgerChangeId } from "@/shared/types/assertions";
 import type { IsoDateTime, LedgerChangeId, TransactionId, UserId } from "@/shared/types/branded";
 import {
   applyPendingCloudLedgerChanges,
   CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT,
+  type CloudLedgerApplyPendingChangesAccepted,
+  type CloudLedgerPendingChangeOutcome,
 } from "./api-client";
 import {
   refreshCloudLedgerCache,
@@ -42,22 +45,58 @@ export type EncryptedCloudLedgerOutboxStorage = {
 };
 
 export type EncryptedCloudLedgerOutbox = {
+  readonly clearRepairStates?: (changeIds: readonly LedgerChangeId[]) => Promise<void>;
   readonly load: () => Promise<readonly CloudLedgerPendingChange[]>;
+  readonly loadAutoRetryAttempts?: () => Promise<readonly CloudLedgerAutoRetryState[]>;
+  readonly loadRepairItems?: () => Promise<readonly CloudLedgerRepairItem[]>;
   readonly enqueue: (
     change: CloudLedgerPendingChange
   ) => Promise<readonly CloudLedgerPendingChange[]>;
+  readonly recordAutoRetryAttempts?: (items: readonly CloudLedgerAutoRetryState[]) => Promise<void>;
+  readonly markForRepair?: (items: readonly CloudLedgerRepairState[]) => Promise<void>;
   readonly remove: (changeIds: readonly LedgerChangeId[]) => Promise<void>;
   readonly removeAcceptedChanges?: (
     changesToRemove: readonly CloudLedgerPendingChange[]
   ) => Promise<void>;
+  readonly replace?: (
+    change: CloudLedgerPendingChange
+  ) => Promise<readonly CloudLedgerPendingChange[]>;
   readonly clear: () => Promise<void>;
 };
 
 export type CloudLedgerOutboxFailureCode = "invalid_encrypted_outbox";
 
+export type CloudLedgerRepairAction = "discard" | "editAndResubmit" | "retry";
+export type CloudLedgerRepairReason =
+  | "dependencyFailure"
+  | "invalidTransaction"
+  | "retryableFailure"
+  | "staleConflict"
+  | "unsupportedCommandVersion";
+export type CloudLedgerRepairState = {
+  readonly changeId: LedgerChangeId;
+  readonly outcome: CloudLedgerPendingChangeOutcome;
+  readonly parentChangeId?: LedgerChangeId;
+};
+export type CloudLedgerAutoRetryState = {
+  readonly changeId: LedgerChangeId;
+  readonly attempts: number;
+};
+export type CloudLedgerRepairItem = {
+  readonly id: LedgerChangeId;
+  readonly kind: CloudLedgerPendingChange["kind"];
+  readonly change: CloudLedgerPendingChange;
+  readonly outcome: CloudLedgerPendingChangeOutcome;
+  readonly parentChangeId?: LedgerChangeId;
+  readonly reason: CloudLedgerRepairReason;
+  readonly actions: readonly CloudLedgerRepairAction[];
+};
+
 type CloudLedgerOutboxSnapshot = {
   readonly version: typeof CLOUD_LEDGER_OUTBOX_VERSION;
   readonly changes: readonly CloudLedgerPendingChange[];
+  readonly retryAttempts: readonly CloudLedgerAutoRetryState[];
+  readonly repairs: readonly CloudLedgerRepairState[];
 };
 type SecureStoreOutboxChunkAllocation = {
   readonly generation: number | null;
@@ -112,25 +151,62 @@ export function createEncryptedCloudLedgerOutbox(input: {
 
   return {
     clear: () => serializeMutation(() => input.storage.clear()),
+    clearRepairStates: (changeIds) =>
+      serializeMutation(async () => {
+        const changeIdSet = new Set(changeIds);
+        const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes: snapshot.changes,
+          retryAttempts: snapshot.retryAttempts.filter((retry) => !changeIdSet.has(retry.changeId)),
+          repairs: snapshot.repairs.filter((repair) => !changeIdSet.has(repair.changeId)),
+        });
+      }),
     enqueue: (change) =>
       serializeMutation(async () => {
-        const changes = [
-          ...(await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
-          change,
-        ];
+        const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
+        const changes = [...snapshot.changes, change];
         await writeOutboxSnapshot(input.storage, encryptionKey, {
           version: CLOUD_LEDGER_OUTBOX_VERSION,
           changes,
+          retryAttempts: snapshot.retryAttempts.filter((retry) => retry.changeId !== change.id),
+          repairs: snapshot.repairs.filter((repair) => repair.changeId !== change.id),
         });
         return changes;
       }),
     load: async () => (await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
+    loadAutoRetryAttempts: async () =>
+      (await loadOutboxSnapshot(input.storage, encryptionKey)).retryAttempts,
+    loadRepairItems: async () =>
+      repairItemsFromSnapshot(await loadOutboxSnapshot(input.storage, encryptionKey)),
+    recordAutoRetryAttempts: (items) =>
+      serializeMutation(async () => {
+        if (items.length === 0) return;
+        const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes: snapshot.changes,
+          retryAttempts: mergeAutoRetryStates(snapshot.retryAttempts, items),
+          repairs: snapshot.repairs,
+        });
+      }),
+    markForRepair: (items) =>
+      serializeMutation(async () => {
+        if (items.length === 0) return;
+        const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes: snapshot.changes,
+          retryAttempts: snapshot.retryAttempts,
+          repairs: mergeRepairStates(snapshot.repairs, items),
+        });
+      }),
     remove: (changeIds) =>
       serializeMutation(async () => {
         const changeIdSet = new Set(changeIds);
-        const changes = (await loadOutboxSnapshot(input.storage, encryptionKey)).changes.filter(
-          (change) => !changeIdSet.has(change.id)
-        );
+        const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
+        const changes = snapshot.changes.filter((change) => !changeIdSet.has(change.id));
+        const repairs = snapshot.repairs.filter((repair) => !changeIdSet.has(repair.changeId));
         if (changes.length === 0) {
           await input.storage.clear();
           return;
@@ -138,14 +214,19 @@ export function createEncryptedCloudLedgerOutbox(input: {
         await writeOutboxSnapshot(input.storage, encryptionKey, {
           version: CLOUD_LEDGER_OUTBOX_VERSION,
           changes,
+          retryAttempts: snapshot.retryAttempts.filter((retry) => !changeIdSet.has(retry.changeId)),
+          repairs,
         });
       }),
     removeAcceptedChanges: (changesToRemove) =>
       serializeMutation(async () => {
+        const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
         const changes = outboxReconciliation.removePendingChangeOccurrences(
-          (await loadOutboxSnapshot(input.storage, encryptionKey)).changes,
+          snapshot.changes,
           changesToRemove
         );
+        const removedChangeIds = new Set(changesToRemove.map((change) => change.id));
+        const repairs = snapshot.repairs.filter((repair) => !removedChangeIds.has(repair.changeId));
         if (changes.length === 0) {
           await input.storage.clear();
           return;
@@ -153,7 +234,25 @@ export function createEncryptedCloudLedgerOutbox(input: {
         await writeOutboxSnapshot(input.storage, encryptionKey, {
           version: CLOUD_LEDGER_OUTBOX_VERSION,
           changes,
+          retryAttempts: snapshot.retryAttempts.filter(
+            (retry) => !removedChangeIds.has(retry.changeId)
+          ),
+          repairs,
         });
+      }),
+    replace: (change) =>
+      serializeMutation(async () => {
+        const snapshot = await loadOutboxSnapshot(input.storage, encryptionKey);
+        const changes = snapshot.changes.some((candidate) => candidate.id === change.id)
+          ? snapshot.changes.map((candidate) => (candidate.id === change.id ? change : candidate))
+          : [...snapshot.changes, change];
+        await writeOutboxSnapshot(input.storage, encryptionKey, {
+          version: CLOUD_LEDGER_OUTBOX_VERSION,
+          changes,
+          retryAttempts: snapshot.retryAttempts.filter((retry) => retry.changeId !== change.id),
+          repairs: snapshot.repairs.filter((repair) => repair.changeId !== change.id),
+        });
+        return changes;
       }),
   };
 }
@@ -209,6 +308,95 @@ export async function hasPendingCloudLedgerOutboxChanges(userId: UserId): Promis
   });
   outboxesByUserId.set(userId, outbox);
   return (await outbox.load()).length > 0;
+}
+
+export async function loadCloudLedgerRepairItems(
+  outbox: EncryptedCloudLedgerOutbox
+): Promise<readonly CloudLedgerRepairItem[]> {
+  return outbox.loadRepairItems?.() ?? [];
+}
+
+export async function retryCloudLedgerRepairItem(
+  outbox: EncryptedCloudLedgerOutbox,
+  changeId: LedgerChangeId
+): Promise<void> {
+  await outbox.clearRepairStates?.([changeId]);
+}
+
+export async function discardCloudLedgerRepairItem(
+  outbox: EncryptedCloudLedgerOutbox,
+  changeId: LedgerChangeId
+): Promise<void> {
+  await outbox.remove([changeId]);
+}
+
+export async function retryCloudLedgerRepairSet(outbox: EncryptedCloudLedgerOutbox): Promise<void> {
+  await outbox.clearRepairStates?.(
+    (await loadCloudLedgerRepairItems(outbox)).map((item) => item.id)
+  );
+}
+
+export async function resubmitCloudLedgerRepairTransactionChange(input: {
+  readonly cache: CloudLedgerCache;
+  readonly changeId: LedgerChangeId;
+  readonly createdAt: IsoDateTime;
+  readonly expectedVersion?: number;
+  readonly outbox: EncryptedCloudLedgerOutbox;
+  readonly transaction: CloudLedgerTransaction;
+}): Promise<CloudLedgerCache> {
+  const repairItem = (await loadCloudLedgerRepairItems(input.outbox)).find(
+    (item) => item.id === input.changeId
+  );
+  if (repairItem === undefined) {
+    throw new Error("pending change repair item must exist before resubmitting");
+  }
+  const replacement = resubmittedTransactionChange(repairItem.change, input);
+  const changes =
+    input.outbox.replace === undefined
+      ? await replacePendingChangeThroughOutboxFallback(input.outbox, replacement)
+      : await input.outbox.replace(replacement);
+  return applyPendingLedgerChanges(input.cache, changes);
+}
+
+function resubmittedTransactionChange(
+  change: CloudLedgerPendingChange,
+  input: {
+    readonly createdAt: IsoDateTime;
+    readonly expectedVersion?: number;
+    readonly transaction: CloudLedgerTransaction;
+  }
+): CloudLedgerPendingChange {
+  if (change.kind === "createTransaction") {
+    return {
+      ...change,
+      createdAt: input.createdAt,
+      transaction: toTransactionCommandPayload(input.transaction),
+    };
+  }
+  if (change.kind === "amendTransaction") {
+    return {
+      ...change,
+      createdAt: input.createdAt,
+      expectedVersion: requireResubmitExpectedVersion(input.expectedVersion),
+      transaction: toTransactionCommandPayload(input.transaction),
+    };
+  }
+  throw new Error("delete transaction repairs cannot be edited and resubmitted");
+}
+
+function requireResubmitExpectedVersion(value: number | undefined): number {
+  if (value !== undefined && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  throw new Error("expectedVersion is required when resubmitting an amend repair");
+}
+
+async function replacePendingChangeThroughOutboxFallback(
+  outbox: EncryptedCloudLedgerOutbox,
+  change: CloudLedgerPendingChange
+): Promise<readonly CloudLedgerPendingChange[]> {
+  await outbox.remove([change.id]);
+  return await outbox.enqueue(change);
 }
 
 export function createSecureStoreCloudLedgerOutboxStorage(
@@ -292,12 +480,26 @@ export async function flushPendingCloudLedgerChanges(input: {
   readonly shouldContinue?: () => boolean;
 }): Promise<CloudLedgerCache> {
   const changes = await input.outbox.load();
+  const repairChangeIds = new Set(
+    (await loadCloudLedgerRepairItems(input.outbox)).map((item) => item.id)
+  );
+  const retryAttempts = new Map(
+    (await (input.outbox.loadAutoRetryAttempts?.() ?? Promise.resolve([]))).map((retry) => [
+      retry.changeId,
+      retry.attempts,
+    ])
+  );
+  const flushableChanges = changes.filter((change) => !repairChangeIds.has(change.id));
   if (input.shouldContinue?.() === false) {
     return applyPendingLedgerChanges(input.cache, changes);
   }
-  const removableChanges = await flushPendingChanges(
+  if (flushableChanges.length === 0) {
+    return applyPendingLedgerChanges(input.cache, changes);
+  }
+  const { repairStates, retryStates, removableChanges } = await flushPendingChanges(
     input.supabase,
-    changes,
+    flushableChanges,
+    retryAttempts,
     input.abortSignal,
     input.shouldContinue
   );
@@ -313,6 +515,8 @@ export async function flushPendingCloudLedgerChanges(input: {
   } else {
     await input.outbox.removeAcceptedChanges(removableChanges);
   }
+  await input.outbox.recordAutoRetryAttempts?.(retryStates);
+  await input.outbox.markForRepair?.(repairStates);
   return restoreOptimisticCloudLedgerCache({
     cache: refreshedCache,
     outbox: input.outbox,
@@ -322,18 +526,29 @@ export async function flushPendingCloudLedgerChanges(input: {
 async function flushPendingChanges(
   supabase: SupabaseClient,
   changes: readonly CloudLedgerPendingChange[],
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>,
   abortSignal?: AbortSignal,
   shouldContinue?: () => boolean
-): Promise<readonly CloudLedgerPendingChange[]> {
+): Promise<{
+  readonly removableChanges: readonly CloudLedgerPendingChange[];
+  readonly repairStates: readonly CloudLedgerRepairState[];
+  readonly retryStates: readonly CloudLedgerAutoRetryState[];
+}> {
   if (changes.length === 0) {
-    return [];
+    return { removableChanges: [], repairStates: [], retryStates: [] };
   }
   const deviceId = getOrCreateCloudLedgerDeviceId();
-  return await chunkPendingChanges(changes).reduce<Promise<readonly CloudLedgerPendingChange[]>>(
+  return await chunkPendingChanges(changes).reduce<
+    Promise<{
+      readonly removableChanges: readonly CloudLedgerPendingChange[];
+      readonly repairStates: readonly CloudLedgerRepairState[];
+      readonly retryStates: readonly CloudLedgerAutoRetryState[];
+    }>
+  >(
     async (previous, batch) => {
-      const removableChanges = await previous;
+      const progress = await previous;
       if (shouldContinue?.() === false) {
-        return removableChanges;
+        return progress;
       }
       const outcome = await applyPendingCloudLedgerChanges(
         supabase,
@@ -345,10 +560,166 @@ async function flushPendingChanges(
         },
         { signal: abortSignal }
       );
-      return removablePendingChanges(removableChanges, batch, outcome);
+      return {
+        removableChanges: removablePendingChanges(progress.removableChanges, batch, outcome),
+        repairStates: [
+          ...progress.repairStates,
+          ...repairStatesFromOutcome(batch, outcome, retryAttempts),
+        ],
+        retryStates: [
+          ...progress.retryStates,
+          ...retryStatesFromOutcome(batch, outcome, retryAttempts),
+        ],
+      };
     },
-    Promise.resolve([])
+    Promise.resolve({ removableChanges: [], repairStates: [], retryStates: [] })
   );
+}
+
+function repairStatesFromOutcome(
+  batch: readonly CloudLedgerPendingChange[],
+  outcome: CloudLedgerApplyPendingChangesAccepted,
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+): readonly CloudLedgerRepairState[] {
+  if (outcome.changeOutcomes.length === 0) {
+    return [];
+  }
+  const changesById = new Set(batch.map((change) => change.id));
+  const batchOutcomes = outcome.changeOutcomes.filter((changeOutcome) =>
+    changesById.has(changeOutcome.changeId)
+  );
+  return batchOutcomes
+    .filter((changeOutcome) => shouldSurfaceRepairOutcome(changeOutcome, retryAttempts))
+    .map((changeOutcome) => repairStateFromOutcome(batchOutcomes, changeOutcome, retryAttempts));
+}
+
+function repairStateFromOutcome(
+  batchOutcomes: readonly CloudLedgerPendingChangeOutcome[],
+  outcome: CloudLedgerPendingChangeOutcome,
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+): CloudLedgerRepairState {
+  const parentChangeId = parentProblemChangeId(batchOutcomes, outcome, retryAttempts);
+  return parentChangeId === undefined
+    ? { changeId: outcome.changeId, outcome }
+    : { changeId: outcome.changeId, outcome, parentChangeId };
+}
+
+function parentProblemChangeId(
+  batchOutcomes: readonly CloudLedgerPendingChangeOutcome[],
+  outcome: CloudLedgerPendingChangeOutcome,
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+): LedgerChangeId | undefined {
+  if (outcome.code !== "dependency_failed") {
+    return undefined;
+  }
+  const dependencyIndex = batchOutcomes.findIndex(
+    (candidate) => candidate.changeId === outcome.changeId
+  );
+  const parentCandidates = batchOutcomes
+    .slice(0, Math.max(0, dependencyIndex))
+    .filter(
+      (candidate) =>
+        candidate.code !== "dependency_failed" &&
+        shouldSurfaceRepairOutcome(candidate, retryAttempts)
+    );
+  return parentCandidates[parentCandidates.length - 1]?.changeId;
+}
+
+function shouldSurfaceRepairOutcome(
+  outcome: CloudLedgerPendingChangeOutcome,
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+): boolean {
+  if (outcome.status === "retryable") {
+    return (retryAttempts.get(outcome.changeId) ?? 0) > 0;
+  }
+  return outcome.status === "repair_required" || outcome.status === "requires_app_update";
+}
+
+function retryStatesFromOutcome(
+  batch: readonly CloudLedgerPendingChange[],
+  outcome: CloudLedgerApplyPendingChangesAccepted,
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+): readonly CloudLedgerAutoRetryState[] {
+  if (outcome.changeOutcomes.length === 0) {
+    return [];
+  }
+  const changesById = new Set(batch.map((change) => change.id));
+  return outcome.changeOutcomes
+    .filter(
+      (changeOutcome) =>
+        changesById.has(changeOutcome.changeId) &&
+        changeOutcome.status === "retryable" &&
+        (retryAttempts.get(changeOutcome.changeId) ?? 0) === 0
+    )
+    .map((changeOutcome) => ({
+      changeId: changeOutcome.changeId,
+      attempts: 1,
+    }));
+}
+
+function repairItemsFromSnapshot(
+  snapshot: CloudLedgerOutboxSnapshot
+): readonly CloudLedgerRepairItem[] {
+  const changesById = new Map(snapshot.changes.map((change) => [change.id, change]));
+  return snapshot.repairs.flatMap((repair) => {
+    const change = changesById.get(repair.changeId);
+    const presentation = repairPresentation(repair.outcome);
+    return change === undefined || presentation === null
+      ? []
+      : [
+          {
+            id: repair.changeId,
+            kind: change.kind,
+            change,
+            outcome: repair.outcome,
+            ...(repair.parentChangeId === undefined
+              ? {}
+              : { parentChangeId: repair.parentChangeId }),
+            ...presentation,
+          },
+        ];
+  });
+}
+
+function repairPresentation(
+  outcome: CloudLedgerPendingChangeOutcome
+): Pick<CloudLedgerRepairItem, "actions" | "reason"> | null {
+  if (outcome.status === "retryable") {
+    return { reason: "retryableFailure", actions: ["retry", "discard"] };
+  }
+  if (outcome.status === "requires_app_update" || outcome.code === "unsupported_command_version") {
+    return { reason: "unsupportedCommandVersion", actions: ["discard"] };
+  }
+  if (outcome.code === "stale_expected_version") {
+    return { reason: "staleConflict", actions: ["editAndResubmit", "discard"] };
+  }
+  if (outcome.code === "dependency_failed") {
+    return { reason: "dependencyFailure", actions: ["discard"] };
+  }
+  if (
+    outcome.code === "invalid_ledger_reference" ||
+    outcome.code === "invalid_transaction" ||
+    outcome.code === "invalid_transaction_id"
+  ) {
+    return { reason: "invalidTransaction", actions: ["editAndResubmit", "discard"] };
+  }
+  return null;
+}
+
+function mergeRepairStates(
+  existing: readonly CloudLedgerRepairState[],
+  incoming: readonly CloudLedgerRepairState[]
+): readonly CloudLedgerRepairState[] {
+  const incomingIds = new Set(incoming.map((repair) => repair.changeId));
+  return [...existing.filter((repair) => !incomingIds.has(repair.changeId)), ...incoming];
+}
+
+function mergeAutoRetryStates(
+  existing: readonly CloudLedgerAutoRetryState[],
+  incoming: readonly CloudLedgerAutoRetryState[]
+): readonly CloudLedgerAutoRetryState[] {
+  const incomingIds = new Set(incoming.map((retry) => retry.changeId));
+  return [...existing.filter((retry) => !incomingIds.has(retry.changeId)), ...incoming];
 }
 
 const chunkPendingChanges = (
@@ -384,7 +755,7 @@ async function loadOutboxSnapshot(
 ): Promise<CloudLedgerOutboxSnapshot> {
   const encrypted = await storage.read();
   return encrypted === null
-    ? { version: CLOUD_LEDGER_OUTBOX_VERSION, changes: [] }
+    ? { version: CLOUD_LEDGER_OUTBOX_VERSION, changes: [], retryAttempts: [], repairs: [] }
     : await decryptOutboxSnapshot(encrypted, encryptionKey);
 }
 
@@ -447,7 +818,55 @@ function parseOutboxSnapshot(value: unknown): CloudLedgerOutboxSnapshot {
   return {
     version: CLOUD_LEDGER_OUTBOX_VERSION,
     changes: requireArray(record.changes, "changes").map(parsePendingChange),
+    retryAttempts:
+      record.retryAttempts === undefined
+        ? []
+        : requireArray(record.retryAttempts, "retryAttempts").map(parseAutoRetryState),
+    repairs:
+      record.repairs === undefined
+        ? []
+        : requireArray(record.repairs, "repairs").map(parseRepairState),
   };
+}
+
+function parseAutoRetryState(value: unknown): CloudLedgerAutoRetryState {
+  const record = requireRecord(value, "auto retry state");
+  return {
+    changeId: requireLedgerChangeId(requireString(record.changeId, "auto retry changeId")),
+    attempts: requireNonNegativeInteger(record.attempts, "auto retry attempts"),
+  };
+}
+
+function parseRepairState(value: unknown): CloudLedgerRepairState {
+  const record = requireRecord(value, "repair state");
+  const outcome = requireRecord(record.outcome, "repair outcome");
+  return {
+    changeId: requireLedgerChangeId(requireString(record.changeId, "repair changeId")),
+    outcome: {
+      changeId: requireLedgerChangeId(requireString(outcome.changeId, "repair outcome changeId")),
+      status: requireRepairOutcomeStatus(outcome.status),
+      code: requireString(outcome.code, "repair outcome code"),
+    },
+    ...(record.parentChangeId === undefined
+      ? {}
+      : {
+          parentChangeId: requireLedgerChangeId(
+            requireString(record.parentChangeId, "repair parentChangeId")
+          ),
+        }),
+  };
+}
+
+function requireRepairOutcomeStatus(value: unknown): CloudLedgerPendingChangeOutcome["status"] {
+  if (
+    value === "accepted" ||
+    value === "repair_required" ||
+    value === "requires_app_update" ||
+    value === "retryable"
+  ) {
+    return value;
+  }
+  throw new Error("repair outcome status must be supported");
 }
 
 function requireRecord(value: unknown, label: string): Record<string, unknown> {
@@ -873,9 +1292,5 @@ function removablePendingChanges(
   batch: readonly CloudLedgerPendingChange[],
   outcome: Parameters<typeof outboxReconciliation.acceptedPendingChanges>[1]
 ): readonly CloudLedgerPendingChange[] {
-  return [
-    ...previousChanges,
-    ...outboxReconciliation.acceptedPendingChanges(batch, outcome),
-    ...outboxReconciliation.terminalRejectedPendingChanges(batch, outcome),
-  ];
+  return [...previousChanges, ...outboxReconciliation.acceptedPendingChanges(batch, outcome)];
 }

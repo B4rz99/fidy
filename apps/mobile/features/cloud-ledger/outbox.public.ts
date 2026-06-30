@@ -1,4 +1,7 @@
 export type {
+  CloudLedgerRepairAction,
+  CloudLedgerRepairItem,
+  CloudLedgerRepairReason,
   CloudLedgerOutboxFailureCode,
   CloudLedgerPendingChange,
   CloudLedgerPendingAmendTransaction,
@@ -17,9 +20,19 @@ export {
   createSecureStoreCloudLedgerOutboxStorage,
   deleteOfflineCloudLedgerTransaction,
   discardCloudLedgerOutbox,
+  discardCloudLedgerRepairItem,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   hasPendingCloudLedgerOutboxChanges,
+  loadCloudLedgerRepairItems,
   resetCloudLedgerOutboxInstances,
+  resubmitCloudLedgerRepairTransactionChange,
   restoreOptimisticCloudLedgerCache,
+  retryCloudLedgerRepairItem,
+  retryCloudLedgerRepairSet,
 } from "./outbox";
+export {
+  describeCloudLedgerRepairItem,
+  type CloudLedgerRepairActionLabel,
+  type CloudLedgerRepairItemCopy,
+} from "./repair-copy";

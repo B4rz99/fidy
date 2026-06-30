@@ -134,6 +134,38 @@ const es = {
     deleteFailed: "La transacción no se eliminó. Revisa tu conexión e intenta de nuevo.",
   },
 
+  cloudLedger: {
+    repair: {
+      actions: {
+        discard: "Descartar cambio",
+        editAndResubmit: "Editar y reenviar",
+        retry: "Reintentar sincronización",
+      },
+      emptyTitle: "No hay reparaciones del ledger",
+      emptyBody: "Los cambios pendientes que necesiten tu revisión aparecerán aquí.",
+      dependencyFailure: {
+        title: "Bloqueado por otro cambio",
+        body: "Resuelve primero la reparación principal. Este cambio local no puede sincronizarse hasta que ese problema quede resuelto.",
+      },
+      invalidTransaction: {
+        title: "La transacción necesita cambios",
+        body: "Corrige los datos de la transacción antes de reenviar este cambio local.",
+      },
+      retryableFailure: {
+        title: "La sincronización no terminó",
+        body: "Fidy reintentó este cambio automáticamente. Puedes intentarlo de nuevo o descartar el cambio local.",
+      },
+      staleConflict: {
+        title: "La transacción cambió en otro lugar",
+        body: "Revisa la versión más reciente, luego edita y reenvía tu cambio local.",
+      },
+      unsupportedCommandVersion: {
+        title: "Actualización requerida",
+        body: "Actualiza Fidy antes de sincronizar este cambio local.",
+      },
+    },
+  },
+
   transfers: {
     title: "Nueva transferencia",
     reclassifyTitle: "Convertir en transferencia",
