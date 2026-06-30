@@ -132,9 +132,12 @@ async function handleMissingRemoteSession(
 async function handleMissingValidatedUser(
   set: SetAuthState,
   transitionVersion: number,
+  userId: UserId,
   errorMessage?: string
 ) {
   await signOutRemoteSession();
+  if (isStaleAuthTransition(transitionVersion)) return;
+  await discardCloudLedgerStateAfterMissingRemoteUser(userId);
   if (isStaleAuthTransition(transitionVersion)) return;
   await handleMissingRemoteSession(set, transitionVersion, errorMessage);
 }
@@ -161,12 +164,17 @@ async function restoreSupabaseSession(set: SetAuthState, transitionVersion: numb
     await handleMissingRemoteSession(set, transitionVersion, error?.message);
     return;
   }
-  // shouldHandleMissingValidatedUser only clears the local session for missing users
-  // matched by isMissingRemoteUserError; unexpected getUser errors fall back to this session.
+  // shouldHandleMissingValidatedUser only clears local data for missing users matched by
+  // isMissingRemoteUserError; unexpected getUser errors fall back to this session.
   const userResult = await supabase.auth.getUser();
   if (isStaleAuthTransition(transitionVersion)) return;
   if (shouldHandleMissingValidatedUser(userResult)) {
-    await handleMissingValidatedUser(set, transitionVersion, userResult.error?.message);
+    await handleMissingValidatedUser(
+      set,
+      transitionVersion,
+      requireUserId(session.user.id),
+      userResult.error?.message
+    );
     return;
   }
   setRemoteAuthState(set, session);
@@ -200,9 +208,13 @@ function suspendCloudLedgerStateBeforeSignOut(): UserId | null {
     return null;
   }
 
+  suspendCloudLedgerStateForUser(userId);
+  return userId;
+}
+
+function suspendCloudLedgerStateForUser(userId: UserId): void {
   invalidateTransactionSession();
   suspendCloudLedgerRuntimeCacheWrites(userId);
-  return userId;
 }
 
 async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null): Promise<void> {
@@ -218,6 +230,11 @@ async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null): Prom
     captureAuthFailure("auth_signout_cloud_ledger_outbox_discard_failed", err);
     throw err;
   }
+}
+
+async function discardCloudLedgerStateAfterMissingRemoteUser(userId: UserId): Promise<void> {
+  suspendCloudLedgerStateForUser(userId);
+  await discardCloudLedgerStateBeforeSignOut(userId);
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({

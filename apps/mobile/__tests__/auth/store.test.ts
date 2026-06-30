@@ -258,6 +258,11 @@ describe("useAuthStore", () => {
     const { session, isLoading } = useAuthStore.getState();
     expect(session).toBeNull();
     expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
     expect(useLocalOnboardingState.getState().isComplete).toBe(false);
     expect(isLoading).toBe(false);

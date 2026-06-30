@@ -104,6 +104,7 @@ describe("useCategoriesStore", () => {
       createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       deletedAt: null,
+      source: "local_ledger" as const,
     };
     vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
 
@@ -129,6 +130,7 @@ describe("useCategoriesStore", () => {
       createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       deletedAt: null,
+      source: "local_ledger" as const,
     };
     vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
     vi.mocked(getCategoryIconOverridesForUser).mockReturnValue([
@@ -170,6 +172,7 @@ describe("useCategoriesStore", () => {
       createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       deletedAt: null,
+      source: "local_ledger" as const,
     };
     vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
     vi.mocked(getCategoryColorOverridesForUser).mockReturnValue([

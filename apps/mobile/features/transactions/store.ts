@@ -117,10 +117,6 @@ type CloudLedgerMutationTarget =
   | { readonly kind: "accepted"; readonly transaction: CloudLedgerTransaction }
   | { readonly kind: "local" }
   | { readonly kind: "unsupported" };
-type CloudLedgerShadowReferenceRow = {
-  readonly accountId: FinancialAccountId;
-  readonly categoryId: CategoryId;
-};
 type TransactionInsertRow = typeof transactions.$inferInsert;
 type FinancialAccountInsertRow = typeof financialAccounts.$inferInsert;
 type UserCategoryInsertRow = typeof userCategories.$inferInsert;
@@ -550,6 +546,7 @@ function toCloudLedgerFinancialAccountRow(
     name: account.name,
     paymentDueDay: null,
     statementClosingDay: null,
+    source: CLOUD_LEDGER_TRANSACTION_SOURCE,
     updatedAt: account.updatedAt,
     userId,
   };
@@ -577,6 +574,7 @@ function toCloudLedgerUserCategoryRow(
     iconName: category.icon ?? CLOUD_LEDGER_REFERENCE_FALLBACK_CATEGORY.icon,
     id: toCloudLedgerUserCategoryReferenceId(category.id),
     name: category.name,
+    source: CLOUD_LEDGER_TRANSACTION_SOURCE,
     updatedAt: category.updatedAt,
     userId,
   };
@@ -590,67 +588,34 @@ export async function deleteCloudLedgerTransactionCache(userId: UserId): Promise
   const db = tryGetDb(userId);
   if (db === null) return;
 
-  deleteCloudLedgerRuntimeReferences(db, userId);
+  deleteCloudLedgerReferenceRows(db, userId);
   deleteAllCloudLedgerTransactionShadows(db, userId);
 }
 
-function deleteCloudLedgerRuntimeReferences(db: AnyDb, userId: UserId): void {
-  const runtimeCache = getCloudLedgerRuntimeCache(userId);
-  const shadowReferenceRows = loadCloudLedgerShadowReferenceRows(db, userId);
-  deleteCloudLedgerFinancialAccountReferences(db, userId, [
-    ...runtimeCache.financialAccounts.map((account) => account.id),
-    ...shadowReferenceRows.map((row) => row.accountId),
-  ]);
-  deleteCloudLedgerUserCategoryReferences(db, userId, [
-    ...runtimeCache.categories
-      .filter((category) => !DEFAULT_CATEGORY_IDS.has(category.id))
-      .map((category) => toCloudLedgerUserCategoryReferenceId(category.id)),
-    ...shadowReferenceRows
-      .map((row) => row.categoryId)
-      .filter((categoryId) => !DEFAULT_CATEGORY_IDS.has(categoryId))
-      .map(toCloudLedgerUserCategoryReferenceId),
-  ]);
+function deleteCloudLedgerReferenceRows(db: AnyDb, userId: UserId): void {
+  deleteCloudLedgerFinancialAccountReferences(db, userId);
+  deleteCloudLedgerUserCategoryReferences(db, userId);
 }
 
-function loadCloudLedgerShadowReferenceRows(
-  db: AnyDb,
-  userId: UserId
-): readonly CloudLedgerShadowReferenceRow[] {
-  return db
-    .select({
-      accountId: transactions.accountId,
-      categoryId: transactions.categoryId,
-    })
-    .from(transactions)
-    .where(cloudLedgerShadowRowsForUser(userId))
-    .all() as readonly CloudLedgerShadowReferenceRow[];
-}
-
-function deleteCloudLedgerFinancialAccountReferences(
-  db: AnyDb,
-  userId: UserId,
-  accountIds: readonly FinancialAccountId[]
-): void {
-  const uniqueAccountIds = [...new Set(accountIds)];
-  if (uniqueAccountIds.length === 0) return;
-
+function deleteCloudLedgerFinancialAccountReferences(db: AnyDb, userId: UserId): void {
   db.delete(financialAccounts)
     .where(
-      and(eq(financialAccounts.userId, userId), inArray(financialAccounts.id, uniqueAccountIds))
+      and(
+        eq(financialAccounts.userId, userId),
+        eq(financialAccounts.source, CLOUD_LEDGER_TRANSACTION_SOURCE)
+      )
     )
     .run();
 }
 
-function deleteCloudLedgerUserCategoryReferences(
-  db: AnyDb,
-  userId: UserId,
-  categoryIds: readonly UserCategoryId[]
-): void {
-  const uniqueCategoryIds = [...new Set(categoryIds)];
-  if (uniqueCategoryIds.length === 0) return;
-
+function deleteCloudLedgerUserCategoryReferences(db: AnyDb, userId: UserId): void {
   db.delete(userCategories)
-    .where(and(eq(userCategories.userId, userId), inArray(userCategories.id, uniqueCategoryIds)))
+    .where(
+      and(
+        eq(userCategories.userId, userId),
+        eq(userCategories.source, CLOUD_LEDGER_TRANSACTION_SOURCE)
+      )
+    )
     .run();
 }
 

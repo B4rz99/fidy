@@ -1,3 +1,7 @@
+import { resolve } from "node:path";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -55,6 +59,7 @@ import type {
   IsoDateTime,
   LedgerCursor,
   TransactionId,
+  UserCategoryId,
   UserId,
 } from "@/shared/types/branded";
 
@@ -283,6 +288,7 @@ function expectCloudLedgerRemoteReferencesPersisted() {
       userId: mockUserId,
       name: "Remote account",
       kind: "cash",
+      source: "cloud_ledger",
     }),
   ]);
   expect(insertedUserCategoryRows).toEqual([
@@ -292,6 +298,7 @@ function expectCloudLedgerRemoteReferencesPersisted() {
       name: "Remote custom",
       iconName: "receipt",
       colorHex: "#445566",
+      source: "cloud_ledger",
     }),
   ]);
   expect(insertedTransactionRows).toEqual([
@@ -1977,6 +1984,82 @@ describe("transaction boundaries", () => {
     expect(deletedTransactionScopes).toHaveLength(1);
     expect(deletedFinancialAccountScopes).toHaveLength(1);
     expect(deletedUserCategoryScopes).toHaveLength(1);
+  });
+
+  it("deletes account and category-only Cloud Ledger cache rows after cold start", async () => {
+    const sqlite = new Database(":memory:");
+    const db = drizzle(sqlite);
+    migrate(db, { migrationsFolder: resolve(__dirname, "../../drizzle") });
+    const now = "2026-06-25T10:00:00.000Z" as IsoDateTime;
+
+    try {
+      db.insert(financialAccounts)
+        .values({
+          id: "fa-local-preserved" as FinancialAccountId,
+          userId: mockUserId,
+          name: "Local cash",
+          kind: "cash",
+          isDefault: false,
+          statementClosingDay: null,
+          paymentDueDay: null,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        })
+        .run();
+      db.insert(userCategories)
+        .values({
+          id: "ucat-local-preserved" as UserCategoryId,
+          userId: mockUserId,
+          name: "Local category",
+          iconName: "tag",
+          colorHex: "#123456",
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        })
+        .run();
+      setCloudLedgerRuntimeCache(
+        mockUserId,
+        applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+          cursor: "ledger:account-category-only" as LedgerCursor,
+          categories: [
+            {
+              id: "ucat-cloud-account-only" as CategoryId,
+              name: "Cloud category only",
+              icon: "receipt",
+              color: "#445566",
+              updatedAt: now,
+            },
+          ],
+          financialAccounts: [
+            {
+              id: "fa-cloud-account-only" as FinancialAccountId,
+              name: "Cloud account only",
+              type: "cash",
+              currency: "COP",
+              updatedAt: now,
+            },
+          ],
+          transactions: [],
+          tombstones: [],
+        })
+      );
+      persistCloudLedgerRuntimeTransactionShadows(db as unknown as AnyDb, mockUserId);
+      clearCloudLedgerRuntimeCache(mockUserId);
+      mockTryGetDb.mockReturnValue(db);
+
+      await deleteCloudLedgerTransactionCache(mockUserId);
+
+      expect(sqlite.prepare("select id from financial_accounts order by id").all()).toEqual([
+        { id: "fa-local-preserved" },
+      ]);
+      expect(sqlite.prepare("select id from user_categories order by id").all()).toEqual([
+        { id: "ucat-local-preserved" },
+      ]);
+    } finally {
+      sqlite.close();
+    }
   });
 
   it("deletes all local Cloud Ledger shadows when pending outbox state is unreadable", async () => {

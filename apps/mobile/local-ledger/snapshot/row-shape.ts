@@ -1,6 +1,6 @@
 import { CAPTURE_EVIDENCE_TYPES } from "@/shared/capture-evidence/types";
 import { TRANSACTION_SOURCES } from "@/shared/lib/transaction-source";
-import { TRANSFER_SOURCES } from "@/shared/types/ledger-source";
+import { LEDGER_CACHE_REFERENCE_SOURCES, TRANSFER_SOURCES } from "@/shared/types/ledger-source";
 import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./snapshot";
 import {
   assertBoolean,
@@ -113,7 +113,9 @@ const ROW_SPECS: readonly RowSpec[] = [
           name: (value) => assertString(value, "name"),
           iconName: (value) => assertString(value, "iconName"),
           colorHex: (value) => assertString(value, "colorHex"),
-        })
+          source: (value) => assertOneOf(LEDGER_CACHE_REFERENCE_SOURCES, value, "source"),
+        }),
+        ["source"]
       ),
   },
   {
@@ -159,8 +161,9 @@ const ROW_SPECS: readonly RowSpec[] = [
           isDefault: (value) => assertBoolean(value, "isDefault"),
           statementClosingDay: (value) => assertNullableNumber(value, "statementClosingDay"),
           paymentDueDay: (value) => assertNullableNumber(value, "paymentDueDay"),
+          source: (value) => assertOneOf(LEDGER_CACHE_REFERENCE_SOURCES, value, "source"),
         }),
-        ["statementClosingDay", "paymentDueDay"]
+        ["statementClosingDay", "paymentDueDay", "source"]
       ),
   },
   {
