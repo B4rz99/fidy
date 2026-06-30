@@ -66,6 +66,470 @@ $$;
 revoke execute on function ledger.accepted_transaction_payload(ledger.transactions)
   from public, anon, authenticated;
 
+create or replace function public.cloud_ledger_bootstrap(
+  p_user_id uuid,
+  p_after_sequence bigint default null
+)
+returns jsonb
+language sql
+security definer
+set search_path = ''
+as $$
+with cursor_state as (
+  select coalesce(
+    (
+      select ledger.ledger_cursors.latest_sequence
+      from ledger.ledger_cursors
+      where ledger.ledger_cursors.user_id = p_user_id
+    ),
+    0
+  ) as latest_sequence
+),
+category_rows as (
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', ledger.categories.id,
+        'name', ledger.categories.name,
+        'icon', ledger.categories.icon,
+        'color', ledger.categories.color,
+        'updatedAt', to_char(
+          ledger.categories.updated_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      )
+      order by ledger.categories.cursor_sequence, ledger.categories.id
+    ),
+    '[]'::jsonb
+  ) as rows
+  from ledger.categories
+  where ledger.categories.user_id = p_user_id
+    and ledger.categories.deleted_at is null
+    and (
+      p_after_sequence is null
+      or ledger.categories.cursor_sequence > p_after_sequence
+    )
+),
+financial_account_rows as (
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', ledger.financial_accounts.id,
+        'name', ledger.financial_accounts.name,
+        'type', ledger.financial_accounts.type,
+        'currency', ledger.financial_accounts.currency,
+        'updatedAt', to_char(
+          ledger.financial_accounts.updated_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      )
+      order by ledger.financial_accounts.cursor_sequence, ledger.financial_accounts.id
+    ),
+    '[]'::jsonb
+  ) as rows
+  from ledger.financial_accounts
+  where ledger.financial_accounts.user_id = p_user_id
+    and ledger.financial_accounts.deleted_at is null
+    and (
+      p_after_sequence is null
+      or ledger.financial_accounts.cursor_sequence > p_after_sequence
+    )
+),
+transaction_rows as (
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', ledger.transactions.id,
+        'type', ledger.transactions.type,
+        'amount', ledger.transactions.amount,
+        'currency', ledger.transactions.currency,
+        'categoryId', ledger.transactions.category_id,
+        'accountId', ledger.transactions.account_id,
+        'description', ledger.transactions.description,
+        'date', ledger.transactions.date::text,
+        'version', ledger.transactions.record_version,
+        'updatedAt', to_char(
+          ledger.transactions.updated_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      )
+      order by ledger.transactions.cursor_sequence, ledger.transactions.id
+    ),
+    '[]'::jsonb
+  ) as rows
+  from ledger.transactions
+  where ledger.transactions.user_id = p_user_id
+    and ledger.transactions.deleted_at is null
+    and (
+      p_after_sequence is null
+      or ledger.transactions.cursor_sequence > p_after_sequence
+    )
+),
+tombstone_rows as (
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'recordType', case ledger.tombstones.record_type
+          when 'financial_account' then 'financialAccount'
+          else ledger.tombstones.record_type
+        end,
+        'recordId', ledger.tombstones.record_id,
+        'deletedAt', to_char(
+          ledger.tombstones.deleted_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      )
+      order by ledger.tombstones.cursor_sequence, ledger.tombstones.record_type, ledger.tombstones.record_id
+    ),
+    '[]'::jsonb
+  ) as rows
+  from ledger.tombstones
+  where ledger.tombstones.user_id = p_user_id
+    and (
+      p_after_sequence is null
+      or ledger.tombstones.cursor_sequence > p_after_sequence
+    )
+)
+select jsonb_build_object(
+  'cursor', 'ledger:' || cursor_state.latest_sequence::text,
+  'categories', category_rows.rows,
+  'financialAccounts', financial_account_rows.rows,
+  'transactions', transaction_rows.rows,
+  'tombstones', tombstone_rows.rows
+)
+from cursor_state, category_rows, financial_account_rows, transaction_rows, tombstone_rows;
+$$;
+
+revoke execute on function public.cloud_ledger_bootstrap(uuid, bigint)
+  from public, anon, authenticated;
+grant execute on function public.cloud_ledger_bootstrap(uuid, bigint)
+  to service_role;
+
+create or replace function public.cloud_ledger_create_transaction(
+  p_user_id uuid,
+  p_command_version integer,
+  p_transaction_id text,
+  p_type text,
+  p_amount integer,
+  p_currency text,
+  p_category_id text,
+  p_account_id text,
+  p_description text,
+  p_date date
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_current_sequence bigint;
+  v_existing_transaction ledger.transactions%rowtype;
+  v_new_transaction ledger.transactions%rowtype;
+  v_next_sequence bigint;
+  v_updated_at timestamptz := now();
+  v_month text := to_char(p_date, 'YYYY-MM');
+  v_should_seed_account boolean := false;
+  v_should_seed_category boolean := false;
+begin
+  if p_command_version is distinct from 1 then
+    return jsonb_build_object('code', 'unsupported_command_version');
+  end if;
+
+  if p_transaction_id is null or p_transaction_id !~ '^txn-[A-Za-z0-9][A-Za-z0-9_-]*$' then
+    return jsonb_build_object('code', 'invalid_transaction_id');
+  end if;
+
+  if exists (
+    select 1
+    from ledger.transactions
+    where ledger.transactions.id = p_transaction_id
+      and ledger.transactions.user_id <> p_user_id
+  ) then
+    return jsonb_build_object('code', 'unauthorized_transaction_id');
+  end if;
+
+  select ledger.transactions.*
+  into v_existing_transaction
+  from ledger.transactions
+  where ledger.transactions.user_id = p_user_id
+    and ledger.transactions.id = p_transaction_id;
+
+  if found then
+    if v_existing_transaction.deleted_at is null
+      and v_existing_transaction.type = p_type
+      and v_existing_transaction.amount = p_amount
+      and v_existing_transaction.currency = p_currency
+      and v_existing_transaction.category_id is not distinct from p_category_id
+      and v_existing_transaction.account_id = p_account_id
+      and v_existing_transaction.description is not distinct from p_description
+      and v_existing_transaction.date = p_date
+    then
+      select coalesce(
+        (
+          select ledger.ledger_cursors.latest_sequence
+          from ledger.ledger_cursors
+          where ledger.ledger_cursors.user_id = p_user_id
+        ),
+        v_existing_transaction.cursor_sequence
+      )
+      into v_current_sequence;
+
+      return jsonb_build_object(
+        'code', 'accepted',
+        'transaction', ledger.accepted_transaction_payload(v_existing_transaction),
+        'cursor', 'ledger:' || v_current_sequence::text
+      );
+    end if;
+
+    return jsonb_build_object('code', 'duplicate_transaction_id');
+  end if;
+
+  if p_type is null
+    or p_type not in ('expense', 'income')
+    or p_amount is null
+    or p_amount <= 0
+    or p_currency is distinct from 'COP'
+    or p_date is null
+    or p_date > current_date
+    or length(coalesce(p_description, '')) > 200
+  then
+    return jsonb_build_object('code', 'invalid_transaction');
+  end if;
+
+  insert into ledger.ledger_cursors (user_id, latest_sequence, updated_at)
+  values (p_user_id, 0, v_updated_at)
+  on conflict (user_id) do nothing;
+
+  if p_account_id is null or length(trim(p_account_id)) = 0 then
+    return jsonb_build_object('code', 'invalid_ledger_reference');
+  end if;
+
+  if not exists (
+    select 1
+    from ledger.financial_accounts
+    where ledger.financial_accounts.user_id = p_user_id
+      and ledger.financial_accounts.id = p_account_id
+      and ledger.financial_accounts.deleted_at is null
+  ) then
+    if exists (
+      select 1
+      from ledger.financial_accounts
+      where ledger.financial_accounts.user_id = p_user_id
+        and ledger.financial_accounts.id = p_account_id
+    ) then
+      return jsonb_build_object('code', 'invalid_ledger_reference');
+    end if;
+    v_should_seed_account := true;
+  end if;
+
+  if p_category_id is not null and length(trim(p_category_id)) = 0 then
+    return jsonb_build_object('code', 'invalid_ledger_reference');
+  end if;
+
+  if p_category_id is not null and not exists (
+    select 1
+    from ledger.categories
+    where ledger.categories.user_id = p_user_id
+      and ledger.categories.id = p_category_id
+      and ledger.categories.deleted_at is null
+  ) then
+    if exists (
+      select 1
+      from ledger.categories
+      where ledger.categories.user_id = p_user_id
+        and ledger.categories.id = p_category_id
+    ) then
+      return jsonb_build_object('code', 'invalid_ledger_reference');
+    end if;
+    v_should_seed_category := true;
+  end if;
+
+  if v_should_seed_account then
+    select ledger.ledger_cursors.latest_sequence + 1
+    into v_next_sequence
+    from ledger.ledger_cursors
+    where ledger.ledger_cursors.user_id = p_user_id
+    for update;
+
+    if not exists (
+      select 1
+      from ledger.financial_accounts
+      where ledger.financial_accounts.user_id = p_user_id
+        and ledger.financial_accounts.id = p_account_id
+        and ledger.financial_accounts.deleted_at is null
+    ) then
+      if exists (
+        select 1
+        from ledger.financial_accounts
+        where ledger.financial_accounts.user_id = p_user_id
+          and ledger.financial_accounts.id = p_account_id
+      ) then
+        return jsonb_build_object('code', 'invalid_ledger_reference');
+      end if;
+
+      insert into ledger.financial_accounts (
+        user_id,
+        id,
+        name,
+        type,
+        currency,
+        cursor_sequence,
+        created_at,
+        updated_at
+      ) values (
+        p_user_id,
+        p_account_id,
+        p_account_id,
+        'cash',
+        'COP',
+        v_next_sequence,
+        v_updated_at,
+        v_updated_at
+      );
+
+      update ledger.ledger_cursors
+      set latest_sequence = v_next_sequence,
+          updated_at = v_updated_at
+      where ledger.ledger_cursors.user_id = p_user_id;
+    end if;
+  end if;
+
+  if v_should_seed_category then
+    select ledger.ledger_cursors.latest_sequence + 1
+    into v_next_sequence
+    from ledger.ledger_cursors
+    where ledger.ledger_cursors.user_id = p_user_id
+    for update;
+
+    if not exists (
+      select 1
+      from ledger.categories
+      where ledger.categories.user_id = p_user_id
+        and ledger.categories.id = p_category_id
+        and ledger.categories.deleted_at is null
+    ) then
+      if exists (
+        select 1
+        from ledger.categories
+        where ledger.categories.user_id = p_user_id
+          and ledger.categories.id = p_category_id
+      ) then
+        return jsonb_build_object('code', 'invalid_ledger_reference');
+      end if;
+
+      insert into ledger.categories (
+        user_id,
+        id,
+        name,
+        icon,
+        color,
+        cursor_sequence,
+        created_at,
+        updated_at
+      ) values (
+        p_user_id,
+        p_category_id,
+        p_category_id,
+        null,
+        null,
+        v_next_sequence,
+        v_updated_at,
+        v_updated_at
+      );
+
+      update ledger.ledger_cursors
+      set latest_sequence = v_next_sequence,
+          updated_at = v_updated_at
+      where ledger.ledger_cursors.user_id = p_user_id;
+    end if;
+  end if;
+
+  select ledger.ledger_cursors.latest_sequence + 1
+  into v_next_sequence
+  from ledger.ledger_cursors
+  where ledger.ledger_cursors.user_id = p_user_id
+  for update;
+
+  insert into ledger.transactions (
+    user_id,
+    id,
+    type,
+    amount,
+    currency,
+    category_id,
+    account_id,
+    description,
+    date,
+    record_version,
+    cursor_sequence,
+    created_at,
+    updated_at
+  ) values (
+    p_user_id,
+    p_transaction_id,
+    p_type,
+    p_amount,
+    p_currency,
+    p_category_id,
+    p_account_id,
+    p_description,
+    p_date,
+    1,
+    v_next_sequence,
+    v_updated_at,
+    v_updated_at
+  )
+  returning ledger.transactions.*
+  into v_new_transaction;
+
+  update ledger.ledger_cursors
+  set latest_sequence = v_next_sequence,
+      updated_at = v_updated_at
+  where ledger.ledger_cursors.user_id = p_user_id;
+
+  perform ledger.rebuild_transaction_monthly_total(p_user_id, v_month, v_next_sequence);
+
+  return jsonb_build_object(
+    'code', 'accepted',
+    'transaction', ledger.accepted_transaction_payload(v_new_transaction),
+    'cursor', 'ledger:' || v_next_sequence::text
+  );
+exception
+  when unique_violation then
+    return jsonb_build_object('code', 'duplicate_transaction_id');
+  when foreign_key_violation then
+    return jsonb_build_object('code', 'invalid_ledger_reference');
+  when check_violation or not_null_violation then
+    return jsonb_build_object('code', 'invalid_transaction');
+end;
+$$;
+
+revoke execute on function public.cloud_ledger_create_transaction(
+  uuid,
+  integer,
+  text,
+  text,
+  integer,
+  text,
+  text,
+  text,
+  text,
+  date
+) from public, anon, authenticated;
+grant execute on function public.cloud_ledger_create_transaction(
+  uuid,
+  integer,
+  text,
+  text,
+  integer,
+  text,
+  text,
+  text,
+  text,
+  date
+) to service_role;
+
 create or replace function ledger.apply_transaction_amend(
   p_user_id uuid,
   p_command_version integer,

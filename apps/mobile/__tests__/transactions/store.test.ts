@@ -14,7 +14,11 @@ import {
   CloudLedgerOutboxFailure,
   getCloudLedgerOutbox,
 } from "@/features/cloud-ledger/outbox.public";
-import { enqueueCloudLedgerOptimisticCreate } from "@/features/cloud-ledger/runtime-mutations.public";
+import {
+  enqueueCloudLedgerOptimisticAmend,
+  enqueueCloudLedgerOptimisticCreate,
+  enqueueCloudLedgerOptimisticDelete,
+} from "@/features/cloud-ledger/runtime-mutations.public";
 import {
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
@@ -84,7 +88,21 @@ vi.mock("@/features/cloud-ledger/outbox.public", async () => {
 });
 
 vi.mock("@/features/cloud-ledger/runtime-mutations.public", () => ({
+  enqueueCloudLedgerOptimisticAmend: vi.fn<(...args: any[]) => any>((input) => {
+    cloudLedgerOutboxCalls.push(input);
+    return Promise.resolve({
+      didWriteRuntimeCache: true,
+      flushIfOnline: cloudLedgerFlushIfOnline,
+    });
+  }),
   enqueueCloudLedgerOptimisticCreate: vi.fn<(...args: any[]) => any>((input) => {
+    cloudLedgerOutboxCalls.push(input);
+    return Promise.resolve({
+      didWriteRuntimeCache: true,
+      flushIfOnline: cloudLedgerFlushIfOnline,
+    });
+  }),
+  enqueueCloudLedgerOptimisticDelete: vi.fn<(...args: any[]) => any>((input) => {
     cloudLedgerOutboxCalls.push(input);
     return Promise.resolve({
       didWriteRuntimeCache: true,
@@ -406,7 +424,21 @@ describe("transaction boundaries", () => {
     vi.mocked(getTransactionById).mockReturnValue(null);
     vi.mocked(getSupabase).mockReturnValue(createMockSupabase());
     vi.mocked(getCloudLedgerOutbox).mockImplementation(() => createMockCloudLedgerOutbox());
+    vi.mocked(enqueueCloudLedgerOptimisticAmend).mockImplementation((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return Promise.resolve({
+        didWriteRuntimeCache: true,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      });
+    });
     vi.mocked(enqueueCloudLedgerOptimisticCreate).mockImplementation((input) => {
+      cloudLedgerOutboxCalls.push(input);
+      return Promise.resolve({
+        didWriteRuntimeCache: true,
+        flushIfOnline: cloudLedgerFlushIfOnline,
+      });
+    });
+    vi.mocked(enqueueCloudLedgerOptimisticDelete).mockImplementation((input) => {
       cloudLedgerOutboxCalls.push(input);
       return Promise.resolve({
         didWriteRuntimeCache: true,
@@ -644,6 +676,98 @@ describe("transaction boundaries", () => {
         },
       })
     ).resolves.toEqual({ success: false, error: "cloudLedgerMutationUnsupported" });
+  });
+
+  it("amends accepted Cloud Ledger transactions through the optimistic Remote API outbox", async () => {
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:12" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            id: "txn-accepted-cloud-edit" as TransactionId,
+            type: "expense",
+            amount: 1000 as CopAmount,
+            currency: "COP",
+            categoryId: "food" as CategoryId,
+            accountId: "fa-default-user-1" as FinancialAccountId,
+            description: "Lunch",
+            date: "2026-03-04" as IsoDate,
+            updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+            version: 3,
+          },
+        ],
+        tombstones: [],
+      })
+    );
+
+    const result = await updateTransactionDirect({
+      db: mockDb,
+      userId: mockUserId,
+      id: "txn-accepted-cloud-edit" as TransactionId,
+      fields: {
+        type: "expense",
+        digits: "9999",
+        categoryId: "food" as CategoryId,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        description: "Edited remotely",
+        date: new Date("2026-03-04T00:00:00.000Z"),
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(enqueueCloudLedgerOptimisticAmend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedVersion: 3,
+        transaction: expect.objectContaining({
+          id: "txn-accepted-cloud-edit",
+          amount: 9999,
+          description: "Edited remotely",
+          version: 3,
+        }),
+      })
+    );
+    expect(cloudLedgerFlushIfOnline).toHaveBeenCalledTimes(1);
+  });
+
+  it("deletes accepted Cloud Ledger transactions through the optimistic Remote API outbox", async () => {
+    setCloudLedgerRuntimeCache(
+      mockUserId,
+      applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+        cursor: "ledger:12" as LedgerCursor,
+        categories: [],
+        financialAccounts: [],
+        transactions: [
+          {
+            id: "txn-accepted-cloud-delete" as TransactionId,
+            type: "expense",
+            amount: 1000 as CopAmount,
+            currency: "COP",
+            categoryId: "food" as CategoryId,
+            accountId: "fa-default-user-1" as FinancialAccountId,
+            description: "Lunch",
+            date: "2026-03-04" as IsoDate,
+            updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+            version: 4,
+          },
+        ],
+        tombstones: [],
+      })
+    );
+
+    await expect(
+      deleteTransaction(mockDb, mockUserId, "txn-accepted-cloud-delete" as TransactionId)
+    ).resolves.toBeUndefined();
+
+    expect(enqueueCloudLedgerOptimisticDelete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedVersion: 4,
+        transactionId: "txn-accepted-cloud-delete",
+      })
+    );
+    expect(cloudLedgerFlushIfOnline).toHaveBeenCalledTimes(1);
   });
 
   it("allows local deletes for ordinary rows when encrypted Cloud Ledger outbox is unreadable", async () => {

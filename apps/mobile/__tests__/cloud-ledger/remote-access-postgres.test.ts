@@ -153,6 +153,36 @@ describe("Cloud Ledger Postgres access boundary", () => {
     }
   );
 
+  postgresIt("upgrades existing Cloud Ledger RPCs to return transaction versions", () => {
+    const postgres = setupSeededPostgres();
+    installLegacyTransactionResponseRpcs(postgres);
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-upgraded-rpc-version",
+      }).transaction
+    ).not.toHaveProperty("version");
+
+    applyMigrationFile(postgres, TRANSACTION_EDIT_DELETE_MIGRATION);
+
+    expect(
+      createTransactionOutcome(postgres, {
+        transactionId: "txn-upgraded-rpc-version",
+      }).transaction
+    ).toMatchObject({
+      id: "txn-upgraded-rpc-version",
+      version: 1,
+    });
+    expect(readRefreshAfterSequence(postgres, 4)).toMatchObject({
+      transactions: [
+        {
+          id: "txn-upgraded-rpc-version",
+          version: 1,
+        },
+      ],
+    });
+  });
+
   postgresIt("accepts repeated matching transaction creates without advancing the cursor", () => {
     const postgres = setupSeededPostgres();
 
@@ -1821,10 +1851,14 @@ create table auth.users (id uuid primary key);
 
 function applyMigration(harness: PostgresHarness) {
   MIGRATIONS.forEach((migration) => {
-    execFileSync(postgresBinary("psql"), ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-f", migration], {
-      env: harness.env,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    applyMigrationFile(harness, migration);
+  });
+}
+
+function applyMigrationFile(harness: PostgresHarness, migration: string) {
+  execFileSync(postgresBinary("psql"), ["-v", "ON_ERROR_STOP=1", "-X", "-q", "-f", migration], {
+    env: harness.env,
+    stdio: ["ignore", "pipe", "pipe"],
   });
 }
 
@@ -1865,6 +1899,193 @@ insert into ledger.tombstones (
 ) values
   ('${USER_ID}'::uuid, 'transaction', 'txn-user', 4, '2026-06-02T11:00:00Z'),
   ('${OTHER_USER_ID}'::uuid, 'transaction', 'txn-other-hidden', 8, '2026-06-02T11:00:00Z');
+`
+  );
+}
+
+function installLegacyTransactionResponseRpcs(harness: PostgresHarness) {
+  psql(
+    harness,
+    `
+create or replace function public.cloud_ledger_bootstrap(
+  p_user_id uuid,
+  p_after_sequence bigint default null
+)
+returns jsonb
+language sql
+security definer
+set search_path = ''
+as $$
+with cursor_state as (
+  select coalesce(
+    (
+      select ledger.ledger_cursors.latest_sequence
+      from ledger.ledger_cursors
+      where ledger.ledger_cursors.user_id = p_user_id
+    ),
+    0
+  ) as latest_sequence
+),
+transaction_rows as (
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', ledger.transactions.id,
+        'type', ledger.transactions.type,
+        'amount', ledger.transactions.amount,
+        'currency', ledger.transactions.currency,
+        'categoryId', ledger.transactions.category_id,
+        'accountId', ledger.transactions.account_id,
+        'description', ledger.transactions.description,
+        'date', ledger.transactions.date::text,
+        'updatedAt', to_char(
+          ledger.transactions.updated_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      )
+      order by ledger.transactions.cursor_sequence, ledger.transactions.id
+    ),
+    '[]'::jsonb
+  ) as rows
+  from ledger.transactions
+  where ledger.transactions.user_id = p_user_id
+    and ledger.transactions.deleted_at is null
+    and (
+      p_after_sequence is null
+      or ledger.transactions.cursor_sequence > p_after_sequence
+    )
+)
+select jsonb_build_object(
+  'cursor', 'ledger:' || cursor_state.latest_sequence::text,
+  'categories', '[]'::jsonb,
+  'financialAccounts', '[]'::jsonb,
+  'transactions', transaction_rows.rows,
+  'tombstones', '[]'::jsonb
+)
+from cursor_state, transaction_rows;
+$$;
+
+create or replace function public.cloud_ledger_create_transaction(
+  p_user_id uuid,
+  p_command_version integer,
+  p_transaction_id text,
+  p_type text,
+  p_amount integer,
+  p_currency text,
+  p_category_id text,
+  p_account_id text,
+  p_description text,
+  p_date date
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_current_sequence bigint;
+  v_existing_transaction ledger.transactions%rowtype;
+  v_next_sequence bigint;
+  v_updated_at timestamptz := now();
+begin
+  select ledger.transactions.*
+  into v_existing_transaction
+  from ledger.transactions
+  where ledger.transactions.user_id = p_user_id
+    and ledger.transactions.id = p_transaction_id;
+
+  if found then
+    select coalesce(
+      (
+        select ledger.ledger_cursors.latest_sequence
+        from ledger.ledger_cursors
+        where ledger.ledger_cursors.user_id = p_user_id
+      ),
+      v_existing_transaction.cursor_sequence
+    )
+    into v_current_sequence;
+
+    return jsonb_build_object(
+      'code', 'accepted',
+      'transaction', jsonb_build_object(
+        'id', v_existing_transaction.id,
+        'type', v_existing_transaction.type,
+        'amount', v_existing_transaction.amount,
+        'currency', v_existing_transaction.currency,
+        'categoryId', v_existing_transaction.category_id,
+        'accountId', v_existing_transaction.account_id,
+        'description', v_existing_transaction.description,
+        'date', v_existing_transaction.date::text,
+        'updatedAt', to_char(
+          v_existing_transaction.updated_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+        )
+      ),
+      'cursor', 'ledger:' || v_current_sequence::text
+    );
+  end if;
+
+  select ledger.ledger_cursors.latest_sequence + 1
+  into v_next_sequence
+  from ledger.ledger_cursors
+  where ledger.ledger_cursors.user_id = p_user_id
+  for update;
+
+  insert into ledger.transactions (
+    user_id,
+    id,
+    type,
+    amount,
+    currency,
+    category_id,
+    account_id,
+    description,
+    date,
+    record_version,
+    cursor_sequence,
+    created_at,
+    updated_at
+  ) values (
+    p_user_id,
+    p_transaction_id,
+    p_type,
+    p_amount,
+    p_currency,
+    p_category_id,
+    p_account_id,
+    p_description,
+    p_date,
+    1,
+    v_next_sequence,
+    v_updated_at,
+    v_updated_at
+  );
+
+  update ledger.ledger_cursors
+  set latest_sequence = v_next_sequence,
+      updated_at = v_updated_at
+  where ledger.ledger_cursors.user_id = p_user_id;
+
+  return jsonb_build_object(
+    'code', 'accepted',
+    'transaction', jsonb_build_object(
+      'id', p_transaction_id,
+      'type', p_type,
+      'amount', p_amount,
+      'currency', p_currency,
+      'categoryId', p_category_id,
+      'accountId', p_account_id,
+      'description', p_description,
+      'date', p_date::text,
+      'updatedAt', to_char(
+        v_updated_at at time zone 'UTC',
+        'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+      )
+    ),
+    'cursor', 'ledger:' || v_next_sequence::text
+  );
+end;
+$$;
 `
   );
 }

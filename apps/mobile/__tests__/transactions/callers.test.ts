@@ -35,9 +35,8 @@ describe("transaction callers", () => {
     expect(editTransactionSource).not.toContain("processedEmailId");
   });
 
-  test("edit screen does not expose save and delete actions for Cloud Ledger rows", () => {
-    expect(editTransactionSource).toContain('if (tx.source === "cloud_ledger")');
-    expect(editTransactionSource).toMatch(
+  test("edit screen exposes save and delete actions for Cloud Ledger rows", () => {
+    expect(editTransactionSource).not.toMatch(
       /if \(tx\.source === "cloud_ledger"\) \{\n\s+back\(\);\n\s+return;/
     );
   });
