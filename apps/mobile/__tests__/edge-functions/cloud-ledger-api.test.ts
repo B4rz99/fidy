@@ -333,26 +333,29 @@ describe("cloud-ledger-api Edge Function", () => {
   });
 
   it("records redacted command telemetry with retry and repair metadata", async () => {
+    const repairChangeId = "lchg-1719876543210-a1b2c";
+    const retryChangeId = "lchg-1719876543211-d3e4f";
     const recordCommand = vi.fn();
     const api = createCloudLedgerApiDeps({
       applyPendingChangesResult: {
         code: "accepted",
         acceptedChangeIds: [],
-        rejectedChangeIds: ["change-sensitive-repair", "change-sensitive-retry"],
+        rejectedChangeIds: [repairChangeId, retryChangeId],
         changeOutcomes: [
           {
-            changeId: "change-sensitive-repair",
+            changeId: repairChangeId,
             status: "repair_required",
             code: "stale_expected_version",
           },
           {
-            changeId: "change-sensitive-retry",
+            changeId: retryChangeId,
             status: "retryable",
             code: "retryable_failure",
           },
         ],
         cursor: "ledger:2",
       },
+      createCorrelationId: () => "corr-issue-542",
       telemetry: { recordCommand },
     });
 
@@ -360,10 +363,12 @@ describe("cloud-ledger-api Edge Function", () => {
       jsonRequest(
         {
           ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          deviceId: "device-0102030405060708090a0b0c0d0e0f10",
+          batchId: `batch-${repairChangeId}`,
           changes: [
             {
               ...PENDING_CHANGE_REQUEST,
-              id: "change-sensitive-repair",
+              id: repairChangeId,
               idempotencyKey: "idem-sensitive-repair",
               transaction: {
                 ...CREATE_TRANSACTION_PAYLOAD,
@@ -374,7 +379,7 @@ describe("cloud-ledger-api Edge Function", () => {
             },
             {
               ...PENDING_CHANGE_REQUEST,
-              id: "change-sensitive-retry",
+              id: retryChangeId,
               idempotencyKey: "idem-sensitive-retry",
               transaction: {
                 ...CREATE_TRANSACTION_PAYLOAD,
@@ -397,28 +402,28 @@ describe("cloud-ledger-api Edge Function", () => {
       action: "applyPendingChanges",
       acceptedChangeIds: [],
       authenticatedUserId: USER_ID,
-      batchId: "batch-20260601-offline",
-      changeIds: ["change-sensitive-repair", "change-sensitive-retry"],
+      batchId: `batch-${repairChangeId}`,
+      changeIds: [repairChangeId, retryChangeId],
       changeOutcomes: [
         {
-          changeId: "change-sensitive-repair",
+          changeId: repairChangeId,
           code: "stale_expected_version",
           status: "repair_required",
         },
         {
-          changeId: "change-sensitive-retry",
+          changeId: retryChangeId,
           code: "retryable_failure",
           status: "retryable",
         },
       ],
       commandVersion: 1,
       correlationId: "corr-issue-542",
-      deviceId: "device-ios-17-pro",
+      deviceId: "device-0102030405060708090a0b0c0d0e0f10",
       latencyMs: expect.any(Number),
       outcomeCode: "accepted",
-      rejectedChangeIds: ["change-sensitive-repair", "change-sensitive-retry"],
-      retryableChangeIds: ["change-sensitive-retry"],
-      repairRequiredChangeIds: ["change-sensitive-repair"],
+      rejectedChangeIds: [repairChangeId, retryChangeId],
+      retryableChangeIds: [retryChangeId],
+      repairRequiredChangeIds: [repairChangeId],
       requiresAppUpdateChangeIds: [],
       status: "success",
     });
@@ -436,32 +441,69 @@ describe("cloud-ledger-api Edge Function", () => {
   it("does not log raw rejected command metadata or unsafe correlation headers", async () => {
     const recordCommand = vi.fn();
     const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-exito-50000-card-1234"],
+        rejectedChangeIds: ["change-exito-50000-card-5678"],
+        changeOutcomes: [
+          {
+            changeId: "change-exito-50000-card-5678",
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+        ],
+        cursor: "ledger:2",
+      },
       createCorrelationId: () => "server-correlation-safe",
       telemetry: { recordCommand },
     });
 
-    const response = await handleCloudLedgerRequest(
+    const rejectedResponse = await handleCloudLedgerRequest(
       jsonRequest(
         {
-          action: "EXITO-50000-card-1234",
+          action: "exito-50000-card-1234",
           commandVersion: 1,
-          deviceId: "device-EXITO-50000-card-1234",
-          batchId: "batch-EXITO-50000-card-1234",
-          changes: [{ id: "change-EXITO-50000-card-1234" }],
         },
         "valid-token",
-        "header-EXITO-50000-card-1234"
+        "header-exito-50000-card-1234"
       ),
       api.deps
     );
 
-    expect(response.status).toBe(400);
-    expect(response.headers.get("X-Correlation-Id")).toBe("server-correlation-safe");
-    await expect(response.json()).resolves.toEqual({
+    expect(rejectedResponse.status).toBe(400);
+    expect(rejectedResponse.headers.get("X-Correlation-Id")).toBe("server-correlation-safe");
+    await expect(rejectedResponse.json()).resolves.toEqual({
       success: false,
       error: "unsupported_action",
     });
-    expect(recordCommand).toHaveBeenCalledWith(
+
+    const acceptedResponse = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          deviceId: "device-exito-50000-card-1234",
+          batchId: "batch-exito-50000-card-1234",
+          changes: [
+            {
+              ...PENDING_CHANGE_REQUEST,
+              id: "change-exito-50000-card-1234",
+              transaction: {
+                ...CREATE_TRANSACTION_PAYLOAD,
+                id: "txn-sensitive-lowercase",
+              },
+            },
+          ],
+        },
+        "valid-token",
+        "header-exito-50000-card-1234"
+      ),
+      api.deps
+    );
+
+    expect(acceptedResponse.status).toBe(200);
+    expect(acceptedResponse.headers.get("X-Correlation-Id")).toBe("server-correlation-safe");
+    expect(recordCommand).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         action: "unknown",
         batchId: null,
@@ -472,8 +514,20 @@ describe("cloud-ledger-api Edge Function", () => {
         status: "failure",
       })
     );
+    expect(recordCommand).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        action: "applyPendingChanges",
+        batchId: null,
+        changeIds: [],
+        changeOutcomes: [],
+        correlationId: "server-correlation-safe",
+        deviceId: null,
+        rejectedChangeIds: [],
+      })
+    );
     const telemetryPayload = JSON.stringify(recordCommand.mock.calls);
-    expect(telemetryPayload).not.toContain("EXITO");
+    expect(telemetryPayload).not.toContain("exito");
     expect(telemetryPayload).not.toContain("50000");
     expect(telemetryPayload).not.toContain("1234");
     expect(telemetryPayload).not.toContain("card-");

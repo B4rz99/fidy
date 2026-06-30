@@ -78,7 +78,7 @@ export async function handleCloudLedgerRequest(
   deps: CloudLedgerApiDeps
 ): Promise<Response> {
   const startedAt = readNow(deps);
-  const correlationId = readCorrelationId(request, deps);
+  const correlationId = readCorrelationId(deps);
   if (request.method === "OPTIONS") {
     return withCorrelationId(
       new Response(null, { status: 204, headers: corsHeaders() }),
@@ -389,13 +389,8 @@ function readNow(deps: CloudLedgerApiDeps): number {
   return deps.now?.() ?? Date.now();
 }
 
-function readCorrelationId(request: Request, deps: CloudLedgerApiDeps): string {
-  const header = request.headers.get("X-Correlation-Id") ?? request.headers.get("X-Request-Id");
-  return (
-    readSafeCorrelationId(header) ??
-    readSafeCorrelationId(deps.createCorrelationId?.()) ??
-    crypto.randomUUID()
-  );
+function readCorrelationId(deps: CloudLedgerApiDeps): string {
+  return readSafeCorrelationId(deps.createCorrelationId?.()) ?? crypto.randomUUID();
 }
 
 function readSafeCorrelationId(value: unknown): string | null {

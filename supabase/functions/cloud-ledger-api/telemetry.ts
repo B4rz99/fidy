@@ -46,7 +46,9 @@ const CLOUD_LEDGER_COMMAND_ACTIONS = new Set<CloudLedgerCommandAction>([
   "retainCaptureImprovementSample",
   "setCaptureImprovementPreference",
 ]);
-const SAFE_TELEMETRY_ID_PATTERN = /^[a-z]+-[a-z0-9][a-z0-9_-]{0,63}$/;
+const SAFE_BATCH_ID_PATTERN = /^batch-lchg-\d{13}-[a-z0-9]{5}$/;
+const SAFE_DEVICE_ID_PATTERN = /^device-[0-9a-f]{32}$/;
+const SAFE_LEDGER_CHANGE_ID_PATTERN = /^lchg-\d{13}-[a-z0-9]{5}$/;
 const SAFE_TELEMETRY_CODE_PATTERN = /^[a-z][a-z0-9_]{0,79}$/;
 const SAFE_CORRELATION_ID_PATTERN = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 
@@ -171,11 +173,16 @@ function readCommandAction(value: unknown): CloudLedgerCommandAction {
 }
 
 function readTelemetryId(value: unknown, prefix: "batch" | "change" | "device"): string | null {
-  return typeof value === "string" &&
-    value.startsWith(`${prefix}-`) &&
-    SAFE_TELEMETRY_ID_PATTERN.test(value)
-    ? value
-    : null;
+  if (typeof value !== "string") {
+    return null;
+  }
+  if (prefix === "batch") {
+    return SAFE_BATCH_ID_PATTERN.test(value) ? value : null;
+  }
+  if (prefix === "device") {
+    return SAFE_DEVICE_ID_PATTERN.test(value) ? value : null;
+  }
+  return SAFE_LEDGER_CHANGE_ID_PATTERN.test(value) ? value : null;
 }
 
 function readTelemetryCode(value: unknown): string | null {

@@ -8,6 +8,7 @@ end
 $$;
 
 grant usage on schema public to ledger_api;
+grant ledger_api to authenticator;
 
 revoke all on schema ledger from ledger_api;
 revoke all on all tables in schema ledger from ledger_api;

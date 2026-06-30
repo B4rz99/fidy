@@ -153,6 +153,8 @@ describe("Cloud Ledger Postgres access boundary", () => {
 
       expectLedgerApiRoleCannotReadLedger(postgres);
       expectLedgerApiRoleReadsOnlyScopedBootstrap(postgres);
+      expectAuthenticatorCanAssumeLedgerApiRole(postgres);
+      expectClientRolesCannotAssumeLedgerApiRole(postgres);
       expectLedgerApiRoleRejectsCrossUserTransactionIdentity(postgres);
       expectLedgerApiRoleCannotExecuteInternalLedgerHelpers(postgres);
       expectFutureLedgerHelpersNotExecutableByLedgerApi(postgres);
@@ -1874,6 +1876,42 @@ function expectLedgerApiRoleReadsOnlyScopedBootstrap(postgres: PostgresHarness) 
   expect(JSON.stringify(payload)).not.toContain("acct-other");
 }
 
+function expectAuthenticatorCanAssumeLedgerApiRole(postgres: PostgresHarness) {
+  const payload = JSON.parse(
+    psqlScalar(
+      postgres,
+      `set session authorization authenticator; set role ledger_api; select public.cloud_ledger_bootstrap('${USER_ID}'::uuid, 1::bigint)::text;`
+    )
+  );
+
+  expect(payload).toMatchObject({
+    cursor: "ledger:4",
+    transactions: [],
+    tombstones: [
+      {
+        recordType: "transaction",
+        recordId: "txn-user",
+      },
+    ],
+  });
+  expect(JSON.stringify(payload)).not.toContain("txn-other");
+  expect(JSON.stringify(payload)).not.toContain("acct-other");
+}
+
+function expectClientRolesCannotAssumeLedgerApiRole(postgres: PostgresHarness) {
+  const authenticatedError = psqlFails(
+    postgres,
+    "set session authorization authenticated; set role ledger_api; select current_role;"
+  );
+  const anonError = psqlFails(
+    postgres,
+    "set session authorization anon; set role ledger_api; select current_role;"
+  );
+
+  expect(authenticatedError).toMatch(/permission denied/);
+  expect(anonError).toMatch(/permission denied/);
+}
+
 function expectLedgerApiRoleRejectsCrossUserTransactionIdentity(postgres: PostgresHarness) {
   const outcome = JSON.parse(
     psqlScalar(
@@ -2004,6 +2042,7 @@ function setupSupabaseAuthSurface(harness: PostgresHarness) {
     `
 create role anon;
 create role authenticated;
+create role authenticator;
 create role service_role;
 create schema auth;
 create table auth.users (id uuid primary key);

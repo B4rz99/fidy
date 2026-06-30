@@ -183,6 +183,7 @@ describe("Cloud Ledger remote schema", () => {
     const sql = readFileSync(OBSERVABILITY_SECURITY_MIGRATION, "utf8").toLowerCase();
 
     expect(sql).toContain("create role ledger_api nologin");
+    expect(sql).toContain("grant ledger_api to authenticator");
     expect(sql).toContain("grant usage on schema public to ledger_api");
     expect(sql).toContain("revoke all on schema ledger from ledger_api");
     expect(sql).toContain("revoke all on all tables in schema ledger from ledger_api");
