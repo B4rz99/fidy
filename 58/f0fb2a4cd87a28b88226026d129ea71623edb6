@@ -1,0 +1,39 @@
+supabase/functions/cloud-ledger-api/telemetry.ts
+  s_6c070d47258744::t_bdd88d71f3da5e 1-159
+supabase/functions/cloud-ledger-api/handler.ts
+  s_6c070d47258744::t_c5dd47aebce4ac 28,70-72,79-80,82-85,88-91,96-99,109-112,116-127,129,135-158
+  s_6c070d47258744::t_1fe19a05b8a5a1 348-355,387-404
+  s_6c070d47258744::t_c67d7418718427 159-162,405-407
+apps/mobile/supabase/migrations/20260630170000_cloud_ledger_observability_security.sql
+  s_6c070d47258744::t_234e209cce8056 1-105
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_6c070d47258744::t_c4377974e5454c 21-24,182-209
+  s_6c070d47258744::t_535691a0e88eb8 210-212
+supabase/functions/cloud-ledger-api/index.ts
+  s_6c070d47258744::t_8bc6e400817fc5 4,12-14,18-19
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_6c070d47258744::t_14db5178f240f9 24-27,33,149-157
+  s_6c070d47258744::t_5899909c735e86 159,1845-1911
+  s_6c070d47258744::t_bc9af72bc7c698 158
+  s_6c070d47258744::t_d9fc1817ce5c41 160
+apps/mobile/__tests__/edge-functions/cloud-ledger-source.test.ts
+  s_6c070d47258744::t_3776a995dd7468 1-20
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_6c070d47258744::t_22ac36906c3fee 335-435,1836,1842,1871,1973
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "58f0fb2a4cd87a28b88226026d129ea71623edb6",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
