@@ -1,0 +1,29 @@
+supabase/functions/cloud-ledger-api/apply-pending-changes-command.ts
+  s_6c070d47258744::t_3e190ea1374273 69-70,138
+apps/mobile/__tests__/edge-functions/cloud-ledger-api.test.ts
+  s_6c070d47258744::t_0a1c286778c63a 78-79,389
+  s_6c070d47258744::t_04f6e3175fa4d3 66-67,72,75,80,390,393,397,399-400,402
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_0673ec5c9e89fb 16-29
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_6c070d47258744::t_fe58310b48bd41 32-35,68-83,87,89,96,102-124,132-143,153-156,160,163-164
+  s_6c070d47258744::t_099e155614f989 157-159,161-162
+apps/mobile/features/cloud-ledger/pending-changes.ts
+  s_6c070d47258744::t_d5eb088b9df5da 1-247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "89fc041c0fd832b410a732e091779d7726930e38",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
