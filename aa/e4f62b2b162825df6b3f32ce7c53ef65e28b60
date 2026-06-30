@@ -1,0 +1,43 @@
+apps/mobile/__tests__/transactions/cloud-ledger-optimistic-snapshot.test.ts
+  s_6c070d47258744::t_266e723d53c850 328-402
+  s_6c070d47258744::t_28a48fef81d5d8 218-251,254-265
+  s_6c070d47258744::t_39c7c393779c78 252-253
+apps/mobile/features/transactions/store.ts
+  s_6c070d47258744::t_afdb2b0d5f7db3 11-14,590-591,603-608
+  s_6c070d47258744::t_54fe1ab2069aa8 330-332,360-362,389-390,393-401,403-412,609
+  s_6c070d47258744::t_8749bda05b27fe 838-839,952-953
+  s_6c070d47258744::t_99ed0954426279 610
+apps/mobile/features/activity/services/create-activity-query-service.ts
+  s_6c070d47258744::t_d999e5a83b7a64 43-44
+  s_6c070d47258744::t_e3f984a38307c6 45
+apps/mobile/__tests__/activity/query-service.test.ts
+  s_6c070d47258744::t_3b24f5447dcb27 392-402,406-432
+  s_6c070d47258744::t_d999e5a83b7a64 403-405
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_3d8296cdf4f1fd 360-381,1897-1910
+  s_6c070d47258744::t_ec13787666561f 195,404-421,423-443,1468-1471,1473-1475
+  s_6c070d47258744::t_55dceb61aa174f 123,166-167,169-172,191-193,534
+  s_6c070d47258744::t_b8d02a7687afb9 349-359,1456-1467,1472,1476-1486
+  s_6c070d47258744::t_d999e5a83b7a64 422
+  s_6c070d47258744::t_9dfd6dd53d8a40 819-886,1487,1911
+  s_6c070d47258744::t_db651d338853ba 194,196,1488,1912
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_6c070d47258744::t_dfde04f39f46d0 32-34,200-210,213-216,323-327,337
+  s_6c070d47258744::t_d999e5a83b7a64 211-212,447-450
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "aae4f62b2b162825df6b3f32ce7c53ef65e28b60",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
