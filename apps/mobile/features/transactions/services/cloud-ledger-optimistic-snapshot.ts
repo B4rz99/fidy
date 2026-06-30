@@ -25,6 +25,7 @@ import type {
 
 type TransactionSnapshot = TransactionPageSnapshot & TransactionAggregateSnapshot;
 type ApplyCloudLedgerTransactionsOptions = {
+  readonly aggregateReplacementTransactionIds?: ReadonlySet<TransactionId>;
   readonly getTransactionIncludedInAggregate?: (
     transaction: StoredTransaction
   ) => StoredTransaction | null;
@@ -33,6 +34,7 @@ type ApplyCloudLedgerTransactionsOptions = {
   readonly pageWindowSize?: number;
 };
 type ApplyCloudLedgerTransactionsRuntime = {
+  readonly aggregateReplacementTransactionIds: ReadonlySet<TransactionId>;
   readonly isTransactionIncludedInPageOffset: (transaction: StoredTransaction) => boolean;
   readonly now: Date;
 };
@@ -210,9 +212,10 @@ function addCloudLedgerTransactionToSnapshot(
     options.pageWindowSize,
     runtime.isTransactionIncludedInPageOffset
   );
-  const aggregateTransaction =
-    options.getTransactionIncludedInAggregate?.(transaction) ??
-    cloudLedgerSnapshot.replacedTransaction;
+  const aggregateTransaction = runtime.aggregateReplacementTransactionIds.has(transaction.id)
+    ? (options.getTransactionIncludedInAggregate?.(transaction) ??
+      cloudLedgerSnapshot.replacedTransaction)
+    : null;
 
   if (options.isTransactionIncludedInAggregate?.(transaction) === true) {
     return aggregateTransaction == null
@@ -373,6 +376,7 @@ function applyCloudLedgerTransactionsToSnapshot(
 ): TransactionSnapshot {
   const basePageIds = new Set(snapshot.pages.map((transaction) => transaction.id));
   const runtime = {
+    aggregateReplacementTransactionIds: options.aggregateReplacementTransactionIds ?? new Set(),
     isTransactionIncludedInPageOffset:
       options.isTransactionIncludedInPageOffset ??
       ((transaction: StoredTransaction) => basePageIds.has(transaction.id)),
@@ -407,6 +411,11 @@ export async function applyCloudLedgerOptimisticView(
   const restoredDeletedTransactionIds = restoredChanges.flatMap(
     pendingCloudLedgerChangeToDeletedTransactionIds
   );
+  const aggregateReplacementTransactionIds = new Set(
+    restoredChanges.flatMap((change) =>
+      change.kind === "amendTransaction" ? [change.transaction.id] : []
+    )
+  );
   const restoredTransactions = restoredChanges.flatMap((change) =>
     pendingCloudLedgerChangeToStoredTransactions(userId, change)
   );
@@ -418,7 +427,7 @@ export async function applyCloudLedgerOptimisticView(
   const optimisticSnapshot = applyCloudLedgerTransactionsToSnapshot(
     runtimeSnapshot,
     excludeTransactionsById(restoredTransactions, runtimeTransactions),
-    options
+    { ...options, aggregateReplacementTransactionIds }
   );
   const basePageIds = new Set(snapshot.pages.map((transaction) => transaction.id));
   return removeDeletedCloudLedgerTransactionsFromSnapshot(
@@ -426,6 +435,7 @@ export async function applyCloudLedgerOptimisticView(
     restoredDeletedTransactionIds,
     options,
     {
+      aggregateReplacementTransactionIds,
       isTransactionIncludedInPageOffset:
         options.isTransactionIncludedInPageOffset ??
         ((transaction: StoredTransaction) => basePageIds.has(transaction.id)),
