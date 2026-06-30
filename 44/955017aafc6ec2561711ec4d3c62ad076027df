@@ -1,0 +1,20 @@
+apps/mobile/features/transactions/services/cloud-ledger-optimistic-snapshot.ts
+  s_6c070d47258744::t_c246e13d3c8637 215-218
+  s_6c070d47258744::t_d15671a77a6fc3 28,37,379,414-418,430,438
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "44955017aafc6ec2561711ec4d3c62ad076027df",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
