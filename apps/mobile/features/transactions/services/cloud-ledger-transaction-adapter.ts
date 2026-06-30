@@ -5,7 +5,7 @@ import type {
 import type { CloudLedgerPendingChange } from "@/features/cloud-ledger/outbox.public";
 import { getBuiltInCategoryId } from "@/shared/categories";
 import { parseIsoDate } from "@/shared/lib";
-import type { UserId } from "@/shared/types/branded";
+import type { TransactionId, UserId } from "@/shared/types/branded";
 import type { StoredTransaction } from "../schema";
 
 type CloudLedgerStoredTransactionShape = {
@@ -77,6 +77,12 @@ export function pendingCloudLedgerChangeToStoredTransactions(
       timestamp,
     })
   );
+}
+
+export function pendingCloudLedgerChangeToDeletedTransactionIds(
+  change: CloudLedgerPendingChange
+): readonly TransactionId[] {
+  return change.kind === "deleteTransaction" ? [change.transactionId] : [];
 }
 
 export function cloudLedgerCreateCommandToStoredTransaction(input: {

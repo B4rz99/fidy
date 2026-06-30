@@ -555,6 +555,8 @@ declare
   v_new_transaction ledger.transactions%rowtype;
   v_old_month text;
   v_new_month text;
+  v_should_seed_account boolean := false;
+  v_should_seed_category boolean := false;
   v_updated_at timestamptz := now();
 begin
   if p_command_version is distinct from 1 then
@@ -590,27 +592,7 @@ begin
     return jsonb_build_object('code', 'invalid_ledger_reference');
   end if;
 
-  if not exists (
-    select 1
-    from ledger.financial_accounts
-    where ledger.financial_accounts.user_id = p_user_id
-      and ledger.financial_accounts.id = p_account_id
-      and ledger.financial_accounts.deleted_at is null
-  ) then
-    return jsonb_build_object('code', 'invalid_ledger_reference');
-  end if;
-
   if p_category_id is not null and length(trim(p_category_id)) = 0 then
-    return jsonb_build_object('code', 'invalid_ledger_reference');
-  end if;
-
-  if p_category_id is not null and not exists (
-    select 1
-    from ledger.categories
-    where ledger.categories.user_id = p_user_id
-      and ledger.categories.id = p_category_id
-      and ledger.categories.deleted_at is null
-  ) then
     return jsonb_build_object('code', 'invalid_ledger_reference');
   end if;
 
@@ -628,6 +610,42 @@ begin
     return jsonb_build_object('code', 'stale_expected_version');
   end if;
 
+  if not exists (
+    select 1
+    from ledger.financial_accounts
+    where ledger.financial_accounts.user_id = p_user_id
+      and ledger.financial_accounts.id = p_account_id
+      and ledger.financial_accounts.deleted_at is null
+  ) then
+    if exists (
+      select 1
+      from ledger.financial_accounts
+      where ledger.financial_accounts.user_id = p_user_id
+        and ledger.financial_accounts.id = p_account_id
+    ) then
+      return jsonb_build_object('code', 'invalid_ledger_reference');
+    end if;
+    v_should_seed_account := true;
+  end if;
+
+  if p_category_id is not null and not exists (
+    select 1
+    from ledger.categories
+    where ledger.categories.user_id = p_user_id
+      and ledger.categories.id = p_category_id
+      and ledger.categories.deleted_at is null
+  ) then
+    if exists (
+      select 1
+      from ledger.categories
+      where ledger.categories.user_id = p_user_id
+        and ledger.categories.id = p_category_id
+    ) then
+      return jsonb_build_object('code', 'invalid_ledger_reference');
+    end if;
+    v_should_seed_category := true;
+  end if;
+
   if v_existing_transaction.type = p_type
     and v_existing_transaction.amount = p_amount
     and v_existing_transaction.currency = p_currency
@@ -641,6 +659,106 @@ begin
       'transaction', ledger.accepted_transaction_payload(v_existing_transaction),
       'cursor', 'ledger:' || v_existing_transaction.cursor_sequence::text
     );
+  end if;
+
+  if v_should_seed_account then
+    select ledger.ledger_cursors.latest_sequence + 1
+    into v_next_sequence
+    from ledger.ledger_cursors
+    where ledger.ledger_cursors.user_id = p_user_id
+    for update;
+
+    if not exists (
+      select 1
+      from ledger.financial_accounts
+      where ledger.financial_accounts.user_id = p_user_id
+        and ledger.financial_accounts.id = p_account_id
+        and ledger.financial_accounts.deleted_at is null
+    ) then
+      if exists (
+        select 1
+        from ledger.financial_accounts
+        where ledger.financial_accounts.user_id = p_user_id
+          and ledger.financial_accounts.id = p_account_id
+      ) then
+        return jsonb_build_object('code', 'invalid_ledger_reference');
+      end if;
+
+      insert into ledger.financial_accounts (
+        user_id,
+        id,
+        name,
+        type,
+        currency,
+        cursor_sequence,
+        created_at,
+        updated_at
+      ) values (
+        p_user_id,
+        p_account_id,
+        p_account_id,
+        'cash',
+        'COP',
+        v_next_sequence,
+        v_updated_at,
+        v_updated_at
+      );
+
+      update ledger.ledger_cursors
+      set latest_sequence = v_next_sequence,
+          updated_at = v_updated_at
+      where ledger.ledger_cursors.user_id = p_user_id;
+    end if;
+  end if;
+
+  if v_should_seed_category then
+    select ledger.ledger_cursors.latest_sequence + 1
+    into v_next_sequence
+    from ledger.ledger_cursors
+    where ledger.ledger_cursors.user_id = p_user_id
+    for update;
+
+    if not exists (
+      select 1
+      from ledger.categories
+      where ledger.categories.user_id = p_user_id
+        and ledger.categories.id = p_category_id
+        and ledger.categories.deleted_at is null
+    ) then
+      if exists (
+        select 1
+        from ledger.categories
+        where ledger.categories.user_id = p_user_id
+          and ledger.categories.id = p_category_id
+      ) then
+        return jsonb_build_object('code', 'invalid_ledger_reference');
+      end if;
+
+      insert into ledger.categories (
+        user_id,
+        id,
+        name,
+        icon,
+        color,
+        cursor_sequence,
+        created_at,
+        updated_at
+      ) values (
+        p_user_id,
+        p_category_id,
+        p_category_id,
+        null,
+        null,
+        v_next_sequence,
+        v_updated_at,
+        v_updated_at
+      );
+
+      update ledger.ledger_cursors
+      set latest_sequence = v_next_sequence,
+          updated_at = v_updated_at
+      where ledger.ledger_cursors.user_id = p_user_id;
+    end if;
   end if;
 
   select ledger.ledger_cursors.latest_sequence + 1

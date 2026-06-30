@@ -1203,6 +1203,57 @@ commit;
     }
   );
 
+  postgresIt("seeds local-only ledger references before accepting transaction amends", () => {
+    const postgres = setupSeededPostgres();
+
+    expectAcceptedCreateOutcome(createTransactionOutcome(postgres));
+
+    expect(
+      applyPendingChangesOutcome(postgres, [
+        pendingAmendChangeJson({
+          accountId: "acct-amend-local-only",
+          amount: 19000,
+          categoryId: "cat-amend-local-only",
+          changeId: "change-amend-local-only-refs",
+          description: "Market corrected",
+          expectedVersion: 1,
+          transactionId: CLIENT_TRANSACTION_ID,
+        }),
+      ])
+    ).toMatchObject({
+      code: "accepted",
+      acceptedChangeIds: ["change-amend-local-only-refs"],
+      rejectedChangeIds: [],
+      cursor: "ledger:8",
+    });
+
+    expect(readLedgerCursorSequence(postgres)).toBe("8");
+    expect(readRefreshAfterSequence(postgres, 5)).toMatchObject({
+      cursor: "ledger:8",
+      categories: [
+        {
+          id: "cat-amend-local-only",
+          name: "cat-amend-local-only",
+        },
+      ],
+      financialAccounts: [
+        {
+          id: "acct-amend-local-only",
+          name: "acct-amend-local-only",
+          type: "cash",
+          currency: "COP",
+        },
+      ],
+      transactions: [
+        {
+          id: CLIENT_TRANSACTION_ID,
+          accountId: "acct-amend-local-only",
+          categoryId: "cat-amend-local-only",
+        },
+      ],
+    });
+  });
+
   postgresIt(
     "accepts transaction delete changes as tombstones and replays them idempotently",
     () => {
@@ -2259,7 +2310,9 @@ function pendingCreateChangeJson(input: {
 }
 
 function pendingAmendChangeJson(input: {
+  readonly accountId?: string;
   readonly changeId: string;
+  readonly categoryId?: string | null;
   readonly transactionId: string;
   readonly amount: number;
   readonly description: string;
@@ -2284,8 +2337,8 @@ function pendingAmendChangeJson(input: {
       type: "expense",
       amount: input.amount,
       currency: "COP",
-      categoryId: "cat-groceries",
-      accountId: "acct-cash",
+      categoryId: input.categoryId ?? "cat-groceries",
+      accountId: input.accountId ?? "acct-cash",
       description: input.description,
       date: "2026-06-01",
     },
