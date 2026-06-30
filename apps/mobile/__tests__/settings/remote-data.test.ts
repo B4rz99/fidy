@@ -79,11 +79,13 @@ describe("settings remote callers", () => {
     expect(source).not.toContain("deleteAccount = useSettingsStore");
   });
 
-  test("delete-account confirmation copy says encrypted backups are unrecoverable", () => {
-    expect(en.settings.deleteAccountWarning).toContain("encrypted backups");
-    expect(en.settings.deleteAccountWarning).toContain("cannot be recovered");
-    expect(es.settings.deleteAccountWarning).toContain("copias privadas");
-    expect(es.settings.deleteAccountWarning).toContain("no se podrán recuperar");
+  test("delete-account confirmation copy says Cloud Ledger records and linked samples are deleted", () => {
+    expect(en.settings.deleteAccountWarning).toContain("Cloud Ledger");
+    expect(en.settings.deleteAccountWarning).toContain("financial records");
+    expect(en.settings.deleteAccountWarning).toContain("capture improvement samples");
+    expect(es.settings.deleteAccountWarning).toContain("Cloud Ledger");
+    expect(es.settings.deleteAccountWarning).toContain("registros financieros");
+    expect(es.settings.deleteAccountWarning).toContain("muestras de mejora de captura");
   });
 
   test("logout pending-change copy says unsent Cloud Ledger work is discarded", () => {

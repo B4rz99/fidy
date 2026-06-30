@@ -7,7 +7,7 @@ import { deleteAccountRemoteData } from "../../../../supabase/functions/delete-a
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 
 describe("delete-account remote cleanup", () => {
-  it("deletes encrypted backups, operational rows, and the auth user", async () => {
+  it("deletes Cloud Ledger data, encrypted backups, operational rows, and the auth user", async () => {
     const supabase = createDeleteAccountSupabase({
       backupRows: [{ id: "backup-1" }, { id: "backup-2" }],
     });
@@ -17,6 +17,9 @@ describe("delete-account remote cleanup", () => {
       failures: [],
     });
 
+    expect(supabase.rpc).toHaveBeenCalledWith("cloud_ledger_delete_account_data", {
+      p_user_id: USER_ID,
+    });
     expect(supabase.tableDeletes()).toEqual([
       "encrypted_backups",
       "push_devices",
@@ -29,6 +32,9 @@ describe("delete-account remote cleanup", () => {
       `${USER_ID}/backup-1.json`,
       `${USER_ID}/backup-2.json`,
     ]);
+    expect(supabase.rpc.mock.invocationCallOrder[0]!).toBeLessThan(
+      supabase.deleteUser.mock.invocationCallOrder[0]!
+    );
     expect(supabase.deleteUser).toHaveBeenCalledWith(USER_ID);
   });
 
@@ -45,6 +51,21 @@ describe("delete-account remote cleanup", () => {
 
     expect(supabase.tableDeletes()).not.toContain("encrypted_backups");
     expect(supabase.storageRemove).toHaveBeenCalledWith([`${USER_ID}/backup-1.json`]);
+    expect(supabase.deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("reports Cloud Ledger cleanup failures before deleting operational rows or the auth user", async () => {
+    const supabase = createDeleteAccountSupabase({
+      backupRows: [],
+      rpcError: { message: "ledger cleanup unavailable" },
+    });
+
+    await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
+      success: false,
+      failures: [{ target: "cloud_ledger", message: "ledger cleanup unavailable" }],
+    });
+
+    expect(supabase.tableDeletes()).toEqual([]);
     expect(supabase.deleteUser).not.toHaveBeenCalled();
   });
 
@@ -92,6 +113,7 @@ describe("delete-account remote cleanup", () => {
 function createDeleteAccountSupabase(options: {
   readonly backupRows: readonly { id: string }[];
   readonly backupListError?: { readonly message: string };
+  readonly rpcError?: { readonly message: string };
   readonly storageError?: { readonly message: string };
 }) {
   const tableDeleteCalls: string[] = [];
@@ -113,12 +135,16 @@ function createDeleteAccountSupabase(options: {
     Promise.resolve({ error: options.storageError ?? null })
   );
   const deleteUser = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
+  const rpc = vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve({ data: { code: "deleted" }, error: options.rpcError ?? null })
+  );
   const client = {
     auth: { admin: { deleteUser } },
     from: vi.fn<(...args: any[]) => any>((tableName: string) => ({
       delete: () => deleteTable(tableName),
       select,
     })),
+    rpc,
     storage: {
       from: vi.fn<(...args: any[]) => any>(() => ({ remove: storageRemove })),
     },
@@ -127,6 +153,7 @@ function createDeleteAccountSupabase(options: {
   return {
     client,
     deleteUser,
+    rpc,
     storageRemove,
     tableDeletes: () => tableDeleteCalls,
   };

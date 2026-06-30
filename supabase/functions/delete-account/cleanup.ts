@@ -7,6 +7,10 @@ type SelectResponse<Row> = Promise<{
   readonly data: readonly Row[] | null;
   readonly error: SupabaseError;
 }>;
+type RpcResponse = Promise<{
+  readonly data: { readonly code?: string } | null;
+  readonly error: SupabaseError;
+}>;
 
 type DeleteQuery = {
   eq(column: string, value: string): DeleteResponse;
@@ -34,6 +38,7 @@ export type DeleteAccountSupabaseClient = {
     delete(): DeleteQuery;
     select(columns: string): SelectQuery<{ readonly id: string }>;
   };
+  rpc(functionName: string, params: Record<string, unknown>): RpcResponse;
   readonly storage: {
     from(bucketName: string): {
       remove(paths: readonly string[]): DeleteResponse;
@@ -72,6 +77,11 @@ export async function deleteAccountRemoteData(
     return { success: false, failures: [backupBlobFailure] };
   }
 
+  const cloudLedgerFailure = await deleteCloudLedgerAccountData(supabase, userId);
+  if (cloudLedgerFailure !== null) {
+    return { success: false, failures: [cloudLedgerFailure] };
+  }
+
   const cleanupFailures = [
     await deleteUserRows(supabase, ENCRYPTED_BACKUPS_TABLE, userId),
     ...(await Promise.all(
@@ -88,6 +98,21 @@ export async function deleteAccountRemoteData(
     success: authFailure === null,
     failures: authFailure === null ? [] : [authFailure],
   };
+}
+
+async function deleteCloudLedgerAccountData(
+  supabase: DeleteAccountSupabaseClient,
+  userId: string
+): Promise<DeleteAccountRemoteFailure | null> {
+  const { data, error } = await supabase.rpc("cloud_ledger_delete_account_data", {
+    p_user_id: userId,
+  });
+  if (error !== null) {
+    return { target: "cloud_ledger", message: error.message ?? "delete_failed" };
+  }
+  return data?.code === "deleted"
+    ? null
+    : { target: "cloud_ledger", message: data?.code ?? "delete_failed" };
 }
 
 async function listBackupRows(

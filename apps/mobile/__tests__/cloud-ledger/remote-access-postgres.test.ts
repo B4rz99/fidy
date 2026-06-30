@@ -25,12 +25,17 @@ const OBSERVABILITY_SECURITY_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260630170000_cloud_ledger_observability_security.sql"
 );
+const ACCOUNT_DELETION_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260630190000_cloud_ledger_account_deletion.sql"
+);
 const MIGRATIONS = [
   BOOTSTRAP_MIGRATION,
   CREATE_TRANSACTION_MIGRATION,
   PENDING_CHANGE_SET_MIGRATION,
   TRANSACTION_EDIT_DELETE_MIGRATION,
   OBSERVABILITY_SECURITY_MIGRATION,
+  ACCOUNT_DELETION_MIGRATION,
 ] as const;
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
@@ -140,6 +145,7 @@ describe("Cloud Ledger Postgres access boundary", () => {
       expectClientRolesCannotReadLedger(postgres);
       expectClientRolesCannotExecuteBootstrap(postgres);
       expectClientRolesCannotExecuteCreate(postgres);
+      expectClientRolesCannotExecuteAccountDeletion(postgres);
       expectBlankLedgerIdentifiersRejected(postgres);
       expectTransactionMoneyAndDateConstraints(postgres);
       expectServiceRoleReadsOnlyScopedBootstrap(postgres);
@@ -158,6 +164,66 @@ describe("Cloud Ledger Postgres access boundary", () => {
       expectLedgerApiRoleRejectsCrossUserTransactionIdentity(postgres);
       expectLedgerApiRoleCannotExecuteInternalLedgerHelpers(postgres);
       expectFutureLedgerHelpersNotExecutableByLedgerApi(postgres);
+    }
+  );
+
+  postgresIt(
+    "physically deletes one account's Cloud Ledger data without touching another user",
+    () => {
+      const postgres = setupSeededPostgres();
+      createTransactionOutcome(postgres);
+      applyPendingChangesOutcome(postgres, [
+        pendingAmendChangeJson({
+          changeId: "change-account-delete-amend",
+          transactionId: CLIENT_TRANSACTION_ID,
+          amount: 18000,
+          description: "Market updated",
+          expectedVersion: 1,
+        }),
+        pendingDeleteChangeJson({
+          changeId: "change-account-delete-tombstone",
+          transactionId: CLIENT_TRANSACTION_ID,
+          expectedVersion: 2,
+        }),
+      ]);
+
+      expect(readAllLedgerRowCounts(postgres, USER_ID)).toMatchObject({
+        categories: expect.any(Number),
+        financialAccounts: expect.any(Number),
+        transactions: expect.any(Number),
+        tombstones: expect.any(Number),
+        transactionMonthlyTotals: expect.any(Number),
+        pendingChangeAcceptances: expect.any(Number),
+        transactionEditHistory: expect.any(Number),
+        ledgerCursors: 1,
+      });
+      expect(readAllLedgerRowCounts(postgres, OTHER_USER_ID)).toMatchObject({
+        categories: 1,
+        financialAccounts: 1,
+        transactions: 1,
+        tombstones: 1,
+        ledgerCursors: 1,
+      });
+
+      expect(deleteCloudLedgerAccountData(postgres, USER_ID)).toEqual({ code: "deleted" });
+
+      expect(readAllLedgerRowCounts(postgres, USER_ID)).toEqual({
+        categories: 0,
+        financialAccounts: 0,
+        transactions: 0,
+        tombstones: 0,
+        transactionMonthlyTotals: 0,
+        pendingChangeAcceptances: 0,
+        transactionEditHistory: 0,
+        ledgerCursors: 0,
+      });
+      expect(readAllLedgerRowCounts(postgres, OTHER_USER_ID)).toMatchObject({
+        categories: 1,
+        financialAccounts: 1,
+        transactions: 1,
+        tombstones: 1,
+        ledgerCursors: 1,
+      });
     }
   );
 
@@ -1726,6 +1792,35 @@ where user_id = '${userId}'::uuid
   );
 }
 
+function readAllLedgerRowCounts(postgres: PostgresHarness, userId: string) {
+  return JSON.parse(
+    psqlScalar(
+      postgres,
+      `
+select jsonb_build_object(
+  'categories', (select count(*) from ledger.categories where user_id = '${userId}'::uuid),
+  'financialAccounts', (select count(*) from ledger.financial_accounts where user_id = '${userId}'::uuid),
+  'transactions', (select count(*) from ledger.transactions where user_id = '${userId}'::uuid),
+  'tombstones', (select count(*) from ledger.tombstones where user_id = '${userId}'::uuid),
+  'transactionMonthlyTotals', (select count(*) from ledger.transaction_monthly_totals where user_id = '${userId}'::uuid),
+  'pendingChangeAcceptances', (select count(*) from ledger.pending_change_acceptances where user_id = '${userId}'::uuid),
+  'transactionEditHistory', (select count(*) from ledger.transaction_edit_history where user_id = '${userId}'::uuid),
+  'ledgerCursors', (select count(*) from ledger.ledger_cursors where user_id = '${userId}'::uuid)
+)::text;
+`
+    )
+  );
+}
+
+function deleteCloudLedgerAccountData(postgres: PostgresHarness, userId: string) {
+  return JSON.parse(
+    psqlScalar(
+      postgres,
+      `set role service_role; select public.cloud_ledger_delete_account_data('${userId}'::uuid)::text;`
+    )
+  );
+}
+
 function expectClientRolesCannotReadLedger(postgres: PostgresHarness) {
   const authenticatedError = psqlFails(
     postgres,
@@ -1765,6 +1860,15 @@ select public.cloud_ledger_create_transaction(
   'Denied',
   '2026-06-01'::date
 );`;
+  const authenticatedError = psqlFails(postgres, `set role authenticated; ${sql}`);
+  const anonError = psqlFails(postgres, `set role anon; ${sql}`);
+
+  expect(authenticatedError).toMatch(/permission denied/);
+  expect(anonError).toMatch(/permission denied/);
+}
+
+function expectClientRolesCannotExecuteAccountDeletion(postgres: PostgresHarness) {
+  const sql = `select public.cloud_ledger_delete_account_data('${OTHER_USER_ID}'::uuid);`;
   const authenticatedError = psqlFails(postgres, `set role authenticated; ${sql}`);
   const anonError = psqlFails(postgres, `set role anon; ${sql}`);
 

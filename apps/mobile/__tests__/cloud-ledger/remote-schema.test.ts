@@ -22,6 +22,10 @@ const OBSERVABILITY_SECURITY_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260630170000_cloud_ledger_observability_security.sql"
 );
+const ACCOUNT_DELETION_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260630190000_cloud_ledger_account_deletion.sql"
+);
 const CAPTURE_IMPROVEMENT_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql"
@@ -217,6 +221,23 @@ describe("Cloud Ledger remote schema", () => {
       "alter default privileges in schema ledger revoke execute on functions from public, anon, authenticated, ledger_api"
     );
     expect(sql).not.toContain("raise notice");
+  });
+
+  it("physically deletes Cloud Ledger account data only through a service-role command", () => {
+    const sql = readFileSync(ACCOUNT_DELETION_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("create or replace function public.cloud_ledger_delete_account_data");
+    expect(sql).toContain("delete from ledger.transaction_edit_history");
+    expect(sql).toContain("delete from ledger.pending_change_acceptances");
+    expect(sql).toContain("delete from ledger.transaction_monthly_totals");
+    expect(sql).toContain("delete from ledger.tombstones");
+    expect(sql).toContain("delete from ledger.transactions");
+    expect(sql).toContain("delete from ledger.categories");
+    expect(sql).toContain("delete from ledger.financial_accounts");
+    expect(sql).toContain("delete from ledger.ledger_cursors");
+    expect(sql).toContain("from public, anon, authenticated");
+    expect(sql).toContain("to service_role");
+    expect(sql).not.toMatch(/update\s+ledger\.[\s\S]*deleted_at/);
   });
 
   it("exposes Capture Improvement Sample retention and deletion only through service-role commands", () => {
