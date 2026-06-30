@@ -14,6 +14,8 @@ revoke all on all tables in schema ledger from ledger_api;
 revoke all on all sequences in schema ledger from ledger_api;
 alter default privileges in schema ledger revoke all on tables from ledger_api;
 alter default privileges in schema ledger revoke all on sequences from ledger_api;
+alter default privileges revoke execute on functions from public, anon, authenticated, ledger_api;
+alter default privileges in schema ledger revoke execute on functions from public, anon, authenticated, ledger_api;
 
 grant execute on function public.cloud_ledger_bootstrap(uuid, bigint) to ledger_api;
 grant execute on function public.cloud_ledger_create_transaction(
@@ -102,4 +104,4 @@ begin
 end
 $$;
 
-revoke execute on all functions in schema ledger from ledger_api;
+revoke execute on all functions in schema ledger from public, anon, authenticated, ledger_api;

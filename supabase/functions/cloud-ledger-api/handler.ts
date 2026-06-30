@@ -63,6 +63,7 @@ type LedgerStore = {
 const RETAIN_CAPTURE_IMPROVEMENT_SAMPLE_KEYS = new Set(["action", "sample", "userId"]);
 const DELETE_CAPTURE_IMPROVEMENT_SAMPLES_KEYS = new Set(["action", "userId"]);
 const SET_CAPTURE_IMPROVEMENT_PREFERENCE_KEYS = new Set(["action", "enabled", "userId"]);
+const SAFE_CORRELATION_ID_PATTERN = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 
 export type CloudLedgerApiDeps = {
   readonly auth: AuthClient;
@@ -390,9 +391,17 @@ function readNow(deps: CloudLedgerApiDeps): number {
 
 function readCorrelationId(request: Request, deps: CloudLedgerApiDeps): string {
   const header = request.headers.get("X-Correlation-Id") ?? request.headers.get("X-Request-Id");
-  return header !== null && header.trim().length > 0
-    ? header.trim()
-    : (deps.createCorrelationId?.() ?? crypto.randomUUID());
+  return (
+    readSafeCorrelationId(header) ??
+    readSafeCorrelationId(deps.createCorrelationId?.()) ??
+    crypto.randomUUID()
+  );
+}
+
+function readSafeCorrelationId(value: unknown): string | null {
+  return typeof value === "string" && SAFE_CORRELATION_ID_PATTERN.test(value.trim())
+    ? value.trim()
+    : null;
 }
 
 function withCorrelationId(response: Response, correlationId: string): Response {

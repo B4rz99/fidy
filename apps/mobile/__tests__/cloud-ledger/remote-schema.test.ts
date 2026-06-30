@@ -206,7 +206,15 @@ describe("Cloud Ledger remote schema", () => {
       "grant execute on function public.cloud_ledger_set_capture_improvement_preference(uuid, boolean) to ledger_api"
     );
     expect(sql).toContain("to service_role");
-    expect(sql).toContain("revoke execute on all functions in schema ledger from ledger_api");
+    expect(sql).toContain(
+      "revoke execute on all functions in schema ledger from public, anon, authenticated, ledger_api"
+    );
+    expect(sql).toContain(
+      "alter default privileges revoke execute on functions from public, anon, authenticated, ledger_api"
+    );
+    expect(sql).toContain(
+      "alter default privileges in schema ledger revoke execute on functions from public, anon, authenticated, ledger_api"
+    );
     expect(sql).not.toContain("raise notice");
   });
 

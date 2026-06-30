@@ -4,8 +4,18 @@ export type CloudLedgerChangeTelemetryOutcome = {
   readonly code: string;
 };
 
+type CloudLedgerCommandAction =
+  | "applyPendingChanges"
+  | "bootstrap"
+  | "createTransaction"
+  | "deleteCaptureImprovementSamples"
+  | "refresh"
+  | "retainCaptureImprovementSample"
+  | "setCaptureImprovementPreference"
+  | "unknown";
+
 export type CloudLedgerCommandTelemetryEvent = {
-  readonly action: string;
+  readonly action: CloudLedgerCommandAction;
   readonly authenticatedUserId: string;
   readonly commandVersion: number | null;
   readonly deviceId: string | null;
@@ -27,6 +37,19 @@ export type CloudLedgerTelemetry = {
   readonly recordCommand: (event: CloudLedgerCommandTelemetryEvent) => void | Promise<void>;
 };
 
+const CLOUD_LEDGER_COMMAND_ACTIONS = new Set<CloudLedgerCommandAction>([
+  "applyPendingChanges",
+  "bootstrap",
+  "createTransaction",
+  "deleteCaptureImprovementSamples",
+  "refresh",
+  "retainCaptureImprovementSample",
+  "setCaptureImprovementPreference",
+]);
+const SAFE_TELEMETRY_ID_PATTERN = /^[a-z]+-[a-z0-9][a-z0-9_-]{0,63}$/;
+const SAFE_TELEMETRY_CODE_PATTERN = /^[a-z][a-z0-9_]{0,79}$/;
+const SAFE_CORRELATION_ID_PATTERN = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
+
 export function createCloudLedgerConsoleTelemetry(
   log: (message: string) => void = logCloudLedgerTelemetry
 ): CloudLedgerTelemetry {
@@ -47,24 +70,27 @@ export function buildCloudLedgerCommandTelemetryEvent(input: {
   const body = toRecord(input.body);
   const responseData = readResponseData(input.responseBody);
   const changeOutcomes = readChangeOutcomes(responseData);
+  const status = readResponseSuccess(input.responseBody) ? "success" : "failure";
+  const action = readCommandAction(body?.action);
+  const canLogRequestMetadata = status === "success" && action === "applyPendingChanges";
 
   return {
-    action: readString(body?.action) ?? "unknown",
+    action,
     authenticatedUserId: input.authenticatedUserId,
     commandVersion: readInteger(body?.commandVersion),
-    deviceId: readString(body?.deviceId),
-    batchId: readString(body?.batchId),
-    changeIds: readBodyChangeIds(body?.changes),
-    acceptedChangeIds: readStringArray(responseData?.acceptedChangeIds),
-    rejectedChangeIds: readStringArray(responseData?.rejectedChangeIds),
+    deviceId: canLogRequestMetadata ? readTelemetryId(body?.deviceId, "device") : null,
+    batchId: canLogRequestMetadata ? readTelemetryId(body?.batchId, "batch") : null,
+    changeIds: canLogRequestMetadata ? readBodyChangeIds(body?.changes) : [],
+    acceptedChangeIds: readTelemetryIdArray(responseData?.acceptedChangeIds, "change"),
+    rejectedChangeIds: readTelemetryIdArray(responseData?.rejectedChangeIds, "change"),
     changeOutcomes,
     outcomeCode: readOutcomeCode(input.responseBody),
-    status: readResponseSuccess(input.responseBody) ? "success" : "failure",
+    status,
     retryableChangeIds: changeIdsWithStatus(changeOutcomes, "retryable"),
     repairRequiredChangeIds: changeIdsWithStatus(changeOutcomes, "repair_required"),
     requiresAppUpdateChangeIds: changeIdsWithStatus(changeOutcomes, "requires_app_update"),
     latencyMs: input.latencyMs,
-    correlationId: input.correlationId,
+    correlationId: readCorrelationId(input.correlationId) ?? "unknown",
   };
 }
 
@@ -76,7 +102,7 @@ function logCloudLedgerTelemetry(message: string): void {
 function readOutcomeCode(responseBody: unknown): string {
   const response = toRecord(responseBody);
   const data = readResponseData(responseBody);
-  return readString(response?.error) ?? readString(data?.code) ?? "accepted";
+  return readTelemetryCode(response?.error) ?? readTelemetryCode(data?.code) ?? "accepted";
 }
 
 function readResponseSuccess(responseBody: unknown): boolean {
@@ -90,7 +116,7 @@ function readResponseData(responseBody: unknown): Record<string, unknown> | null
 function readBodyChangeIds(value: unknown): readonly string[] {
   return Array.isArray(value)
     ? value
-        .map((change) => readString(toRecord(change)?.id))
+        .map((change) => readTelemetryId(toRecord(change)?.id, "change"))
         .filter((changeId): changeId is string => changeId !== null)
     : [];
 }
@@ -104,9 +130,9 @@ function readChangeOutcomes(value: Record<string, unknown> | null) {
 
 function readChangeOutcome(value: unknown): CloudLedgerChangeTelemetryOutcome | null {
   const outcome = toRecord(value);
-  const changeId = readString(outcome?.changeId);
+  const changeId = readTelemetryId(outcome?.changeId, "change");
   const status = readChangeOutcomeStatus(outcome?.status);
-  const code = readString(outcome?.code);
+  const code = readTelemetryCode(outcome?.code);
   return changeId === null || status === null || code === null
     ? null
     : {
@@ -129,14 +155,35 @@ function changeIdsWithStatus(
   return outcomes.filter((outcome) => outcome.status === status).map((outcome) => outcome.changeId);
 }
 
-function readStringArray(value: unknown): readonly string[] {
+function readTelemetryIdArray(value: unknown, prefix: "change"): readonly string[] {
   return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
+    ? value
+        .map((item) => readTelemetryId(item, prefix))
+        .filter((item): item is string => item !== null)
     : [];
 }
 
-function readString(value: unknown): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value : null;
+function readCommandAction(value: unknown): CloudLedgerCommandAction {
+  return typeof value === "string" &&
+    CLOUD_LEDGER_COMMAND_ACTIONS.has(value as CloudLedgerCommandAction)
+    ? (value as CloudLedgerCommandAction)
+    : "unknown";
+}
+
+function readTelemetryId(value: unknown, prefix: "batch" | "change" | "device"): string | null {
+  return typeof value === "string" &&
+    value.startsWith(`${prefix}-`) &&
+    SAFE_TELEMETRY_ID_PATTERN.test(value)
+    ? value
+    : null;
+}
+
+function readTelemetryCode(value: unknown): string | null {
+  return typeof value === "string" && SAFE_TELEMETRY_CODE_PATTERN.test(value) ? value : null;
+}
+
+function readCorrelationId(value: unknown): string | null {
+  return typeof value === "string" && SAFE_CORRELATION_ID_PATTERN.test(value) ? value : null;
 }
 
 function readInteger(value: unknown): number | null {

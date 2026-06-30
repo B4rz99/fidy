@@ -433,6 +433,52 @@ describe("cloud-ledger-api Edge Function", () => {
     expect(telemetryPayload).not.toContain("accountId");
   });
 
+  it("does not log raw rejected command metadata or unsafe correlation headers", async () => {
+    const recordCommand = vi.fn();
+    const api = createCloudLedgerApiDeps({
+      createCorrelationId: () => "server-correlation-safe",
+      telemetry: { recordCommand },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "EXITO-50000-card-1234",
+          commandVersion: 1,
+          deviceId: "device-EXITO-50000-card-1234",
+          batchId: "batch-EXITO-50000-card-1234",
+          changes: [{ id: "change-EXITO-50000-card-1234" }],
+        },
+        "valid-token",
+        "header-EXITO-50000-card-1234"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("X-Correlation-Id")).toBe("server-correlation-safe");
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "unsupported_action",
+    });
+    expect(recordCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "unknown",
+        batchId: null,
+        changeIds: [],
+        correlationId: "server-correlation-safe",
+        deviceId: null,
+        outcomeCode: "unsupported_action",
+        status: "failure",
+      })
+    );
+    const telemetryPayload = JSON.stringify(recordCommand.mock.calls);
+    expect(telemetryPayload).not.toContain("EXITO");
+    expect(telemetryPayload).not.toContain("50000");
+    expect(telemetryPayload).not.toContain("1234");
+    expect(telemetryPayload).not.toContain("card-");
+  });
+
   it("rejects oversized pending-change batches before replaying them", async () => {
     const api = createCloudLedgerApiDeps();
 
@@ -1868,6 +1914,7 @@ type CloudLedgerApiDepsOptions = {
   readonly applyPendingChangesResult?: unknown;
   readonly createTransactionResult?: unknown;
   readonly retainCaptureImprovementResult?: unknown;
+  readonly createCorrelationId?: () => string;
   readonly telemetry?: { readonly recordCommand: (event: unknown) => void };
   readonly userId?: string;
 };
@@ -1970,6 +2017,9 @@ function createCloudLedgerApiDeps(options: CloudLedgerApiDepsOptions = {}) {
     deps: {
       auth: createCloudLedgerApiAuth(options),
       store,
+      ...(options.createCorrelationId === undefined
+        ? {}
+        : { createCorrelationId: options.createCorrelationId }),
       ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
     },
   };

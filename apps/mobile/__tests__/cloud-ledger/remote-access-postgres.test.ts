@@ -155,6 +155,7 @@ describe("Cloud Ledger Postgres access boundary", () => {
       expectLedgerApiRoleReadsOnlyScopedBootstrap(postgres);
       expectLedgerApiRoleRejectsCrossUserTransactionIdentity(postgres);
       expectLedgerApiRoleCannotExecuteInternalLedgerHelpers(postgres);
+      expectFutureLedgerHelpersNotExecutableByLedgerApi(postgres);
     }
   );
 
@@ -1907,6 +1908,32 @@ function expectLedgerApiRoleCannotExecuteInternalLedgerHelpers(postgres: Postgre
   );
 
   expect(internalHelperError).toMatch(/permission denied/);
+}
+
+function expectFutureLedgerHelpersNotExecutableByLedgerApi(postgres: PostgresHarness) {
+  psql(
+    postgres,
+    `
+create function ledger.future_default_private_helper()
+returns integer
+language sql
+as $$ select 1 $$;
+`
+  );
+
+  expect(
+    psqlScalar(
+      postgres,
+      "select has_function_privilege('ledger_api', 'ledger.future_default_private_helper()', 'execute');"
+    )
+  ).toBe("f");
+
+  const futureHelperError = psqlFails(
+    postgres,
+    "set role ledger_api; select ledger.future_default_private_helper();"
+  );
+
+  expect(futureHelperError).toMatch(/permission denied/);
 }
 
 function readRefreshAfterInitialSeed(postgres: PostgresHarness) {
