@@ -181,7 +181,14 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
     };
   }
-  throw new Error("pending change command kind must be supported");
+  return {
+    id: requireLedgerChangeId(requireString(record.id, "id")),
+    kind: "unsupported",
+    originalKind: kind,
+    commandVersion,
+    dependencies,
+    ...parseOptionalCreatedAt(record.createdAt),
+  };
 }
 
 function expectedVersionsForPendingChange(change: CloudLedgerPendingChange): readonly {

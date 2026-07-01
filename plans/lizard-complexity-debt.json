@@ -49,6 +49,15 @@
       "parameterCount": 0
     },
     {
+      "key": "(anonymous)@17-90@apps/mobile/__tests__/cloud-ledger/repair-copy.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/repair-copy.test.ts",
+      "function": "(anonymous)",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 72,
+      "parameterCount": 0
+    },
+    {
       "key": "(anonymous)@599-653@apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts",
       "function": "(anonymous)",
@@ -193,7 +202,7 @@
       "parameterCount": 1
     },
     {
-      "key": "readCategoryId@439-488@apps/mobile/features/cloud-ledger/api-client.ts",
+      "key": "readCategoryId@450-499@apps/mobile/features/cloud-ledger/api-client.ts",
       "file": "apps/mobile/features/cloud-ledger/api-client.ts",
       "function": "readCategoryId",
       "thresholdProfile": "default",
@@ -202,16 +211,34 @@
       "parameterCount": 2
     },
     {
-      "key": "requireChunkAllocationCoverage@608-698@apps/mobile/features/cloud-ledger/outbox.ts",
-      "file": "apps/mobile/features/cloud-ledger/outbox.ts",
-      "function": "requireChunkAllocationCoverage",
+      "key": "requireArray@319-354@apps/mobile/features/cloud-ledger/pending-changes.ts",
+      "file": "apps/mobile/features/cloud-ledger/pending-changes.ts",
+      "function": "requireArray",
       "thresholdProfile": "default",
-      "cyclomaticComplexity": 10,
-      "nloc": 83,
-      "parameterCount": 8
+      "cyclomaticComplexity": 8,
+      "nloc": 32,
+      "parameterCount": 6
     },
     {
-      "key": "requireIsoDateTime@596-666@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "key": "requireArray@576-619@apps/mobile/features/cloud-ledger/outbox-storage.ts",
+      "file": "apps/mobile/features/cloud-ledger/outbox-storage.ts",
+      "function": "requireArray",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 10,
+      "nloc": 38,
+      "parameterCount": 6
+    },
+    {
+      "key": "requireChunkAllocationCoverage@353-435@apps/mobile/features/cloud-ledger/outbox-storage.ts",
+      "file": "apps/mobile/features/cloud-ledger/outbox-storage.ts",
+      "function": "requireChunkAllocationCoverage",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 8,
+      "nloc": 76,
+      "parameterCount": 7
+    },
+    {
+      "key": "requireIsoDateTime@601-671@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
       "function": "requireIsoDateTime",
       "thresholdProfile": "default",
@@ -220,21 +247,30 @@
       "parameterCount": 0
     },
     {
-      "key": "requireString@467-548@apps/mobile/features/cloud-ledger/outbox.ts",
-      "file": "apps/mobile/features/cloud-ledger/outbox.ts",
-      "function": "requireString",
+      "key": "requireIsoDateTime@873-947@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "function": "requireIsoDateTime",
       "thresholdProfile": "default",
-      "cyclomaticComplexity": 8,
-      "nloc": 69,
-      "parameterCount": 5
+      "cyclomaticComplexity": 1,
+      "nloc": 73,
+      "parameterCount": 0
     },
     {
-      "key": "requireTransactionId@690-761@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "key": "requireTransactionId@695-766@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
       "file": "apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
       "function": "requireTransactionId",
       "thresholdProfile": "default",
       "cyclomaticComplexity": 1,
       "nloc": 69,
+      "parameterCount": 0
+    },
+    {
+      "key": "requireTransactionId@798-855@apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "file": "apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts",
+      "function": "requireTransactionId",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 56,
       "parameterCount": 0
     }
   ]

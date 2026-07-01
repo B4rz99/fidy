@@ -8,6 +8,7 @@ export {
   enqueueCloudLedgerOptimisticCreate,
   enqueueCloudLedgerOptimisticDelete,
   flushCloudLedgerOutboxForUser,
+  resubmitCloudLedgerRepairTransactionChangeForUser,
   restoreCloudLedgerOptimisticRuntimeState,
   retryCloudLedgerRepairItemForUser,
   retryCloudLedgerRepairSetForUser,

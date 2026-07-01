@@ -27,18 +27,17 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 import type { CloudLedgerCache, CloudLedgerTransaction } from "../cache";
-import {
-  getCloudLedgerOutbox,
-  loadCloudLedgerRepairItems,
-  resubmitCloudLedgerRepairTransactionChange,
-} from "../outbox";
+import { getCloudLedgerOutbox, loadCloudLedgerRepairItems } from "../outbox";
 import type {
   CloudLedgerPendingAmendTransaction,
   CloudLedgerPendingCreateTransaction,
 } from "../pending-changes";
 import type { CloudLedgerRepairItem } from "../repair-policy";
-import { flushCloudLedgerOutboxForUser } from "../runtime-mutations.public";
-import { getCloudLedgerRuntimeCache, setCloudLedgerRuntimeCache } from "../runtime.public";
+import {
+  flushCloudLedgerOutboxForUser,
+  resubmitCloudLedgerRepairTransactionChangeForUser,
+} from "../runtime-mutations.public";
+import { getCloudLedgerRuntimeCache } from "../runtime.public";
 
 type DigitsInput = string | ((currentDigits: string) => string);
 
@@ -65,7 +64,7 @@ const initialDraft: RepairTransactionDraft = {
 };
 
 export function CloudLedgerRepairTransactionScreen() {
-  const { changeId: routeChangeId } = useLocalSearchParams<{ changeId?: string }>();
+  const { changeId: routeChangeId } = useLocalSearchParams();
   const { back, replace } = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
@@ -119,17 +118,17 @@ export function CloudLedgerRepairTransactionScreen() {
         return;
       }
       try {
-        setCloudLedgerRuntimeCache(
+        const didResubmit = await resubmitCloudLedgerRepairTransactionChangeForUser({
           userId,
-          await resubmitCloudLedgerRepairTransactionChange({
-            cache: runtimeCache,
-            changeId: repairItem.id,
-            createdAt,
-            expectedVersion,
-            outbox: getCloudLedgerOutbox(userId),
-            transaction,
-          })
-        );
+          changeId: repairItem.id,
+          createdAt,
+          expectedVersion,
+          transaction,
+        });
+        if (!didResubmit) {
+          showErrorToast(t("cloudLedger.repair.actionFailed"));
+          return;
+        }
         await flushCloudLedgerOutboxForUser(userId);
         replace("/ledger-repair");
       } catch {
@@ -145,6 +144,7 @@ export function CloudLedgerRepairTransactionScreen() {
   return (
     <TransactionForm
       type={draft.type}
+      allowTransferMode={false}
       digits={draft.digits}
       categories={categories}
       categoryId={draft.categoryId}
@@ -259,8 +259,8 @@ function resolveDigitsInput(currentDigits: string, input: DigitsInput): string {
   return typeof input === "function" ? input(currentDigits) : input;
 }
 
-function parseRepairChangeId(value: string | undefined): LedgerChangeId | null {
-  return value === undefined || value.trim().length === 0
+function parseRepairChangeId(value: string | readonly string[] | undefined): LedgerChangeId | null {
+  return typeof value !== "string" || value.trim().length === 0
     ? null
     : requireLedgerChangeId(value.trim());
 }

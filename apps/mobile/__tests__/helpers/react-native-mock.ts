@@ -1,3 +1,4 @@
+import { createElement, type ComponentType, type ReactNode } from "react";
 import { vi } from "vitest";
 
 const createNoop = () => () => undefined;
@@ -7,7 +8,36 @@ export const Text = "Text";
 export const TextInput = "TextInput";
 export const Pressable = "Pressable";
 export const ScrollView = "ScrollView";
-export const FlatList = "FlatList";
+export function FlatList({
+  data = [],
+  keyExtractor,
+  ListHeaderComponent,
+  renderItem,
+  ...props
+}: {
+  readonly data?: readonly unknown[];
+  readonly keyExtractor?: (item: unknown, index: number) => string;
+  readonly ListHeaderComponent?: ComponentType | ReactNode;
+  readonly renderItem?: (input: { readonly item: unknown; readonly index: number }) => ReactNode;
+}) {
+  const header =
+    typeof ListHeaderComponent === "function"
+      ? createElement(ListHeaderComponent as ComponentType)
+      : ListHeaderComponent;
+  const headerChildren =
+    header === null || header === undefined || header === false ? [] : [header];
+  const items =
+    renderItem === undefined
+      ? []
+      : data.map((item, index) =>
+          createElement(
+            View,
+            { key: keyExtractor?.(item, index) ?? String(index) },
+            renderItem({ item, index })
+          )
+        );
+  return createElement("FlatList", props, ...headerChildren, ...items);
+}
 export const SectionList = "SectionList";
 export const Switch = "Switch";
 export const Image = "Image";

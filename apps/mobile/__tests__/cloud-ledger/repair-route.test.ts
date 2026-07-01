@@ -42,9 +42,9 @@ test("Ledger Repair screen wires visible repairs to retry, discard, and edit act
 
 test("Ledger Repair transaction screen resubmits editable pending transaction repairs", () => {
   expect(repairEditScreenSource).toContain("TransactionForm");
-  expect(repairEditScreenSource).toContain("resubmitCloudLedgerRepairTransactionChange");
+  expect(repairEditScreenSource).toContain("resubmitCloudLedgerRepairTransactionChangeForUser");
   expect(repairEditScreenSource).toContain("acceptedTransactionVersion");
-  expect(repairEditScreenSource).toContain("setCloudLedgerRuntimeCache");
+  expect(repairEditScreenSource).not.toContain("setCloudLedgerRuntimeCache(");
   expect(repairEditScreenSource).toContain("flushCloudLedgerOutboxForUser");
   expect(repairEditScreenSource).toContain('replace("/ledger-repair")');
 });

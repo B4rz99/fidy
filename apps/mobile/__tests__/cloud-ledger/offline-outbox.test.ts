@@ -2406,6 +2406,78 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ]);
   });
 
+  it("surfaces persisted unsupported v1 change kinds instead of treating the outbox as corrupt", async () => {
+    const storage = createMemoryOutboxStorage();
+    await writePlainOutboxSnapshot(storage, {
+      version: 1,
+      changes: [
+        {
+          id: "change-persisted-unsupported-kind",
+          kind: "splitTransaction",
+          commandVersion: 1,
+          dependencies: [],
+        },
+      ],
+      retryAttempts: [],
+      repairs: [],
+    });
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const failedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-persisted-unsupported-kind"],
+        changeOutcomes: [
+          {
+            changeId: "change-persisted-unsupported-kind",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+
+    await expect(outbox.load()).resolves.toEqual([
+      expect.objectContaining({
+        id: "change-persisted-unsupported-kind",
+        kind: "unsupported",
+        originalKind: "splitTransaction",
+        commandVersion: 1,
+      }),
+    ]);
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: failedSupabase.client,
+    });
+
+    expect(
+      failedSupabase.functionsInvoke.mock.calls
+        .filter(([, options]) => options.body.action === "applyPendingChanges")
+        .flatMap(([, options]) =>
+          ((options as CloudLedgerInvokeOptions).body.changes ?? []).map((change) => change)
+        )
+    ).toEqual([
+      expect.objectContaining({
+        id: "change-persisted-unsupported-kind",
+        kind: "splitTransaction",
+        commandVersion: 1,
+      }),
+    ]);
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-persisted-unsupported-kind",
+        reason: "unsupportedCommandVersion",
+        actions: ["discard"],
+      }),
+    ]);
+  });
+
   it("surfaces terminal backend repair outcomes and holds them from automatic retry", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({

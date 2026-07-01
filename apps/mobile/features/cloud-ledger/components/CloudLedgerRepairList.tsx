@@ -1,5 +1,5 @@
 import { Button, Card, EmptyState, TAB_BAR_CLEARANCE } from "@/shared/components";
-import { ScrollView, Text, View } from "@/shared/components/rn";
+import { FlatList, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import type { LedgerChangeId } from "@/shared/types/branded";
 import { describeCloudLedgerRepairItem } from "../repair-copy";
@@ -36,36 +36,38 @@ export function CloudLedgerRepairList({
   }
 
   return (
-    <ScrollView
+    <FlatList
       className="flex-1"
-      contentContainerStyle={{
-        paddingHorizontal: 20,
-        paddingTop: 16,
-        paddingBottom: 16 + TAB_BAR_CLEARANCE,
-        gap: 12,
-      }}
-      contentInset={{ bottom: TAB_BAR_CLEARANCE }}
-      contentInsetAdjustmentBehavior="automatic"
-      showsVerticalScrollIndicator={false}
-    >
-      {canRetrySet ? (
-        <Button
-          label={t("cloudLedger.repair.actions.retrySet")}
-          size="compact"
-          variant="secondary"
-          onPress={onRetrySet}
-        />
-      ) : null}
-      {items.map((item) => (
+      data={items}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
         <CloudLedgerRepairCard
-          key={item.id}
           item={item}
           onDiscard={onDiscard}
           onEditAndResubmit={onEditAndResubmit}
           onRetry={onRetry}
         />
-      ))}
-    </ScrollView>
+      )}
+      ListHeaderComponent={
+        canRetrySet ? (
+          <Button
+            label={t("cloudLedger.repair.actions.retrySet")}
+            size="compact"
+            variant="secondary"
+            onPress={onRetrySet}
+          />
+        ) : null
+      }
+      contentContainerStyle={{
+        paddingHorizontal: 20,
+        paddingTop: 16,
+        paddingBottom: 16,
+        gap: 12,
+      }}
+      contentInset={{ bottom: TAB_BAR_CLEARANCE }}
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 

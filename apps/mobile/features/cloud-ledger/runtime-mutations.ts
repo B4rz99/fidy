@@ -16,6 +16,7 @@ import {
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
   loadCloudLedgerRepairItems,
+  resubmitCloudLedgerRepairTransactionChange,
   restoreOptimisticCloudLedgerCache,
   retryCloudLedgerRepairItem,
   retryCloudLedgerRepairSet,
@@ -131,6 +132,32 @@ export async function discardCloudLedgerRepairItemForUser(
     );
   } finally {
     finishCloudLedgerRuntimeCacheWrite(userId, writeToken);
+  }
+}
+
+export async function resubmitCloudLedgerRepairTransactionChangeForUser(input: {
+  readonly userId: UserId;
+  readonly changeId: LedgerChangeId;
+  readonly createdAt: IsoDateTime;
+  readonly expectedVersion?: number;
+  readonly transaction: CloudLedgerTransaction;
+}): Promise<boolean> {
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(input.userId);
+  try {
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(input.userId, writeToken)) {
+      return false;
+    }
+    const optimisticCache = await resubmitCloudLedgerRepairTransactionChange({
+      cache: getCloudLedgerRuntimeCache(input.userId),
+      changeId: input.changeId,
+      createdAt: input.createdAt,
+      expectedVersion: input.expectedVersion,
+      outbox: getCloudLedgerOutbox(input.userId),
+      transaction: input.transaction,
+    });
+    return setCloudLedgerRuntimeCacheIfCurrent(input.userId, writeToken, optimisticCache);
+  } finally {
+    finishCloudLedgerRuntimeCacheWrite(input.userId, writeToken);
   }
 }
 

@@ -1,7 +1,12 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
+import {
+  persistCloudLedgerRuntimeTransactionShadows,
+  refreshTransactions,
+} from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import type { LedgerChangeId, UserId } from "@/shared/types/branded";
@@ -39,7 +44,7 @@ export function CloudLedgerRepairScreen() {
       }
       try {
         await action(userId);
-        await reloadItems(userId);
+        await Promise.all([refreshRepairTransactionViews(userId), reloadItems(userId)]);
       } catch {
         showErrorToast(t("cloudLedger.repair.actionFailed"));
       }
@@ -94,4 +99,13 @@ export function CloudLedgerRepairScreen() {
 
 async function loadRepairItemsForUser(userId: UserId): Promise<readonly CloudLedgerRepairItem[]> {
   return await loadCloudLedgerRepairItems(getCloudLedgerOutbox(userId));
+}
+
+async function refreshRepairTransactionViews(userId: UserId): Promise<void> {
+  const db = tryGetDb(userId);
+  if (db === null) {
+    return;
+  }
+  persistCloudLedgerRuntimeTransactionShadows(db, userId);
+  await refreshTransactions(db, userId);
 }

@@ -6,6 +6,7 @@ import {
   enqueueCloudLedgerOptimisticCreate,
   enqueueCloudLedgerOptimisticDelete,
   flushCloudLedgerOutboxForUser,
+  resubmitCloudLedgerRepairTransactionChangeForUser,
   restoreCloudLedgerOptimisticRuntimeState,
   retryCloudLedgerRepairItemForUser,
 } from "@/features/cloud-ledger/runtime-mutations";
@@ -54,6 +55,7 @@ const mocks = vi.hoisted(() => {
     loadCloudLedgerRepairItems: vi.fn<(...args: any[]) => any>(),
     releaseCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
     refreshCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
+    resubmitCloudLedgerRepairTransactionChange: vi.fn<(...args: any[]) => any>(),
     restoreOptimisticCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     resumeCloudLedgerRuntimeCacheWrites: vi.fn<(...args: any[]) => any>(),
     retryCloudLedgerRepairItem: vi.fn<(...args: any[]) => any>(),
@@ -75,6 +77,7 @@ vi.mock("@/features/cloud-ledger/outbox", () => ({
   flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
   loadCloudLedgerRepairItems: mocks.loadCloudLedgerRepairItems,
+  resubmitCloudLedgerRepairTransactionChange: mocks.resubmitCloudLedgerRepairTransactionChange,
   restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
   retryCloudLedgerRepairItem: mocks.retryCloudLedgerRepairItem,
 }));
@@ -121,6 +124,7 @@ describe("Cloud Ledger runtime mutations", () => {
     mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValue(true);
     mocks.loadCloudLedgerRepairItems.mockResolvedValue([]);
     mocks.refreshCloudLedgerCache.mockResolvedValue(mocks.refreshedRepairBaseCache);
+    mocks.resubmitCloudLedgerRepairTransactionChange.mockResolvedValue(mocks.optimisticCache);
     mocks.restoreOptimisticCloudLedgerCache.mockResolvedValue(mocks.optimisticCache);
     mocks.retryCloudLedgerRepairItem.mockResolvedValue(undefined);
     mocks.setCloudLedgerRuntimeCacheIfCurrent.mockReturnValue(true);
@@ -328,6 +332,37 @@ describe("Cloud Ledger runtime mutations", () => {
       mocks.writeToken,
       mocks.optimisticCache
     );
+  });
+
+  it("resubmits repair edits through a guarded runtime cache write", async () => {
+    const changeId = "ledger-change-repair-resubmit" as LedgerChangeId;
+    const transaction = makeAcceptedTransaction({ version: 6 });
+
+    await expect(
+      resubmitCloudLedgerRepairTransactionChangeForUser({
+        userId,
+        changeId,
+        createdAt: "2026-06-20T10:07:00.000Z" as IsoDateTime,
+        expectedVersion: 5,
+        transaction,
+      })
+    ).resolves.toBe(true);
+
+    expect(mocks.beginCloudLedgerRuntimeCacheWrite).toHaveBeenCalledWith(userId);
+    expect(mocks.resubmitCloudLedgerRepairTransactionChange).toHaveBeenCalledWith({
+      cache: mocks.cache,
+      changeId,
+      createdAt: "2026-06-20T10:07:00.000Z",
+      expectedVersion: 5,
+      outbox: mocks.outbox,
+      transaction,
+    });
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.optimisticCache
+    );
+    expect(mocks.finishCloudLedgerRuntimeCacheWrite).toHaveBeenCalledWith(userId, mocks.writeToken);
   });
 
   it("does not flush another user's outbox when the Supabase session changes before flush", async () => {
