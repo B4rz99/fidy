@@ -62,6 +62,33 @@ export function createCloudLedgerConsoleTelemetry(
   };
 }
 
+export async function recordCloudLedgerCommandTelemetry(input: {
+  readonly authenticatedUserId: string;
+  readonly body: unknown;
+  readonly correlationId: string;
+  readonly now: () => number;
+  readonly response: Response;
+  readonly startedAt: number;
+  readonly telemetry?: CloudLedgerTelemetry;
+}): Promise<void> {
+  if (input.telemetry === undefined) {
+    return;
+  }
+  try {
+    await input.telemetry.recordCommand(
+      buildCloudLedgerCommandTelemetryEvent({
+        authenticatedUserId: input.authenticatedUserId,
+        body: input.body,
+        correlationId: input.correlationId,
+        latencyMs: Math.max(0, input.now() - input.startedAt),
+        responseBody: await readResponseBody(input.response),
+      })
+    );
+  } catch {
+    return;
+  }
+}
+
 export function buildCloudLedgerCommandTelemetryEvent(input: {
   readonly body: unknown;
   readonly responseBody: unknown;
@@ -99,6 +126,14 @@ export function buildCloudLedgerCommandTelemetryEvent(input: {
 function logCloudLedgerTelemetry(message: string): void {
   // eslint-disable-next-line no-console -- Supabase Edge Function operational telemetry log.
   console.log(message);
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+  try {
+    return await response.clone().json();
+  } catch {
+    return null;
+  }
 }
 
 function readOutcomeCode(responseBody: unknown): string {

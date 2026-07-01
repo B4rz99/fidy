@@ -90,10 +90,6 @@ type CloudLedgerWirePayload = {
   readonly tombstones: readonly CloudLedgerWireTombstone[];
 };
 
-type CloudLedgerBootstrapApiResponse =
-  | { readonly success: true; readonly data: CloudLedgerWirePayload }
-  | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
-
 type CloudLedgerWireCreateTransactionAccepted = {
   readonly code: "accepted";
   readonly transaction: CloudLedgerWireTransaction;
@@ -113,14 +109,6 @@ type CloudLedgerWirePendingChangeOutcome = {
   readonly status: string;
   readonly code: string;
 };
-
-type CloudLedgerCreateTransactionApiResponse =
-  | { readonly success: true; readonly data: CloudLedgerWireCreateTransactionAccepted }
-  | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
-
-type CloudLedgerApplyPendingChangesApiResponse =
-  | { readonly success: true; readonly data: CloudLedgerWireApplyPendingChangesAccepted }
-  | { readonly success: false; readonly error: CloudLedgerApiErrorCode };
 
 export type CloudLedgerApplyPendingCreateTransactionChange = {
   readonly id: LedgerChangeId;
@@ -190,6 +178,19 @@ type RemoteErrorLike = {
   readonly context?: unknown;
   readonly message?: string;
 };
+type CloudLedgerFunctionResponse<TData> = {
+  readonly data:
+    | { readonly success: true; readonly data: TData }
+    | { readonly success: false; readonly error: CloudLedgerApiErrorCode }
+    | null;
+  readonly error: RemoteErrorLike | null;
+};
+type CloudLedgerFunctionInvokeOptions<TWireData, TParsedData> = {
+  readonly body: Record<string, unknown>;
+  readonly parse: (data: TWireData) => TParsedData;
+  readonly signal?: AbortSignal;
+  readonly supabase: SupabaseClient;
+};
 
 const CLOUD_LEDGER_FUNCTION = "cloud-ledger-api";
 export const CLOUD_LEDGER_PENDING_CHANGE_BATCH_LIMIT = 10;
@@ -232,62 +233,26 @@ export async function fetchCloudLedgerBootstrap(
   supabase: SupabaseClient,
   cursor: LedgerCursor | null
 ): Promise<CloudLedgerBootstrapPayload> {
-  const response = await supabase.functions.invoke<CloudLedgerBootstrapApiResponse>(
-    CLOUD_LEDGER_FUNCTION,
-    {
-      body: cursor === null ? { action: "bootstrap" } : { action: "refresh", cursor },
-    }
-  );
-
-  if (response.data !== null && !response.data.success) {
-    throw new CloudLedgerClientFailure(
-      response.data.error,
-      `Cloud Ledger API failed: ${response.data.error}`
-    );
-  }
-  const httpFailure = await readHttpErrorApiFailure(response.error);
-  if (httpFailure !== null) {
-    throw new CloudLedgerClientFailure(httpFailure, `Cloud Ledger API failed: ${httpFailure}`);
-  }
-  throwIfTransportError(response.error);
-  if (response.data === null) {
-    throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
-  }
-
-  return parseCloudLedgerPayload(response.data.data);
+  return invokeCloudLedgerFunction({
+    body: cursor === null ? { action: "bootstrap" } : { action: "refresh", cursor },
+    parse: parseCloudLedgerPayload,
+    supabase,
+  });
 }
 
 export async function createCloudLedgerTransaction(
   supabase: SupabaseClient,
   command: CloudLedgerCreateTransactionCommand
 ): Promise<CloudLedgerCreateTransactionAccepted> {
-  const response = await supabase.functions.invoke<CloudLedgerCreateTransactionApiResponse>(
-    CLOUD_LEDGER_FUNCTION,
-    {
-      body: {
-        action: "createTransaction",
-        commandVersion: command.commandVersion,
-        transaction: command.transaction,
-      },
-    }
-  );
-
-  if (response.data !== null && !response.data.success) {
-    throw new CloudLedgerClientFailure(
-      response.data.error,
-      `Cloud Ledger API failed: ${response.data.error}`
-    );
-  }
-  const httpFailure = await readHttpErrorApiFailure(response.error);
-  if (httpFailure !== null) {
-    throw new CloudLedgerClientFailure(httpFailure, `Cloud Ledger API failed: ${httpFailure}`);
-  }
-  throwIfTransportError(response.error);
-  if (response.data === null) {
-    throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
-  }
-
-  return parseCreateTransactionAccepted(response.data.data);
+  return invokeCloudLedgerFunction({
+    body: {
+      action: "createTransaction",
+      commandVersion: command.commandVersion,
+      transaction: command.transaction,
+    },
+    parse: parseCreateTransactionAccepted,
+    supabase,
+  });
 }
 
 export async function applyPendingCloudLedgerChanges(
@@ -295,19 +260,27 @@ export async function applyPendingCloudLedgerChanges(
   command: CloudLedgerApplyPendingChangesCommand,
   options: { readonly signal?: AbortSignal } = {}
 ): Promise<CloudLedgerApplyPendingChangesAccepted> {
-  const response = await supabase.functions.invoke<CloudLedgerApplyPendingChangesApiResponse>(
-    CLOUD_LEDGER_FUNCTION,
-    {
-      body: {
-        action: "applyPendingChanges",
-        commandVersion: command.commandVersion,
-        deviceId: command.deviceId,
-        batchId: command.batchId,
-        changes: command.changes,
-      },
-      signal: options.signal,
-    }
-  );
+  return invokeCloudLedgerFunction({
+    body: {
+      action: "applyPendingChanges",
+      commandVersion: command.commandVersion,
+      deviceId: command.deviceId,
+      batchId: command.batchId,
+      changes: command.changes,
+    },
+    parse: parseApplyPendingChangesAccepted,
+    signal: options.signal,
+    supabase,
+  });
+}
+
+async function invokeCloudLedgerFunction<TWireData, TParsedData>(
+  options: CloudLedgerFunctionInvokeOptions<TWireData, TParsedData>
+): Promise<TParsedData> {
+  const response = (await options.supabase.functions.invoke(CLOUD_LEDGER_FUNCTION, {
+    body: options.body,
+    ...(options.signal === undefined ? {} : { signal: options.signal }),
+  })) as CloudLedgerFunctionResponse<TWireData>;
 
   if (response.data !== null && !response.data.success) {
     throw new CloudLedgerClientFailure(
@@ -324,7 +297,7 @@ export async function applyPendingCloudLedgerChanges(
     throw new CloudLedgerClientFailure("missing_response", "Cloud Ledger API returned no response");
   }
 
-  return parseApplyPendingChangesAccepted(response.data.data);
+  return options.parse(response.data.data);
 }
 
 function parseCloudLedgerPayload(data: CloudLedgerWirePayload): CloudLedgerBootstrapPayload {

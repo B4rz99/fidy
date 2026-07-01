@@ -25,7 +25,7 @@ import {
 } from "./create-transaction-command.ts";
 import { isLedgerCursor } from "./model.ts";
 import { readRequiredString } from "./request-readers.ts";
-import { buildCloudLedgerCommandTelemetryEvent, type CloudLedgerTelemetry } from "./telemetry.ts";
+import { recordCloudLedgerCommandTelemetry, type CloudLedgerTelemetry } from "./telemetry.ts";
 
 type AuthClient = {
   readonly auth: {
@@ -115,12 +115,14 @@ export async function handleCloudLedgerRequest(
 
   const body = await readJsonBody(request);
   const response = await routeAuthenticatedRequestSafely(deps.store, user.id, body);
-  await recordCommandTelemetry(deps, {
+  await recordCloudLedgerCommandTelemetry({
     authenticatedUserId: user.id,
     body,
     correlationId,
-    latencyMs: Math.max(0, readNow(deps) - startedAt),
+    now: () => readNow(deps),
     response,
+    startedAt,
+    telemetry: deps.telemetry,
   });
   return withCorrelationId(response, correlationId);
 }
@@ -130,34 +132,6 @@ async function routeAuthenticatedRequestSafely(store: LedgerStore, userId: strin
     return await routeAuthenticatedRequest(store, userId, body);
   } catch {
     return jsonResponse({ success: false, error: "internal_error" }, 500);
-  }
-}
-
-async function recordCommandTelemetry(
-  deps: CloudLedgerApiDeps,
-  input: {
-    readonly authenticatedUserId: string;
-    readonly body: unknown;
-    readonly correlationId: string;
-    readonly latencyMs: number;
-    readonly response: Response;
-  }
-) {
-  if (deps.telemetry === undefined) {
-    return;
-  }
-  try {
-    await deps.telemetry.recordCommand(
-      buildCloudLedgerCommandTelemetryEvent({
-        authenticatedUserId: input.authenticatedUserId,
-        body: input.body,
-        correlationId: input.correlationId,
-        latencyMs: input.latencyMs,
-        responseBody: await readResponseBody(input.response),
-      })
-    );
-  } catch {
-    return;
   }
 }
 
@@ -341,14 +315,6 @@ async function refreshResponse(
 async function readJsonBody(request: Request): Promise<unknown> {
   try {
     return await request.json();
-  } catch {
-    return null;
-  }
-}
-
-async function readResponseBody(response: Response): Promise<unknown> {
-  try {
-    return await response.clone().json();
   } catch {
     return null;
   }
