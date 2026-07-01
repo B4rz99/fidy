@@ -7,6 +7,10 @@ import {
   tryEnsureDefaultFinancialAccount,
   type FinancialAccountRow,
 } from "@/features/financial-accounts/public";
+import {
+  persistCloudLedgerRuntimeTransactionShadows,
+  refreshTransactions,
+} from "@/features/transactions/store.public";
 import { TransactionForm, type TransactionType } from "@/features/transactions/ui.public";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
@@ -130,6 +134,7 @@ export function CloudLedgerRepairTransactionScreen() {
           return;
         }
         await flushCloudLedgerOutboxForUser(userId);
+        await refreshRepairTransactionViews(userId);
         replace("/ledger-repair");
       } catch {
         showErrorToast(t("cloudLedger.repair.actionFailed"));
@@ -248,6 +253,15 @@ function expectedVersionForRepairItem(
         cache.transactions.find((transaction) => transaction.id === item.change.transaction.id)
           ?.version ??
         item.change.expectedVersion + 1);
+}
+
+async function refreshRepairTransactionViews(userId: UserId): Promise<void> {
+  const db = tryGetDb(userId);
+  if (db === null) {
+    return;
+  }
+  persistCloudLedgerRuntimeTransactionShadows(db, userId);
+  await refreshTransactions(db, userId);
 }
 
 function normalizeDescription(value: string): string | null {

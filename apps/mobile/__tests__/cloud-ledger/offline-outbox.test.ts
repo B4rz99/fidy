@@ -2478,6 +2478,102 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ]);
   });
 
+  it("round-trips raw unsupported command envelopes across repair writes", async () => {
+    const storage = createMemoryOutboxStorage();
+    const rawUnsupportedCommand = {
+      id: "change-future-unsupported-raw",
+      kind: "splitTransaction",
+      commandVersion: 2,
+      idempotencyKey: "future-idempotency-key",
+      dependencies: ["change-parent-future"],
+      expectedVersions: [
+        {
+          recordType: "transaction",
+          recordId: "txn-future-split",
+          version: 9,
+        },
+      ],
+      clientTimestamp: "2026-06-02T10:03:00.000Z",
+      futurePayload: {
+        splits: [
+          { categoryId: "cat-groceries", amount: 12000 },
+          { categoryId: "cat-transport", amount: 6000 },
+        ],
+      },
+    };
+    await writePlainOutboxSnapshot(storage, {
+      version: 1,
+      changes: [rawUnsupportedCommand],
+      retryAttempts: [],
+      repairs: [],
+    });
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const failedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-future-unsupported-raw"],
+        changeOutcomes: [
+          {
+            changeId: "change-future-unsupported-raw",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+
+    await expect(outbox.load()).resolves.toEqual([
+      expect.objectContaining({
+        id: "change-future-unsupported-raw",
+        kind: "unsupported",
+        rawCommand: expect.objectContaining({
+          futurePayload: rawUnsupportedCommand.futurePayload,
+        }),
+      }),
+    ]);
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: failedSupabase.client,
+    });
+
+    expect(
+      failedSupabase.functionsInvoke.mock.calls
+        .filter(([, options]) => options.body.action === "applyPendingChanges")
+        .flatMap(([, options]) =>
+          ((options as CloudLedgerInvokeOptions).body.changes ?? []).map((change) => change)
+        )
+    ).toEqual([
+      expect.objectContaining({
+        id: "change-future-unsupported-raw",
+        kind: "splitTransaction",
+        commandVersion: 2,
+        idempotencyKey: "future-idempotency-key",
+        futurePayload: rawUnsupportedCommand.futurePayload,
+      }),
+    ]);
+    expect(await outbox.load()).toEqual([
+      expect.objectContaining({
+        id: "change-future-unsupported-raw",
+        rawCommand: expect.objectContaining({
+          futurePayload: rawUnsupportedCommand.futurePayload,
+        }),
+      }),
+    ]);
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-future-unsupported-raw",
+        reason: "unsupportedCommandVersion",
+      }),
+    ]);
+  });
+
   it("surfaces terminal backend repair outcomes and holds them from automatic retry", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({

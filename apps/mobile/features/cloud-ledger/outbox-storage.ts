@@ -74,7 +74,9 @@ export async function writeOutboxSnapshot(
   encryptionKey: Uint8Array,
   snapshot: CloudLedgerOutboxSnapshot
 ): Promise<void> {
-  await storage.write(await encryptOutboxSnapshot(snapshot, encryptionKey));
+  await storage.write(
+    await encryptOutboxSnapshot(serializeOutboxSnapshot(snapshot), encryptionKey)
+  );
 }
 
 export function createSecureStoreCloudLedgerOutboxStorage(
@@ -145,7 +147,7 @@ export async function clearSecureStoreOutboxPayload(key: string): Promise<void> 
 }
 
 async function encryptOutboxSnapshot(
-  snapshot: CloudLedgerOutboxSnapshot,
+  snapshot: unknown,
   encryptionKey: Uint8Array
 ): Promise<EncryptedCloudLedgerOutboxSnapshot> {
   const nonce = Crypto.getRandomBytes(GCM_NONCE_BYTES);
@@ -163,6 +165,17 @@ async function encryptOutboxSnapshot(
     nonce: await sealedData.iv("base64"),
     ciphertext: await sealedData.ciphertext({ includeTag: true, encoding: "base64" }),
   };
+}
+
+function serializeOutboxSnapshot(snapshot: CloudLedgerOutboxSnapshot): unknown {
+  return {
+    ...snapshot,
+    changes: snapshot.changes.map(serializePendingChange),
+  };
+}
+
+function serializePendingChange(change: CloudLedgerPendingChange): unknown {
+  return change.kind === "unsupported" ? change.rawCommand : change;
 }
 
 async function decryptOutboxSnapshot(

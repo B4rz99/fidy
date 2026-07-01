@@ -120,6 +120,7 @@ const pendingChangeKey = (change: CloudLedgerPendingChange): string =>
         change.originalKind,
         change.commandVersion,
         change.createdAt ?? "",
+        JSON.stringify(change.rawCommand),
       ].join(KEY_SEPARATOR)
     : change.kind === "deleteTransaction"
       ? [

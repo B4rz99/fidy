@@ -52,6 +52,7 @@ export type CloudLedgerPendingUnsupportedChange = {
   readonly commandVersion: number;
   readonly dependencies?: readonly LedgerChangeId[];
   readonly createdAt?: IsoDateTime;
+  readonly rawCommand: Readonly<Record<string, unknown>>;
 };
 
 export type CloudLedgerPendingChange =
@@ -76,14 +77,22 @@ export function toPendingChangeCommand(
 ): CloudLedgerApplyPendingChangesCommand["changes"][number] {
   if (change.kind === "unsupported") {
     return {
+      ...change.rawCommand,
       id: change.id,
       kind: change.originalKind,
       commandVersion: change.commandVersion,
-      idempotencyKey: change.id,
+      idempotencyKey:
+        typeof change.rawCommand.idempotencyKey === "string"
+          ? requireLedgerChangeId(change.rawCommand.idempotencyKey)
+          : change.id,
       dependencies: change.dependencies ?? [],
-      expectedVersions: [],
-      ...(change.createdAt === undefined ? {} : { clientTimestamp: change.createdAt }),
-    };
+      expectedVersions: Array.isArray(change.rawCommand.expectedVersions)
+        ? change.rawCommand.expectedVersions
+        : [],
+      ...(change.rawCommand.clientTimestamp !== undefined || change.createdAt === undefined
+        ? {}
+        : { clientTimestamp: change.createdAt }),
+    } as CloudLedgerApplyPendingChangesCommand["changes"][number];
   }
   const base = {
     id: change.id,
@@ -147,6 +156,7 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
       commandVersion,
       dependencies,
       ...parseOptionalCreatedAt(record.createdAt),
+      rawCommand: record,
     };
   }
   if (kind === "createTransaction") {
@@ -181,6 +191,17 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
     };
   }
+  if (kind === "unsupported" && record.rawCommand !== undefined) {
+    return {
+      id: requireLedgerChangeId(requireString(record.id, "id")),
+      kind: "unsupported",
+      originalKind: requireString(record.originalKind, "originalKind"),
+      commandVersion,
+      dependencies,
+      ...parseOptionalCreatedAt(record.createdAt),
+      rawCommand: requireRecord(record.rawCommand, "raw unsupported command"),
+    };
+  }
   return {
     id: requireLedgerChangeId(requireString(record.id, "id")),
     kind: "unsupported",
@@ -188,6 +209,7 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
     commandVersion,
     dependencies,
     ...parseOptionalCreatedAt(record.createdAt),
+    rawCommand: record,
   };
 }
 
