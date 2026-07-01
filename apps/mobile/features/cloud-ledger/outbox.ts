@@ -334,7 +334,7 @@ export async function discardCloudLedgerRepairItem(
   outbox: EncryptedCloudLedgerOutbox,
   changeId: LedgerChangeId
 ): Promise<void> {
-  await outbox.remove([changeId]);
+  await outbox.remove([...dependentChangeClosureIds(await outbox.load(), new Set([changeId]))]);
 }
 
 export async function retryCloudLedgerRepairSet(outbox: EncryptedCloudLedgerOutbox): Promise<void> {
@@ -552,6 +552,22 @@ function dependencyBlockedChangeIds(
   return nextBlockedIds.size === blockedIds.size
     ? blockedIds
     : dependencyBlockedChangeIds(changes, nextBlockedIds);
+}
+
+function dependentChangeClosureIds(
+  changes: readonly CloudLedgerPendingChange[],
+  rootIds: ReadonlySet<LedgerChangeId>
+): ReadonlySet<LedgerChangeId> {
+  const nextRootIds = new Set([
+    ...rootIds,
+    ...changes
+      .filter((change) => !rootIds.has(change.id))
+      .filter((change) => (change.dependencies ?? []).some((dependency) => rootIds.has(dependency)))
+      .map((change) => change.id),
+  ]);
+  return nextRootIds.size === rootIds.size
+    ? rootIds
+    : dependentChangeClosureIds(changes, nextRootIds);
 }
 
 function repairStatesWithAcceptedTransactionVersions(

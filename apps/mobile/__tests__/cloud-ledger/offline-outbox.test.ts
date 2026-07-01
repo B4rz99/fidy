@@ -1678,6 +1678,83 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ]);
   });
 
+  it("discards dependent children when a parent repair is discarded", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const parentCache = await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-discard-parent"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const childAmend = acceptedCoffeeLedgerTransaction({
+      description: "Coffee impossible child",
+      version: 2,
+      updatedAt: "2026-06-02T10:04:00.000Z",
+    });
+    const optimisticCache = await amendOfflineCloudLedgerTransaction({
+      cache: parentCache,
+      changeId: requireLedgerChangeId("change-discard-child"),
+      createdAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transaction: childAmend,
+    });
+    const failedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-discard-parent", "change-discard-child"],
+        changeOutcomes: [
+          {
+            changeId: "change-discard-parent",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+          {
+            changeId: "change-discard-child",
+            status: "repair_required",
+            code: "dependency_failed",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+
+    const repairCache = await flushPendingCloudLedgerChanges({
+      cache: optimisticCache,
+      outbox,
+      supabase: failedSupabase.client,
+    });
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-discard-parent",
+        reason: "invalidTransaction",
+      }),
+      expect.objectContaining({
+        id: "change-discard-child",
+        reason: "dependencyFailure",
+        parentChangeId: "change-discard-parent",
+      }),
+    ]);
+
+    await discardCloudLedgerRepairItem(outbox, requireLedgerChangeId("change-discard-parent"));
+    const restoredCache = await restoreOptimisticCloudLedgerCache({
+      cache: createSeededLedgerCache(),
+      outbox,
+    });
+
+    expect(repairCache.transactions).toEqual([childAmend]);
+    expect(await outbox.load()).toEqual([]);
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([]);
+    expect(restoredCache.transactions).toEqual([]);
+  });
+
   it("identifies the parent problem for dependency failures and holds impossible child changes", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
