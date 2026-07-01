@@ -3,6 +3,7 @@ import OpenAI from "https://deno.land/x/openai@v4.24.0/mod.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { readBodyWithLimit } from "../_shared/body-size.ts";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
+import { classifyAiChatInternalError } from "./error-classification.ts";
 import {
   type FinancialContextGoalSummary,
   type FinancialContextPacket,
@@ -268,14 +269,14 @@ Deno.serve(async (req) => {
             context_query_ms: 0,
           });
         } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : String(err);
+          const errorType = classifyAiChatInternalError(err);
           structuredLog({
             request_id: requestId,
             user_id: userId,
             mode,
             success: false,
             latency_ms: Date.now() - startTime,
-            error_type: errorMsg,
+            error_type: errorType,
           });
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ error: "stream_error" })}\n\n`)
@@ -293,14 +294,14 @@ Deno.serve(async (req) => {
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const errorType = classifyAiChatInternalError(err);
     structuredLog({
       request_id: requestId,
       user_id: userId,
       mode,
       success: false,
       latency_ms: Date.now() - startTime,
-      error_type: message,
+      error_type: errorType,
     });
     return jsonResponse({ success: false, error: "internal_error" }, 500);
   }
