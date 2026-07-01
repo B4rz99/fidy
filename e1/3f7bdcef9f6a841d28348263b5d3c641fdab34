@@ -1,0 +1,22 @@
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_e4062e30a130f8 1210-1211,1214,1217,1702,1706-1708,1752
+  s_6c070d47258744::t_10e9cb9733f459 1215,1737-1739
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_6c070d47258744::t_89e8a9138512fe 16-21,30-31,41-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "e13f7bdcef9f6a841d28348263b5d3c641fdab34",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
