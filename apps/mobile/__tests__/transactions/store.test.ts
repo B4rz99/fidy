@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -67,7 +68,7 @@ const cloudLedgerOutboxCalls: unknown[] = [];
 const cloudLedgerFlushIfOnline = vi.hoisted(() =>
   vi.fn<(...args: any[]) => any>(() => Promise.resolve())
 );
-const mockTryGetDb = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
+const mockGetDb = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
@@ -121,7 +122,7 @@ vi.mock("@/shared/db/supabase", () => ({
 }));
 
 vi.mock("@/shared/db/client", () => ({
-  tryGetDb: mockTryGetDb,
+  getDb: mockGetDb,
 }));
 
 const insertedTransactionRows: unknown[] = [];
@@ -507,6 +508,81 @@ function mockCommittedRideRefresh() {
   ]);
 }
 
+function applyMigrationSql(sqlite: Database.Database, fileName: string) {
+  const migrationSql = readFileSync(resolve(__dirname, "../../drizzle", fileName), "utf8");
+  migrationSql
+    .split("--> statement-breakpoint")
+    .map((statement) => statement.trim())
+    .filter((statement) => statement.length > 0)
+    .forEach((statement) => sqlite.exec(statement));
+}
+
+function createPreLedgerCacheReferenceSourceTables(sqlite: Database.Database) {
+  sqlite.exec(`
+    CREATE TABLE financial_accounts (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      name text NOT NULL,
+      kind text NOT NULL,
+      is_default integer DEFAULT false NOT NULL,
+      statement_closing_day integer,
+      payment_due_day integer,
+      created_at text NOT NULL,
+      updated_at text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE user_categories (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      name text NOT NULL,
+      icon_name text NOT NULL,
+      color_hex text NOT NULL,
+      created_at text NOT NULL,
+      updated_at text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE transactions (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      account_id text NOT NULL,
+      category_id text NOT NULL,
+      source text DEFAULT 'manual' NOT NULL
+    );
+    CREATE TABLE transfers (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      from_account_id text,
+      to_account_id text,
+      source text DEFAULT 'manual' NOT NULL
+    );
+    CREATE TABLE opening_balances (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      account_id text NOT NULL
+    );
+    CREATE TABLE financial_account_identifiers (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      account_id text NOT NULL
+    );
+    CREATE TABLE budgets (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL
+    );
+    CREATE TABLE category_icon_overrides (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL
+    );
+    CREATE TABLE category_color_overrides (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL
+    );
+  `);
+}
+
 function expectCommittedRideRefreshApplied() {
   expect(useTransactionStore.getState()).toMatchObject({
     pages: [
@@ -597,7 +673,7 @@ describe("transaction boundaries", () => {
     deletedUserCategoryScopes.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
-    mockTryGetDb.mockReturnValue(mockDb);
+    mockGetDb.mockReturnValue(mockDb);
     resetCloudLedgerRuntimeCaches();
     initializeTransactionSession(mockUserId);
     useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
@@ -2047,7 +2123,7 @@ describe("transaction boundaries", () => {
       );
       persistCloudLedgerRuntimeTransactionShadows(db as unknown as AnyDb, mockUserId);
       clearCloudLedgerRuntimeCache(mockUserId);
-      mockTryGetDb.mockReturnValue(db);
+      mockGetDb.mockReturnValue(db);
 
       await deleteCloudLedgerTransactionCache(mockUserId);
 
@@ -2060,6 +2136,95 @@ describe("transaction boundaries", () => {
     } finally {
       sqlite.close();
     }
+  });
+
+  it("deletes legacy cache-only Cloud Ledger references after the source migration", async () => {
+    const sqlite = new Database(":memory:");
+    const now = "2026-06-25T10:00:00.000Z";
+
+    try {
+      createPreLedgerCacheReferenceSourceTables(sqlite);
+      const insertAccount = sqlite.prepare(`
+        INSERT INTO financial_accounts (
+          id, user_id, name, kind, is_default, statement_closing_day,
+          payment_due_day, created_at, updated_at, deleted_at
+        ) VALUES (?, ?, ?, 'cash', 0, NULL, NULL, ?, ?, NULL)
+      `);
+      const insertCategory = sqlite.prepare(`
+        INSERT INTO user_categories (
+          id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+        ) VALUES (?, ?, ?, 'receipt', '#445566', ?, ?, NULL)
+      `);
+      [
+        ["fa-cloud-cache-only", "Cloud account cache-only"],
+        ["fa-cloud-transaction", "Cloud account with transaction"],
+        ["fa-local-transaction", "Local account with transaction"],
+      ].forEach(([id, name]) => insertAccount.run(id, mockUserId, name, now, now));
+      [
+        ["ucat-cloud-cache-only", "Cloud category cache-only"],
+        ["ucat-cloud-transaction", "Cloud category with transaction"],
+        ["ucat-local-transaction", "Local category with transaction"],
+      ].forEach(([id, name]) => insertCategory.run(id, mockUserId, name, now, now));
+      sqlite
+        .prepare(
+          "INSERT INTO transactions (id, user_id, account_id, category_id, source) VALUES (?, ?, ?, ?, ?)"
+        )
+        .run(
+          "txn-cloud-reference",
+          mockUserId,
+          "fa-cloud-transaction",
+          "ucat-cloud-transaction",
+          "cloud_ledger"
+        );
+      sqlite
+        .prepare(
+          "INSERT INTO transactions (id, user_id, account_id, category_id, source) VALUES (?, ?, ?, ?, ?)"
+        )
+        .run(
+          "txn-local-reference",
+          mockUserId,
+          "fa-local-transaction",
+          "ucat-local-transaction",
+          "manual"
+        );
+
+      applyMigrationSql(sqlite, "0038_ledger_cache_reference_source.sql");
+
+      expect(sqlite.prepare("select id, source from financial_accounts order by id").all()).toEqual(
+        [
+          { id: "fa-cloud-cache-only", source: "cloud_ledger" },
+          { id: "fa-cloud-transaction", source: "cloud_ledger" },
+          { id: "fa-local-transaction", source: "local_ledger" },
+        ]
+      );
+      expect(sqlite.prepare("select id, source from user_categories order by id").all()).toEqual([
+        { id: "ucat-cloud-cache-only", source: "cloud_ledger" },
+        { id: "ucat-cloud-transaction", source: "cloud_ledger" },
+        { id: "ucat-local-transaction", source: "local_ledger" },
+      ]);
+
+      mockGetDb.mockReturnValueOnce(drizzle(sqlite));
+      await deleteCloudLedgerTransactionCache(mockUserId);
+
+      expect(sqlite.prepare("select id from financial_accounts order by id").all()).toEqual([
+        { id: "fa-local-transaction" },
+      ]);
+      expect(sqlite.prepare("select id from user_categories order by id").all()).toEqual([
+        { id: "ucat-local-transaction" },
+      ]);
+    } finally {
+      sqlite.close();
+    }
+  });
+
+  it("fails Cloud Ledger cache cleanup when the local user database cannot be opened", async () => {
+    mockGetDb.mockImplementationOnce(() => {
+      throw new Error("db decryption failed");
+    });
+
+    await expect(deleteCloudLedgerTransactionCache(mockUserId)).rejects.toThrow(
+      "db decryption failed"
+    );
   });
 
   it("rolls back Cloud Ledger cache cleanup when a mid-cleanup delete fails", async () => {
@@ -2087,7 +2252,7 @@ describe("transaction boundaries", () => {
         return result;
       }),
     } as unknown as AnyDb;
-    mockTryGetDb.mockReturnValueOnce(db);
+    mockGetDb.mockReturnValueOnce(db);
 
     await expect(deleteCloudLedgerTransactionCache(mockUserId)).rejects.toThrow(
       "category delete failed"

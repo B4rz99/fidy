@@ -275,7 +275,7 @@ describe("useAuthStore", () => {
     expect(isLoading).toBe(false);
   });
 
-  it("restoreSession stays signed in when missing-user Cloud Ledger cleanup fails", async () => {
+  it("restoreSession stays signed in when missing-user local database cannot be opened", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
@@ -290,7 +290,7 @@ describe("useAuthStore", () => {
       data: { user: null },
       error: { message: "User from sub claim in JWT does not exist" },
     });
-    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("sqlite locked"));
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("db decryption failed"));
 
     await useAuthStore.getState().restoreSession();
 
@@ -614,16 +614,14 @@ describe("useAuthStore", () => {
     expect(mockSignOut).toHaveBeenCalled();
   });
 
-  it("signOut preserves Cloud Ledger outbox state when local cache cleanup fails", async () => {
+  it("signOut preserves auth and outbox state when the local database cannot be opened", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
     });
-    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(
-      new Error("local shadow delete failed")
-    );
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("db decryption failed"));
 
-    await expect(useAuthStore.getState().signOut()).rejects.toThrow("local shadow delete failed");
+    await expect(useAuthStore.getState().signOut()).rejects.toThrow("db decryption failed");
 
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockDiscardCloudLedgerOutbox).not.toHaveBeenCalled();
@@ -634,15 +632,13 @@ describe("useAuthStore", () => {
     expect(useAuthStore.getState().session).toEqual(mockSession);
   });
 
-  it("account-deletion signout clears local auth after remote deletion even when cache cleanup fails", async () => {
+  it("account-deletion signout resets local auth after remote deletion when the local database cannot be opened", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
     });
     useLocalOnboardingState.setState({ isComplete: true });
-    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(
-      new Error("local shadow delete failed")
-    );
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("db decryption failed"));
 
     await useAuthStore.getState().completeDeletedAccountSignOut();
 

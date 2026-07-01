@@ -1,7 +1,7 @@
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { financialAccounts, transactions, userCategories } from "@/shared/db/schema";
-import { tryGetDb } from "@/shared/db/client";
+import { getDb } from "@/shared/db/client";
 import {
   type CloudLedgerCategory,
   type CloudLedgerCreateTransactionCommand,
@@ -585,8 +585,7 @@ function toCloudLedgerUserCategoryReferenceId(categoryId: CategoryId): UserCateg
 }
 
 export async function deleteCloudLedgerTransactionCache(userId: UserId): Promise<void> {
-  const db = tryGetDb(userId);
-  if (db === null) return;
+  const db = getDb(userId);
 
   db.transaction((tx) => {
     const transactionDb = tx as AnyDb;
