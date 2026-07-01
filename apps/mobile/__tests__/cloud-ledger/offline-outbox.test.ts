@@ -12,6 +12,7 @@ import {
   amendOfflineCloudLedgerTransaction,
   CloudLedgerOutboxFailure,
   createEncryptedCloudLedgerOutbox,
+  createCloudLedgerOutboxDiscardCheckpoint,
   createOfflineCloudLedgerTransaction,
   discardCloudLedgerOutbox,
   discardCloudLedgerRepairItem,
@@ -416,6 +417,28 @@ describe("mobile Cloud Ledger offline outbox", () => {
     await discardCloudLedgerOutbox(USER_ID);
 
     expect([...secureStore.keys()]).toEqual([]);
+  });
+
+  it("restores discarded encrypted outbox state from a signout cleanup checkpoint", async () => {
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+
+    const checkpoint = await createCloudLedgerOutboxDiscardCheckpoint(USER_ID);
+
+    await checkpoint.discard();
+    expect([...secureStore.keys()]).toEqual([]);
+
+    await checkpoint.restore();
+    resetCloudLedgerOutboxInstances();
+
+    await expect(getCloudLedgerOutbox(USER_ID).load()).resolves.toMatchObject([
+      { id: "change-offline-coffee" },
+    ]);
   });
 
   it("does not create encrypted outbox keys when logout discard has no stored outbox", async () => {
@@ -3038,6 +3061,71 @@ describe("mobile Cloud Ledger offline outbox", () => {
 
     expect(await outbox.load()).toHaveLength(1);
     expect(storage.readRaw()).not.toBeNull();
+  });
+
+  it("fails signout cleanup checkpoint creation when persisted outbox state cannot be read", async () => {
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+
+    let failPayloadRead = true;
+    vi.mocked(SecureStore.getItemAsync).mockImplementation((key: string) =>
+      failPayloadRead && key === "cloud-ledger-outbox_user-1"
+        ? Promise.reject(new Error("simulated outbox read failure"))
+        : Promise.resolve(secureStore.get(key) ?? null)
+    );
+
+    await expect(createCloudLedgerOutboxDiscardCheckpoint(USER_ID)).rejects.toThrow(
+      "simulated outbox read failure"
+    );
+
+    failPayloadRead = false;
+    resetCloudLedgerOutboxInstances();
+    await expect(getCloudLedgerOutbox(USER_ID).load()).resolves.toMatchObject([
+      { id: "change-offline-coffee" },
+    ]);
+  });
+
+  it("restores queued pending writes from a signout cleanup checkpoint", async () => {
+    let releaseManifestWrite: () => void = () => undefined;
+    const manifestWriteStarted = new Promise<void>((resolveStarted) => {
+      const releasePromise = new Promise<void>((resolveRelease) => {
+        releaseManifestWrite = resolveRelease;
+      });
+      vi.mocked(SecureStore.setItemAsync).mockImplementation(async (key: string, value: string) => {
+        if (key === "cloud-ledger-outbox_user-1") {
+          resolveStarted();
+          await releasePromise;
+        }
+        secureStore.set(key, value);
+      });
+    });
+    const outbox = getCloudLedgerOutbox(USER_ID);
+    const queuedWrite = createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+
+    await manifestWriteStarted;
+    const checkpointPromise = createCloudLedgerOutboxDiscardCheckpoint(USER_ID);
+    releaseManifestWrite();
+    await queuedWrite;
+    const checkpoint = await checkpointPromise;
+
+    await checkpoint.discard();
+    await checkpoint.restore();
+    resetCloudLedgerOutboxInstances();
+
+    await expect(getCloudLedgerOutbox(USER_ID).load()).resolves.toMatchObject([
+      { id: "change-offline-coffee" },
+    ]);
   });
 });
 

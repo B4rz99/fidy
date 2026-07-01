@@ -406,6 +406,7 @@ function rollbackAccountRow(id = "fa-rollback") {
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
+    source: "local_ledger",
   };
 }
 
@@ -436,6 +437,7 @@ function userCategoryRow(id = "uc-food") {
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
+    source: "local_ledger",
   };
 }
 
@@ -574,6 +576,26 @@ describe("local ledger backup snapshots", () => {
         kind: "wallet",
         isDefault: true,
       }),
+    ]);
+  });
+
+  it("imports legacy account and category backup rows without source markers", () => {
+    const { source: _accountSource, ...legacyAccount } = rollbackAccountRow();
+    const { source: _categorySource, ...legacyCategory } = userCategoryRow();
+
+    importLocalLedgerBackupSnapshot(
+      targetDb as any,
+      validSnapshot({
+        financialAccounts: [legacyAccount],
+        userCategories: [legacyCategory],
+      })
+    );
+
+    expect(targetSqlite.prepare("select id, source from financial_accounts").all()).toEqual([
+      { id: "fa-rollback", source: "local_ledger" },
+    ]);
+    expect(targetSqlite.prepare("select id, source from user_categories").all()).toEqual([
+      { id: "uc-food", source: "local_ledger" },
     ]);
   });
 

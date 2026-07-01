@@ -1,7 +1,7 @@
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { financialAccounts, transactions, userCategories } from "@/shared/db/schema";
-import { tryGetDb } from "@/shared/db/client";
+import { getDb } from "@/shared/db/client";
 import {
   type CloudLedgerCategory,
   type CloudLedgerCreateTransactionCommand,
@@ -60,6 +60,7 @@ import {
   applyCloudLedgerOptimisticView,
   applyRuntimeCloudLedgerTransactions,
 } from "./services/cloud-ledger-optimistic-snapshot";
+import { promoteCloudLedgerReferencesWithLocalDependents } from "./cloud-ledger-cache-cleanup";
 import { createTransactionQueryService } from "./services/create-transaction-query-service";
 import { toTransactionFormInput } from "./store/form-input";
 import { useTransactionStore } from "./store/state";
@@ -549,6 +550,7 @@ function toCloudLedgerFinancialAccountRow(
     name: account.name,
     paymentDueDay: null,
     statementClosingDay: null,
+    source: CLOUD_LEDGER_TRANSACTION_SOURCE,
     updatedAt: account.updatedAt,
     userId,
   };
@@ -574,38 +576,54 @@ function toCloudLedgerUserCategoryRow(
     createdAt: category.updatedAt,
     deletedAt: null,
     iconName: category.icon ?? CLOUD_LEDGER_REFERENCE_FALLBACK_CATEGORY.icon,
-    id: category.id as unknown as UserCategoryId,
+    id: toCloudLedgerUserCategoryReferenceId(category.id),
     name: category.name,
+    source: CLOUD_LEDGER_TRANSACTION_SOURCE,
     updatedAt: category.updatedAt,
     userId,
   };
 }
 
-export async function deletePendingCloudLedgerTransactionShadows(userId: UserId): Promise<void> {
-  const db = tryGetDb(userId);
-  if (db === null) return;
-
-  let pendingTransactionIds: readonly TransactionId[];
-  try {
-    pendingTransactionIds = (await getCloudLedgerOutbox(userId).load()).flatMap(
-      pendingCloudLedgerShadowTransactionIdsToDelete
-    );
-  } catch (error) {
-    captureWarning("cloud_ledger_shadow_transaction_delete_failed", {
-      errorType: getErrorType(error),
-    });
-    deleteAllCloudLedgerTransactionShadows(db, userId);
-    return;
-  }
-  deleteCloudLedgerTransactionShadows(db, userId, pendingTransactionIds);
+function toCloudLedgerUserCategoryReferenceId(categoryId: CategoryId): UserCategoryId {
+  return categoryId as unknown as UserCategoryId;
 }
 
-function pendingCloudLedgerShadowTransactionIdsToDelete(
-  change: CloudLedgerPendingChange
-): readonly TransactionId[] {
-  if (change.kind === "createTransaction") return [change.transaction.id];
-  if (change.kind === "deleteTransaction") return [change.transactionId];
-  return [];
+export async function deleteCloudLedgerTransactionCache(userId: UserId): Promise<void> {
+  const db = getDb(userId);
+
+  db.transaction((tx) => {
+    const transactionDb = tx as AnyDb;
+    deleteCloudLedgerReferenceRows(transactionDb, userId);
+    deleteAllCloudLedgerTransactionShadows(transactionDb, userId);
+  });
+}
+
+function deleteCloudLedgerReferenceRows(db: AnyDb, userId: UserId): void {
+  promoteCloudLedgerReferencesWithLocalDependents(db, userId);
+  deleteCloudLedgerFinancialAccountReferences(db, userId);
+  deleteCloudLedgerUserCategoryReferences(db, userId);
+}
+
+function deleteCloudLedgerFinancialAccountReferences(db: AnyDb, userId: UserId): void {
+  db.delete(financialAccounts)
+    .where(
+      and(
+        eq(financialAccounts.userId, userId),
+        eq(financialAccounts.source, CLOUD_LEDGER_TRANSACTION_SOURCE)
+      )
+    )
+    .run();
+}
+
+function deleteCloudLedgerUserCategoryReferences(db: AnyDb, userId: UserId): void {
+  db.delete(userCategories)
+    .where(
+      and(
+        eq(userCategories.userId, userId),
+        eq(userCategories.source, CLOUD_LEDGER_TRANSACTION_SOURCE)
+      )
+    )
+    .run();
 }
 
 const cloudLedgerShadowRowsForUser = (userId: UserId) =>

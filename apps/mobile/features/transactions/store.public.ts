@@ -1,6 +1,6 @@
 export {
+  deleteCloudLedgerTransactionCache,
   deleteTransaction,
-  deletePendingCloudLedgerTransactionShadows,
   getStoredTransactionById,
   initializeTransactionSession,
   invalidateTransactionSession,

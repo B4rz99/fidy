@@ -19,6 +19,10 @@ export type EncryptedCloudLedgerOutboxStorage = {
   readonly clear: () => Promise<void>;
 };
 
+export type SecureStoreOutboxPayloadCheckpoint = {
+  readonly restore: () => Promise<void>;
+};
+
 export type CloudLedgerOutboxSnapshot = {
   readonly version: 1;
   readonly changes: readonly CloudLedgerPendingChange[];
@@ -144,6 +148,19 @@ export async function clearSecureStoreOutboxPayload(key: string): Promise<void> 
     await writeSecureStoreOutboxPayload(key, payload, allocations);
   }
   throw failedDelete.reason;
+}
+
+export async function createSecureStoreOutboxPayloadCheckpoint(
+  key: string
+): Promise<SecureStoreOutboxPayloadCheckpoint> {
+  const payload = await readSecureStoreOutboxPayload(key);
+  return {
+    restore: async () => {
+      if (payload !== null) {
+        await writeSecureStoreOutboxPayload(key, payload);
+      }
+    },
+  };
 }
 
 async function encryptOutboxSnapshot(

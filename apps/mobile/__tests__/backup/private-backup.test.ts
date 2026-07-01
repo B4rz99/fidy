@@ -63,6 +63,7 @@ const SNAPSHOT_WITH_FINANCIAL_DATA = {
         createdAt: "2026-04-25T12:00:00.000Z",
         updatedAt: "2026-04-25T12:00:00.000Z",
         deletedAt: null,
+        source: "local_ledger",
       },
     ] as unknown as BackupSnapshot["data"]["userCategories"],
     financialAccounts: [
@@ -77,6 +78,7 @@ const SNAPSHOT_WITH_FINANCIAL_DATA = {
         createdAt: "2026-04-25T12:00:00.000Z",
         updatedAt: "2026-04-25T12:00:00.000Z",
         deletedAt: null,
+        source: "local_ledger",
       },
     ] as unknown as BackupSnapshot["data"]["financialAccounts"],
     transactions: [

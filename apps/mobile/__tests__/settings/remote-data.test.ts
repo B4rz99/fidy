@@ -4,8 +4,9 @@ import { resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   deleteAccountRequest,
-  saveNotificationPreferences,
-} from "@/features/settings/data/notification-preferences";
+  isDeleteAccountLocalCleanupRequiredError,
+} from "@/features/settings/data/delete-account";
+import { saveNotificationPreferences } from "@/features/settings/data/notification-preferences";
 import { getSupabase } from "@/shared/db";
 import en from "@/shared/i18n/locales/en";
 import es from "@/shared/i18n/locales/es";
@@ -59,6 +60,24 @@ describe("settings remote data", () => {
       "delete_failed"
     );
   });
+
+  test("delete-account helper preserves the deleted-account local cleanup signal", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<(...args: any[]) => any>().mockResolvedValue({
+        ok: false,
+        json: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+          error: "delete_failed",
+          localCleanupRequired: true,
+        }),
+      })
+    );
+
+    const result = deleteAccountRequest("https://example.supabase.co", "token");
+
+    await expect(result).rejects.toThrow("delete_failed");
+    await expect(result).rejects.toSatisfy(isDeleteAccountLocalCleanupRequiredError);
+  });
 });
 
 describe("settings remote callers", () => {
@@ -79,11 +98,27 @@ describe("settings remote callers", () => {
     expect(source).not.toContain("deleteAccount = useSettingsStore");
   });
 
-  test("delete-account confirmation copy says encrypted backups are unrecoverable", () => {
-    expect(en.settings.deleteAccountWarning).toContain("encrypted backups");
-    expect(en.settings.deleteAccountWarning).toContain("cannot be recovered");
+  test("delete-account success uses the deleted-account local cleanup path", () => {
+    const source = readFileSync(
+      resolve(__dirname, "../../features/settings/hooks/use-delete-account.ts"),
+      "utf-8"
+    );
+
+    expect(source).toContain("queryClient.clear()");
+    expect(source).toContain("useAuthStore.getState().completeDeletedAccountSignOut()");
+    expect(source).toContain("isDeleteAccountLocalCleanupRequiredError");
+    expect(source).not.toContain("useAuthStore.getState().signOut()");
+  });
+
+  test("delete-account confirmation copy says Cloud Ledger records and linked samples are deleted", () => {
+    expect(en.settings.deleteAccountWarning).toContain("Cloud Ledger");
+    expect(en.settings.deleteAccountWarning).toContain("financial records");
+    expect(en.settings.deleteAccountWarning).toContain("capture improvement samples");
+    expect(en.settings.deleteAccountWarning).toContain("private backups");
+    expect(es.settings.deleteAccountWarning).toContain("Cloud Ledger");
+    expect(es.settings.deleteAccountWarning).toContain("registros financieros");
+    expect(es.settings.deleteAccountWarning).toContain("muestras de mejora de captura");
     expect(es.settings.deleteAccountWarning).toContain("copias privadas");
-    expect(es.settings.deleteAccountWarning).toContain("no se podrán recuperar");
   });
 
   test("logout pending-change copy says unsent Cloud Ledger work is discarded", () => {

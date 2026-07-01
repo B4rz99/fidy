@@ -8,7 +8,7 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import type { TransferSource } from "@/shared/types/ledger-source";
+import type { LedgerCacheReferenceSource, TransferSource } from "@/shared/types/ledger-source";
 import type {
   AccountSuggestionDismissalId,
   BillId,
@@ -117,10 +117,12 @@ export const financialAccounts = sqliteTable(
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
+    source: text("source").$type<LedgerCacheReferenceSource>().notNull().default("local_ledger"),
   },
   (table) => [
     index("idx_financial_accounts_user").on(table.userId),
     index("idx_financial_accounts_user_default").on(table.userId, table.isDefault),
+    index("idx_financial_accounts_user_source").on(table.userId, table.source),
   ]
 );
 
@@ -541,8 +543,12 @@ export const userCategories = sqliteTable(
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
+    source: text("source").$type<LedgerCacheReferenceSource>().notNull().default("local_ledger"),
   },
-  (table) => [index("idx_user_categories_user").on(table.userId)]
+  (table) => [
+    index("idx_user_categories_user").on(table.userId),
+    index("idx_user_categories_user_source").on(table.userId, table.source),
+  ]
 );
 
 export const categoryIconOverrides = sqliteTable(

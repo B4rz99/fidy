@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: mock exports must match Supabase API names
 import * as Sentry from "@sentry/react-native";
+import * as SecureStore from "expo-secure-store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/features/auth/store";
 import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
@@ -9,10 +10,12 @@ const mockSession = { user: mockUser, access_token: "token" };
 const {
   mockClearCloudLedgerRuntimeCache,
   mockCleanupCurrentPushToken,
+  mockCreateCloudLedgerOutboxDiscardCheckpoint,
   mockDiscardCloudLedgerOutbox,
-  mockDeletePendingCloudLedgerTransactionShadows,
+  mockDeleteCloudLedgerTransactionCache,
   mockInvalidateTransactionSession,
   mockResumeTransactionSession,
+  mockRestoreCloudLedgerOutbox,
   mockResumeCloudLedgerRuntimeCacheWrites,
   mockSuspendCloudLedgerRuntimeCacheWrites,
   mockLoadLocalQaSession,
@@ -20,11 +23,19 @@ const {
   mockClearLocalQaSession,
   mockGetOnboardingCompleteFromStore,
   mockClearOnboardingFromStore,
+  mockResetDbForUser,
 } = vi.hoisted(() => {
   const mockClearCloudLedgerRuntimeCache = vi.fn<(...args: any[]) => any>();
   const mockCleanupCurrentPushToken = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockDiscardCloudLedgerOutbox = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
-  const mockDeletePendingCloudLedgerTransactionShadows = vi.fn<(...args: any[]) => any>(() =>
+  const mockRestoreCloudLedgerOutbox = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+  const mockCreateCloudLedgerOutboxDiscardCheckpoint = vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve({
+      discard: mockDiscardCloudLedgerOutbox,
+      restore: mockRestoreCloudLedgerOutbox,
+    })
+  );
+  const mockDeleteCloudLedgerTransactionCache = vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve()
   );
   const mockInvalidateTransactionSession = vi.fn<(...args: any[]) => any>();
@@ -53,14 +64,17 @@ const {
   const mockClearLocalQaSession = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockGetOnboardingCompleteFromStore = vi.fn<(...args: any[]) => any>(() => false);
   const mockClearOnboardingFromStore = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+  const mockResetDbForUser = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 
   return {
     mockClearCloudLedgerRuntimeCache,
     mockCleanupCurrentPushToken,
+    mockCreateCloudLedgerOutboxDiscardCheckpoint,
     mockDiscardCloudLedgerOutbox,
-    mockDeletePendingCloudLedgerTransactionShadows,
+    mockDeleteCloudLedgerTransactionCache,
     mockInvalidateTransactionSession,
     mockResumeTransactionSession,
+    mockRestoreCloudLedgerOutbox,
     mockResumeCloudLedgerRuntimeCacheWrites,
     mockSuspendCloudLedgerRuntimeCacheWrites,
     mockLoadLocalQaSession,
@@ -68,6 +82,7 @@ const {
     mockClearLocalQaSession,
     mockGetOnboardingCompleteFromStore,
     mockClearOnboardingFromStore,
+    mockResetDbForUser,
   };
 });
 
@@ -117,8 +132,32 @@ const {
   };
 });
 
+const { mockSecureStore } = vi.hoisted(() => ({
+  mockSecureStore: new Map<string, string>(),
+}));
+
+vi.mock("expo-secure-store", () => ({
+  deleteItemAsync: vi.fn((key: string) => {
+    mockSecureStore.delete(key);
+    return Promise.resolve();
+  }),
+  getItem: vi.fn((key: string) => mockSecureStore.get(key) ?? null),
+  getItemAsync: vi.fn((key: string) => Promise.resolve(mockSecureStore.get(key) ?? null)),
+  setItem: vi.fn((key: string, value: string) => {
+    mockSecureStore.set(key, value);
+  }),
+  setItemAsync: vi.fn((key: string, value: string) => {
+    mockSecureStore.set(key, value);
+    return Promise.resolve();
+  }),
+}));
+
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({ auth: supabaseAuthMock }),
+}));
+
+vi.mock("@/shared/db/client", () => ({
+  resetDbForUser: mockResetDbForUser,
 }));
 
 const mockOpenAuthSession = vi.fn<
@@ -146,11 +185,12 @@ vi.mock("@/features/cloud-ledger/runtime.public", () => ({
 }));
 
 vi.mock("@/features/cloud-ledger/outbox.public", () => ({
+  createCloudLedgerOutboxDiscardCheckpoint: mockCreateCloudLedgerOutboxDiscardCheckpoint,
   discardCloudLedgerOutbox: mockDiscardCloudLedgerOutbox,
 }));
 
 vi.mock("@/features/transactions/store.public", () => ({
-  deletePendingCloudLedgerTransactionShadows: mockDeletePendingCloudLedgerTransactionShadows,
+  deleteCloudLedgerTransactionCache: mockDeleteCloudLedgerTransactionCache,
   invalidateTransactionSession: mockInvalidateTransactionSession,
   resumeTransactionSession: mockResumeTransactionSession,
 }));
@@ -188,6 +228,7 @@ function createDeferred<T>() {
 describe("useAuthStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSecureStore.clear();
     useAuthStore.setState({
       session: null,
       localQaSession: null,
@@ -242,7 +283,7 @@ describe("useAuthStore", () => {
     expect(isLoading).toBe(false);
   });
 
-  it("restoreSession clears a cached session that Supabase no longer recognizes", async () => {
+  it("restoreSession resets deleted-account local state when the missing user has no retry marker", async () => {
     useLocalOnboardingState.setState({ isComplete: true });
     mockGetSession.mockResolvedValueOnce({
       data: { session: mockSession },
@@ -258,9 +299,131 @@ describe("useAuthStore", () => {
     const { session, isLoading } = useAuthStore.getState();
     expect(session).toBeNull();
     expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
     expect(useLocalOnboardingState.getState().isComplete).toBe(false);
     expect(isLoading).toBe(false);
+  });
+
+  it("restoreSession resets the local database when missing-user cache cleanup cannot open it", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: true,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("db decryption failed"));
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toBeNull();
+    expect(isLoading).toBe(false);
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
+    expect(mockResumeTransactionSession).not.toHaveBeenCalled();
+  });
+
+  it("restoreSession stays signed in when unmarked missing-user database reset fails", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: true,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toEqual(mockSession);
+    expect(isLoading).toBe(false);
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+  });
+
+  it("restoreSession keeps the recovered session on cold-start missing-user reset failure", async () => {
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toEqual(mockSession);
+    expect(isLoading).toBe(false);
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+  });
+
+  it("restoreSession keeps the recovered session on cold-start marker read failure", async () => {
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+    vi.mocked(SecureStore.getItemAsync).mockRejectedValueOnce(
+      new Error("secure store read failed")
+    );
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toEqual(mockSession);
+    expect(isLoading).toBe(false);
+    expect(mockResetDbForUser).not.toHaveBeenCalled();
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
   });
 
   it("restoreSession preserves cached session on transient getUser errors", async () => {
@@ -485,7 +648,8 @@ describe("useAuthStore", () => {
 
     await useAuthStore.getState().signOut();
 
-    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockCreateCloudLedgerOutboxDiscardCheckpoint).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledOnce();
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
   });
 
@@ -499,19 +663,24 @@ describe("useAuthStore", () => {
 
     expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
-    expect(mockDeletePendingCloudLedgerTransactionShadows).toHaveBeenCalledWith("user-1");
-    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockCreateCloudLedgerOutboxDiscardCheckpoint).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledOnce();
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockRestoreCloudLedgerOutbox).not.toHaveBeenCalled();
     expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
     expect(mockInvalidateTransactionSession.mock.invocationCallOrder[0]!).toBeLessThan(
       mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!
     );
     expect(mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!).toBeLessThan(
-      mockDeletePendingCloudLedgerTransactionShadows.mock.invocationCallOrder[0]!
+      mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!
     );
-    expect(
-      mockDeletePendingCloudLedgerTransactionShadows.mock.invocationCallOrder[0]!
-    ).toBeLessThan(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!);
+    expect(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockDeleteCloudLedgerTransactionCache.mock.invocationCallOrder[0]!
+    );
+    expect(mockDeleteCloudLedgerTransactionCache.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockClearCloudLedgerRuntimeCache.mock.invocationCallOrder[0]!
+    );
     expect(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!).toBeLessThan(
       mockClearCloudLedgerRuntimeCache.mock.invocationCallOrder[0]!
     );
@@ -548,7 +717,9 @@ describe("useAuthStore", () => {
     await expect(useAuthStore.getState().signOut()).rejects.toThrow("secure store delete failed");
 
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
-    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledOnce();
+    expect(mockDeleteCloudLedgerTransactionCache).not.toHaveBeenCalled();
+    expect(mockRestoreCloudLedgerOutbox).not.toHaveBeenCalled();
     expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
@@ -556,39 +727,230 @@ describe("useAuthStore", () => {
     expect(useAuthStore.getState().session).toEqual(mockSession);
   });
 
-  it("signOut discards raw Cloud Ledger outbox state after shadow cleanup handles unreadable state", async () => {
+  it("signOut discards raw Cloud Ledger outbox state after local cache cleanup handles unreadable state", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
     });
-    mockDeletePendingCloudLedgerTransactionShadows.mockResolvedValueOnce(undefined);
+    mockDeleteCloudLedgerTransactionCache.mockResolvedValueOnce(undefined);
 
     await useAuthStore.getState().signOut();
 
-    expect(mockDeletePendingCloudLedgerTransactionShadows).toHaveBeenCalledWith("user-1");
-    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledOnce();
     expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
     expect(mockSignOut).toHaveBeenCalled();
   });
 
-  it("signOut preserves Cloud Ledger outbox state when shadow cleanup fails", async () => {
+  it("signOut restores discarded outbox before preserving auth when the local database cannot be opened", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
     });
-    mockDeletePendingCloudLedgerTransactionShadows.mockRejectedValueOnce(
-      new Error("local shadow delete failed")
-    );
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("db decryption failed"));
 
-    await expect(useAuthStore.getState().signOut()).rejects.toThrow("local shadow delete failed");
+    await expect(useAuthStore.getState().signOut()).rejects.toThrow("db decryption failed");
 
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
-    expect(mockDiscardCloudLedgerOutbox).not.toHaveBeenCalled();
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledOnce();
+    expect(mockRestoreCloudLedgerOutbox).toHaveBeenCalledOnce();
+    expect(mockRestoreCloudLedgerOutbox.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockResumeCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!
+    );
     expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
     expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
     expect(mockSignOut).not.toHaveBeenCalled();
     expect(useAuthStore.getState().session).toEqual(mockSession);
+  });
+
+  it("account-deletion signout resets local auth after remote deletion when the local database cannot be opened", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("db decryption failed"));
+
+    await useAuthStore.getState().completeDeletedAccountSignOut();
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
+    expect(mockResumeTransactionSession).not.toHaveBeenCalled();
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
+  });
+
+  it("account-deletion signout still runs local cleanup when the retry marker write fails", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    vi.mocked(SecureStore.setItemAsync).mockRejectedValueOnce(
+      new Error("secure store marker write failed")
+    );
+
+    await useAuthStore.getState().completeDeletedAccountSignOut();
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
+    expect(mockResumeTransactionSession).not.toHaveBeenCalled();
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
+  });
+
+  it("restoreSession retries deleted-account cleanup when the async retry marker write failed before local cleanup failed", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: false,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    vi.mocked(SecureStore.setItemAsync).mockRejectedValueOnce(
+      new Error("secure store async marker write failed")
+    );
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await expect(useAuthStore.getState().completeDeletedAccountSignOut()).rejects.toThrow(
+      "db file delete failed"
+    );
+
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+    vi.clearAllMocks();
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: true,
+    });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+
+    await useAuthStore.getState().restoreSession();
+
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
+  });
+
+  it("account-deletion signout preserves local auth when database reset fails after remote deletion", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await expect(useAuthStore.getState().completeDeletedAccountSignOut()).rejects.toThrow(
+      "db file delete failed"
+    );
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+  });
+
+  it("account-deletion signout preserves local auth when outbox discard fails after remote deletion", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockDiscardCloudLedgerOutbox.mockRejectedValueOnce(new Error("secure store delete failed"));
+
+    await expect(useAuthStore.getState().completeDeletedAccountSignOut()).rejects.toThrow(
+      "secure store delete failed"
+    );
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+  });
+
+  it("restoreSession retries deleted-account cleanup after remote deletion cleanup failed before restart", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: false,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await expect(useAuthStore.getState().completeDeletedAccountSignOut()).rejects.toThrow(
+      "db file delete failed"
+    );
+
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+    vi.clearAllMocks();
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: true,
+    });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+
+    await useAuthStore.getState().restoreSession();
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
   });
 
   it("signOut clears state even if supabase.signOut fails", async () => {

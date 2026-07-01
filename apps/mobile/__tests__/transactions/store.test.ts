@@ -1,3 +1,8 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -26,7 +31,7 @@ import {
   getTransactionsPaginated,
 } from "@/features/transactions/lib/repository";
 import {
-  deletePendingCloudLedgerTransactionShadows,
+  deleteCloudLedgerTransactionCache,
   deleteTransaction,
   getStoredTransactionById,
   initializeTransactionSession,
@@ -55,6 +60,7 @@ import type {
   IsoDateTime,
   LedgerCursor,
   TransactionId,
+  UserCategoryId,
   UserId,
 } from "@/shared/types/branded";
 
@@ -62,7 +68,7 @@ const cloudLedgerOutboxCalls: unknown[] = [];
 const cloudLedgerFlushIfOnline = vi.hoisted(() =>
   vi.fn<(...args: any[]) => any>(() => Promise.resolve())
 );
-const mockTryGetDb = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
+const mockGetDb = vi.hoisted(() => vi.fn<(...args: any[]) => any>());
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
@@ -116,7 +122,7 @@ vi.mock("@/shared/db/supabase", () => ({
 }));
 
 vi.mock("@/shared/db/client", () => ({
-  tryGetDb: mockTryGetDb,
+  getDb: mockGetDb,
 }));
 
 const insertedTransactionRows: unknown[] = [];
@@ -126,14 +132,17 @@ const insertedUserCategoryRows: unknown[] = [];
 const financialAccountConflictUpdates: unknown[] = [];
 const userCategoryConflictUpdates: unknown[] = [];
 const deletedTransactionScopes: unknown[] = [];
+const deletedFinancialAccountScopes: unknown[] = [];
+const deletedUserCategoryScopes: unknown[] = [];
 let canUseSelectedAccount = true;
 const mockDb = {
   transaction: vi.fn<(...args: any[]) => any>((fn: (tx: unknown) => unknown) => fn(mockDb)),
-  select: () => ({
-    from: () => ({
+  select: (fields?: unknown) => ({
+    from: (table: unknown) => ({
       where: () => ({
+        all: () => recordSelectedRows(table, fields),
         limit: () => ({
-          all: () => (canUseSelectedAccount ? [{ id: "usable-row" }] : []),
+          all: () => recordSelectedRows(table, fields),
         }),
       }),
     }),
@@ -156,10 +165,10 @@ const mockDb = {
       }),
     }),
   }),
-  delete: () => ({
+  delete: (table: unknown) => ({
     where: (scope: unknown) => ({
       run: () => {
-        deletedTransactionScopes.push(scope);
+        recordDeletedScope(table, scope);
       },
     }),
   }),
@@ -200,6 +209,34 @@ function recordConflictUpdate(table: unknown, set: unknown) {
   }
   if (table === userCategories) {
     userCategoryConflictUpdates.push(set);
+  }
+}
+
+function recordSelectedRows(table: unknown, fields: unknown) {
+  if (table === transactions && isCloudLedgerReferenceSelection(fields)) {
+    return insertedTransactionRows.map((row) => ({
+      accountId: (row as { readonly accountId: unknown }).accountId,
+      categoryId: (row as { readonly categoryId: unknown }).categoryId,
+    }));
+  }
+  return canUseSelectedAccount ? [{ id: "usable-row" }] : [];
+}
+
+function isCloudLedgerReferenceSelection(fields: unknown): boolean {
+  return (
+    typeof fields === "object" && fields !== null && "accountId" in fields && "categoryId" in fields
+  );
+}
+
+function recordDeletedScope(table: unknown, scope: unknown) {
+  if (table === transactions) {
+    deletedTransactionScopes.push(scope);
+  }
+  if (table === financialAccounts) {
+    deletedFinancialAccountScopes.push(scope);
+  }
+  if (table === userCategories) {
+    deletedUserCategoryScopes.push(scope);
   }
 }
 
@@ -252,6 +289,7 @@ function expectCloudLedgerRemoteReferencesPersisted() {
       userId: mockUserId,
       name: "Remote account",
       kind: "cash",
+      source: "cloud_ledger",
     }),
   ]);
   expect(insertedUserCategoryRows).toEqual([
@@ -261,6 +299,7 @@ function expectCloudLedgerRemoteReferencesPersisted() {
       name: "Remote custom",
       iconName: "receipt",
       colorHex: "#445566",
+      source: "cloud_ledger",
     }),
   ]);
   expect(insertedTransactionRows).toEqual([
@@ -469,6 +508,108 @@ function mockCommittedRideRefresh() {
   ]);
 }
 
+function applyMigrationSql(sqlite: Database.Database, fileName: string) {
+  const migrationSql = readFileSync(resolve(__dirname, "../../drizzle", fileName), "utf8");
+  migrationSql
+    .split("--> statement-breakpoint")
+    .map((statement) => statement.trim())
+    .filter((statement) => statement.length > 0)
+    .forEach((statement) => sqlite.exec(statement));
+}
+
+function createPreLedgerCacheReferenceSourceTables(sqlite: Database.Database) {
+  sqlite.exec(`
+    CREATE TABLE financial_accounts (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      name text NOT NULL,
+      kind text NOT NULL,
+      is_default integer DEFAULT false NOT NULL,
+      statement_closing_day integer,
+      payment_due_day integer,
+      created_at text NOT NULL,
+      updated_at text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE user_categories (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      name text NOT NULL,
+      icon_name text NOT NULL,
+      color_hex text NOT NULL,
+      created_at text NOT NULL,
+      updated_at text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE transactions (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      account_id text NOT NULL,
+      category_id text NOT NULL,
+      source text DEFAULT 'manual' NOT NULL
+    );
+    CREATE TABLE transfers (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      from_account_id text,
+      to_account_id text,
+      source text DEFAULT 'manual' NOT NULL
+    );
+    CREATE TABLE opening_balances (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      account_id text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE financial_account_identifiers (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      account_id text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE budgets (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE category_icon_overrides (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE category_color_overrides (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL,
+      deleted_at text
+    );
+    CREATE TABLE bills (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL
+    );
+    CREATE TABLE review_candidates (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text,
+      deleted_at text
+    );
+    CREATE TABLE merchant_rules (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL
+    );
+    CREATE TABLE notifications (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text,
+      deleted_at text
+    );
+  `);
+}
+
 function expectCommittedRideRefreshApplied() {
   expect(useTransactionStore.getState()).toMatchObject({
     pages: [
@@ -555,9 +696,11 @@ describe("transaction boundaries", () => {
     financialAccountConflictUpdates.length = 0;
     userCategoryConflictUpdates.length = 0;
     deletedTransactionScopes.length = 0;
+    deletedFinancialAccountScopes.length = 0;
+    deletedUserCategoryScopes.length = 0;
     cloudLedgerOutboxCalls.length = 0;
     canUseSelectedAccount = true;
-    mockTryGetDb.mockReturnValue(mockDb);
+    mockGetDb.mockReturnValue(mockDb);
     resetCloudLedgerRuntimeCaches();
     initializeTransactionSession(mockUserId);
     useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
@@ -1263,7 +1406,15 @@ describe("transaction boundaries", () => {
     await refreshTransactions(mockDb, mockUserId);
 
     expect(useTransactionStore.getState()).toMatchObject({
-      pages: [visibleTransaction],
+      pages: [
+        expect.objectContaining({
+          id: visibleTransaction.id,
+          amount: visibleTransaction.amount,
+          categoryId: visibleTransaction.categoryId,
+          accountId: visibleTransaction.accountId,
+          description: visibleTransaction.description,
+        }),
+      ],
       offset: 0,
       balance: visibleTransaction.amount,
       categorySpending: [
@@ -1901,7 +2052,7 @@ describe("transaction boundaries", () => {
     expectCloudLedgerReferenceMetadataPreserved();
   });
 
-  it("deletes local Cloud Ledger shadows for pending outbox creates on discard", async () => {
+  it("deletes local Cloud Ledger shadows without reading pending outbox state", async () => {
     const pendingTransaction = makeStoredTransaction({
       id: "tx-pending-cloud-ledger-shadow-discard" as TransactionId,
     });
@@ -1910,13 +2061,13 @@ describe("transaction boundaries", () => {
       .mockResolvedValue([pendingCreateFromStoredTransaction(pendingTransaction)]);
     vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
 
-    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+    await deleteCloudLedgerTransactionCache(mockUserId);
 
-    expect(load).toHaveBeenCalled();
+    expect(load).not.toHaveBeenCalled();
     expect(deletedTransactionScopes).toHaveLength(1);
   });
 
-  it("preserves local Cloud Ledger shadows for pending outbox amends on discard", async () => {
+  it("deletes committed Cloud Ledger shadows even when pending outbox only has amends", async () => {
     const pendingTransaction = makeStoredTransaction({
       id: "tx-pending-cloud-ledger-amend-discard" as TransactionId,
       source: "cloud_ledger",
@@ -1926,21 +2077,378 @@ describe("transaction boundaries", () => {
       .mockResolvedValue([pendingAmendFromStoredTransaction(pendingTransaction)]);
     vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
 
-    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+    await deleteCloudLedgerTransactionCache(mockUserId);
 
-    expect(load).toHaveBeenCalled();
-    expect(deletedTransactionScopes).toHaveLength(0);
+    expect(load).not.toHaveBeenCalled();
+    expect(deletedTransactionScopes).toHaveLength(1);
   });
 
-  it("deletes all local Cloud Ledger shadows when pending outbox cleanup cannot read the outbox", async () => {
+  it("deletes persisted Cloud Ledger account and category references when runtime cache is cleared", async () => {
+    seedCloudLedgerRuntimeWithRemoteReferences();
+    persistCloudLedgerRuntimeTransactionShadows(mockDb, mockUserId);
+    expectCloudLedgerRemoteReferencesPersisted();
+    deletedTransactionScopes.length = 0;
+    clearCloudLedgerRuntimeCache(mockUserId);
+
+    await deleteCloudLedgerTransactionCache(mockUserId);
+
+    expect(deletedTransactionScopes).toHaveLength(1);
+    expect(deletedFinancialAccountScopes).toHaveLength(1);
+    expect(deletedUserCategoryScopes).toHaveLength(1);
+  });
+
+  it("deletes account and category-only Cloud Ledger cache rows after cold start", async () => {
+    const sqlite = new Database(":memory:");
+    const db = drizzle(sqlite);
+    migrate(db, { migrationsFolder: resolve(__dirname, "../../drizzle") });
+    const now = "2026-06-25T10:00:00.000Z" as IsoDateTime;
+
+    try {
+      db.insert(financialAccounts)
+        .values({
+          id: "fa-local-preserved" as FinancialAccountId,
+          userId: mockUserId,
+          name: "Local cash",
+          kind: "cash",
+          isDefault: false,
+          statementClosingDay: null,
+          paymentDueDay: null,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        })
+        .run();
+      db.insert(userCategories)
+        .values({
+          id: "ucat-local-preserved" as UserCategoryId,
+          userId: mockUserId,
+          name: "Local category",
+          iconName: "tag",
+          colorHex: "#123456",
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        })
+        .run();
+      setCloudLedgerRuntimeCache(
+        mockUserId,
+        applyCloudLedgerBootstrap(createEmptyCloudLedgerCache(), {
+          cursor: "ledger:account-category-only" as LedgerCursor,
+          categories: [
+            {
+              id: "ucat-cloud-account-only" as CategoryId,
+              name: "Cloud category only",
+              icon: "receipt",
+              color: "#445566",
+              updatedAt: now,
+            },
+          ],
+          financialAccounts: [
+            {
+              id: "fa-cloud-account-only" as FinancialAccountId,
+              name: "Cloud account only",
+              type: "cash",
+              currency: "COP",
+              updatedAt: now,
+            },
+          ],
+          transactions: [],
+          tombstones: [],
+        })
+      );
+      persistCloudLedgerRuntimeTransactionShadows(db as unknown as AnyDb, mockUserId);
+      clearCloudLedgerRuntimeCache(mockUserId);
+      mockGetDb.mockReturnValue(db);
+
+      await deleteCloudLedgerTransactionCache(mockUserId);
+
+      expect(sqlite.prepare("select id from financial_accounts order by id").all()).toEqual([
+        { id: "fa-local-preserved" },
+      ]);
+      expect(sqlite.prepare("select id from user_categories order by id").all()).toEqual([
+        { id: "ucat-local-preserved" },
+      ]);
+    } finally {
+      sqlite.close();
+    }
+  });
+
+  it("promotes Cloud Ledger references with local dependents before cache cleanup", async () => {
+    const sqlite = new Database(":memory:");
+    const db = drizzle(sqlite);
+    migrate(db, { migrationsFolder: resolve(__dirname, "../../drizzle") });
+    const now = "2026-06-25T10:00:00.000Z";
+
+    try {
+      const insertAccount = sqlite.prepare(`
+        INSERT INTO financial_accounts (
+          id, user_id, name, kind, is_default, statement_closing_day,
+          payment_due_day, created_at, updated_at, deleted_at, source
+        ) VALUES (?, ?, ?, 'cash', 0, NULL, NULL, ?, ?, NULL, 'cloud_ledger')
+      `);
+      const insertCategory = sqlite.prepare(`
+        INSERT INTO user_categories (
+          id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at, source
+        ) VALUES (?, ?, ?, 'receipt', '#445566', ?, ?, NULL, 'cloud_ledger')
+      `);
+      [
+        ["fa-cloud-opening-balance", "Cloud account with opening balance"],
+        ["fa-cloud-identifier", "Cloud account with identifier"],
+        ["fa-cloud-local-transaction", "Cloud account with local transaction"],
+        ["fa-cloud-local-transfer-from", "Cloud account with local transfer from"],
+        ["fa-cloud-local-transfer-to", "Cloud account with local transfer to"],
+        ["fa-cloud-unreferenced", "Cloud account cache-only"],
+      ].forEach(([id, name]) => insertAccount.run(id, mockUserId, name, now, now));
+      [
+        ["ucat-cloud-icon-override", "Cloud category with icon override"],
+        ["ucat-cloud-budget", "Cloud category with budget"],
+        ["ucat-cloud-local-transaction", "Cloud category with local transaction"],
+        ["ucat-cloud-unreferenced", "Cloud category cache-only"],
+      ].forEach(([id, name]) => insertCategory.run(id, mockUserId, name, now, now));
+      sqlite
+        .prepare(
+          `INSERT INTO transactions (
+            id, user_id, type, amount, category_id, description, counterparty_name, date,
+            account_id, account_attribution_state, superseded_at, superseded_by_transfer_id,
+            created_at, updated_at, voided_at, source
+          ) VALUES (?, ?, 'expense', 7000, ?, 'Local coffee', NULL, '2026-06-25',
+            ?, 'confirmed', NULL, NULL, ?, ?, NULL, 'manual')`
+        )
+        .run(
+          "txn-local-dependent",
+          mockUserId,
+          "ucat-cloud-local-transaction",
+          "fa-cloud-local-transaction",
+          now,
+          now
+        );
+      sqlite
+        .prepare(
+          `INSERT INTO transfers (
+            id, user_id, amount, from_account_id, to_account_id, from_external_label,
+            to_external_label, description, date, source, created_at, updated_at, voided_at
+          ) VALUES (?, ?, 9000, ?, ?, NULL, NULL, 'Local transfer', '2026-06-25',
+            'manual', ?, ?, NULL)`
+        )
+        .run(
+          "transfer-local-dependent",
+          mockUserId,
+          "fa-cloud-local-transfer-from",
+          "fa-cloud-local-transfer-to",
+          now,
+          now
+        );
+      sqlite
+        .prepare(
+          `INSERT INTO opening_balances (
+            id, user_id, account_id, amount, effective_date, created_at, updated_at, deleted_at
+          ) VALUES (?, ?, ?, 12000, '2026-06-01', ?, ?, NULL)`
+        )
+        .run("opening-1", mockUserId, "fa-cloud-opening-balance", now, now);
+      sqlite
+        .prepare(
+          `INSERT INTO financial_account_identifiers (
+            id, user_id, account_id, scope, value, created_at, updated_at, deleted_at
+          ) VALUES (?, ?, ?, 'manual', '1234', ?, ?, NULL)`
+        )
+        .run("identifier-1", mockUserId, "fa-cloud-identifier", now, now);
+      sqlite
+        .prepare(
+          `INSERT INTO category_icon_overrides (
+            id, user_id, category_id, emoji, created_at, updated_at, deleted_at
+          ) VALUES (?, ?, ?, '🍽️', ?, ?, NULL)`
+        )
+        .run("icon-override-1", mockUserId, "ucat-cloud-icon-override", now, now);
+      sqlite
+        .prepare(
+          `INSERT INTO budgets (
+            id, user_id, category_id, amount, month, created_at, updated_at, deleted_at
+          ) VALUES (?, ?, ?, 50000, '2026-06', ?, ?, NULL)`
+        )
+        .run("budget-1", mockUserId, "ucat-cloud-budget", now, now);
+      mockGetDb.mockReturnValueOnce(db);
+
+      await deleteCloudLedgerTransactionCache(mockUserId);
+
+      expect(sqlite.prepare("select id, source from financial_accounts order by id").all()).toEqual(
+        [
+          { id: "fa-cloud-identifier", source: "local_ledger" },
+          { id: "fa-cloud-local-transaction", source: "local_ledger" },
+          { id: "fa-cloud-local-transfer-from", source: "local_ledger" },
+          { id: "fa-cloud-local-transfer-to", source: "local_ledger" },
+          { id: "fa-cloud-opening-balance", source: "local_ledger" },
+        ]
+      );
+      expect(sqlite.prepare("select id, source from user_categories order by id").all()).toEqual([
+        { id: "ucat-cloud-budget", source: "local_ledger" },
+        { id: "ucat-cloud-icon-override", source: "local_ledger" },
+        { id: "ucat-cloud-local-transaction", source: "local_ledger" },
+      ]);
+      expect(sqlite.prepare("select account_id, category_id from transactions").all()).toEqual([
+        {
+          account_id: "fa-cloud-local-transaction",
+          category_id: "ucat-cloud-local-transaction",
+        },
+      ]);
+      expect(sqlite.prepare("select from_account_id, to_account_id from transfers").all()).toEqual([
+        {
+          from_account_id: "fa-cloud-local-transfer-from",
+          to_account_id: "fa-cloud-local-transfer-to",
+        },
+      ]);
+      expect(sqlite.prepare("select account_id from opening_balances").all()).toEqual([
+        { account_id: "fa-cloud-opening-balance" },
+      ]);
+      expect(sqlite.prepare("select account_id from financial_account_identifiers").all()).toEqual([
+        { account_id: "fa-cloud-identifier" },
+      ]);
+      expect(sqlite.prepare("select category_id from category_icon_overrides").all()).toEqual([
+        { category_id: "ucat-cloud-icon-override" },
+      ]);
+      expect(sqlite.prepare("select category_id from budgets").all()).toEqual([
+        { category_id: "ucat-cloud-budget" },
+      ]);
+    } finally {
+      sqlite.close();
+    }
+  });
+
+  it("backfills Cloud Ledger-only references while preserving local references during source migration", async () => {
+    const sqlite = new Database(":memory:");
+    const now = "2026-06-25T10:00:00.000Z";
+
+    try {
+      createPreLedgerCacheReferenceSourceTables(sqlite);
+      seedLedgerReferenceSourceMigrationFixtures(sqlite, now);
+
+      applyMigrationSql(sqlite, "0038_ledger_cache_reference_source.sql");
+      expectLedgerReferenceSourceBackfill(sqlite);
+
+      mockGetDb.mockReturnValueOnce(drizzle(sqlite));
+      await deleteCloudLedgerTransactionCache(mockUserId);
+      expectCloudLedgerOnlyReferencesRemoved(sqlite);
+    } finally {
+      sqlite.close();
+    }
+  });
+
+  it("preserves local categories referenced outside transactions, budgets, and overrides during the source migration", () => {
+    const sqlite = new Database(":memory:");
+    const now = "2026-06-25T10:00:00.000Z";
+
+    try {
+      createPreLedgerCacheReferenceSourceTables(sqlite);
+      const insertCategory = sqlite.prepare(`
+        INSERT INTO user_categories (
+          id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+        ) VALUES (?, ?, ?, 'receipt', '#445566', ?, ?, NULL)
+      `);
+      [
+        ["ucat-local-bill", "Bill-only local category"],
+        ["ucat-local-review", "Review-only local category"],
+        ["ucat-local-merchant-rule", "Merchant rule-only local category"],
+        ["ucat-local-notification", "Notification-only local category"],
+        ["ucat-cloud-cache-only", "Cloud category cache-only"],
+      ].forEach(([id, name]) => insertCategory.run(id, mockUserId, name, now, now));
+      sqlite
+        .prepare("INSERT INTO bills (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("bill-1", mockUserId, "ucat-local-bill");
+      sqlite
+        .prepare("INSERT INTO review_candidates (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("review-1", mockUserId, "ucat-local-review");
+      sqlite
+        .prepare("INSERT INTO merchant_rules (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("merchant-rule-1", mockUserId, "ucat-local-merchant-rule");
+      sqlite
+        .prepare("INSERT INTO notifications (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("notification-1", mockUserId, "ucat-local-notification");
+
+      applyMigrationSql(sqlite, "0038_ledger_cache_reference_source.sql");
+
+      expect(sqlite.prepare("select id, source from user_categories order by id").all()).toEqual([
+        { id: "ucat-cloud-cache-only", source: "local_ledger" },
+        { id: "ucat-local-bill", source: "local_ledger" },
+        { id: "ucat-local-merchant-rule", source: "local_ledger" },
+        { id: "ucat-local-notification", source: "local_ledger" },
+        { id: "ucat-local-review", source: "local_ledger" },
+      ]);
+    } finally {
+      sqlite.close();
+    }
+  });
+
+  it("fails Cloud Ledger cache cleanup when the local user database cannot be opened", async () => {
+    mockGetDb.mockImplementationOnce(() => {
+      throw new Error("db decryption failed");
+    });
+
+    await expect(deleteCloudLedgerTransactionCache(mockUserId)).rejects.toThrow(
+      "db decryption failed"
+    );
+  });
+
+  it("rolls back Cloud Ledger cache cleanup when a mid-cleanup delete fails", async () => {
+    const committedDeletes: unknown[] = [];
+    const stagedDeletes: unknown[] = [];
+    const failure = new Error("category delete failed");
+    const makeDelete = (target: unknown[]) => (table: unknown) => ({
+      where: (scope: unknown) => ({
+        run: () => {
+          if (table === userCategories) {
+            throw failure;
+          }
+          target.push({ table, scope });
+        },
+      }),
+    });
+    const selectNoDependentRows = () => ({
+      from: () => ({
+        where: () => ({
+          all: () => [],
+        }),
+      }),
+    });
+    const updateNoop = () => ({
+      set: () => ({
+        where: () => ({
+          run: () => undefined,
+        }),
+      }),
+    });
+    const transactionalDb = {
+      delete: makeDelete(stagedDeletes),
+      select: selectNoDependentRows,
+      update: updateNoop,
+    };
+    const db = {
+      delete: makeDelete(committedDeletes),
+      select: selectNoDependentRows,
+      transaction: vi.fn<(...args: any[]) => any>((fn: (tx: unknown) => unknown) => {
+        const result = fn(transactionalDb);
+        committedDeletes.push(...stagedDeletes);
+        return result;
+      }),
+      update: updateNoop,
+    } as unknown as AnyDb;
+    mockGetDb.mockReturnValueOnce(db);
+
+    await expect(deleteCloudLedgerTransactionCache(mockUserId)).rejects.toThrow(
+      "category delete failed"
+    );
+
+    expect(db.transaction).toHaveBeenCalledOnce();
+    expect(committedDeletes).toEqual([]);
+  });
+
+  it("deletes all local Cloud Ledger shadows when pending outbox state is unreadable", async () => {
     const load = vi
       .fn<(...args: any[]) => any>()
       .mockRejectedValue(new CloudLedgerOutboxFailure("invalid_encrypted_outbox", "corrupt"));
     vi.mocked(getCloudLedgerOutbox).mockReturnValueOnce(createMockCloudLedgerOutbox(load) as never);
 
-    await deletePendingCloudLedgerTransactionShadows(mockUserId);
+    await deleteCloudLedgerTransactionCache(mockUserId);
 
-    expect(load).toHaveBeenCalled();
+    expect(load).not.toHaveBeenCalled();
     expect(deletedTransactionScopes).toHaveLength(1);
   });
 
@@ -2118,3 +2626,86 @@ describe("transaction boundaries", () => {
     });
   });
 });
+
+function selectReferenceSources(
+  sqlite: Database.Database,
+  tableName: "financial_accounts" | "user_categories"
+) {
+  return sqlite.prepare(`select id, source from ${tableName} order by id`).all();
+}
+
+function selectReferenceIds(
+  sqlite: Database.Database,
+  tableName: "financial_accounts" | "user_categories"
+) {
+  return sqlite.prepare(`select id from ${tableName} order by id`).all();
+}
+
+function seedLedgerReferenceSourceMigrationFixtures(sqlite: Database.Database, now: string) {
+  const insertAccount = sqlite.prepare(`
+    INSERT INTO financial_accounts (
+      id, user_id, name, kind, is_default, statement_closing_day,
+      payment_due_day, created_at, updated_at, deleted_at
+    ) VALUES (?, ?, ?, 'cash', 0, NULL, NULL, ?, ?, NULL)
+  `);
+  const insertCategory = sqlite.prepare(`
+    INSERT INTO user_categories (
+      id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+    ) VALUES (?, ?, ?, 'receipt', '#445566', ?, ?, NULL)
+  `);
+  [
+    "fa-cloud-cache-only",
+    "fa-cloud-transaction",
+    "fa-mixed-transaction",
+    "fa-local-transaction",
+  ].forEach((id) => insertAccount.run(id, mockUserId, id, now, now));
+  [
+    "ucat-cloud-cache-only",
+    "ucat-cloud-transaction",
+    "ucat-mixed-transaction",
+    "ucat-local-transaction",
+  ].forEach((id) => insertCategory.run(id, mockUserId, id, now, now));
+  seedLedgerReferenceSourceMigrationTransactions(sqlite);
+}
+
+function seedLedgerReferenceSourceMigrationTransactions(sqlite: Database.Database) {
+  const insertReferenceTransaction = sqlite.prepare(
+    "INSERT INTO transactions (id, user_id, account_id, category_id, source) VALUES (?, ?, ?, ?, ?)"
+  );
+  [
+    ["txn-cloud-mixed-reference", "fa-mixed-transaction", "ucat-mixed-transaction", "cloud_ledger"],
+    ["txn-local-mixed-reference", "fa-mixed-transaction", "ucat-mixed-transaction", "manual"],
+    ["txn-cloud-reference", "fa-cloud-transaction", "ucat-cloud-transaction", "cloud_ledger"],
+    ["txn-local-reference", "fa-local-transaction", "ucat-local-transaction", "manual"],
+  ].forEach(([id, accountId, categoryId, source]) =>
+    insertReferenceTransaction.run(id, mockUserId, accountId, categoryId, source)
+  );
+}
+
+function expectLedgerReferenceSourceBackfill(sqlite: Database.Database) {
+  expect(selectReferenceSources(sqlite, "financial_accounts")).toEqual([
+    { id: "fa-cloud-cache-only", source: "local_ledger" },
+    { id: "fa-cloud-transaction", source: "cloud_ledger" },
+    { id: "fa-local-transaction", source: "local_ledger" },
+    { id: "fa-mixed-transaction", source: "local_ledger" },
+  ]);
+  expect(selectReferenceSources(sqlite, "user_categories")).toEqual([
+    { id: "ucat-cloud-cache-only", source: "local_ledger" },
+    { id: "ucat-cloud-transaction", source: "cloud_ledger" },
+    { id: "ucat-local-transaction", source: "local_ledger" },
+    { id: "ucat-mixed-transaction", source: "local_ledger" },
+  ]);
+}
+
+function expectCloudLedgerOnlyReferencesRemoved(sqlite: Database.Database) {
+  expect(selectReferenceIds(sqlite, "financial_accounts")).toEqual([
+    { id: "fa-cloud-cache-only" },
+    { id: "fa-local-transaction" },
+    { id: "fa-mixed-transaction" },
+  ]);
+  expect(selectReferenceIds(sqlite, "user_categories")).toEqual([
+    { id: "ucat-cloud-cache-only" },
+    { id: "ucat-local-transaction" },
+    { id: "ucat-mixed-transaction" },
+  ]);
+}

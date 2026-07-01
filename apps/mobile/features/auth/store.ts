@@ -1,11 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
+import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
-import {
-  clearCloudLedgerRuntimeCache,
-  resumeCloudLedgerRuntimeCacheWrites,
-  suspendCloudLedgerRuntimeCacheWrites,
-} from "@/features/cloud-ledger/runtime.public";
-import { discardCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
 import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
 import { useLocalOnboardingState } from "@/features/onboarding/store.public";
 import {
@@ -14,15 +9,16 @@ import {
   type LocalQaSession,
   loadLocalQaSession,
 } from "@/features/qa/session.public";
-import {
-  deletePendingCloudLedgerTransactionShadows,
-  invalidateTransactionSession,
-  resumeTransactionSession,
-} from "@/features/transactions/store.public";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 import { requireUserId } from "@/shared/types/assertions";
 import type { UserId } from "@/shared/types/branded";
+import {
+  discardCloudLedgerStateAfterDeletedAccount as discardDeletedCloudLedgerAccountState,
+  discardCloudLedgerStateBeforeSignOut,
+  resumeCloudLedgerStateForUser,
+  suspendCloudLedgerStateForUser,
+} from "./cloud-ledger-session-cleanup";
 import { type OAuthProvider, signInWithProvider } from "./provider-sign-in";
 import { cleanupPushTokenBeforeSignOut, signOutRemoteSession } from "./sign-out";
 
@@ -34,6 +30,7 @@ type AuthState = {
 };
 
 type AuthActions = {
+  completeDeletedAccountSignOut: () => Promise<void>;
   restoreSession: () => Promise<void>;
   startLocalQaSession: (profile?: LocalQaProfile) => Promise<void>;
   signIn: (provider: OAuthProvider) => Promise<void>;
@@ -41,6 +38,8 @@ type AuthActions = {
 };
 
 type SetAuthState = (nextState: Partial<AuthState>) => void;
+
+const PENDING_DELETED_ACCOUNT_CLEANUP_KEY_PREFIX = "auth_pending_deleted_account_cleanup_";
 
 let authTransitionVersion = 0;
 
@@ -104,6 +103,32 @@ function captureAuthFailure(event: string, err: unknown) {
   });
 }
 
+function pendingDeletedAccountCleanupKey(userId: UserId): string {
+  return `${PENDING_DELETED_ACCOUNT_CLEANUP_KEY_PREFIX}${userId}`;
+}
+
+async function markPendingDeletedAccountCleanup(userId: UserId): Promise<void> {
+  const key = pendingDeletedAccountCleanupKey(userId);
+  await SecureStore.setItemAsync(key, "true").catch((err) => {
+    captureAuthFailure("auth_deleted_account_cleanup_marker_write_failed", err);
+    try {
+      SecureStore.setItem(key, "true");
+    } catch (fallbackErr) {
+      captureAuthFailure("auth_deleted_account_cleanup_marker_fallback_write_failed", fallbackErr);
+    }
+  });
+}
+
+async function hasPendingDeletedAccountCleanup(userId: UserId): Promise<boolean> {
+  return (await SecureStore.getItemAsync(pendingDeletedAccountCleanupKey(userId))) === "true";
+}
+
+async function clearPendingDeletedAccountCleanup(userId: UserId): Promise<void> {
+  await SecureStore.deleteItemAsync(pendingDeletedAccountCleanupKey(userId)).catch((err) => {
+    captureAuthFailure("auth_deleted_account_cleanup_marker_clear_failed", err);
+  });
+}
+
 async function restoreStoredLocalQaSession(
   set: SetAuthState,
   transitionVersion: number
@@ -129,14 +154,70 @@ async function handleMissingRemoteSession(
   clearLocalOnboardingState();
 }
 
-async function handleMissingValidatedUser(
+async function handleMissingValidatedUser(input: {
+  readonly set: SetAuthState;
+  readonly transitionVersion: number;
+  readonly recoveredSession: Session;
+  readonly userId: UserId;
+  readonly errorMessage?: string;
+}) {
+  const pendingDeletedCleanup = await readPendingDeletedAccountCleanup(
+    input.set,
+    input.transitionVersion,
+    input.recoveredSession,
+    input.userId
+  );
+  if (pendingDeletedCleanup === null) return;
+
+  const didDiscardLocalState = await discardDeletedAccountStateAfterMissingRemoteUser(
+    input.set,
+    input.transitionVersion,
+    input.recoveredSession,
+    input.userId
+  );
+  if (!didDiscardLocalState) return;
+  if (isStaleAuthTransition(input.transitionVersion)) return;
+  await signOutRemoteSession();
+  if (isStaleAuthTransition(input.transitionVersion)) return;
+  await handleMissingRemoteSession(input.set, input.transitionVersion, input.errorMessage);
+}
+
+async function readPendingDeletedAccountCleanup(
   set: SetAuthState,
   transitionVersion: number,
-  errorMessage?: string
-) {
-  await signOutRemoteSession();
-  if (isStaleAuthTransition(transitionVersion)) return;
-  await handleMissingRemoteSession(set, transitionVersion, errorMessage);
+  recoveredSession: Session,
+  userId: UserId
+): Promise<boolean | null> {
+  try {
+    return await hasPendingDeletedAccountCleanup(userId);
+  } catch (err) {
+    captureAuthFailure("auth_deleted_account_cleanup_marker_read_failed", err);
+    if (!isStaleAuthTransition(transitionVersion)) {
+      setRemoteAuthState(set, recoveredSession);
+    }
+    return null;
+  }
+}
+
+async function discardDeletedAccountStateAfterMissingRemoteUser(
+  set: SetAuthState,
+  transitionVersion: number,
+  recoveredSession: Session,
+  userId: UserId
+): Promise<boolean> {
+  suspendCloudLedgerStateForUser(userId);
+  try {
+    await discardDeletedCloudLedgerAccountState(userId);
+    await clearPendingDeletedAccountCleanup(userId);
+    return true;
+  } catch (err) {
+    resumeCloudLedgerStateForUser(userId);
+    captureAuthFailure("auth_deleted_account_pending_cleanup_retry_failed", err);
+    if (!isStaleAuthTransition(transitionVersion)) {
+      setRemoteAuthState(set, recoveredSession);
+    }
+    return false;
+  }
 }
 
 function hasMissingRemoteSession(error: unknown, session: Session | null): session is null {
@@ -161,12 +242,18 @@ async function restoreSupabaseSession(set: SetAuthState, transitionVersion: numb
     await handleMissingRemoteSession(set, transitionVersion, error?.message);
     return;
   }
-  // shouldHandleMissingValidatedUser only clears the local session for missing users
-  // matched by isMissingRemoteUserError; unexpected getUser errors fall back to this session.
+  // shouldHandleMissingValidatedUser only clears local data for missing users matched by
+  // isMissingRemoteUserError; unexpected getUser errors fall back to this session.
   const userResult = await supabase.auth.getUser();
   if (isStaleAuthTransition(transitionVersion)) return;
   if (shouldHandleMissingValidatedUser(userResult)) {
-    await handleMissingValidatedUser(set, transitionVersion, userResult.error?.message);
+    await handleMissingValidatedUser({
+      set,
+      transitionVersion,
+      recoveredSession: session,
+      userId: requireUserId(session.user.id),
+      errorMessage: userResult.error?.message,
+    });
     return;
   }
   setRemoteAuthState(set, session);
@@ -200,24 +287,8 @@ function suspendCloudLedgerStateBeforeSignOut(): UserId | null {
     return null;
   }
 
-  invalidateTransactionSession();
-  suspendCloudLedgerRuntimeCacheWrites(userId);
+  suspendCloudLedgerStateForUser(userId);
   return userId;
-}
-
-async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null): Promise<void> {
-  if (userId === null) return;
-
-  try {
-    await deletePendingCloudLedgerTransactionShadows(userId);
-    await discardCloudLedgerOutbox(userId);
-    clearCloudLedgerRuntimeCache(userId);
-  } catch (err) {
-    resumeCloudLedgerRuntimeCacheWrites(userId);
-    resumeTransactionSession(userId);
-    captureAuthFailure("auth_signout_cloud_ledger_outbox_discard_failed", err);
-    throw err;
-  }
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
@@ -225,6 +296,34 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   localQaSession: null,
   isLoading: true,
   isSigningIn: false,
+
+  completeDeletedAccountSignOut: async () => {
+    beginAuthTransition();
+
+    if (useAuthStore.getState().localQaSession) {
+      await signOutLocalQaSession(set);
+      return;
+    }
+
+    const cloudLedgerSignOutUserId = suspendCloudLedgerStateBeforeSignOut();
+    try {
+      if (cloudLedgerSignOutUserId !== null) {
+        await markPendingDeletedAccountCleanup(cloudLedgerSignOutUserId);
+      }
+      await discardDeletedCloudLedgerAccountState(cloudLedgerSignOutUserId);
+      if (cloudLedgerSignOutUserId !== null) {
+        await clearPendingDeletedAccountCleanup(cloudLedgerSignOutUserId);
+      }
+    } catch (err) {
+      if (cloudLedgerSignOutUserId !== null) {
+        resumeCloudLedgerStateForUser(cloudLedgerSignOutUserId);
+      }
+      throw err;
+    }
+    await signOutRemoteSession();
+    await clearOnboardingAndAuthState(set);
+    resetAnalyticsUser();
+  },
 
   restoreSession: async () => {
     const transitionVersion = beginAuthTransition();

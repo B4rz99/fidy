@@ -58,6 +58,7 @@ export type UserCategorySnapshotRow = SoftDeletedSnapshotRow & {
   readonly name: string;
   readonly iconName: string;
   readonly colorHex: string;
+  readonly source?: string;
 };
 
 export type CategoryIconOverrideSnapshotRow = SoftDeletedSnapshotRow & {
@@ -76,6 +77,7 @@ export type FinancialAccountSnapshotRow = SoftDeletedSnapshotRow & {
   readonly isDefault: boolean;
   readonly statementClosingDay: number | null;
   readonly paymentDueDay: number | null;
+  readonly source?: string;
 };
 
 export type OpeningBalanceSnapshotRow = SoftDeletedSnapshotRow & {

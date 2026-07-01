@@ -23,6 +23,7 @@ export function buildDefaultFinancialAccountRow(
     paymentDueDay: null,
     createdAt: now,
     isDefault: true,
+    source: "local_ledger",
     updatedAt: now,
     deletedAt: null,
   };

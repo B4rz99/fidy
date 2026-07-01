@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
           success: false,
           error: "delete_failed",
           failureCount: deleteResult.failures.length,
+          localCleanupRequired: deleteResult.localCleanupRequired === true,
         },
         500
       );
