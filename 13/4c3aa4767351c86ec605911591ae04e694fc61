@@ -1,0 +1,22 @@
+apps/mobile/__tests__/edge-functions/delete-account-cleanup.test.ts
+  s_6c070d47258744::t_6c4ec78f3e26b0 79-100
+  s_6c070d47258744::t_ce8a17ed58e678 176,203-205
+supabase/functions/delete-account/cleanup.ts
+  s_6c070d47258744::t_838036dd5a5f59 110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "134c3aa4767351c86ec605911591ae04e694fc61",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
