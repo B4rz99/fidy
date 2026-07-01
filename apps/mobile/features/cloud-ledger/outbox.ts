@@ -652,7 +652,7 @@ async function flushPendingChanges(
         removableChanges: removablePendingChanges(progress.removableChanges, batch, outcome),
         repairStates: [
           ...progress.repairStates,
-          ...repairStatesFromOutcome(batch, outcome, retryAttempts),
+          ...repairStatesFromOutcome(batch, outcome, retryAttempts, progress.repairStates),
         ],
         retryStates: [
           ...progress.retryStates,
@@ -667,7 +667,8 @@ async function flushPendingChanges(
 function repairStatesFromOutcome(
   batch: readonly CloudLedgerPendingChange[],
   outcome: CloudLedgerApplyPendingChangesAccepted,
-  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>,
+  previousRepairStates: readonly CloudLedgerRepairState[]
 ): readonly CloudLedgerRepairState[] {
   if (outcome.changeOutcomes.length === 0) {
     return [];
@@ -679,7 +680,13 @@ function repairStatesFromOutcome(
   return batchOutcomes
     .filter((changeOutcome) => shouldSurfaceRepairOutcome(changeOutcome, retryAttempts))
     .map((changeOutcome) =>
-      repairStateFromOutcome(batch, batchOutcomes, changeOutcome, retryAttempts)
+      repairStateFromOutcome(
+        batch,
+        batchOutcomes,
+        changeOutcome,
+        retryAttempts,
+        previousRepairStates
+      )
     );
 }
 
@@ -687,9 +694,16 @@ function repairStateFromOutcome(
   batch: readonly CloudLedgerPendingChange[],
   batchOutcomes: readonly CloudLedgerPendingChangeOutcome[],
   outcome: CloudLedgerPendingChangeOutcome,
-  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>,
+  previousRepairStates: readonly CloudLedgerRepairState[]
 ): CloudLedgerRepairState {
-  const parentChangeId = parentProblemChangeId(batch, batchOutcomes, outcome, retryAttempts);
+  const parentChangeId = parentProblemChangeId(
+    batch,
+    batchOutcomes,
+    outcome,
+    retryAttempts,
+    previousRepairStates
+  );
   return parentChangeId === undefined
     ? { changeId: outcome.changeId, outcome }
     : { changeId: outcome.changeId, outcome, parentChangeId };
@@ -699,18 +713,20 @@ function parentProblemChangeId(
   batch: readonly CloudLedgerPendingChange[],
   batchOutcomes: readonly CloudLedgerPendingChangeOutcome[],
   outcome: CloudLedgerPendingChangeOutcome,
-  retryAttempts: ReadonlyMap<LedgerChangeId, number>
+  retryAttempts: ReadonlyMap<LedgerChangeId, number>,
+  previousRepairStates: readonly CloudLedgerRepairState[]
 ): LedgerChangeId | undefined {
   if (outcome.code !== "dependency_failed") {
     return undefined;
   }
   const dependencies = batch.find((change) => change.id === outcome.changeId)?.dependencies ?? [];
-  const surfacedParentIds = new Set(
-    batchOutcomes
+  const surfacedParentIds = new Set([
+    ...previousRepairStates.map((repair) => repair.changeId),
+    ...batchOutcomes
       .filter((candidate) => candidate.changeId !== outcome.changeId)
       .filter((candidate) => shouldSurfaceRepairOutcome(candidate, retryAttempts))
-      .map((candidate) => candidate.changeId)
-  );
+      .map((candidate) => candidate.changeId),
+  ]);
   return dependencies.find((dependency) => surfacedParentIds.has(dependency)) ?? dependencies[0];
 }
 

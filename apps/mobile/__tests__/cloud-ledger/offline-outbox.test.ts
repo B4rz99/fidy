@@ -1867,6 +1867,102 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(acceptedSupabase.functionsInvoke).not.toHaveBeenCalled();
   });
 
+  it("identifies dependency failure parents across chunked Pending Change Set flushes", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const pendingChanges = Array.from({ length: 11 }, (_, index) => ({
+      changeId: requireLedgerChangeId(`change-chunked-parent-${String(index).padStart(2, "0")}`),
+      createdAt: requireIsoDateTime(`2026-06-02T10:${String(index + 10).padStart(2, "0")}:00.000Z`),
+      transaction: acceptedCoffeeLedgerTransaction({
+        description: `Coffee chunked ${index}`,
+        version: index + 2,
+        updatedAt: `2026-06-02T10:${String(index + 10).padStart(2, "0")}:00.000Z`,
+      }),
+    }));
+    const optimisticCache = await pendingChanges.reduce<
+      Promise<Awaited<ReturnType<typeof createOfflineCloudLedgerTransaction>>>
+    >(
+      async (previousCache, pending, index) =>
+        await amendOfflineCloudLedgerTransaction({
+          cache: await previousCache,
+          changeId: pending.changeId,
+          createdAt: pending.createdAt,
+          expectedVersion: index + 1,
+          outbox,
+          transaction: pending.transaction,
+        }),
+      Promise.resolve(createAcceptedCoffeeLedgerCache())
+    );
+    const acceptedDependencyIds = pendingChanges.slice(0, 9).map((change) => change.changeId);
+    const failedParentId = pendingChanges[9]?.changeId;
+    const dependentChildId = pendingChanges[10]?.changeId;
+    if (failedParentId === undefined || dependentChildId === undefined) {
+      throw new Error("Expected chunked parent and child changes");
+    }
+    const supabase = createCloudLedgerSupabase({
+      createTransactionPayload: (changes: readonly CloudLedgerApplyPendingChangeRequest[]) => {
+        const changeIds = changes.map((change) => change.id);
+        return changeIds.includes(dependentChildId)
+          ? {
+              code: "accepted",
+              acceptedChangeIds: [],
+              rejectedChangeIds: [dependentChildId],
+              changeOutcomes: [
+                {
+                  changeId: dependentChildId,
+                  status: "repair_required",
+                  code: "dependency_failed",
+                },
+              ],
+              cursor: "ledger:9",
+            }
+          : {
+              code: "accepted",
+              acceptedChangeIds: acceptedDependencyIds,
+              rejectedChangeIds: [failedParentId],
+              changeOutcomes: [
+                ...acceptedDependencyIds.map((changeId) => ({
+                  changeId,
+                  status: "accepted" as const,
+                  code: "accepted",
+                })),
+                {
+                  changeId: failedParentId,
+                  status: "repair_required" as const,
+                  code: "invalid_transaction",
+                },
+              ],
+              cursor: "ledger:8",
+            };
+      },
+      refreshPayload: {
+        ...emptyRefreshPayload("ledger:9"),
+        transactions: [acceptedCoffeeTransaction({ description: "Coffee accepted dependency" })],
+      },
+    });
+
+    await flushPendingCloudLedgerChanges({
+      cache: optimisticCache,
+      outbox,
+      supabase: supabase.client,
+    });
+
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: failedParentId,
+        reason: "invalidTransaction",
+      }),
+      expect.objectContaining({
+        id: dependentChildId,
+        reason: "dependencyFailure",
+        parentChangeId: failedParentId,
+      }),
+    ]);
+  });
+
   it("resumes a dependency-failed child after the parent repair is accepted", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
