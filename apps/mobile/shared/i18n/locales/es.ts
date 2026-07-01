@@ -820,7 +820,7 @@ const es = {
     deleteAccount: "Eliminar cuenta",
     deleteAccountTitle: "Eliminar cuenta",
     deleteAccountWarning:
-      "Esto eliminará permanentemente tu cuenta, los registros financieros de Cloud Ledger, las muestras de mejora de captura vinculadas y los datos operativos de la cuenta. No se podrá recuperar.",
+      "Esto eliminará permanentemente tu cuenta, los registros financieros de Cloud Ledger, las copias privadas, las muestras de mejora de captura vinculadas y los datos operativos de la cuenta. No se podrá recuperar.",
     deleteAccountUnsyncedWarning: {
       one: "Tienes %{count} cambio sin sincronizar que se perderá.",
       other: "Tienes %{count} cambios sin sincronizar que se perderán.",

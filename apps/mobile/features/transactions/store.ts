@@ -8,7 +8,10 @@ import {
   type CloudLedgerFinancialAccount,
   type CloudLedgerTransaction,
 } from "@/features/cloud-ledger/public";
-import { getCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
+import {
+  getCloudLedgerOutbox,
+  type CloudLedgerPendingChange,
+} from "@/features/cloud-ledger/outbox.public";
 import { getCloudLedgerRuntimeCache } from "@/features/cloud-ledger/runtime.public";
 import {
   enqueueCloudLedgerOptimisticAmend,
@@ -57,6 +60,7 @@ import {
   applyCloudLedgerOptimisticView,
   applyRuntimeCloudLedgerTransactions,
 } from "./services/cloud-ledger-optimistic-snapshot";
+import { promoteCloudLedgerReferencesWithLocalDependents } from "./cloud-ledger-cache-cleanup";
 import { createTransactionQueryService } from "./services/create-transaction-query-service";
 import { toTransactionFormInput } from "./store/form-input";
 import { useTransactionStore } from "./store/state";
@@ -595,6 +599,7 @@ export async function deleteCloudLedgerTransactionCache(userId: UserId): Promise
 }
 
 function deleteCloudLedgerReferenceRows(db: AnyDb, userId: UserId): void {
+  promoteCloudLedgerReferencesWithLocalDependents(db, userId);
   deleteCloudLedgerFinancialAccountReferences(db, userId);
   deleteCloudLedgerUserCategoryReferences(db, userId);
 }

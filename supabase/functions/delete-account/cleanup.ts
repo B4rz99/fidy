@@ -72,14 +72,14 @@ export async function deleteAccountRemoteData(
   supabase: DeleteAccountSupabaseClient,
   userId: string
 ): Promise<DeleteAccountRemoteResult> {
-  const backupBlobFailure = await deleteBackupBlobs(supabase, userId);
-  if (backupBlobFailure !== null) {
-    return { success: false, failures: [backupBlobFailure] };
-  }
-
   const cloudLedgerFailure = await deleteCloudLedgerAccountData(supabase, userId);
   if (cloudLedgerFailure !== null) {
     return { success: false, failures: [cloudLedgerFailure] };
+  }
+
+  const backupBlobFailure = await deleteBackupBlobs(supabase, userId);
+  if (backupBlobFailure !== null) {
+    return { success: false, failures: [backupBlobFailure] };
   }
 
   const cleanupFailures = [

@@ -809,7 +809,7 @@ const en = {
     deleteAccount: "Delete account",
     deleteAccountTitle: "Delete account",
     deleteAccountWarning:
-      "This will permanently delete your account, Cloud Ledger financial records, linked capture improvement samples, and operational account data. This cannot be recovered.",
+      "This will permanently delete your account, Cloud Ledger financial records, private backups, linked capture improvement samples, and operational account data. This cannot be recovered.",
     deleteAccountUnsyncedWarning: {
       one: "You have %{count} unsynced change that will be lost.",
       other: "You have %{count} unsynced changes that will be lost.",

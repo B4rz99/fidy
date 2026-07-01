@@ -69,6 +69,22 @@ describe("delete-account remote cleanup", () => {
     expect(supabase.deleteUser).not.toHaveBeenCalled();
   });
 
+  it("does not delete backup blobs before Cloud Ledger cleanup succeeds", async () => {
+    const supabase = createDeleteAccountSupabase({
+      backupRows: [{ id: "backup-1" }],
+      rpcError: { message: "ledger cleanup unavailable" },
+    });
+
+    await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
+      success: false,
+      failures: [{ target: "cloud_ledger", message: "ledger cleanup unavailable" }],
+    });
+
+    expect(supabase.storageRemove).not.toHaveBeenCalled();
+    expect(supabase.tableDeletes()).toEqual([]);
+    expect(supabase.deleteUser).not.toHaveBeenCalled();
+  });
+
   it("deletes every backup blob page before removing backup metadata", async () => {
     const backupRows = Array.from({ length: 1001 }, (_, index) => ({ id: `backup-${index}` }));
     const supabase = createDeleteAccountSupabase({ backupRows });

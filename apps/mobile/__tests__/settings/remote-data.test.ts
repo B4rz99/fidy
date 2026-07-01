@@ -92,9 +92,11 @@ describe("settings remote callers", () => {
     expect(en.settings.deleteAccountWarning).toContain("Cloud Ledger");
     expect(en.settings.deleteAccountWarning).toContain("financial records");
     expect(en.settings.deleteAccountWarning).toContain("capture improvement samples");
+    expect(en.settings.deleteAccountWarning).toContain("private backups");
     expect(es.settings.deleteAccountWarning).toContain("Cloud Ledger");
     expect(es.settings.deleteAccountWarning).toContain("registros financieros");
     expect(es.settings.deleteAccountWarning).toContain("muestras de mejora de captura");
+    expect(es.settings.deleteAccountWarning).toContain("copias privadas");
   });
 
   test("logout pending-change copy says unsent Cloud Ledger work is discarded", () => {

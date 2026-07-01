@@ -154,32 +154,32 @@ async function handleMissingRemoteSession(
   clearLocalOnboardingState();
 }
 
-async function handleMissingValidatedUser(
-  set: SetAuthState,
-  transitionVersion: number,
-  recoveredSession: Session,
-  userId: UserId,
-  errorMessage?: string
-) {
+async function handleMissingValidatedUser(input: {
+  readonly set: SetAuthState;
+  readonly transitionVersion: number;
+  readonly recoveredSession: Session;
+  readonly userId: UserId;
+  readonly errorMessage?: string;
+}) {
   const pendingDeletedCleanup = await readPendingDeletedAccountCleanup(
-    set,
-    transitionVersion,
-    recoveredSession,
-    userId
+    input.set,
+    input.transitionVersion,
+    input.recoveredSession,
+    input.userId
   );
   if (pendingDeletedCleanup === null) return;
 
   const didDiscardLocalState = await discardDeletedAccountStateAfterMissingRemoteUser(
-    set,
-    transitionVersion,
-    recoveredSession,
-    userId
+    input.set,
+    input.transitionVersion,
+    input.recoveredSession,
+    input.userId
   );
   if (!didDiscardLocalState) return;
-  if (isStaleAuthTransition(transitionVersion)) return;
+  if (isStaleAuthTransition(input.transitionVersion)) return;
   await signOutRemoteSession();
-  if (isStaleAuthTransition(transitionVersion)) return;
-  await handleMissingRemoteSession(set, transitionVersion, errorMessage);
+  if (isStaleAuthTransition(input.transitionVersion)) return;
+  await handleMissingRemoteSession(input.set, input.transitionVersion, input.errorMessage);
 }
 
 async function readPendingDeletedAccountCleanup(
@@ -247,13 +247,13 @@ async function restoreSupabaseSession(set: SetAuthState, transitionVersion: numb
   const userResult = await supabase.auth.getUser();
   if (isStaleAuthTransition(transitionVersion)) return;
   if (shouldHandleMissingValidatedUser(userResult)) {
-    await handleMissingValidatedUser(
+    await handleMissingValidatedUser({
       set,
       transitionVersion,
-      session,
-      requireUserId(session.user.id),
-      userResult.error?.message
-    );
+      recoveredSession: session,
+      userId: requireUserId(session.user.id),
+      errorMessage: userResult.error?.message,
+    });
     return;
   }
   setRemoteAuthState(set, session);
