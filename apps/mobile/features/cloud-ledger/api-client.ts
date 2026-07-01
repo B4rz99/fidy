@@ -113,7 +113,7 @@ type CloudLedgerWirePendingChangeOutcome = {
 export type CloudLedgerApplyPendingCreateTransactionChange = {
   readonly id: LedgerChangeId;
   readonly kind: "createTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
   readonly idempotencyKey: LedgerChangeId;
   readonly dependencies: readonly LedgerChangeId[];
   readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
@@ -124,7 +124,7 @@ export type CloudLedgerApplyPendingCreateTransactionChange = {
 export type CloudLedgerApplyPendingAmendTransactionChange = {
   readonly id: LedgerChangeId;
   readonly kind: "amendTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
   readonly idempotencyKey: LedgerChangeId;
   readonly dependencies: readonly LedgerChangeId[];
   readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
@@ -135,7 +135,7 @@ export type CloudLedgerApplyPendingAmendTransactionChange = {
 export type CloudLedgerApplyPendingDeleteTransactionChange = {
   readonly id: LedgerChangeId;
   readonly kind: "deleteTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
   readonly idempotencyKey: LedgerChangeId;
   readonly dependencies: readonly LedgerChangeId[];
   readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];

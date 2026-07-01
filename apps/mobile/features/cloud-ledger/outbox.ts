@@ -37,6 +37,7 @@ import {
   mergeAutoRetryStates,
   mergeRepairStates,
   repairItemsFromSnapshot,
+  repairStatesAfterAcceptedChanges,
   repairStatesFromOutcome,
   repairStatesWithAcceptedTransactionVersions,
   retryStatesFromOutcome,
@@ -187,7 +188,7 @@ export function createEncryptedCloudLedgerOutbox(input: {
           changesToRemove
         );
         const removedChangeIds = new Set(changesToRemove.map((change) => change.id));
-        const repairs = snapshot.repairs.filter((repair) => !removedChangeIds.has(repair.changeId));
+        const repairs = repairStatesAfterAcceptedChanges(snapshot.repairs, removedChangeIds);
         if (changes.length === 0) {
           await input.storage.clear();
           return;

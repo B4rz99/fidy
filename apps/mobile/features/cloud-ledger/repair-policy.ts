@@ -195,6 +195,21 @@ export function mergeAutoRetryStates(
   return [...existing.filter((retry) => !incomingIds.has(retry.changeId)), ...incoming];
 }
 
+export function repairStatesAfterAcceptedChanges(
+  existing: readonly CloudLedgerRepairState[],
+  acceptedChangeIds: ReadonlySet<LedgerChangeId>
+): readonly CloudLedgerRepairState[] {
+  return existing.filter(
+    (repair) =>
+      !acceptedChangeIds.has(repair.changeId) &&
+      !(
+        repair.outcome.code === "dependency_failed" &&
+        repair.parentChangeId !== undefined &&
+        acceptedChangeIds.has(repair.parentChangeId)
+      )
+  );
+}
+
 function repairStateFromOutcome(
   batch: readonly CloudLedgerPendingChange[],
   batchOutcomes: readonly CloudLedgerPendingChangeOutcome[],

@@ -19,7 +19,7 @@ import {
 export type CloudLedgerPendingCreateTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "createTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
   readonly dependencies?: readonly LedgerChangeId[];
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
   readonly createdAt: IsoDateTime;
@@ -28,7 +28,7 @@ export type CloudLedgerPendingCreateTransaction = {
 export type CloudLedgerPendingAmendTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "amendTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
   readonly dependencies?: readonly LedgerChangeId[];
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
   readonly expectedVersion: number;
@@ -38,7 +38,7 @@ export type CloudLedgerPendingAmendTransaction = {
 export type CloudLedgerPendingDeleteTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "deleteTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
   readonly dependencies?: readonly LedgerChangeId[];
   readonly transactionId: TransactionId;
   readonly expectedVersion: number;
@@ -112,15 +112,13 @@ export function withPendingChangeDependencies(
 
 export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
   const record = requireRecord(value, "pending change");
+  const commandVersion = requirePositiveInteger(record.commandVersion, "commandVersion");
   const dependencies = parseLedgerChangeDependencies(record.dependencies);
-  if (record.commandVersion !== 1) {
-    throw new Error("pending change command version must be supported");
-  }
   if (record.kind === "createTransaction") {
     return {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "createTransaction",
-      commandVersion: 1,
+      commandVersion,
       dependencies,
       transaction: parseCreateTransaction(record.transaction),
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
@@ -130,7 +128,7 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
     return {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "amendTransaction",
-      commandVersion: 1,
+      commandVersion,
       dependencies,
       transaction: parseCreateTransaction(record.transaction),
       expectedVersion: requirePositiveInteger(record.expectedVersion, "expectedVersion"),
@@ -141,7 +139,7 @@ export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
     return {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "deleteTransaction",
-      commandVersion: 1,
+      commandVersion,
       dependencies,
       transactionId: requireTransactionId(requireString(record.transactionId, "transactionId")),
       expectedVersion: requirePositiveInteger(record.expectedVersion, "expectedVersion"),

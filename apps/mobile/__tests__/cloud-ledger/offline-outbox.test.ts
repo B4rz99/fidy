@@ -2105,6 +2105,103 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ]);
   });
 
+  it("does not strand dependency repairs when storage fails after a parent is accepted", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const parentCache = await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-parent-atomic-cleanup"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const childAmend = acceptedCoffeeLedgerTransaction({
+      description: "Coffee child waits for atomic cleanup",
+      version: 2,
+      updatedAt: "2026-06-02T10:04:00.000Z",
+    });
+    const optimisticCache = await amendOfflineCloudLedgerTransaction({
+      cache: parentCache,
+      changeId: requireLedgerChangeId("change-child-atomic-cleanup"),
+      createdAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transaction: childAmend,
+    });
+    const failedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-parent-atomic-cleanup", "change-child-atomic-cleanup"],
+        changeOutcomes: [
+          {
+            changeId: "change-parent-atomic-cleanup",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+          {
+            changeId: "change-child-atomic-cleanup",
+            status: "repair_required",
+            code: "dependency_failed",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+    const parentAcceptedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-parent-atomic-cleanup"],
+        rejectedChangeIds: [],
+        changeOutcomes: [
+          { changeId: "change-parent-atomic-cleanup", status: "accepted", code: "accepted" },
+        ],
+        cursor: "ledger:9",
+      },
+      refreshPayload: {
+        ...emptyRefreshPayload("ledger:9"),
+        transactions: [acceptedCoffeeTransaction({ description: "Coffee parent accepted" })],
+      },
+    });
+
+    const repairCache = await flushPendingCloudLedgerChanges({
+      cache: optimisticCache,
+      outbox,
+      supabase: failedSupabase.client,
+    });
+    const fixedParent = acceptedCoffeeLedgerTransaction({
+      description: "Coffee parent fixed",
+      updatedAt: "2026-06-02T10:06:00.000Z",
+    });
+    const resubmitCache = await resubmitCloudLedgerRepairTransactionChange({
+      cache: repairCache,
+      changeId: requireLedgerChangeId("change-parent-atomic-cleanup"),
+      createdAt: requireIsoDateTime("2026-06-02T10:06:00.000Z"),
+      outbox,
+      transaction: fixedParent,
+    });
+
+    storage.failNthWrite(2, "simulated crash after accepted parent removal");
+    await flushPendingCloudLedgerChanges({
+      cache: resubmitCache,
+      outbox,
+      supabase: parentAcceptedSupabase.client,
+    }).catch(() => undefined);
+
+    const restartedOutbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    expect(await loadCloudLedgerRepairItems(restartedOutbox)).toEqual([]);
+    expect((await restartedOutbox.load()).map((change) => change.id)).toEqual([
+      "change-child-atomic-cleanup",
+    ]);
+  });
+
   it("surfaces unsupported command versions as app-update repair items that cannot be retried", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -2166,6 +2263,77 @@ describe("mobile Cloud Ledger offline outbox", () => {
       }),
     ]);
     expect(acceptedSupabase.functionsInvoke).not.toHaveBeenCalled();
+  });
+
+  it("surfaces persisted unsupported command versions instead of treating the outbox as corrupt", async () => {
+    const storage = createMemoryOutboxStorage();
+    await writePlainOutboxSnapshot(storage, {
+      version: 1,
+      changes: [
+        {
+          id: "change-persisted-unsupported-version",
+          kind: "createTransaction",
+          commandVersion: 2,
+          dependencies: [],
+          transaction: offlineCoffeeCommand().transaction,
+          createdAt: "2026-06-02T10:03:00.000Z",
+        },
+      ],
+      retryAttempts: [],
+      repairs: [],
+    });
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const failedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-persisted-unsupported-version"],
+        changeOutcomes: [
+          {
+            changeId: "change-persisted-unsupported-version",
+            status: "requires_app_update",
+            code: "unsupported_command_version",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+
+    await expect(outbox.load()).resolves.toEqual([
+      expect.objectContaining({
+        id: "change-persisted-unsupported-version",
+        commandVersion: 2,
+      }),
+    ]);
+    await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: failedSupabase.client,
+    });
+
+    expect(
+      failedSupabase.functionsInvoke.mock.calls
+        .filter(([, options]) => options.body.action === "applyPendingChanges")
+        .flatMap(([, options]) =>
+          ((options as CloudLedgerInvokeOptions).body.changes ?? []).map((change) => change)
+        )
+    ).toEqual([
+      expect.objectContaining({
+        id: "change-persisted-unsupported-version",
+        commandVersion: 2,
+      }),
+    ]);
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-persisted-unsupported-version",
+        reason: "unsupportedCommandVersion",
+        actions: ["discard"],
+      }),
+    ]);
   });
 
   it("surfaces terminal backend repair outcomes and holds them from automatic retry", async () => {
@@ -2673,23 +2841,59 @@ async function enqueueCloudLedgerPendingChanges(
 
 function createMemoryOutboxStorage() {
   let stored: EncryptedCloudLedgerOutboxSnapshot | null = null;
+  let writeFailure: { readonly message: string; readonly writeNumber: number } | null = null;
   const adapter: EncryptedCloudLedgerOutboxStorage = {
     clear: async () => {
       stored = null;
     },
     read: async () => stored,
     write: async (snapshot) => {
+      if (writeFailure !== null) {
+        if (writeFailure.writeNumber === 1) {
+          const { message } = writeFailure;
+          writeFailure = null;
+          throw new Error(message);
+        }
+        writeFailure = {
+          ...writeFailure,
+          writeNumber: writeFailure.writeNumber - 1,
+        };
+      }
       stored = snapshot;
     },
   };
 
   return {
     adapter,
+    failNthWrite: (writeNumber: number, message: string) => {
+      writeFailure = { message, writeNumber };
+    },
     readRaw: () => stored,
     replaceRaw: (snapshot: EncryptedCloudLedgerOutboxSnapshot | null) => {
       stored = snapshot;
     },
   };
+}
+
+async function writePlainOutboxSnapshot(
+  storage: ReturnType<typeof createMemoryOutboxStorage>,
+  snapshot: unknown
+): Promise<void> {
+  const nonce = Crypto.getRandomBytes(12);
+  const sealedData = await Crypto.aesEncryptAsync(
+    new TextEncoder().encode(JSON.stringify(snapshot)),
+    await Crypto.AESEncryptionKey.import(OUTBOX_KEY),
+    {
+      nonce: { bytes: nonce },
+      tagLength: 16,
+    }
+  );
+  await storage.adapter.write({
+    version: 1,
+    algorithm: "AES-GCM",
+    nonce: await sealedData.iv("base64"),
+    ciphertext: await sealedData.ciphertext({ includeTag: true, encoding: "base64" }),
+  });
 }
 
 async function withTemporaryGlobalCrypto<Result>(
