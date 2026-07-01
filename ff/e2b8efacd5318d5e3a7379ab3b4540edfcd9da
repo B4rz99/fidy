@@ -1,0 +1,24 @@
+apps/mobile/features/auth/store.ts
+  s_6c070d47258744::t_2eec489c65ab4e 120-121,123-127
+  s_6c070d47258744::t_bef03a3205de58 122,128
+apps/mobile/__tests__/auth/store.test.ts
+  s_6c070d47258744::t_dc1e16338b7a45 3,681-689
+  s_6c070d47258744::t_001c5db0c1fd3b 695-698,701-705,707-750
+  s_6c070d47258744::t_1afc31af950d60 690-694,699-700,706
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "ffe2b8efacd5318d5e3a7379ab3b4540edfcd9da",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
