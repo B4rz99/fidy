@@ -143,6 +143,16 @@ export type CloudLedgerApplyPendingDeleteTransactionChange = {
   readonly transactionId: TransactionId;
 };
 
+export type CloudLedgerApplyPendingUnsupportedChange = {
+  readonly id: LedgerChangeId;
+  readonly kind: string;
+  readonly commandVersion: number;
+  readonly idempotencyKey: LedgerChangeId;
+  readonly dependencies: readonly LedgerChangeId[];
+  readonly expectedVersions: readonly CloudLedgerExpectedRecordVersion[];
+  readonly clientTimestamp?: string;
+};
+
 export type CloudLedgerExpectedRecordVersion = {
   readonly recordType: "transaction";
   readonly recordId: TransactionId;
@@ -163,6 +173,7 @@ export type CloudLedgerApplyPendingChangesCommand = {
     | CloudLedgerApplyPendingAmendTransactionChange
     | CloudLedgerApplyPendingCreateTransactionChange
     | CloudLedgerApplyPendingDeleteTransactionChange
+    | CloudLedgerApplyPendingUnsupportedChange
   )[];
 };
 

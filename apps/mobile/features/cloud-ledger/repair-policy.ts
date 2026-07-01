@@ -83,7 +83,11 @@ export function repairStatesWithAcceptedTransactionVersions(
   return repairs.map((repair) => {
     const change = changesById.get(repair.changeId);
     const transactionId =
-      change?.kind === "deleteTransaction" ? change.transactionId : change?.transaction.id;
+      change?.kind === "deleteTransaction"
+        ? change.transactionId
+        : change?.kind === "unsupported"
+          ? undefined
+          : change?.transaction.id;
     const acceptedTransactionVersion =
       transactionId === undefined ? undefined : versionsByTransactionId.get(transactionId);
     return acceptedTransactionVersion === undefined
@@ -302,5 +306,7 @@ function repairPresentation(
 function editableRepairActions(
   change: CloudLedgerPendingChange
 ): readonly CloudLedgerRepairAction[] {
-  return change.kind === "deleteTransaction" ? ["discard"] : ["editAndResubmit", "discard"];
+  return change.kind === "deleteTransaction" || change.kind === "unsupported"
+    ? ["discard"]
+    : ["editAndResubmit", "discard"];
 }

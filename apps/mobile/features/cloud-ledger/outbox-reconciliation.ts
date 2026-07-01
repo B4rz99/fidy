@@ -113,16 +113,24 @@ const pendingTransactionChangeKey = (change: PendingTransactionChange): string =
 };
 
 const pendingChangeKey = (change: CloudLedgerPendingChange): string =>
-  change.kind === "deleteTransaction"
+  change.kind === "unsupported"
     ? [
         change.id,
         change.kind,
+        change.originalKind,
         change.commandVersion,
-        change.createdAt,
-        change.transactionId,
-        change.expectedVersion,
+        change.createdAt ?? "",
       ].join(KEY_SEPARATOR)
-    : pendingTransactionChangeKey(change);
+    : change.kind === "deleteTransaction"
+      ? [
+          change.id,
+          change.kind,
+          change.commandVersion,
+          change.createdAt,
+          change.transactionId,
+          change.expectedVersion,
+        ].join(KEY_SEPARATOR)
+      : pendingTransactionChangeKey(change);
 
 export function acceptedPendingChanges(
   batch: readonly CloudLedgerPendingChange[],
