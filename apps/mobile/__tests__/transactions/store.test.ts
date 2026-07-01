@@ -2313,84 +2313,20 @@ describe("transaction boundaries", () => {
     }
   });
 
-  it("preserves unreferenced local references during the source migration", async () => {
+  it("backfills Cloud Ledger-only references while preserving local references during source migration", async () => {
     const sqlite = new Database(":memory:");
     const now = "2026-06-25T10:00:00.000Z";
 
     try {
       createPreLedgerCacheReferenceSourceTables(sqlite);
-      const insertAccount = sqlite.prepare(`
-        INSERT INTO financial_accounts (
-          id, user_id, name, kind, is_default, statement_closing_day,
-          payment_due_day, created_at, updated_at, deleted_at
-        ) VALUES (?, ?, ?, 'cash', 0, NULL, NULL, ?, ?, NULL)
-      `);
-      const insertCategory = sqlite.prepare(`
-        INSERT INTO user_categories (
-          id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
-        ) VALUES (?, ?, ?, 'receipt', '#445566', ?, ?, NULL)
-      `);
-      [
-        ["fa-cloud-cache-only", "Cloud account cache-only"],
-        ["fa-cloud-transaction", "Cloud account with transaction"],
-        ["fa-local-transaction", "Local account with transaction"],
-      ].forEach(([id, name]) => insertAccount.run(id, mockUserId, name, now, now));
-      [
-        ["ucat-cloud-cache-only", "Cloud category cache-only"],
-        ["ucat-cloud-transaction", "Cloud category with transaction"],
-        ["ucat-local-transaction", "Local category with transaction"],
-      ].forEach(([id, name]) => insertCategory.run(id, mockUserId, name, now, now));
-      sqlite
-        .prepare(
-          "INSERT INTO transactions (id, user_id, account_id, category_id, source) VALUES (?, ?, ?, ?, ?)"
-        )
-        .run(
-          "txn-cloud-reference",
-          mockUserId,
-          "fa-cloud-transaction",
-          "ucat-cloud-transaction",
-          "cloud_ledger"
-        );
-      sqlite
-        .prepare(
-          "INSERT INTO transactions (id, user_id, account_id, category_id, source) VALUES (?, ?, ?, ?, ?)"
-        )
-        .run(
-          "txn-local-reference",
-          mockUserId,
-          "fa-local-transaction",
-          "ucat-local-transaction",
-          "manual"
-        );
+      seedLedgerReferenceSourceMigrationFixtures(sqlite, now);
 
       applyMigrationSql(sqlite, "0038_ledger_cache_reference_source.sql");
-
-      expect(sqlite.prepare("select id, source from financial_accounts order by id").all()).toEqual(
-        [
-          { id: "fa-cloud-cache-only", source: "local_ledger" },
-          { id: "fa-cloud-transaction", source: "local_ledger" },
-          { id: "fa-local-transaction", source: "local_ledger" },
-        ]
-      );
-      expect(sqlite.prepare("select id, source from user_categories order by id").all()).toEqual([
-        { id: "ucat-cloud-cache-only", source: "local_ledger" },
-        { id: "ucat-cloud-transaction", source: "local_ledger" },
-        { id: "ucat-local-transaction", source: "local_ledger" },
-      ]);
+      expectLedgerReferenceSourceBackfill(sqlite);
 
       mockGetDb.mockReturnValueOnce(drizzle(sqlite));
       await deleteCloudLedgerTransactionCache(mockUserId);
-
-      expect(sqlite.prepare("select id from financial_accounts order by id").all()).toEqual([
-        { id: "fa-cloud-cache-only" },
-        { id: "fa-cloud-transaction" },
-        { id: "fa-local-transaction" },
-      ]);
-      expect(sqlite.prepare("select id from user_categories order by id").all()).toEqual([
-        { id: "ucat-cloud-cache-only" },
-        { id: "ucat-cloud-transaction" },
-        { id: "ucat-local-transaction" },
-      ]);
+      expectCloudLedgerOnlyReferencesRemoved(sqlite);
     } finally {
       sqlite.close();
     }
@@ -2690,3 +2626,86 @@ describe("transaction boundaries", () => {
     });
   });
 });
+
+function selectReferenceSources(
+  sqlite: Database.Database,
+  tableName: "financial_accounts" | "user_categories"
+) {
+  return sqlite.prepare(`select id, source from ${tableName} order by id`).all();
+}
+
+function selectReferenceIds(
+  sqlite: Database.Database,
+  tableName: "financial_accounts" | "user_categories"
+) {
+  return sqlite.prepare(`select id from ${tableName} order by id`).all();
+}
+
+function seedLedgerReferenceSourceMigrationFixtures(sqlite: Database.Database, now: string) {
+  const insertAccount = sqlite.prepare(`
+    INSERT INTO financial_accounts (
+      id, user_id, name, kind, is_default, statement_closing_day,
+      payment_due_day, created_at, updated_at, deleted_at
+    ) VALUES (?, ?, ?, 'cash', 0, NULL, NULL, ?, ?, NULL)
+  `);
+  const insertCategory = sqlite.prepare(`
+    INSERT INTO user_categories (
+      id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+    ) VALUES (?, ?, ?, 'receipt', '#445566', ?, ?, NULL)
+  `);
+  [
+    "fa-cloud-cache-only",
+    "fa-cloud-transaction",
+    "fa-mixed-transaction",
+    "fa-local-transaction",
+  ].forEach((id) => insertAccount.run(id, mockUserId, id, now, now));
+  [
+    "ucat-cloud-cache-only",
+    "ucat-cloud-transaction",
+    "ucat-mixed-transaction",
+    "ucat-local-transaction",
+  ].forEach((id) => insertCategory.run(id, mockUserId, id, now, now));
+  seedLedgerReferenceSourceMigrationTransactions(sqlite);
+}
+
+function seedLedgerReferenceSourceMigrationTransactions(sqlite: Database.Database) {
+  const insertReferenceTransaction = sqlite.prepare(
+    "INSERT INTO transactions (id, user_id, account_id, category_id, source) VALUES (?, ?, ?, ?, ?)"
+  );
+  [
+    ["txn-cloud-mixed-reference", "fa-mixed-transaction", "ucat-mixed-transaction", "cloud_ledger"],
+    ["txn-local-mixed-reference", "fa-mixed-transaction", "ucat-mixed-transaction", "manual"],
+    ["txn-cloud-reference", "fa-cloud-transaction", "ucat-cloud-transaction", "cloud_ledger"],
+    ["txn-local-reference", "fa-local-transaction", "ucat-local-transaction", "manual"],
+  ].forEach(([id, accountId, categoryId, source]) =>
+    insertReferenceTransaction.run(id, mockUserId, accountId, categoryId, source)
+  );
+}
+
+function expectLedgerReferenceSourceBackfill(sqlite: Database.Database) {
+  expect(selectReferenceSources(sqlite, "financial_accounts")).toEqual([
+    { id: "fa-cloud-cache-only", source: "local_ledger" },
+    { id: "fa-cloud-transaction", source: "cloud_ledger" },
+    { id: "fa-local-transaction", source: "local_ledger" },
+    { id: "fa-mixed-transaction", source: "local_ledger" },
+  ]);
+  expect(selectReferenceSources(sqlite, "user_categories")).toEqual([
+    { id: "ucat-cloud-cache-only", source: "local_ledger" },
+    { id: "ucat-cloud-transaction", source: "cloud_ledger" },
+    { id: "ucat-local-transaction", source: "local_ledger" },
+    { id: "ucat-mixed-transaction", source: "local_ledger" },
+  ]);
+}
+
+function expectCloudLedgerOnlyReferencesRemoved(sqlite: Database.Database) {
+  expect(selectReferenceIds(sqlite, "financial_accounts")).toEqual([
+    { id: "fa-cloud-cache-only" },
+    { id: "fa-local-transaction" },
+    { id: "fa-mixed-transaction" },
+  ]);
+  expect(selectReferenceIds(sqlite, "user_categories")).toEqual([
+    { id: "ucat-cloud-cache-only" },
+    { id: "ucat-local-transaction" },
+    { id: "ucat-mixed-transaction" },
+  ]);
+}

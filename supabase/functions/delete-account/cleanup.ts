@@ -88,26 +88,24 @@ export async function deleteAccountRemoteData(
   }
 
   const cleanupFailures = [
-    await deleteBackupBlobs(supabase, userId, backupRowsResult.rows),
-    await deleteUserRows(supabase, ENCRYPTED_BACKUPS_TABLE, userId),
+    await deleteRetryableBackupData(supabase, userId, backupRowsResult.rows),
     ...(await Promise.all(
       OPERATIONAL_REMOTE_TABLES.map((tableName) => deleteUserRows(supabase, tableName, userId))
     )),
   ].filter((failure): failure is DeleteAccountRemoteFailure => failure !== null);
+
+  if (cleanupFailures.length > 0) {
+    return {
+      success: false,
+      failures: cleanupFailures,
+    };
+  }
 
   const authFailure = await deleteAuthUser(supabase, userId);
   if (authFailure !== null) {
     return {
       success: false,
       failures: [...cleanupFailures, authFailure],
-    };
-  }
-
-  if (cleanupFailures.length > 0) {
-    return {
-      success: false,
-      failures: cleanupFailures,
-      localCleanupRequired: true,
     };
   }
 
@@ -187,6 +185,15 @@ async function deleteUserRows(
 ): Promise<DeleteAccountRemoteFailure | null> {
   const { error } = await supabase.from(tableName).delete().eq("user_id", userId);
   return error === null ? null : { target: tableName, message: error.message ?? "delete_failed" };
+}
+
+async function deleteRetryableBackupData(
+  supabase: DeleteAccountSupabaseClient,
+  userId: string,
+  backupRows: readonly BackupRow[]
+): Promise<DeleteAccountRemoteFailure | null> {
+  const backupBlobFailure = await deleteBackupBlobs(supabase, userId, backupRows);
+  return backupBlobFailure ?? (await deleteUserRows(supabase, ENCRYPTED_BACKUPS_TABLE, userId));
 }
 
 async function deleteBackupBlobs(

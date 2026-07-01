@@ -3062,6 +3062,33 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(await outbox.load()).toHaveLength(1);
     expect(storage.readRaw()).not.toBeNull();
   });
+
+  it("fails signout cleanup checkpoint creation when persisted outbox state cannot be read", async () => {
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+
+    let failPayloadRead = true;
+    vi.mocked(SecureStore.getItemAsync).mockImplementation((key: string) =>
+      failPayloadRead && key === "cloud-ledger-outbox_user-1"
+        ? Promise.reject(new Error("simulated outbox read failure"))
+        : Promise.resolve(secureStore.get(key) ?? null)
+    );
+
+    await expect(createCloudLedgerOutboxDiscardCheckpoint(USER_ID)).rejects.toThrow(
+      "simulated outbox read failure"
+    );
+
+    failPayloadRead = false;
+    resetCloudLedgerOutboxInstances();
+    await expect(getCloudLedgerOutbox(USER_ID).load()).resolves.toMatchObject([
+      { id: "change-offline-coffee" },
+    ]);
+  });
 });
 
 function secureStoreOutboxPayloadChunkKeys() {

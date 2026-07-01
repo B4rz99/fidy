@@ -153,7 +153,7 @@ export async function clearSecureStoreOutboxPayload(key: string): Promise<void> 
 export async function createSecureStoreOutboxPayloadCheckpoint(
   key: string
 ): Promise<SecureStoreOutboxPayloadCheckpoint> {
-  const payload = await readSecureStoreOutboxPayload(key).catch(() => null);
+  const payload = await readSecureStoreOutboxPayload(key);
   return {
     restore: async () => {
       if (payload !== null) {

@@ -38,7 +38,7 @@ describe("delete-account remote cleanup", () => {
     expect(supabase.deleteUser).toHaveBeenCalledWith(USER_ID);
   });
 
-  it("continues deleted-account cleanup after ledger deletion when backup blob removal fails", async () => {
+  it("keeps backup metadata and auth retryable after ledger deletion when backup blob removal fails", async () => {
     const supabase = createDeleteAccountSupabase({
       backupRows: [{ id: "backup-1" }],
       storageError: { message: "storage unavailable" },
@@ -47,19 +47,17 @@ describe("delete-account remote cleanup", () => {
     await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
       success: false,
       failures: [{ target: "encrypted-backups", message: "storage unavailable" }],
-      localCleanupRequired: true,
     });
 
     expect(supabase.storageRemove).toHaveBeenCalledWith([`${USER_ID}/backup-1.json`]);
     expect(supabase.tableDeletes()).toEqual([
-      "encrypted_backups",
       "push_devices",
       "notification_preferences",
       "capture_improvement_preferences",
       "notification_parse_improvement_samples",
       "rate_limits",
     ]);
-    expect(supabase.deleteUser).toHaveBeenCalledWith(USER_ID);
+    expect(supabase.deleteUser).not.toHaveBeenCalled();
   });
 
   it("reports Cloud Ledger cleanup failures before deleting operational rows or the auth user", async () => {
