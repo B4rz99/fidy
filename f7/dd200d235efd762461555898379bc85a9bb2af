@@ -1,0 +1,42 @@
+apps/mobile/drizzle/0038_ledger_cache_reference_source.sql
+  s_6c070d47258744::t_a70d73c171598e 10-11,14,18
+supabase/functions/delete-account/cleanup.ts
+  s_6c070d47258744::t_a70d73c171598e 80-82
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_6c070d47258744::t_a70d73c171598e 95,99
+apps/mobile/features/transactions/store.ts
+  s_6c070d47258744::t_a70d73c171598e 60,599
+apps/mobile/features/transactions/cloud-ledger-cache-cleanup.ts
+  s_6c070d47258744::t_a70d73c171598e 1-214
+apps/mobile/shared/i18n/locales/en.ts
+  s_6c070d47258744::t_a70d73c171598e 812
+plans/lizard-complexity-debt.json
+  s_6c070d47258744::t_b238524d9f6235 25,30,43-44,48,52,61,79,84-93,106,111,124,129,142,147,151,169-170,174,178-179,183,214,223,232,311-313,322
+  s_6c070d47258744::t_a70d73c171598e 24,26-29,31-32,45-47,49-51,215-222,314-321,323-328
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_a70d73c171598e 561-562,567-568,573-574,579-580,585-586,596-597,607-608,1409-1417,2176-2316,2370,2376,2385,2389,2431,2466-2479,2482-2483,2487,2493
+apps/mobile/__tests__/edge-functions/delete-account-cleanup.test.ts
+  s_6c070d47258744::t_a70d73c171598e 72-87
+apps/mobile/features/auth/store.ts
+  s_6c070d47258744::t_a70d73c171598e 157-163,165-168,173-176,179,181-182,250,253-256
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_6c070d47258744::t_a70d73c171598e 16-21,30-31,41-42
+apps/mobile/shared/i18n/locales/es.ts
+  s_6c070d47258744::t_a70d73c171598e 823
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "f7dd200d235efd762461555898379bc85a9bb2af",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
