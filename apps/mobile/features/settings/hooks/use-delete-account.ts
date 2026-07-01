@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/public";
-import { deleteAccountRequest } from "../data/notification-preferences";
+import { deleteAccountRequest } from "../data/delete-account";
 
 type DeleteAccountInput = {
   readonly supabaseUrl: string;

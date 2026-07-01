@@ -2,10 +2,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  deleteAccountRequest,
-  saveNotificationPreferences,
-} from "@/features/settings/data/notification-preferences";
+import { deleteAccountRequest } from "@/features/settings/data/delete-account";
+import { saveNotificationPreferences } from "@/features/settings/data/notification-preferences";
 import { getSupabase } from "@/shared/db";
 import en from "@/shared/i18n/locales/en";
 import es from "@/shared/i18n/locales/es";
