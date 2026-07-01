@@ -1,0 +1,32 @@
+apps/mobile/features/transactions/store.ts
+  s_6c070d47258744::t_96e550488d15df 4,588
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_4ef766e7f40766 551-582
+  s_6c070d47258744::t_7aae1ea08941d5 585,2207
+  s_6c070d47258744::t_9e54461e762fac 2171-2177
+  s_6c070d47258744::t_457190cef68a34 1,511-550,583-584
+  s_6c070d47258744::t_0607263830d297 2104,2233
+  s_6c070d47258744::t_eef919f87bec97 2119-2170,2178-2197,2206
+  s_6c070d47258744::t_6637762a998099 71,125,658,2198-2205
+apps/mobile/drizzle/0038_ledger_cache_reference_source.sql
+  s_6c070d47258744::t_1b449570401f5f 7-14,18-41,44,48-60
+apps/mobile/__tests__/auth/store.test.ts
+  s_6c070d47258744::t_82e1254ec403b7 278,293,617,624,635
+  s_6c070d47258744::t_9e54461e762fac 622,641
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "b9af0c55d851bde818c80f376426841c7a4a7482",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
