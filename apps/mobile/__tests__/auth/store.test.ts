@@ -656,6 +656,58 @@ describe("useAuthStore", () => {
     expect(useLocalOnboardingState.getState().isComplete).toBe(false);
   });
 
+  it("account-deletion signout preserves local auth when database reset fails after remote deletion", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await expect(useAuthStore.getState().completeDeletedAccountSignOut()).rejects.toThrow(
+      "db file delete failed"
+    );
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+  });
+
+  it("account-deletion signout preserves local auth when outbox discard fails after remote deletion", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockDiscardCloudLedgerOutbox.mockRejectedValueOnce(new Error("secure store delete failed"));
+
+    await expect(useAuthStore.getState().completeDeletedAccountSignOut()).rejects.toThrow(
+      "secure store delete failed"
+    );
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+  });
+
   it("signOut clears state even if supabase.signOut fails", async () => {
     useAuthStore.setState({
       session: { access_token: "token" } as never,
