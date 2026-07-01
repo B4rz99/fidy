@@ -134,6 +134,58 @@ const es = {
     deleteFailed: "La transacción no se eliminó. Revisa tu conexión e intenta de nuevo.",
   },
 
+  cloudLedger: {
+    repair: {
+      actions: {
+        discard: "Descartar cambio",
+        editAndResubmit: "Editar y reenviar",
+        retry: "Reintentar sincronización",
+        retrySet: "Reintentar todos los cambios",
+      },
+      actionFailed:
+        "No se pudo actualizar la reparación del ledger. Revisa tu conexión e intenta de nuevo.",
+      emptyTitle: "No hay reparaciones del ledger",
+      emptyBody: "Los cambios pendientes que necesiten tu revisión aparecerán aquí.",
+      resubmitAction: "Reenviar cambio",
+      screenTitle: "Reparación del ledger",
+      settingsRow: "Reparación del ledger",
+      dependencyFailure: {
+        title: "Bloqueado por otro cambio",
+        body: "Resuelve primero la reparación principal. Este cambio local no puede sincronizarse hasta que ese problema quede resuelto.",
+        bodyWithParent:
+          "Resuelve primero el cambio principal %{parentChangeId}. Este cambio local no puede sincronizarse hasta que ese problema quede resuelto.",
+      },
+      duplicateChange: {
+        title: "Cambio local duplicado",
+        body: "Este cambio local entra en conflicto con otro cambio pendiente o aceptado del ledger. Descártalo antes de reintentar el resto.",
+      },
+      invalidTransaction: {
+        title: "La transacción necesita cambios",
+        body: "Corrige los datos de la transacción antes de reenviar este cambio local.",
+      },
+      retryableFailure: {
+        title: "La sincronización no terminó",
+        body: "Fidy reintentó este cambio automáticamente. Puedes intentarlo de nuevo o descartar el cambio local.",
+      },
+      staleConflict: {
+        title: "La transacción cambió en otro lugar",
+        body: "Revisa la versión más reciente, luego edita y reenvía tu cambio local.",
+      },
+      unauthorizedTransaction: {
+        title: "La transacción no está disponible",
+        body: "Este cambio local apunta a una transacción que Fidy no puede actualizar desde este dispositivo. Descártalo y revisa el estado más reciente del ledger.",
+      },
+      unresolvedFailure: {
+        title: "El cambio necesita revisión",
+        body: "Fidy no puede sincronizar este cambio local automáticamente. Descártalo y revisa el estado más reciente del ledger antes de intentarlo de nuevo.",
+      },
+      unsupportedCommandVersion: {
+        title: "Actualización requerida",
+        body: "Actualiza Fidy antes de sincronizar este cambio local.",
+      },
+    },
+  },
+
   transfers: {
     title: "Nueva transferencia",
     reclassifyTitle: "Convertir en transferencia",

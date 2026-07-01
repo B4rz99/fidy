@@ -1,11 +1,14 @@
 import NetInfo from "@react-native-community/netinfo";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  discardCloudLedgerRepairItemForUser,
   enqueueCloudLedgerOptimisticAmend,
   enqueueCloudLedgerOptimisticCreate,
   enqueueCloudLedgerOptimisticDelete,
   flushCloudLedgerOutboxForUser,
+  resubmitCloudLedgerRepairTransactionChangeForUser,
   restoreCloudLedgerOptimisticRuntimeState,
+  retryCloudLedgerRepairItemForUser,
 } from "@/features/cloud-ledger/runtime-mutations";
 import { requireUserId } from "@/shared/types/assertions";
 import type {
@@ -21,32 +24,41 @@ import { getSupabase } from "@/shared/db/supabase";
 
 const mocks = vi.hoisted(() => {
   const cache = { cursor: null, transactions: [] };
-  const outbox = { id: "outbox" };
+  const emptyCache = { cursor: null, transactions: [], source: "empty" };
+  const outbox = { id: "outbox", markForRepair: vi.fn<(...args: any[]) => any>() };
   const writeToken = { generation: 1 };
   const abortSignal = new AbortController().signal;
   return {
     abortSignal,
     cache,
+    emptyCache,
     flushedCache: { cursor: "flushed", transactions: [] },
     optimisticCache: { cursor: "optimistic", transactions: [] },
     outbox,
+    refreshedRepairBaseCache: { cursor: "refreshed-repair-base", transactions: [] },
     writeToken,
     flushToken: { generation: 2 },
     beginCloudLedgerRuntimeCacheFlush: vi.fn<(...args: any[]) => any>(),
     beginCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     createCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
     amendOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
+    createEmptyCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     createOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
     deleteOfflineCloudLedgerTransaction: vi.fn<(...args: any[]) => any>(),
+    discardCloudLedgerRepairItem: vi.fn<(...args: any[]) => any>(),
     finishCloudLedgerRuntimeCacheWrite: vi.fn<(...args: any[]) => any>(),
     flushPendingCloudLedgerChanges: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerOutbox: vi.fn<(...args: any[]) => any>(),
     getCloudLedgerRuntimeCache: vi.fn<(...args: any[]) => any>(),
     getSupabase: vi.fn<(...args: any[]) => any>(),
     isCloudLedgerRuntimeCacheWriteCurrent: vi.fn<(...args: any[]) => any>(),
+    loadCloudLedgerRepairItems: vi.fn<(...args: any[]) => any>(),
     releaseCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
+    refreshCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
+    resubmitCloudLedgerRepairTransactionChange: vi.fn<(...args: any[]) => any>(),
     restoreOptimisticCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     resumeCloudLedgerRuntimeCacheWrites: vi.fn<(...args: any[]) => any>(),
+    retryCloudLedgerRepairItem: vi.fn<(...args: any[]) => any>(),
     setCloudLedgerRuntimeCacheIfCurrent: vi.fn<(...args: any[]) => any>(),
   };
 });
@@ -61,9 +73,18 @@ vi.mock("@/features/cloud-ledger/outbox", () => ({
   amendOfflineCloudLedgerTransaction: mocks.amendOfflineCloudLedgerTransaction,
   createOfflineCloudLedgerTransaction: mocks.createOfflineCloudLedgerTransaction,
   deleteOfflineCloudLedgerTransaction: mocks.deleteOfflineCloudLedgerTransaction,
+  discardCloudLedgerRepairItem: mocks.discardCloudLedgerRepairItem,
   flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
+  loadCloudLedgerRepairItems: mocks.loadCloudLedgerRepairItems,
+  resubmitCloudLedgerRepairTransactionChange: mocks.resubmitCloudLedgerRepairTransactionChange,
   restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
+  retryCloudLedgerRepairItem: mocks.retryCloudLedgerRepairItem,
+}));
+
+vi.mock("@/features/cloud-ledger/cache", () => ({
+  createEmptyCloudLedgerCache: mocks.createEmptyCloudLedgerCache,
+  refreshCloudLedgerCache: mocks.refreshCloudLedgerCache,
 }));
 
 vi.mock("@/features/cloud-ledger/runtime", () => ({
@@ -93,14 +114,21 @@ describe("Cloud Ledger runtime mutations", () => {
     mocks.beginCloudLedgerRuntimeCacheWrite.mockReturnValue(mocks.writeToken);
     mocks.createCloudLedgerRuntimeCacheWriteAbortSignal.mockReturnValue(mocks.abortSignal);
     mocks.amendOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
+    mocks.createEmptyCloudLedgerCache.mockReturnValue(mocks.emptyCache);
     mocks.createOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
     mocks.deleteOfflineCloudLedgerTransaction.mockResolvedValue(mocks.optimisticCache);
+    mocks.discardCloudLedgerRepairItem.mockResolvedValue(undefined);
     mocks.flushPendingCloudLedgerChanges.mockResolvedValue(mocks.flushedCache);
     mocks.getCloudLedgerOutbox.mockReturnValue(mocks.outbox);
     mocks.getCloudLedgerRuntimeCache.mockReturnValue(mocks.cache);
     mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValue(true);
+    mocks.loadCloudLedgerRepairItems.mockResolvedValue([]);
+    mocks.refreshCloudLedgerCache.mockResolvedValue(mocks.refreshedRepairBaseCache);
+    mocks.resubmitCloudLedgerRepairTransactionChange.mockResolvedValue(mocks.optimisticCache);
     mocks.restoreOptimisticCloudLedgerCache.mockResolvedValue(mocks.optimisticCache);
+    mocks.retryCloudLedgerRepairItem.mockResolvedValue(undefined);
     mocks.setCloudLedgerRuntimeCacheIfCurrent.mockReturnValue(true);
+    mocks.outbox.markForRepair.mockResolvedValue(undefined);
     vi.mocked(NetInfo.fetch).mockResolvedValue({ isConnected: true } as never);
     vi.mocked(getSupabase).mockReturnValue({
       auth: {
@@ -133,6 +161,25 @@ describe("Cloud Ledger runtime mutations", () => {
 
     await expect(restoreCloudLedgerOptimisticRuntimeState(userId)).resolves.toBe(false);
 
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.optimisticCache
+    );
+  });
+
+  it("discards a repair item by rebuilding runtime state from a fresh accepted cache", async () => {
+    const changeId = "ledger-change-discard" as LedgerChangeId;
+
+    await expect(discardCloudLedgerRepairItemForUser(userId, changeId)).resolves.toBe(true);
+
+    expect(mocks.createEmptyCloudLedgerCache).toHaveBeenCalled();
+    expect(mocks.refreshCloudLedgerCache).toHaveBeenCalledWith(expect.anything(), mocks.emptyCache);
+    expect(mocks.discardCloudLedgerRepairItem).toHaveBeenCalledWith(mocks.outbox, changeId);
+    expect(mocks.restoreOptimisticCloudLedgerCache).toHaveBeenCalledWith({
+      cache: mocks.refreshedRepairBaseCache,
+      outbox: mocks.outbox,
+    });
     expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
       userId,
       mocks.writeToken,
@@ -287,6 +334,37 @@ describe("Cloud Ledger runtime mutations", () => {
     );
   });
 
+  it("resubmits repair edits through a guarded runtime cache write", async () => {
+    const changeId = "ledger-change-repair-resubmit" as LedgerChangeId;
+    const transaction = makeAcceptedTransaction({ version: 6 });
+
+    await expect(
+      resubmitCloudLedgerRepairTransactionChangeForUser({
+        userId,
+        changeId,
+        createdAt: "2026-06-20T10:07:00.000Z" as IsoDateTime,
+        expectedVersion: 5,
+        transaction,
+      })
+    ).resolves.toBe(true);
+
+    expect(mocks.beginCloudLedgerRuntimeCacheWrite).toHaveBeenCalledWith(userId);
+    expect(mocks.resubmitCloudLedgerRepairTransactionChange).toHaveBeenCalledWith({
+      cache: mocks.cache,
+      changeId,
+      createdAt: "2026-06-20T10:07:00.000Z",
+      expectedVersion: 5,
+      outbox: mocks.outbox,
+      transaction,
+    });
+    expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).toHaveBeenCalledWith(
+      userId,
+      mocks.writeToken,
+      mocks.optimisticCache
+    );
+    expect(mocks.finishCloudLedgerRuntimeCacheWrite).toHaveBeenCalledWith(userId, mocks.writeToken);
+  });
+
   it("does not flush another user's outbox when the Supabase session changes before flush", async () => {
     vi.mocked(getSupabase).mockReturnValueOnce({
       auth: {
@@ -332,6 +410,63 @@ describe("Cloud Ledger runtime mutations", () => {
     expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).not.toHaveBeenCalled();
     expect(NetInfo.fetch).not.toHaveBeenCalled();
     expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
+  });
+
+  it("restores a repair marker when retry cannot run a flush", async () => {
+    const changeId = "ledger-change-retry" as LedgerChangeId;
+    const repairItem = {
+      id: changeId,
+      outcome: { changeId, status: "retryable", code: "edge_function_unavailable" },
+      parentChangeId: "ledger-change-parent" as LedgerChangeId,
+      acceptedTransactionVersion: 5,
+    };
+    mocks.loadCloudLedgerRepairItems.mockResolvedValueOnce([repairItem]);
+    vi.mocked(getSupabase).mockReturnValueOnce({
+      auth: {
+        getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+          data: { session: null },
+          error: null,
+        }),
+      },
+    } as never);
+
+    await expect(retryCloudLedgerRepairItemForUser(userId, changeId)).resolves.toBe(false);
+
+    expect(mocks.retryCloudLedgerRepairItem).toHaveBeenCalledWith(mocks.outbox, changeId);
+    expect(mocks.outbox.markForRepair).toHaveBeenCalledWith([
+      {
+        changeId,
+        outcome: repairItem.outcome,
+        parentChangeId: repairItem.parentChangeId,
+        acceptedTransactionVersion: 5,
+      },
+    ]);
+  });
+
+  it("restores a repair marker when retry flush throws", async () => {
+    const changeId = "ledger-change-retry-throws" as LedgerChangeId;
+    const repairItem = {
+      id: changeId,
+      outcome: { changeId, status: "retryable", code: "edge_function_unavailable" },
+      parentChangeId: "ledger-change-parent" as LedgerChangeId,
+      acceptedTransactionVersion: 5,
+    };
+    mocks.loadCloudLedgerRepairItems.mockResolvedValueOnce([repairItem]);
+    mocks.flushPendingCloudLedgerChanges.mockRejectedValueOnce(new Error("flush unavailable"));
+
+    await expect(retryCloudLedgerRepairItemForUser(userId, changeId)).rejects.toThrow(
+      "flush unavailable"
+    );
+
+    expect(mocks.retryCloudLedgerRepairItem).toHaveBeenCalledWith(mocks.outbox, changeId);
+    expect(mocks.outbox.markForRepair).toHaveBeenCalledWith([
+      {
+        changeId,
+        outcome: repairItem.outcome,
+        parentChangeId: repairItem.parentChangeId,
+        acceptedTransactionVersion: 5,
+      },
+    ]);
   });
 });
 

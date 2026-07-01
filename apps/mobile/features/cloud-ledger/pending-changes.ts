@@ -19,7 +19,8 @@ import {
 export type CloudLedgerPendingCreateTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "createTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
+  readonly dependencies?: readonly LedgerChangeId[];
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
   readonly createdAt: IsoDateTime;
 };
@@ -27,7 +28,8 @@ export type CloudLedgerPendingCreateTransaction = {
 export type CloudLedgerPendingAmendTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "amendTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
+  readonly dependencies?: readonly LedgerChangeId[];
   readonly transaction: CloudLedgerCreateTransactionCommand["transaction"];
   readonly expectedVersion: number;
   readonly createdAt: IsoDateTime;
@@ -36,16 +38,28 @@ export type CloudLedgerPendingAmendTransaction = {
 export type CloudLedgerPendingDeleteTransaction = {
   readonly id: LedgerChangeId;
   readonly kind: "deleteTransaction";
-  readonly commandVersion: 1;
+  readonly commandVersion: number;
+  readonly dependencies?: readonly LedgerChangeId[];
   readonly transactionId: TransactionId;
   readonly expectedVersion: number;
   readonly createdAt: IsoDateTime;
 };
 
+export type CloudLedgerPendingUnsupportedChange = {
+  readonly id: LedgerChangeId;
+  readonly kind: "unsupported";
+  readonly originalKind: string;
+  readonly commandVersion: number;
+  readonly dependencies?: readonly LedgerChangeId[];
+  readonly createdAt?: IsoDateTime;
+  readonly rawCommand: Readonly<Record<string, unknown>>;
+};
+
 export type CloudLedgerPendingChange =
   | CloudLedgerPendingAmendTransaction
   | CloudLedgerPendingCreateTransaction
-  | CloudLedgerPendingDeleteTransaction;
+  | CloudLedgerPendingDeleteTransaction
+  | CloudLedgerPendingUnsupportedChange;
 
 export function applyPendingLedgerChanges(
   cache: CloudLedgerCache,
@@ -61,11 +75,30 @@ export function applyPendingLedgerChanges(
 export function toPendingChangeCommand(
   change: CloudLedgerPendingChange
 ): CloudLedgerApplyPendingChangesCommand["changes"][number] {
+  if (change.kind === "unsupported") {
+    return {
+      ...change.rawCommand,
+      id: change.id,
+      kind: change.originalKind,
+      commandVersion: change.commandVersion,
+      idempotencyKey:
+        typeof change.rawCommand.idempotencyKey === "string"
+          ? requireLedgerChangeId(change.rawCommand.idempotencyKey)
+          : change.id,
+      dependencies: change.dependencies ?? [],
+      expectedVersions: Array.isArray(change.rawCommand.expectedVersions)
+        ? change.rawCommand.expectedVersions
+        : [],
+      ...(change.rawCommand.clientTimestamp !== undefined || change.createdAt === undefined
+        ? {}
+        : { clientTimestamp: change.createdAt }),
+    } as CloudLedgerApplyPendingChangesCommand["changes"][number];
+  }
   const base = {
     id: change.id,
     commandVersion: change.commandVersion,
     idempotencyKey: change.id,
-    dependencies: [],
+    dependencies: change.dependencies ?? [],
     expectedVersions: expectedVersionsForPendingChange(change),
     clientTimestamp: change.createdAt,
   } as const;
@@ -92,41 +125,92 @@ export function toTransactionCommandPayload(
   };
 }
 
+export function withPendingChangeDependencies(
+  change: CloudLedgerPendingChange,
+  existingChanges: readonly CloudLedgerPendingChange[]
+): CloudLedgerPendingChange {
+  const targetTransactionId = pendingChangeTransactionId(change);
+  if (targetTransactionId === null) {
+    return change;
+  }
+  const dependencies = uniqueLedgerChangeIds([
+    ...(change.dependencies ?? []),
+    ...existingChanges
+      .filter((existing) => existing.id !== change.id)
+      .filter((existing) => pendingChangeTransactionId(existing) === targetTransactionId)
+      .map((existing) => existing.id),
+  ]);
+  return { ...change, dependencies };
+}
+
 export function parsePendingChange(value: unknown): CloudLedgerPendingChange {
   const record = requireRecord(value, "pending change");
-  if (record.commandVersion !== 1) {
-    throw new Error("pending change command version must be supported");
+  const commandVersion = requireNonNegativeInteger(record.commandVersion, "commandVersion");
+  const kind = requireString(record.kind, "kind");
+  const dependencies = parseLedgerChangeDependencies(record.dependencies);
+  if (commandVersion !== 1) {
+    return {
+      id: requireLedgerChangeId(requireString(record.id, "id")),
+      kind: "unsupported",
+      originalKind: kind,
+      commandVersion,
+      dependencies,
+      ...parseOptionalCreatedAt(record.createdAt),
+      rawCommand: record,
+    };
   }
-  if (record.kind === "createTransaction") {
+  if (kind === "createTransaction") {
     return {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "createTransaction",
-      commandVersion: 1,
+      commandVersion,
+      dependencies,
       transaction: parseCreateTransaction(record.transaction),
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
     };
   }
-  if (record.kind === "amendTransaction") {
+  if (kind === "amendTransaction") {
     return {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "amendTransaction",
-      commandVersion: 1,
+      commandVersion,
+      dependencies,
       transaction: parseCreateTransaction(record.transaction),
       expectedVersion: requirePositiveInteger(record.expectedVersion, "expectedVersion"),
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
     };
   }
-  if (record.kind === "deleteTransaction") {
+  if (kind === "deleteTransaction") {
     return {
       id: requireLedgerChangeId(requireString(record.id, "id")),
       kind: "deleteTransaction",
-      commandVersion: 1,
+      commandVersion,
+      dependencies,
       transactionId: requireTransactionId(requireString(record.transactionId, "transactionId")),
       expectedVersion: requirePositiveInteger(record.expectedVersion, "expectedVersion"),
       createdAt: requireIsoDateTime(requireString(record.createdAt, "createdAt")),
     };
   }
-  throw new Error("pending change command kind must be supported");
+  if (kind === "unsupported" && record.rawCommand !== undefined) {
+    return {
+      id: requireLedgerChangeId(requireString(record.id, "id")),
+      kind: "unsupported",
+      originalKind: requireString(record.originalKind, "originalKind"),
+      commandVersion,
+      dependencies,
+      ...parseOptionalCreatedAt(record.createdAt),
+      rawCommand: requireRecord(record.rawCommand, "raw unsupported command"),
+    };
+  }
+  return {
+    id: requireLedgerChangeId(requireString(record.id, "id")),
+    kind: "unsupported",
+    originalKind: kind,
+    commandVersion,
+    dependencies,
+    ...parseOptionalCreatedAt(record.createdAt),
+    rawCommand: record,
+  };
 }
 
 function expectedVersionsForPendingChange(change: CloudLedgerPendingChange): readonly {
@@ -134,7 +218,7 @@ function expectedVersionsForPendingChange(change: CloudLedgerPendingChange): rea
   readonly recordId: TransactionId;
   readonly version: number;
 }[] {
-  return change.kind === "createTransaction"
+  return change.kind === "createTransaction" || change.kind === "unsupported"
     ? []
     : [
         {
@@ -146,10 +230,24 @@ function expectedVersionsForPendingChange(change: CloudLedgerPendingChange): rea
       ];
 }
 
+function pendingChangeTransactionId(change: CloudLedgerPendingChange): TransactionId | null {
+  if (change.kind === "unsupported") {
+    return null;
+  }
+  return change.kind === "deleteTransaction" ? change.transactionId : change.transaction.id;
+}
+
+function uniqueLedgerChangeIds(changeIds: readonly LedgerChangeId[]): readonly LedgerChangeId[] {
+  return [...new Map(changeIds.map((changeId) => [changeId, changeId])).values()];
+}
+
 function applyPendingLedgerChange(
   transactions: readonly CloudLedgerTransaction[],
   change: CloudLedgerPendingChange
 ): readonly CloudLedgerTransaction[] {
+  if (change.kind === "unsupported") {
+    return transactions;
+  }
   return change.kind === "deleteTransaction"
     ? transactions.filter((transaction) => transaction.id !== change.transactionId)
     : upsertTransactions(transactions, [toOptimisticTransaction(change)]);
@@ -203,6 +301,22 @@ function parseDescription(value: unknown): string | null {
   return requireString(value, "transaction.description");
 }
 
+function parseLedgerChangeDependencies(value: unknown): readonly LedgerChangeId[] {
+  return value === undefined
+    ? []
+    : requireArray(value, "dependencies").map((dependency) =>
+        requireLedgerChangeId(requireString(dependency, "dependency"))
+      );
+}
+
+function parseOptionalCreatedAt(
+  value: unknown
+): { readonly createdAt: IsoDateTime } | Record<string, never> {
+  return value === undefined
+    ? {}
+    : { createdAt: requireIsoDateTime(requireString(value, "createdAt")) };
+}
+
 function requireTransactionType(value: unknown): "income" | "expense" {
   if (value === "income" || value === "expense") {
     return value;
@@ -222,6 +336,13 @@ function requireRecord(value: unknown, label: string): Record<string, unknown> {
     return value as Record<string, unknown>;
   }
   throw new Error(`${label} must be an object`);
+}
+
+function requireArray(value: unknown, label: string): readonly unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  throw new Error(`${label} must be an array`);
 }
 
 function requireString(value: unknown, label: string): string {
@@ -244,4 +365,12 @@ function requirePositiveInteger(value: unknown, label: string): number {
     return number;
   }
   throw new Error(`${label} must be a positive integer`);
+}
+
+function requireNonNegativeInteger(value: unknown, label: string): number {
+  const number = requireNumber(value, label);
+  if (Number.isInteger(number) && number >= 0) {
+    return number;
+  }
+  throw new Error(`${label} must be a non-negative integer`);
 }

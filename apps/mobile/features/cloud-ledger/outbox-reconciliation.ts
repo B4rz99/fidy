@@ -3,7 +3,7 @@ import type {
   CloudLedgerApplyPendingChangesAccepted,
   CloudLedgerPendingChangeOutcome,
 } from "./api-client";
-import type { CloudLedgerPendingChange } from "./outbox";
+import type { CloudLedgerPendingChange } from "./pending-changes";
 
 type PendingTransactionChange = Extract<
   CloudLedgerPendingChange,
@@ -113,16 +113,25 @@ const pendingTransactionChangeKey = (change: PendingTransactionChange): string =
 };
 
 const pendingChangeKey = (change: CloudLedgerPendingChange): string =>
-  change.kind === "deleteTransaction"
+  change.kind === "unsupported"
     ? [
         change.id,
         change.kind,
+        change.originalKind,
         change.commandVersion,
-        change.createdAt,
-        change.transactionId,
-        change.expectedVersion,
+        change.createdAt ?? "",
+        JSON.stringify(change.rawCommand),
       ].join(KEY_SEPARATOR)
-    : pendingTransactionChangeKey(change);
+    : change.kind === "deleteTransaction"
+      ? [
+          change.id,
+          change.kind,
+          change.commandVersion,
+          change.createdAt,
+          change.transactionId,
+          change.expectedVersion,
+        ].join(KEY_SEPARATOR)
+      : pendingTransactionChangeKey(change);
 
 export function acceptedPendingChanges(
   batch: readonly CloudLedgerPendingChange[],

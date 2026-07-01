@@ -130,6 +130,57 @@ const en = {
     deleteFailed: "Transaction was not deleted. Check your connection and try again.",
   },
 
+  cloudLedger: {
+    repair: {
+      actions: {
+        discard: "Discard change",
+        editAndResubmit: "Edit and resubmit",
+        retry: "Retry sync",
+        retrySet: "Retry all changes",
+      },
+      actionFailed: "Ledger repair could not be updated. Check your connection and try again.",
+      emptyTitle: "No ledger repairs",
+      emptyBody: "Pending changes that need your review will appear here.",
+      resubmitAction: "Resubmit change",
+      screenTitle: "Ledger repair",
+      settingsRow: "Ledger repair",
+      dependencyFailure: {
+        title: "Blocked by another change",
+        body: "Fix the parent repair item first. This local change cannot sync until that problem is resolved.",
+        bodyWithParent:
+          "Fix parent change %{parentChangeId} first. This local change cannot sync until that problem is resolved.",
+      },
+      duplicateChange: {
+        title: "Duplicate local change",
+        body: "This local change conflicts with another pending or accepted ledger change. Discard it before retrying the remaining work.",
+      },
+      invalidTransaction: {
+        title: "Transaction needs changes",
+        body: "Fix the transaction details before resubmitting this local change.",
+      },
+      retryableFailure: {
+        title: "Sync did not finish",
+        body: "Fidy retried this change automatically. You can try again or discard the local change.",
+      },
+      staleConflict: {
+        title: "Transaction changed elsewhere",
+        body: "Review the latest version, then edit and resubmit your local change.",
+      },
+      unauthorizedTransaction: {
+        title: "Transaction is unavailable",
+        body: "This local change points to a transaction Fidy cannot update from this device. Discard it and review the latest ledger state.",
+      },
+      unresolvedFailure: {
+        title: "Change needs review",
+        body: "Fidy cannot sync this local change automatically. Discard it and review the latest ledger state before trying again.",
+      },
+      unsupportedCommandVersion: {
+        title: "Update required",
+        body: "Update Fidy before this local change can be synced.",
+      },
+    },
+  },
+
   transfers: {
     title: "New transfer",
     reclassifyTitle: "Convert to transfer",

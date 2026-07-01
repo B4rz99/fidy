@@ -9,6 +9,7 @@ export type TransactionFormMode = TransactionType | "transfer";
 
 export type TransactionFormProps = {
   readonly accountId: FinancialAccountId | null;
+  readonly allowTransferMode?: boolean;
   readonly accounts: readonly FinancialAccountRow[];
   readonly categories: readonly Category[];
   readonly categoryId: CategoryId | null;

@@ -11,10 +11,11 @@ type TransactionFormPicker = "account" | "date" | null;
 export function TransactionForm(props: TransactionFormProps) {
   const [picker, setPicker] = useState<TransactionFormPicker>(null);
   const [isTransferMode, setIsTransferMode] = useState(false);
-  const mode: TransactionFormMode = isTransferMode ? "transfer" : props.type;
+  const allowTransferMode = props.allowTransferMode ?? true;
+  const mode: TransactionFormMode = allowTransferMode && isTransferMode ? "transfer" : props.type;
   const transferEntry = useTransferEntry({
     digits: props.digits,
-    enabled: mode === "transfer",
+    enabled: allowTransferMode && mode === "transfer",
     setDigits: props.onDigitsChange,
   });
   const model = useTransactionFormModel({
@@ -26,6 +27,9 @@ export function TransactionForm(props: TransactionFormProps) {
   });
   const handleModeChange = (nextMode: TransactionFormMode) => {
     if (nextMode === "transfer") {
+      if (!allowTransferMode) {
+        return;
+      }
       setIsTransferMode(true);
       return;
     }

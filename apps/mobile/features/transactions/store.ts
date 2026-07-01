@@ -669,9 +669,7 @@ async function hasPendingCloudLedgerTransactionChange(
 ): Promise<boolean> {
   try {
     return (await getCloudLedgerOutbox(userId).load()).some(
-      (change) =>
-        (change.kind === "deleteTransaction" ? change.transactionId : change.transaction.id) ===
-        transactionId
+      (change) => pendingCloudLedgerChangeTransactionId(change) === transactionId
     );
   } catch (error) {
     captureWarning("cloud_ledger_read_only_outbox_lookup_failed", {
@@ -679,6 +677,13 @@ async function hasPendingCloudLedgerTransactionChange(
     });
     return false;
   }
+}
+
+function pendingCloudLedgerChangeTransactionId(
+  change: CloudLedgerPendingChange
+): TransactionId | null {
+  if (change.kind === "unsupported") return null;
+  return change.kind === "deleteTransaction" ? change.transactionId : change.transaction.id;
 }
 
 const isPersistedCloudLedgerTransactionShadow = (

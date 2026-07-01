@@ -2,15 +2,27 @@ import NetInfo from "@react-native-community/netinfo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "@/shared/db/supabase";
 import type { IsoDateTime, LedgerChangeId, TransactionId, UserId } from "@/shared/types/branded";
-import type { CloudLedgerCreateTransactionCommand, CloudLedgerTransaction } from "./cache";
+import {
+  createEmptyCloudLedgerCache,
+  refreshCloudLedgerCache,
+  type CloudLedgerCreateTransactionCommand,
+  type CloudLedgerTransaction,
+} from "./cache";
 import {
   amendOfflineCloudLedgerTransaction,
   createOfflineCloudLedgerTransaction,
   deleteOfflineCloudLedgerTransaction,
+  discardCloudLedgerRepairItem,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
+  loadCloudLedgerRepairItems,
+  resubmitCloudLedgerRepairTransactionChange,
   restoreOptimisticCloudLedgerCache,
+  retryCloudLedgerRepairItem,
+  retryCloudLedgerRepairSet,
+  type EncryptedCloudLedgerOutbox,
 } from "./outbox";
+import { repairStateFromRepairItem, type CloudLedgerRepairItem } from "./repair-policy";
 import {
   beginCloudLedgerRuntimeCacheFlush,
   beginCloudLedgerRuntimeCacheWrite,
@@ -57,6 +69,121 @@ export async function flushCloudLedgerOutboxForUser(userId: UserId): Promise<boo
     return false;
   }
   return flushCloudLedgerOutboxIfCurrent(userId, writeToken, getSupabase());
+}
+
+export async function retryCloudLedgerRepairItemForUser(
+  userId: UserId,
+  changeId: LedgerChangeId
+): Promise<boolean> {
+  const outbox = getCloudLedgerOutbox(userId);
+  const repairItem = (await loadCloudLedgerRepairItems(outbox)).find(
+    (item) => item.id === changeId
+  );
+  if (repairItem === undefined) {
+    return false;
+  }
+  await retryCloudLedgerRepairItem(outbox, changeId);
+  return await flushAndRestoreRepairMarkersIfNeeded(userId, outbox, [repairItem]);
+}
+
+export async function retryCloudLedgerRepairSetForUser(userId: UserId): Promise<boolean> {
+  const outbox = getCloudLedgerOutbox(userId);
+  const repairItems = await loadCloudLedgerRepairItems(outbox);
+  const retryableRepairItems = repairItems.filter((item) => item.actions.includes("retry"));
+  if (retryableRepairItems.length === 0) {
+    return false;
+  }
+  await retryCloudLedgerRepairSet(outbox);
+  return await flushAndRestoreRepairMarkersIfNeeded(userId, outbox, retryableRepairItems);
+}
+
+export async function discardCloudLedgerRepairItemForUser(
+  userId: UserId,
+  changeId: LedgerChangeId
+): Promise<boolean> {
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(userId);
+  try {
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    const supabase = getSupabase();
+    if (!(await hasSupabaseSessionForUser(supabase, userId))) {
+      return false;
+    }
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    const acceptedCache = await refreshCloudLedgerCache(supabase, createEmptyCloudLedgerCache());
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    const outbox = getCloudLedgerOutbox(userId);
+    await discardCloudLedgerRepairItem(outbox, changeId);
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(userId, writeToken)) {
+      return false;
+    }
+    return setCloudLedgerRuntimeCacheIfCurrent(
+      userId,
+      writeToken,
+      await restoreOptimisticCloudLedgerCache({
+        cache: acceptedCache,
+        outbox,
+      })
+    );
+  } finally {
+    finishCloudLedgerRuntimeCacheWrite(userId, writeToken);
+  }
+}
+
+export async function resubmitCloudLedgerRepairTransactionChangeForUser(input: {
+  readonly userId: UserId;
+  readonly changeId: LedgerChangeId;
+  readonly createdAt: IsoDateTime;
+  readonly expectedVersion?: number;
+  readonly transaction: CloudLedgerTransaction;
+}): Promise<boolean> {
+  const writeToken = beginCloudLedgerRuntimeCacheWrite(input.userId);
+  try {
+    if (!isCloudLedgerRuntimeCacheWriteCurrent(input.userId, writeToken)) {
+      return false;
+    }
+    const optimisticCache = await resubmitCloudLedgerRepairTransactionChange({
+      cache: getCloudLedgerRuntimeCache(input.userId),
+      changeId: input.changeId,
+      createdAt: input.createdAt,
+      expectedVersion: input.expectedVersion,
+      outbox: getCloudLedgerOutbox(input.userId),
+      transaction: input.transaction,
+    });
+    return setCloudLedgerRuntimeCacheIfCurrent(input.userId, writeToken, optimisticCache);
+  } finally {
+    finishCloudLedgerRuntimeCacheWrite(input.userId, writeToken);
+  }
+}
+
+async function flushAndRestoreRepairMarkersIfNeeded(
+  userId: UserId,
+  outbox: EncryptedCloudLedgerOutbox,
+  repairItems: readonly CloudLedgerRepairItem[]
+): Promise<boolean> {
+  try {
+    const didFlush = await flushCloudLedgerOutboxForUser(userId);
+    if (didFlush) {
+      return true;
+    }
+    await restoreRepairMarkers(outbox, repairItems);
+    return false;
+  } catch (error) {
+    await restoreRepairMarkers(outbox, repairItems);
+    throw error;
+  }
+}
+
+async function restoreRepairMarkers(
+  outbox: EncryptedCloudLedgerOutbox,
+  repairItems: readonly CloudLedgerRepairItem[]
+): Promise<void> {
+  await outbox.markForRepair?.(repairItems.map(repairStateFromRepairItem));
 }
 
 export async function enqueueCloudLedgerOptimisticCreate(input: {

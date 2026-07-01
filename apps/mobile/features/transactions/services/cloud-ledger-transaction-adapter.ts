@@ -66,7 +66,7 @@ export function pendingCloudLedgerChangeToStoredTransactions(
   userId: UserId,
   change: CloudLedgerPendingChange
 ): readonly StoredTransaction[] {
-  if (change.kind === "deleteTransaction") {
+  if (change.kind === "deleteTransaction" || change.kind === "unsupported") {
     return [];
   }
   const timestamp = new Date(change.createdAt);

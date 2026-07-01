@@ -13,6 +13,7 @@ import type {
 } from "@/shared/types/branded";
 
 const mocks = vi.hoisted(() => {
+  const currentIsoDate = "2026-06-20";
   const acceptedTransaction = {
     id: "txn-accepted-restart",
     type: "expense",
@@ -21,8 +22,8 @@ const mocks = vi.hoisted(() => {
     categoryId: "food",
     accountId: "fa-default-user-1",
     description: "Accepted restart coffee",
-    date: "2026-06-20",
-    updatedAt: "2026-06-20T10:04:00.000Z",
+    date: currentIsoDate,
+    updatedAt: `${currentIsoDate}T10:04:00.000Z`,
   };
   const restoredPendingTransaction = {
     id: "txn-restored-pending-restart",
@@ -32,8 +33,8 @@ const mocks = vi.hoisted(() => {
     categoryId: "food",
     accountId: "fa-default-user-1",
     description: "Restored pending offline lunch",
-    date: "2026-06-20",
-    updatedAt: "2026-06-20T10:05:00.000Z",
+    date: currentIsoDate,
+    updatedAt: `${currentIsoDate}T10:05:00.000Z`,
   };
   const createEmptyCache = () => ({
     cursor: null,

@@ -7,6 +7,7 @@ import { styles } from "./TransactionForm.styles";
 import type { TransactionFormMode } from "./TransactionForm.types";
 
 type TransactionFormHeaderProps = {
+  readonly allowTransferMode: boolean;
   readonly closeLabel: string;
   readonly mode: TransactionFormMode;
   readonly onClose?: () => void;
@@ -16,6 +17,7 @@ type TransactionFormHeaderProps = {
 };
 
 export function TransactionFormHeader({
+  allowTransferMode,
   closeLabel,
   mode,
   onClose,
@@ -28,6 +30,11 @@ export function TransactionFormHeader({
     void Haptics.selectionAsync();
     onModeChange(tab);
   };
+  const options = [
+    { value: "expense" as const, label: t("transactions.expense") },
+    { value: "income" as const, label: t("transactions.income") },
+    ...(allowTransferMode ? [{ value: "transfer" as const, label: transferLabel }] : []),
+  ];
 
   return (
     <>
@@ -50,11 +57,7 @@ export function TransactionFormHeader({
 
       <View style={styles.headerCenter}>
         <SegmentedControl
-          options={[
-            { value: "expense", label: t("transactions.expense") },
-            { value: "income", label: t("transactions.income") },
-            { value: "transfer", label: transferLabel },
-          ]}
+          options={options}
           value={mode}
           onChange={handleTabChange}
           variant="detached"

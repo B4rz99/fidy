@@ -26,6 +26,7 @@ type TransactionFormContentProps = TransactionFormProps &
 
 export function TransactionFormContent({
   accountId,
+  allowTransferMode = true,
   accounts,
   canSave,
   categories,
@@ -129,6 +130,7 @@ export function TransactionFormContent({
             onClose={onClose}
             mode={mode}
             onModeChange={handleModeChange}
+            allowTransferMode={allowTransferMode}
             secondaryColor={secondaryColor}
             transferLabel={t("transfers.activity.generic")}
           />
