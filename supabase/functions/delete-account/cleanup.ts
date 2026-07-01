@@ -107,6 +107,7 @@ export async function deleteAccountRemoteData(
     return {
       success: false,
       failures: [...cleanupFailures, authFailure],
+      localCleanupRequired: true,
     };
   }
 

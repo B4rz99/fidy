@@ -76,6 +76,28 @@ describe("delete-account remote cleanup", () => {
     expect(supabase.deleteUser).not.toHaveBeenCalled();
   });
 
+  it("signals local cleanup when auth deletion fails after remote data cleanup", async () => {
+    const supabase = createDeleteAccountSupabase({
+      backupRows: [],
+      authDeleteError: { message: "auth cleanup unavailable" },
+    });
+
+    await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
+      success: false,
+      failures: [{ target: "auth.users", message: "auth cleanup unavailable" }],
+      localCleanupRequired: true,
+    });
+
+    expect(supabase.tableDeletes()).toEqual([
+      "encrypted_backups",
+      "push_devices",
+      "notification_preferences",
+      "capture_improvement_preferences",
+      "notification_parse_improvement_samples",
+      "rate_limits",
+    ]);
+  });
+
   it("reports Cloud Ledger cleanup failures before deleting operational rows or the auth user", async () => {
     const supabase = createDeleteAccountSupabase({
       backupRows: [],
@@ -151,6 +173,7 @@ describe("delete-account remote cleanup", () => {
 
 function createDeleteAccountSupabase(options: {
   readonly backupRows: readonly { id: string }[];
+  readonly authDeleteError?: { readonly message: string };
   readonly backupListError?: { readonly message: string };
   readonly rpcError?: { readonly message: string };
   readonly storageError?: { readonly message: string };
@@ -177,7 +200,9 @@ function createDeleteAccountSupabase(options: {
   const storageRemove = vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ error: options.storageError ?? null })
   );
-  const deleteUser = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
+  const deleteUser = vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve({ error: options.authDeleteError ?? null })
+  );
   const rpc = vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ data: { code: "deleted" }, error: options.rpcError ?? null })
   );
