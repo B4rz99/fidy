@@ -1,0 +1,29 @@
+apps/mobile/__tests__/auth/store.test.ts
+  s_6c070d47258744::t_9316de52861395 123-142,218,732-772
+  s_6c070d47258744::t_e0048d44ec6371 773-774
+apps/mobile/features/auth/store.ts
+  s_6c070d47258744::t_3e63556dcbeb9b 2,51-52,115-132,164,169-173,181-217
+  s_6c070d47258744::t_bd6a96b36eec8f 387-389,391-393
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_b219c5e00fac5d 583-602,2218-2256
+  s_6c070d47258744::t_248f6b31efa8b0 2257-2259
+  s_6c070d47258744::t_23676491185f3d 2260-2262
+apps/mobile/drizzle/0038_ledger_cache_reference_source.sql
+  s_6c070d47258744::t_407cd0b9c9d929 61-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "3cba9d0f4b7e7038108facd5c1b53ce10d4d229c",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
