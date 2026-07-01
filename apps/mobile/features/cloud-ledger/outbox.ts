@@ -525,6 +525,7 @@ export async function flushPendingCloudLedgerChanges(input: {
   } else {
     await input.outbox.removeAcceptedChanges(removableChanges);
   }
+  await clearDependencyRepairsResolvedByAcceptedChanges(input.outbox, removableChanges);
   await input.outbox.recordAutoRetryAttempts?.(retryStates);
   await input.outbox.markForRepair?.(
     repairStatesWithAcceptedTransactionVersions(repairStates, flushableChanges, refreshedCache)
@@ -572,6 +573,26 @@ function repairStatesWithAcceptedTransactionVersions(
       ? repair
       : { ...repair, acceptedTransactionVersion };
   });
+}
+
+async function clearDependencyRepairsResolvedByAcceptedChanges(
+  outbox: EncryptedCloudLedgerOutbox,
+  acceptedChanges: readonly CloudLedgerPendingChange[]
+): Promise<void> {
+  if (outbox.clearRepairStates === undefined || acceptedChanges.length === 0) {
+    return;
+  }
+  const acceptedChangeIds = new Set(acceptedChanges.map((change) => change.id));
+  const resolvedDependencyRepairIds = (await loadCloudLedgerRepairItems(outbox))
+    .filter((item) => item.reason === "dependencyFailure")
+    .filter(
+      (item) => item.parentChangeId !== undefined && acceptedChangeIds.has(item.parentChangeId)
+    )
+    .map((item) => item.id);
+  if (resolvedDependencyRepairIds.length === 0) {
+    return;
+  }
+  await outbox.clearRepairStates(resolvedDependencyRepairIds);
 }
 
 async function flushPendingChanges(

@@ -1790,6 +1790,148 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(acceptedSupabase.functionsInvoke).not.toHaveBeenCalled();
   });
 
+  it("resumes a dependency-failed child after the parent repair is accepted", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const parentCache = await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-parent-fixed"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const childAmend = acceptedCoffeeLedgerTransaction({
+      description: "Coffee child amend",
+      version: 2,
+      updatedAt: "2026-06-02T10:04:00.000Z",
+    });
+    const optimisticCache = await amendOfflineCloudLedgerTransaction({
+      cache: parentCache,
+      changeId: requireLedgerChangeId("change-child-resumes"),
+      createdAt: requireIsoDateTime("2026-06-02T10:04:00.000Z"),
+      expectedVersion: 1,
+      outbox,
+      transaction: childAmend,
+    });
+    const failedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-parent-fixed", "change-child-resumes"],
+        changeOutcomes: [
+          {
+            changeId: "change-parent-fixed",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+          {
+            changeId: "change-child-resumes",
+            status: "repair_required",
+            code: "dependency_failed",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+    const parentAcceptedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-parent-fixed"],
+        rejectedChangeIds: [],
+        changeOutcomes: [{ changeId: "change-parent-fixed", status: "accepted", code: "accepted" }],
+        cursor: "ledger:9",
+      },
+      refreshPayload: {
+        ...emptyRefreshPayload("ledger:9"),
+        transactions: [acceptedCoffeeTransaction({ description: "Coffee parent accepted" })],
+      },
+    });
+    const childAcceptedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-child-resumes"],
+        rejectedChangeIds: [],
+        changeOutcomes: [
+          { changeId: "change-child-resumes", status: "accepted", code: "accepted" },
+        ],
+        cursor: "ledger:10",
+      },
+      refreshPayload: {
+        ...emptyRefreshPayload("ledger:10"),
+        transactions: [
+          acceptedCoffeeTransaction({ description: "Coffee child accepted", version: 2 }),
+        ],
+      },
+    });
+
+    const repairCache = await flushPendingCloudLedgerChanges({
+      cache: optimisticCache,
+      outbox,
+      supabase: failedSupabase.client,
+    });
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-parent-fixed",
+        reason: "invalidTransaction",
+      }),
+      expect.objectContaining({
+        id: "change-child-resumes",
+        reason: "dependencyFailure",
+        parentChangeId: "change-parent-fixed",
+      }),
+    ]);
+
+    const fixedParent = acceptedCoffeeLedgerTransaction({
+      description: "Coffee parent fixed",
+      updatedAt: "2026-06-02T10:06:00.000Z",
+    });
+    const resubmitCache = await resubmitCloudLedgerRepairTransactionChange({
+      cache: repairCache,
+      changeId: requireLedgerChangeId("change-parent-fixed"),
+      createdAt: requireIsoDateTime("2026-06-02T10:06:00.000Z"),
+      outbox,
+      transaction: fixedParent,
+    });
+    const parentAcceptedCache = await flushPendingCloudLedgerChanges({
+      cache: resubmitCache,
+      outbox,
+      supabase: parentAcceptedSupabase.client,
+    });
+
+    expect(
+      parentAcceptedSupabase.functionsInvoke.mock.calls
+        .filter(([, options]) => options.body.action === "applyPendingChanges")
+        .flatMap(([, options]) =>
+          ((options as CloudLedgerInvokeOptions).body.changes ?? []).map((change) => change.id)
+        )
+    ).toEqual(["change-parent-fixed"]);
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([]);
+    expect((await outbox.load()).map((change) => change.id)).toEqual(["change-child-resumes"]);
+
+    const acceptedCache = await flushPendingCloudLedgerChanges({
+      cache: parentAcceptedCache,
+      outbox,
+      supabase: childAcceptedSupabase.client,
+    });
+
+    expect(
+      childAcceptedSupabase.functionsInvoke.mock.calls
+        .filter(([, options]) => options.body.action === "applyPendingChanges")
+        .flatMap(([, options]) =>
+          ((options as CloudLedgerInvokeOptions).body.changes ?? []).map((change) => change.id)
+        )
+    ).toEqual(["change-child-resumes"]);
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([]);
+    expect(await outbox.load()).toEqual([]);
+    expect(acceptedCache.transactions).toEqual([
+      acceptedCoffeeLedgerTransaction({ description: "Coffee child accepted", version: 2 }),
+    ]);
+  });
+
   it("surfaces unsupported command versions as app-update repair items that cannot be retried", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
