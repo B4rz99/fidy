@@ -362,6 +362,58 @@ describe("useAuthStore", () => {
     expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
   });
 
+  it("restoreSession keeps the recovered session on cold-start missing-user reset failure", async () => {
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toEqual(mockSession);
+    expect(isLoading).toBe(false);
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
+  });
+
+  it("restoreSession keeps the recovered session on cold-start marker read failure", async () => {
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+    vi.mocked(SecureStore.getItemAsync).mockRejectedValueOnce(
+      new Error("secure store read failed")
+    );
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toEqual(mockSession);
+    expect(isLoading).toBe(false);
+    expect(mockResetDbForUser).not.toHaveBeenCalled();
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+  });
+
   it("restoreSession preserves cached session on transient getUser errors", async () => {
     mockGetSession.mockResolvedValueOnce({
       data: { session: mockSession },

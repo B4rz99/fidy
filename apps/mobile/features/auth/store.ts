@@ -157,12 +157,14 @@ async function handleMissingRemoteSession(
 async function handleMissingValidatedUser(
   set: SetAuthState,
   transitionVersion: number,
+  recoveredSession: Session,
   userId: UserId,
   errorMessage?: string
 ) {
   const pendingDeletedCleanup = await readPendingDeletedAccountCleanup(
     set,
     transitionVersion,
+    recoveredSession,
     userId
   );
   if (pendingDeletedCleanup === null) return;
@@ -170,6 +172,7 @@ async function handleMissingValidatedUser(
   const didDiscardLocalState = await discardDeletedAccountStateAfterMissingRemoteUser(
     set,
     transitionVersion,
+    recoveredSession,
     userId
   );
   if (!didDiscardLocalState) return;
@@ -182,6 +185,7 @@ async function handleMissingValidatedUser(
 async function readPendingDeletedAccountCleanup(
   set: SetAuthState,
   transitionVersion: number,
+  recoveredSession: Session,
   userId: UserId
 ): Promise<boolean | null> {
   try {
@@ -189,7 +193,7 @@ async function readPendingDeletedAccountCleanup(
   } catch (err) {
     captureAuthFailure("auth_deleted_account_cleanup_marker_read_failed", err);
     if (!isStaleAuthTransition(transitionVersion)) {
-      set({ isLoading: false });
+      setRemoteAuthState(set, recoveredSession);
     }
     return null;
   }
@@ -198,6 +202,7 @@ async function readPendingDeletedAccountCleanup(
 async function discardDeletedAccountStateAfterMissingRemoteUser(
   set: SetAuthState,
   transitionVersion: number,
+  recoveredSession: Session,
   userId: UserId
 ): Promise<boolean> {
   suspendCloudLedgerStateForUser(userId);
@@ -209,7 +214,7 @@ async function discardDeletedAccountStateAfterMissingRemoteUser(
     resumeCloudLedgerStateForUser(userId);
     captureAuthFailure("auth_deleted_account_pending_cleanup_retry_failed", err);
     if (!isStaleAuthTransition(transitionVersion)) {
-      set({ isLoading: false });
+      setRemoteAuthState(set, recoveredSession);
     }
     return false;
   }
@@ -245,6 +250,7 @@ async function restoreSupabaseSession(set: SetAuthState, transitionVersion: numb
     await handleMissingValidatedUser(
       set,
       transitionVersion,
+      session,
       requireUserId(session.user.id),
       userResult.error?.message
     );
