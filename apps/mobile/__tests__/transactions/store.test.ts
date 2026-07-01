@@ -498,6 +498,24 @@ function createMockSupabase(): SupabaseClient {
   return supabase as unknown as SupabaseClient;
 }
 
+function makeCurrentMonthDate(dayOfMonth: number): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), Math.min(dayOfMonth, now.getDate()));
+}
+
+function makeCurrentMonthDateTime(dayOfMonth: number, hour = 12, minute = 0): Date {
+  const now = new Date();
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    Math.min(dayOfMonth, now.getDate()),
+    hour,
+    minute,
+    0,
+    0
+  );
+}
+
 describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -1207,12 +1225,14 @@ describe("transaction boundaries", () => {
   });
 
   it("keeps visible transactions when encrypted outbox restore fails during refresh", async () => {
+    const visibleDate = makeCurrentMonthDate(24);
+    const visibleTimestamp = makeCurrentMonthDateTime(24, 10);
     const visibleTransaction = makeStoredTransaction({
       id: "tx-visible-before-outbox-failure" as TransactionId,
-      createdAt: new Date("2026-06-24T10:00:00.000Z"),
-      date: new Date(2026, 5, 24),
+      createdAt: visibleTimestamp,
+      date: visibleDate,
       source: "cloud_ledger",
-      updatedAt: new Date("2026-06-24T10:00:00.000Z"),
+      updatedAt: visibleTimestamp,
     });
     setCloudLedgerRuntimeCache(
       mockUserId,
@@ -1697,12 +1717,14 @@ describe("transaction boundaries", () => {
   });
 
   it("deduplicates restored pending Cloud Ledger rows already present in runtime aggregates", async () => {
+    const restoredPendingDate = makeCurrentMonthDate(15);
+    const restoredPendingCreatedAt = makeCurrentMonthDateTime(15);
     const restoredPendingTransaction = makeStoredTransaction({
       id: "txn-restored-pending-duplicate" as TransactionId,
       amount: 18_000 as CopAmount,
-      date: new Date("2026-06-15T12:00:00.000Z"),
-      createdAt: new Date("2026-06-15T12:00:00.000Z"),
-      updatedAt: new Date("2026-06-15T12:03:00.000Z"),
+      date: restoredPendingDate,
+      createdAt: restoredPendingCreatedAt,
+      updatedAt: makeCurrentMonthDateTime(15, 12, 3),
     });
     const restoredPendingChange = pendingCreateFromStoredTransaction(restoredPendingTransaction);
     setCloudLedgerRuntimeCache(
@@ -1731,9 +1753,9 @@ describe("transaction boundaries", () => {
         makeRow({
           id: `tx-visible-newer-${index}` as TransactionId,
           amount: (1000 + index) as CopAmount,
-          date: "2026-06-20" as IsoDate,
-          createdAt: `2026-06-20T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
-          updatedAt: `2026-06-20T10:${String(index).padStart(2, "0")}:00.000Z` as IsoDateTime,
+          date: toIsoDate(makeCurrentMonthDate(20)),
+          createdAt: toIsoDateTime(makeCurrentMonthDateTime(20, 13, index)),
+          updatedAt: toIsoDateTime(makeCurrentMonthDateTime(20, 13, index)),
         })
       )
     );
@@ -1746,7 +1768,7 @@ describe("transaction boundaries", () => {
     expect(useTransactionStore.getState()).toMatchObject({
       balance: 18_000,
       categorySpending: [{ categoryId: "food", total: 18_000 }],
-      dailySpending: [{ date: "2026-06-15", total: 18_000 }],
+      dailySpending: [{ date: toIsoDate(restoredPendingTransaction.date), total: 18_000 }],
     });
   });
 

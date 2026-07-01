@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   runAuthenticatedBootstrap,
   subscribeAuthenticatedTransactionRefreshes,
@@ -205,6 +205,8 @@ vi.mock("@/shared/db/supabase", () => ({
 
 describe("authenticated shell Cloud Ledger bootstrap", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-26T12:00:00.000Z"));
     vi.clearAllMocks();
     useTransactionStore.getState().beginSession("user-reset" as UserId);
     mocks.state.runtimeCache = mocks.createEmptyCache();
@@ -228,6 +230,10 @@ describe("authenticated shell Cloud Ledger bootstrap", () => {
       return vi.fn();
     });
     mocks.tryEnsureDefaultFinancialAccount.mockReturnValue({ id: "fa-default-user-1" });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("makes accepted Cloud Ledger transactions visible on the first ordinary load after restart", async () => {

@@ -332,6 +332,207 @@ describe("cloud-ledger-api Edge Function", () => {
     );
   });
 
+  it("records redacted command telemetry with retry and repair metadata", async () => {
+    const repairChangeId = "lchg-1719876543210-a1b2c";
+    const retryChangeId = "lchg-1719876543211-d3e4f";
+    const recordCommand = vi.fn();
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: [repairChangeId, retryChangeId],
+        changeOutcomes: [
+          {
+            changeId: repairChangeId,
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+          {
+            changeId: retryChangeId,
+            status: "retryable",
+            code: "retryable_failure",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+      createCorrelationId: () => "corr-issue-542",
+      telemetry: { recordCommand },
+    });
+
+    const response = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          deviceId: "device-0102030405060708090a0b0c0d0e0f10",
+          batchId: `batch-${repairChangeId}`,
+          changes: [
+            {
+              ...PENDING_CHANGE_REQUEST,
+              id: repairChangeId,
+              idempotencyKey: "idem-sensitive-repair",
+              transaction: {
+                ...CREATE_TRANSACTION_PAYLOAD,
+                id: "txn-sensitive-repair",
+                amount: 50_000,
+                description: "EXITO market card *1234",
+              },
+            },
+            {
+              ...PENDING_CHANGE_REQUEST,
+              id: retryChangeId,
+              idempotencyKey: "idem-sensitive-retry",
+              transaction: {
+                ...CREATE_TRANSACTION_PAYLOAD,
+                id: "txn-sensitive-retry",
+                amount: 51_000,
+                description: "Retry EXITO card *5678",
+              },
+            },
+          ],
+        },
+        "valid-token",
+        "corr-issue-542"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Correlation-Id")).toBe("corr-issue-542");
+    expect(recordCommand).toHaveBeenCalledWith({
+      action: "applyPendingChanges",
+      acceptedChangeIds: [],
+      authenticatedUserId: USER_ID,
+      batchId: `batch-${repairChangeId}`,
+      changeIds: [repairChangeId, retryChangeId],
+      changeOutcomes: [
+        {
+          changeId: repairChangeId,
+          code: "stale_expected_version",
+          status: "repair_required",
+        },
+        {
+          changeId: retryChangeId,
+          code: "retryable_failure",
+          status: "retryable",
+        },
+      ],
+      commandVersion: 1,
+      correlationId: "corr-issue-542",
+      deviceId: "device-0102030405060708090a0b0c0d0e0f10",
+      latencyMs: expect.any(Number),
+      outcomeCode: "accepted",
+      rejectedChangeIds: [repairChangeId, retryChangeId],
+      retryableChangeIds: [retryChangeId],
+      repairRequiredChangeIds: [repairChangeId],
+      requiresAppUpdateChangeIds: [],
+      status: "success",
+    });
+    const telemetryPayload = JSON.stringify(recordCommand.mock.calls);
+    expect(telemetryPayload).not.toContain("50000");
+    expect(telemetryPayload).not.toContain("EXITO");
+    expect(telemetryPayload).not.toContain("market");
+    expect(telemetryPayload).not.toContain("1234");
+    expect(telemetryPayload).not.toContain("5678");
+    expect(telemetryPayload).not.toContain("amount");
+    expect(telemetryPayload).not.toContain("description");
+    expect(telemetryPayload).not.toContain("accountId");
+  });
+
+  it("does not log raw rejected command metadata or unsafe correlation headers", async () => {
+    const recordCommand = vi.fn();
+    const api = createCloudLedgerApiDeps({
+      applyPendingChangesResult: {
+        code: "accepted",
+        acceptedChangeIds: ["change-exito-50000-card-1234"],
+        rejectedChangeIds: ["change-exito-50000-card-5678"],
+        changeOutcomes: [
+          {
+            changeId: "change-exito-50000-card-5678",
+            status: "repair_required",
+            code: "stale_expected_version",
+          },
+        ],
+        cursor: "ledger:2",
+      },
+      createCorrelationId: () => "server-correlation-safe",
+      telemetry: { recordCommand },
+    });
+
+    const rejectedResponse = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          action: "exito-50000-card-1234",
+          commandVersion: 1,
+        },
+        "valid-token",
+        "header-exito-50000-card-1234"
+      ),
+      api.deps
+    );
+
+    expect(rejectedResponse.status).toBe(400);
+    expect(rejectedResponse.headers.get("X-Correlation-Id")).toBe("server-correlation-safe");
+    await expect(rejectedResponse.json()).resolves.toEqual({
+      success: false,
+      error: "unsupported_action",
+    });
+
+    const acceptedResponse = await handleCloudLedgerRequest(
+      jsonRequest(
+        {
+          ...APPLY_PENDING_CHANGES_REQUEST_BODY,
+          deviceId: "device-exito-50000-card-1234",
+          batchId: "batch-exito-50000-card-1234",
+          changes: [
+            {
+              ...PENDING_CHANGE_REQUEST,
+              id: "change-exito-50000-card-1234",
+              transaction: {
+                ...CREATE_TRANSACTION_PAYLOAD,
+                id: "txn-sensitive-lowercase",
+              },
+            },
+          ],
+        },
+        "valid-token",
+        "header-exito-50000-card-1234"
+      ),
+      api.deps
+    );
+
+    expect(acceptedResponse.status).toBe(200);
+    expect(acceptedResponse.headers.get("X-Correlation-Id")).toBe("server-correlation-safe");
+    expect(recordCommand).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        action: "unknown",
+        batchId: null,
+        changeIds: [],
+        correlationId: "server-correlation-safe",
+        deviceId: null,
+        outcomeCode: "unsupported_action",
+        status: "failure",
+      })
+    );
+    expect(recordCommand).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        action: "applyPendingChanges",
+        batchId: null,
+        changeIds: [],
+        changeOutcomes: [],
+        correlationId: "server-correlation-safe",
+        deviceId: null,
+        rejectedChangeIds: [],
+      })
+    );
+    const telemetryPayload = JSON.stringify(recordCommand.mock.calls);
+    expect(telemetryPayload).not.toContain("exito");
+    expect(telemetryPayload).not.toContain("50000");
+    expect(telemetryPayload).not.toContain("1234");
+    expect(telemetryPayload).not.toContain("card-");
+  });
+
   it("rejects oversized pending-change batches before replaying them", async () => {
     const api = createCloudLedgerApiDeps();
 
@@ -1732,12 +1933,13 @@ function optionsRequest() {
   return new Request("http://localhost/cloud-ledger-api", { method: "OPTIONS" });
 }
 
-function jsonRequest(body: unknown, token?: string) {
+function jsonRequest(body: unknown, token?: string, correlationId?: string) {
   return new Request("http://localhost/cloud-ledger-api", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(token === undefined ? {} : { Authorization: `Bearer ${token}` }),
+      ...(correlationId === undefined ? {} : { "X-Correlation-Id": correlationId }),
     },
     body: JSON.stringify(body),
   });
@@ -1766,6 +1968,8 @@ type CloudLedgerApiDepsOptions = {
   readonly applyPendingChangesResult?: unknown;
   readonly createTransactionResult?: unknown;
   readonly retainCaptureImprovementResult?: unknown;
+  readonly createCorrelationId?: () => string;
+  readonly telemetry?: { readonly recordCommand: (event: unknown) => void };
   readonly userId?: string;
 };
 
@@ -1867,6 +2071,10 @@ function createCloudLedgerApiDeps(options: CloudLedgerApiDepsOptions = {}) {
     deps: {
       auth: createCloudLedgerApiAuth(options),
       store,
+      ...(options.createCorrelationId === undefined
+        ? {}
+        : { createCorrelationId: options.createCorrelationId }),
+      ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
     },
   };
 }

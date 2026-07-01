@@ -18,6 +18,10 @@ const TRANSACTION_EDIT_DELETE_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260630153000_cloud_ledger_transaction_edit_delete.sql"
 );
+const OBSERVABILITY_SECURITY_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260630170000_cloud_ledger_observability_security.sql"
+);
 const CAPTURE_IMPROVEMENT_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260622110000_capture_improvement_sample_boundary.sql"
@@ -171,6 +175,46 @@ describe("Cloud Ledger remote schema", () => {
     expect(sql).toContain("revoke execute on function ledger.apply_transaction_delete");
     expect(sql).toContain(
       "revoke all on table ledger.transaction_edit_history from public, anon, authenticated"
+    );
+    expect(sql).not.toContain("raise notice");
+  });
+
+  it("adds a narrow Cloud Ledger API role without direct ledger table privileges", () => {
+    const sql = readFileSync(OBSERVABILITY_SECURITY_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("create role ledger_api nologin");
+    expect(sql).toContain("grant ledger_api to authenticator");
+    expect(sql).toContain("grant usage on schema public to ledger_api");
+    expect(sql).toContain("revoke all on schema ledger from ledger_api");
+    expect(sql).toContain("revoke all on all tables in schema ledger from ledger_api");
+    expect(sql).toContain("revoke all on all sequences in schema ledger from ledger_api");
+    expect(sql).toContain(
+      "grant execute on function public.cloud_ledger_bootstrap(uuid, bigint) to ledger_api"
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_create_transaction\([\s\S]*?date\s*\) to ledger_api/
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_apply_pending_changes\([\s\S]*?jsonb\s*\) to ledger_api/
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.cloud_ledger_retain_capture_improvement_sample\([\s\S]*?integer[\s\S]*?\) to ledger_api/
+    );
+    expect(sql).toContain(
+      "grant execute on function public.cloud_ledger_delete_capture_improvement_samples(uuid) to ledger_api"
+    );
+    expect(sql).toContain(
+      "grant execute on function public.cloud_ledger_set_capture_improvement_preference(uuid, boolean) to ledger_api"
+    );
+    expect(sql).toContain("to service_role");
+    expect(sql).toContain(
+      "revoke execute on all functions in schema ledger from public, anon, authenticated, ledger_api"
+    );
+    expect(sql).toContain(
+      "alter default privileges revoke execute on functions from public, anon, authenticated, ledger_api"
+    );
+    expect(sql).toContain(
+      "alter default privileges in schema ledger revoke execute on functions from public, anon, authenticated, ledger_api"
     );
     expect(sql).not.toContain("raise notice");
   });
