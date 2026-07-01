@@ -160,16 +160,18 @@ async function handleMissingValidatedUser(
   userId: UserId,
   errorMessage?: string
 ) {
-  const hasPendingDeletedCleanup = await readPendingDeletedAccountCleanup(
+  const pendingDeletedCleanup = await readPendingDeletedAccountCleanup(
     set,
     transitionVersion,
     userId
   );
-  if (hasPendingDeletedCleanup === null) return;
+  if (pendingDeletedCleanup === null) return;
 
-  const didDiscardLocalState = hasPendingDeletedCleanup
-    ? await discardDeletedAccountStateAfterMissingRemoteUser(set, transitionVersion, userId)
-    : await discardCloudLedgerStateAfterMissingRemoteUser(set, transitionVersion, userId);
+  const didDiscardLocalState = await discardDeletedAccountStateAfterMissingRemoteUser(
+    set,
+    transitionVersion,
+    userId
+  );
   if (!didDiscardLocalState) return;
   if (isStaleAuthTransition(transitionVersion)) return;
   await signOutRemoteSession();
@@ -281,23 +283,6 @@ function suspendCloudLedgerStateBeforeSignOut(): UserId | null {
 
   suspendCloudLedgerStateForUser(userId);
   return userId;
-}
-
-async function discardCloudLedgerStateAfterMissingRemoteUser(
-  set: SetAuthState,
-  transitionVersion: number,
-  userId: UserId
-): Promise<boolean> {
-  suspendCloudLedgerStateForUser(userId);
-  try {
-    await discardCloudLedgerStateBeforeSignOut(userId);
-    return true;
-  } catch {
-    if (!isStaleAuthTransition(transitionVersion)) {
-      set({ isLoading: false });
-    }
-    return false;
-  }
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
