@@ -117,7 +117,15 @@ function pendingDeletedAccountCleanupKey(userId: UserId): string {
 }
 
 async function markPendingDeletedAccountCleanup(userId: UserId): Promise<void> {
-  await SecureStore.setItemAsync(pendingDeletedAccountCleanupKey(userId), "true");
+  const key = pendingDeletedAccountCleanupKey(userId);
+  await SecureStore.setItemAsync(key, "true").catch((err) => {
+    captureAuthFailure("auth_deleted_account_cleanup_marker_write_failed", err);
+    try {
+      SecureStore.setItem(key, "true");
+    } catch (fallbackErr) {
+      captureAuthFailure("auth_deleted_account_cleanup_marker_fallback_write_failed", fallbackErr);
+    }
+  });
 }
 
 async function hasPendingDeletedAccountCleanup(userId: UserId): Promise<boolean> {
