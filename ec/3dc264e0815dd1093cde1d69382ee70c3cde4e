@@ -1,0 +1,34 @@
+supabase/functions/delete-account/cleanup.ts
+  s_6c070d47258744::t_587a0df5805c67 10-13,41,80-84,103-115
+apps/mobile/shared/i18n/locales/en.ts
+  s_6c070d47258744::t_587a0df5805c67 812
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_6c070d47258744::t_587a0df5805c67 82-88
+apps/mobile/shared/i18n/locales/es.ts
+  s_6c070d47258744::t_587a0df5805c67 823
+apps/mobile/__tests__/cloud-ledger/remote-access-postgres.test.ts
+  s_6c070d47258744::t_587a0df5805c67 28-31,38,148,171-229,1795-1823,1870-1871,1877
+  s_6c070d47258744::t_09ce8131b88140 170
+apps/mobile/__tests__/cloud-ledger/remote-schema.test.ts
+  s_6c070d47258744::t_587a0df5805c67 25-28,226-240
+apps/mobile/__tests__/edge-functions/delete-account-cleanup.test.ts
+  s_6c070d47258744::t_587a0df5805c67 10,20-22,35-37,57-71,116,138-140,147,156
+apps/mobile/supabase/migrations/20260630190000_cloud_ledger_account_deletion.sql
+  s_6c070d47258744::t_587a0df5805c67 1-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "ec3dc264e0815dd1093cde1d69382ee70c3cde4e",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
