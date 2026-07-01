@@ -1,0 +1,27 @@
+supabase/functions/ai-chat/error-classification.ts
+  s_6c070d47258744::t_abe3af59fe03c8 2-4,19-29,31-33
+  s_6c070d47258744::t_8af0a6247c520b 1,5-18,30,34
+apps/mobile/__tests__/edge-functions/ai-chat-privacy-boundary.test.ts
+  s_6c070d47258744::t_4bbaa06399abfc 5-8
+  s_6c070d47258744::t_7ad193020b5af1 52-57,60,64,68
+  s_6c070d47258744::t_4fcdd7483d7c1a 3,47-51,58-59,61-63,65-67,69
+  s_6c070d47258744::t_bd54ba46757520 70
+supabase/functions/ai-chat/index.ts
+  s_6c070d47258744::t_9be428203ea779 6,272,279,297,304
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "59587f9f040feb1db73ae4990872fae758a0fdff",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
