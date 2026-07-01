@@ -1,0 +1,29 @@
+apps/mobile/features/auth/store.ts
+  s_6c070d47258744::t_1c4032ee097158 322
+  s_6c070d47258744::t_a335ff0c5ebac1 17,203,207,328
+  s_6c070d47258744::t_ef1030157dc918 16,18-21
+apps/mobile/features/settings/hooks/use-delete-account.ts
+  s_6c070d47258744::t_f32b05d5a680c3 3
+apps/mobile/features/auth/cloud-ledger-session-cleanup.ts
+  s_6c070d47258744::t_ef1030157dc918 1-99
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_6c070d47258744::t_f32b05d5a680c3 5-6
+apps/mobile/features/settings/data/delete-account.ts
+  s_6c070d47258744::t_f32b05d5a680c3 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d465f02c84744de12b27700e5a789b3136c228aa",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
