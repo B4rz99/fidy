@@ -1029,6 +1029,87 @@ describe("mobile Cloud Ledger offline outbox", () => {
     expect(thirdSupabase.functionsInvoke).not.toHaveBeenCalled();
   });
 
+  it("keeps a retryable repair visible when manual retry receives another retryable response", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    const cache = await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-manual-retryable-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+    const retryableOutcome = {
+      code: "accepted" as const,
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-manual-retryable-coffee"],
+      changeOutcomes: [
+        {
+          changeId: "change-manual-retryable-coffee",
+          status: "retryable" as const,
+          code: "edge_function_unavailable",
+        },
+      ],
+      cursor: "ledger:8",
+    };
+    const firstRetryableSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: retryableOutcome,
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+    const secondRetryableSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: retryableOutcome,
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+    const manualRetrySupabase = createCloudLedgerSupabase({
+      createTransactionPayload: retryableOutcome,
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+
+    const retryCache = await flushPendingCloudLedgerChanges({
+      cache,
+      outbox,
+      supabase: firstRetryableSupabase.client,
+    });
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([]);
+
+    const repairCache = await flushPendingCloudLedgerChanges({
+      cache: retryCache,
+      outbox,
+      supabase: secondRetryableSupabase.client,
+    });
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-manual-retryable-coffee",
+        reason: "retryableFailure",
+        actions: ["retry", "discard"],
+      }),
+    ]);
+
+    await retryCloudLedgerRepairItem(
+      outbox,
+      requireLedgerChangeId("change-manual-retryable-coffee")
+    );
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([]);
+
+    await flushPendingCloudLedgerChanges({
+      cache: repairCache,
+      outbox,
+      supabase: manualRetrySupabase.client,
+    });
+
+    expect(manualRetrySupabase.functionsInvoke).toHaveBeenCalled();
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-manual-retryable-coffee",
+        reason: "retryableFailure",
+        actions: ["retry", "discard"],
+      }),
+    ]);
+  });
+
   it("retries a failed pending change from the repair flow", async () => {
     const storage = createMemoryOutboxStorage();
     const outbox = createEncryptedCloudLedgerOutbox({
@@ -1124,25 +1205,30 @@ describe("mobile Cloud Ledger offline outbox", () => {
         createdAt: "2026-06-02T10:04:00.000Z",
       })
     );
-    const failedSupabase = createCloudLedgerSupabase({
-      createTransactionPayload: {
-        code: "accepted",
-        acceptedChangeIds: [],
-        rejectedChangeIds: ["change-set-coffee", "change-set-taxi"],
-        changeOutcomes: [
-          {
-            changeId: "change-set-coffee",
-            status: "repair_required",
-            code: "invalid_transaction",
-          },
-          {
-            changeId: "change-set-taxi",
-            status: "repair_required",
-            code: "invalid_transaction",
-          },
-        ],
-        cursor: "ledger:8",
-      },
+    const retryableOutcome = {
+      code: "accepted" as const,
+      acceptedChangeIds: [],
+      rejectedChangeIds: ["change-set-coffee", "change-set-taxi"],
+      changeOutcomes: [
+        {
+          changeId: "change-set-coffee",
+          status: "retryable" as const,
+          code: "edge_function_unavailable",
+        },
+        {
+          changeId: "change-set-taxi",
+          status: "retryable" as const,
+          code: "edge_function_unavailable",
+        },
+      ],
+      cursor: "ledger:8",
+    };
+    const firstFailedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: retryableOutcome,
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+    const secondFailedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: retryableOutcome,
       refreshPayload: emptyRefreshPayload("ledger:8"),
     });
     const acceptedSupabase = createCloudLedgerSupabase({
@@ -1159,11 +1245,31 @@ describe("mobile Cloud Ledger offline outbox", () => {
       refreshPayload: emptyRefreshPayload("ledger:9"),
     });
 
-    const repairCache = await flushPendingCloudLedgerChanges({
+    const retryCache = await flushPendingCloudLedgerChanges({
       cache: createSeededLedgerCache(),
       outbox,
-      supabase: failedSupabase.client,
+      supabase: firstFailedSupabase.client,
     });
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([]);
+
+    const repairCache = await flushPendingCloudLedgerChanges({
+      cache: retryCache,
+      outbox,
+      supabase: secondFailedSupabase.client,
+    });
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-set-coffee",
+        reason: "retryableFailure",
+        actions: ["retry", "discard"],
+      }),
+      expect.objectContaining({
+        id: "change-set-taxi",
+        reason: "retryableFailure",
+        actions: ["retry", "discard"],
+      }),
+    ]);
+
     await retryCloudLedgerRepairSet(outbox);
     await flushPendingCloudLedgerChanges({
       cache: repairCache,
@@ -1180,6 +1286,122 @@ describe("mobile Cloud Ledger offline outbox", () => {
     ).toEqual(["change-set-coffee", "change-set-taxi"]);
     expect(await loadCloudLedgerRepairItems(outbox)).toEqual([]);
     expect(await outbox.load()).toEqual([]);
+  });
+
+  it("retries only retryable repairs from a mixed Pending Change Set repair flow", async () => {
+    const storage = createMemoryOutboxStorage();
+    const outbox = createEncryptedCloudLedgerOutbox({
+      encryptionKey: OUTBOX_KEY,
+      storage: storage.adapter,
+    });
+    await outbox.enqueue(
+      pendingCreateChange({
+        changeId: "change-set-retryable-coffee",
+        command: offlineCoffeeCommand(),
+        createdAt: "2026-06-02T10:03:00.000Z",
+      })
+    );
+    await outbox.enqueue(
+      pendingCreateChange({
+        changeId: "change-set-invalid-taxi",
+        command: offlineTaxiCommand(),
+        createdAt: "2026-06-02T10:04:00.000Z",
+      })
+    );
+    const firstFailedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-set-retryable-coffee", "change-set-invalid-taxi"],
+        changeOutcomes: [
+          {
+            changeId: "change-set-retryable-coffee",
+            status: "retryable",
+            code: "edge_function_unavailable",
+          },
+          {
+            changeId: "change-set-invalid-taxi",
+            status: "repair_required",
+            code: "invalid_transaction",
+          },
+        ],
+        cursor: "ledger:8",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:8"),
+    });
+    const secondFailedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: [],
+        rejectedChangeIds: ["change-set-retryable-coffee"],
+        changeOutcomes: [
+          {
+            changeId: "change-set-retryable-coffee",
+            status: "retryable",
+            code: "edge_function_unavailable",
+          },
+        ],
+        cursor: "ledger:9",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:9"),
+    });
+    const acceptedSupabase = createCloudLedgerSupabase({
+      createTransactionPayload: {
+        code: "accepted",
+        acceptedChangeIds: ["change-set-retryable-coffee"],
+        rejectedChangeIds: [],
+        changeOutcomes: [
+          { changeId: "change-set-retryable-coffee", status: "accepted", code: "accepted" },
+        ],
+        cursor: "ledger:10",
+      },
+      refreshPayload: emptyRefreshPayload("ledger:10"),
+    });
+
+    const retryCache = await flushPendingCloudLedgerChanges({
+      cache: createSeededLedgerCache(),
+      outbox,
+      supabase: firstFailedSupabase.client,
+    });
+    const repairCache = await flushPendingCloudLedgerChanges({
+      cache: retryCache,
+      outbox,
+      supabase: secondFailedSupabase.client,
+    });
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-set-invalid-taxi",
+        reason: "invalidTransaction",
+        actions: ["editAndResubmit", "discard"],
+      }),
+      expect.objectContaining({
+        id: "change-set-retryable-coffee",
+        reason: "retryableFailure",
+        actions: ["retry", "discard"],
+      }),
+    ]);
+
+    await retryCloudLedgerRepairSet(outbox);
+    await flushPendingCloudLedgerChanges({
+      cache: repairCache,
+      outbox,
+      supabase: acceptedSupabase.client,
+    });
+
+    expect(
+      acceptedSupabase.functionsInvoke.mock.calls
+        .filter(([, options]) => options.body.action === "applyPendingChanges")
+        .flatMap(([, options]) =>
+          ((options as CloudLedgerInvokeOptions).body.changes ?? []).map((change) => change.id)
+        )
+    ).toEqual(["change-set-retryable-coffee"]);
+    expect(await loadCloudLedgerRepairItems(outbox)).toEqual([
+      expect.objectContaining({
+        id: "change-set-invalid-taxi",
+        reason: "invalidTransaction",
+        actions: ["editAndResubmit", "discard"],
+      }),
+    ]);
   });
 
   it("edits and resubmits a stale pending transaction change from the repair flow", async () => {

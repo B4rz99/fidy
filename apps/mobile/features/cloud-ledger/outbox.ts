@@ -164,7 +164,7 @@ export function createEncryptedCloudLedgerOutbox(input: {
         await writeOutboxSnapshot(input.storage, encryptionKey, {
           version: CLOUD_LEDGER_OUTBOX_VERSION,
           changes: snapshot.changes,
-          retryAttempts: snapshot.retryAttempts.filter((retry) => !changeIdSet.has(retry.changeId)),
+          retryAttempts: snapshot.retryAttempts,
           repairs: snapshot.repairs.filter((repair) => !changeIdSet.has(repair.changeId)),
         });
       }),
@@ -339,7 +339,9 @@ export async function discardCloudLedgerRepairItem(
 
 export async function retryCloudLedgerRepairSet(outbox: EncryptedCloudLedgerOutbox): Promise<void> {
   await outbox.clearRepairStates?.(
-    (await loadCloudLedgerRepairItems(outbox)).map((item) => item.id)
+    (await loadCloudLedgerRepairItems(outbox))
+      .filter((item) => item.actions.includes("retry"))
+      .map((item) => item.id)
   );
 }
 

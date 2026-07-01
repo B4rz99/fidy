@@ -24,7 +24,7 @@ export function CloudLedgerRepairList({
   const canRetrySet =
     onRetrySet !== undefined &&
     items.length > 1 &&
-    items.some((item) => item.actions.includes("retry"));
+    items.every((item) => item.actions.includes("retry"));
 
   if (items.length === 0) {
     return (

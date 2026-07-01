@@ -89,11 +89,12 @@ export async function retryCloudLedgerRepairItemForUser(
 export async function retryCloudLedgerRepairSetForUser(userId: UserId): Promise<boolean> {
   const outbox = getCloudLedgerOutbox(userId);
   const repairItems = await loadCloudLedgerRepairItems(outbox);
-  if (repairItems.length === 0) {
+  const retryableRepairItems = repairItems.filter((item) => item.actions.includes("retry"));
+  if (retryableRepairItems.length === 0) {
     return false;
   }
   await retryCloudLedgerRepairSet(outbox);
-  return await flushAndRestoreRepairMarkersIfNeeded(userId, outbox, repairItems);
+  return await flushAndRestoreRepairMarkersIfNeeded(userId, outbox, retryableRepairItems);
 }
 
 export async function discardCloudLedgerRepairItemForUser(
@@ -139,12 +140,24 @@ async function flushAndRestoreRepairMarkersIfNeeded(
   outbox: EncryptedCloudLedgerOutbox,
   repairItems: readonly CloudLedgerRepairItem[]
 ): Promise<boolean> {
-  const didFlush = await flushCloudLedgerOutboxForUser(userId);
-  if (didFlush) {
-    return true;
+  try {
+    const didFlush = await flushCloudLedgerOutboxForUser(userId);
+    if (didFlush) {
+      return true;
+    }
+    await restoreRepairMarkers(outbox, repairItems);
+    return false;
+  } catch (error) {
+    await restoreRepairMarkers(outbox, repairItems);
+    throw error;
   }
+}
+
+async function restoreRepairMarkers(
+  outbox: EncryptedCloudLedgerOutbox,
+  repairItems: readonly CloudLedgerRepairItem[]
+): Promise<void> {
   await outbox.markForRepair?.(repairItems.map(repairStateFromRepairItem));
-  return false;
 }
 
 function repairStateFromRepairItem(item: CloudLedgerRepairItem): CloudLedgerRepairState {

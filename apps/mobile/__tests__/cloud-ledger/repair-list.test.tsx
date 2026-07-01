@@ -96,6 +96,34 @@ describe("Cloud Ledger repair list", () => {
 
     expect(onRetrySet).toHaveBeenCalledOnce();
   });
+
+  it("hides the Pending Change Set retry action when a visible repair is not retryable", () => {
+    i18n.locale = "en";
+    const screen = renderFidy(
+      <CloudLedgerRepairList
+        items={[
+          repairItem({
+            reason: "retryableFailure",
+            status: "retryable",
+            code: "edge_function_unavailable",
+            actions: ["retry", "discard"],
+          }),
+          repairItem({
+            reason: "invalidTransaction",
+            code: "invalid_transaction",
+            actions: ["editAndResubmit", "discard"],
+            changeId: "change-invalidTransaction-two",
+          }),
+        ]}
+        onDiscard={vi.fn()}
+        onEditAndResubmit={vi.fn()}
+        onRetry={vi.fn()}
+        onRetrySet={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText("Retry all changes")).toBeNull();
+  });
 });
 
 function repairItem(input: {

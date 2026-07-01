@@ -407,6 +407,32 @@ describe("Cloud Ledger runtime mutations", () => {
       },
     ]);
   });
+
+  it("restores a repair marker when retry flush throws", async () => {
+    const changeId = "ledger-change-retry-throws" as LedgerChangeId;
+    const repairItem = {
+      id: changeId,
+      outcome: { changeId, status: "retryable", code: "edge_function_unavailable" },
+      parentChangeId: "ledger-change-parent" as LedgerChangeId,
+      acceptedTransactionVersion: 5,
+    };
+    mocks.loadCloudLedgerRepairItems.mockResolvedValueOnce([repairItem]);
+    mocks.flushPendingCloudLedgerChanges.mockRejectedValueOnce(new Error("flush unavailable"));
+
+    await expect(retryCloudLedgerRepairItemForUser(userId, changeId)).rejects.toThrow(
+      "flush unavailable"
+    );
+
+    expect(mocks.retryCloudLedgerRepairItem).toHaveBeenCalledWith(mocks.outbox, changeId);
+    expect(mocks.outbox.markForRepair).toHaveBeenCalledWith([
+      {
+        changeId,
+        outcome: repairItem.outcome,
+        parentChangeId: repairItem.parentChangeId,
+        acceptedTransactionVersion: 5,
+      },
+    ]);
+  });
 });
 
 function makeCreateCommand() {
