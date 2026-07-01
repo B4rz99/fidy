@@ -1,0 +1,52 @@
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_6c070d47258744::t_27db1b0959d83b 5-8,63-80,109
+supabase/functions/delete-account/index.ts
+  s_6c070d47258744::t_e874fec7d55336 86
+apps/mobile/__tests__/edge-functions/delete-account-cleanup.test.ts
+  s_6c070d47258744::t_2549d4fc5a0541 48,50,117
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_003c9ba220a753 15,422-441
+  s_6c070d47258744::t_253c995749c8f2 442-443
+apps/mobile/features/settings/data/delete-account.ts
+  s_6c070d47258744::t_630f216fa65009 1-15,27-35
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_b67ea1fed458ab 25,93-97,246-262
+  s_6c070d47258744::t_e090ab92f5f4cf 263-264
+apps/mobile/features/cloud-ledger/outbox-storage.ts
+  s_6c070d47258744::t_dff8ae4482da48 22-25,153-163
+  s_6c070d47258744::t_2c7b4e3592b479 164-165
+apps/mobile/features/auth/cloud-ledger-session-cleanup.ts
+  s_6c070d47258744::t_bb87ca93525987 7,44,46,52-58
+  s_6c070d47258744::t_ae0759b78597a2 8-10,43,47-48,59
+  s_6c070d47258744::t_611c80bb2e8148 61
+  s_6c070d47258744::t_1225aacc4473a8 6
+apps/mobile/features/cloud-ledger/outbox.public.ts
+  s_6c070d47258744::t_066c4657627473 10,21
+supabase/functions/delete-account/cleanup.ts
+  s_6c070d47258744::t_8dfd4db29f60b2 61,99-113,115-116
+apps/mobile/features/settings/hooks/use-delete-account.ts
+  s_6c070d47258744::t_63a58bdd19a5c7 3-6,23-27
+  s_6c070d47258744::t_de504445d59e9a 28
+apps/mobile/__tests__/auth/store.test.ts
+  s_6c070d47258744::t_19b609c74a1af6 651,666,670,722,745,756-759
+  s_6c070d47258744::t_083ba57e76fdcd 13,18,31-37,72,77,188
+  s_6c070d47258744::t_09e342a9ae9c44 652,668,720,740,755
+plans/lizard-complexity-debt.json
+  s_6c070d47258744::t_0552a871d1b5f6 259,268,277,286,295,304
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "48edf9cb31f5ba21bbbbddec5c267e22a88ad2d5",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
