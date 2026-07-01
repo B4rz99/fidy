@@ -1,7 +1,4 @@
 export type {
-  CloudLedgerRepairAction,
-  CloudLedgerRepairItem,
-  CloudLedgerRepairReason,
   CloudLedgerOutboxFailureCode,
   CloudLedgerPendingChange,
   CloudLedgerPendingAmendTransaction,
@@ -11,6 +8,11 @@ export type {
   EncryptedCloudLedgerOutboxSnapshot,
   EncryptedCloudLedgerOutboxStorage,
 } from "./outbox";
+export type {
+  CloudLedgerRepairAction,
+  CloudLedgerRepairItem,
+  CloudLedgerRepairReason,
+} from "./repair-policy";
 export {
   applyPendingLedgerChanges,
   amendOfflineCloudLedgerTransaction,

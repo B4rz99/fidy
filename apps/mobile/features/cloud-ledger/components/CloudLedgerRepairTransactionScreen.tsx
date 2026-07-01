@@ -31,10 +31,12 @@ import {
   getCloudLedgerOutbox,
   loadCloudLedgerRepairItems,
   resubmitCloudLedgerRepairTransactionChange,
-  type CloudLedgerPendingAmendTransaction,
-  type CloudLedgerPendingCreateTransaction,
-  type CloudLedgerRepairItem,
 } from "../outbox";
+import type {
+  CloudLedgerPendingAmendTransaction,
+  CloudLedgerPendingCreateTransaction,
+} from "../pending-changes";
+import type { CloudLedgerRepairItem } from "../repair-policy";
 import { flushCloudLedgerOutboxForUser } from "../runtime-mutations.public";
 import { getCloudLedgerRuntimeCache, setCloudLedgerRuntimeCache } from "../runtime.public";
 

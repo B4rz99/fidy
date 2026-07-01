@@ -2,8 +2,8 @@ import { Button, Card, EmptyState, TAB_BAR_CLEARANCE } from "@/shared/components
 import { ScrollView, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import type { LedgerChangeId } from "@/shared/types/branded";
-import type { CloudLedgerRepairAction, CloudLedgerRepairItem } from "../outbox";
 import { describeCloudLedgerRepairItem } from "../repair-copy";
+import type { CloudLedgerRepairAction, CloudLedgerRepairItem } from "../repair-policy";
 
 type CloudLedgerRepairListProps = {
   readonly items: readonly CloudLedgerRepairItem[];

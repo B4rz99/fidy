@@ -3,7 +3,7 @@ import type {
   CloudLedgerApplyPendingChangesAccepted,
   CloudLedgerPendingChangeOutcome,
 } from "./api-client";
-import type { CloudLedgerPendingChange } from "./outbox";
+import type { CloudLedgerPendingChange } from "./pending-changes";
 
 type PendingTransactionChange = Extract<
   CloudLedgerPendingChange,

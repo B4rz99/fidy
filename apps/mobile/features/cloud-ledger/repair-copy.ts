@@ -3,7 +3,7 @@ import type {
   CloudLedgerRepairAction,
   CloudLedgerRepairItem,
   CloudLedgerRepairReason,
-} from "./outbox";
+} from "./repair-policy";
 
 export type CloudLedgerRepairActionLabel = {
   readonly action: CloudLedgerRepairAction;

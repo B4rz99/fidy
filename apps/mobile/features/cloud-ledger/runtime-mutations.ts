@@ -19,10 +19,9 @@ import {
   restoreOptimisticCloudLedgerCache,
   retryCloudLedgerRepairItem,
   retryCloudLedgerRepairSet,
-  type CloudLedgerRepairItem,
-  type CloudLedgerRepairState,
   type EncryptedCloudLedgerOutbox,
 } from "./outbox";
+import { repairStateFromRepairItem, type CloudLedgerRepairItem } from "./repair-policy";
 import {
   beginCloudLedgerRuntimeCacheFlush,
   beginCloudLedgerRuntimeCacheWrite,
@@ -158,17 +157,6 @@ async function restoreRepairMarkers(
   repairItems: readonly CloudLedgerRepairItem[]
 ): Promise<void> {
   await outbox.markForRepair?.(repairItems.map(repairStateFromRepairItem));
-}
-
-function repairStateFromRepairItem(item: CloudLedgerRepairItem): CloudLedgerRepairState {
-  return {
-    changeId: item.id,
-    outcome: item.outcome,
-    ...(item.parentChangeId === undefined ? {} : { parentChangeId: item.parentChangeId }),
-    ...(item.acceptedTransactionVersion === undefined
-      ? {}
-      : { acceptedTransactionVersion: item.acceptedTransactionVersion }),
-  };
 }
 
 export async function enqueueCloudLedgerOptimisticCreate(input: {

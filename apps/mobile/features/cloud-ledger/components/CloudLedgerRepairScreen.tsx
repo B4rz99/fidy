@@ -5,11 +5,8 @@ import { ScreenLayout } from "@/shared/components";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import type { LedgerChangeId, UserId } from "@/shared/types/branded";
-import {
-  getCloudLedgerOutbox,
-  loadCloudLedgerRepairItems,
-  type CloudLedgerRepairItem,
-} from "../outbox";
+import { getCloudLedgerOutbox, loadCloudLedgerRepairItems } from "../outbox";
+import type { CloudLedgerRepairItem } from "../repair-policy";
 import {
   discardCloudLedgerRepairItemForUser,
   retryCloudLedgerRepairItemForUser,
