@@ -1,0 +1,36 @@
+apps/mobile/features/cloud-ledger/outbox-reconciliation.ts
+  s_6c070d47258744::t_6d4fce56978b00 123
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairTransactionScreen.tsx
+  s_6c070d47258744::t_986f0257ea7af4 10-13,137,258-264
+  s_6c070d47258744::t_066864a2c2782d 265-266
+plans/lizard-complexity-debt.json
+  s_6c070d47258744::t_2513fc098cc182 214,223,232
+apps/mobile/__tests__/cloud-ledger/repair-transaction-screen.test.tsx
+  s_6c070d47258744::t_75e5c96b3b4b8f 17,20-21,23,26,58-60,67-71,73,77-79,82,85-86,88,110-144
+  s_6c070d47258744::t_99a9d892e036b8 145
+apps/mobile/features/cloud-ledger/pending-changes.ts
+  s_6c070d47258744::t_c171a8b88b7201 86
+  s_6c070d47258744::t_4f4b167cdc744e 55,80,84-85,87,89-95,159,212
+  s_6c070d47258744::t_904fcf9d843e8c 194-204
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_38dba6c9dc41b1 2481-2576
+apps/mobile/features/cloud-ledger/outbox-storage.ts
+  s_6c070d47258744::t_7a58a1fd1349c1 180
+  s_6c070d47258744::t_af75be0584ddab 77-79,150,170-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "480f648f73b61168c1f23ee7010618819a25b99b",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
