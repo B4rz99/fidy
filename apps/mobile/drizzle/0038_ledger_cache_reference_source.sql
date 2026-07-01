@@ -58,6 +58,24 @@ OR `id` IN (
 OR `id` IN (
   SELECT `category_id`
   FROM `category_color_overrides`
+)
+OR `id` IN (
+  SELECT `category_id`
+  FROM `bills`
+)
+OR `id` IN (
+  SELECT `category_id`
+  FROM `review_candidates`
+  WHERE `category_id` IS NOT NULL
+)
+OR `id` IN (
+  SELECT `category_id`
+  FROM `merchant_rules`
+)
+OR `id` IN (
+  SELECT `category_id`
+  FROM `notifications`
+  WHERE `category_id` IS NOT NULL
 );
 --> statement-breakpoint
 CREATE INDEX `idx_financial_accounts_user_source` ON `financial_accounts` (`user_id`, `source`);

@@ -120,6 +120,26 @@ const {
   };
 });
 
+const { mockSecureStore } = vi.hoisted(() => ({
+  mockSecureStore: new Map<string, string>(),
+}));
+
+vi.mock("expo-secure-store", () => ({
+  deleteItemAsync: vi.fn((key: string) => {
+    mockSecureStore.delete(key);
+    return Promise.resolve();
+  }),
+  getItem: vi.fn((key: string) => mockSecureStore.get(key) ?? null),
+  getItemAsync: vi.fn((key: string) => Promise.resolve(mockSecureStore.get(key) ?? null)),
+  setItem: vi.fn((key: string, value: string) => {
+    mockSecureStore.set(key, value);
+  }),
+  setItemAsync: vi.fn((key: string, value: string) => {
+    mockSecureStore.set(key, value);
+    return Promise.resolve();
+  }),
+}));
+
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({ auth: supabaseAuthMock }),
 }));
@@ -195,6 +215,7 @@ function createDeferred<T>() {
 describe("useAuthStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSecureStore.clear();
     useAuthStore.setState({
       session: null,
       localQaSession: null,
@@ -706,6 +727,49 @@ describe("useAuthStore", () => {
     expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
     expect(useAuthStore.getState().session).toEqual(mockSession);
     expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+  });
+
+  it("restoreSession retries deleted-account cleanup after remote deletion cleanup failed before restart", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: false,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockResetDbForUser.mockRejectedValueOnce(new Error("db file delete failed"));
+
+    await expect(useAuthStore.getState().completeDeletedAccountSignOut()).rejects.toThrow(
+      "db file delete failed"
+    );
+
+    expect(useAuthStore.getState().session).toEqual(mockSession);
+    vi.clearAllMocks();
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: true,
+    });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+
+    await useAuthStore.getState().restoreSession();
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
   });
 
   it("signOut clears state even if supabase.signOut fails", async () => {

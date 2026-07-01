@@ -580,6 +580,26 @@ function createPreLedgerCacheReferenceSourceTables(sqlite: Database.Database) {
       user_id text NOT NULL,
       category_id text NOT NULL
     );
+    CREATE TABLE bills (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL
+    );
+    CREATE TABLE review_candidates (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text
+    );
+    CREATE TABLE merchant_rules (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text NOT NULL
+    );
+    CREATE TABLE notifications (
+      id text PRIMARY KEY NOT NULL,
+      user_id text NOT NULL,
+      category_id text
+    );
   `);
 }
 
@@ -2211,6 +2231,51 @@ describe("transaction boundaries", () => {
       ]);
       expect(sqlite.prepare("select id from user_categories order by id").all()).toEqual([
         { id: "ucat-local-transaction" },
+      ]);
+    } finally {
+      sqlite.close();
+    }
+  });
+
+  it("preserves local categories referenced outside transactions, budgets, and overrides during the source migration", () => {
+    const sqlite = new Database(":memory:");
+    const now = "2026-06-25T10:00:00.000Z";
+
+    try {
+      createPreLedgerCacheReferenceSourceTables(sqlite);
+      const insertCategory = sqlite.prepare(`
+        INSERT INTO user_categories (
+          id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+        ) VALUES (?, ?, ?, 'receipt', '#445566', ?, ?, NULL)
+      `);
+      [
+        ["ucat-local-bill", "Bill-only local category"],
+        ["ucat-local-review", "Review-only local category"],
+        ["ucat-local-merchant-rule", "Merchant rule-only local category"],
+        ["ucat-local-notification", "Notification-only local category"],
+        ["ucat-cloud-cache-only", "Cloud category cache-only"],
+      ].forEach(([id, name]) => insertCategory.run(id, mockUserId, name, now, now));
+      sqlite
+        .prepare("INSERT INTO bills (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("bill-1", mockUserId, "ucat-local-bill");
+      sqlite
+        .prepare("INSERT INTO review_candidates (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("review-1", mockUserId, "ucat-local-review");
+      sqlite
+        .prepare("INSERT INTO merchant_rules (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("merchant-rule-1", mockUserId, "ucat-local-merchant-rule");
+      sqlite
+        .prepare("INSERT INTO notifications (id, user_id, category_id) VALUES (?, ?, ?)")
+        .run("notification-1", mockUserId, "ucat-local-notification");
+
+      applyMigrationSql(sqlite, "0038_ledger_cache_reference_source.sql");
+
+      expect(sqlite.prepare("select id, source from user_categories order by id").all()).toEqual([
+        { id: "ucat-cloud-cache-only", source: "cloud_ledger" },
+        { id: "ucat-local-bill", source: "local_ledger" },
+        { id: "ucat-local-merchant-rule", source: "local_ledger" },
+        { id: "ucat-local-notification", source: "local_ledger" },
+        { id: "ucat-local-review", source: "local_ledger" },
       ]);
     } finally {
       sqlite.close();

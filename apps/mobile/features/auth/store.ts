@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import {
   clearCloudLedgerRuntimeCache,
@@ -46,6 +47,8 @@ type SetAuthState = (nextState: Partial<AuthState>) => void;
 type DeletedAccountCleanupFailure = {
   readonly error: unknown;
 };
+
+const PENDING_DELETED_ACCOUNT_CLEANUP_KEY_PREFIX = "auth_pending_deleted_account_cleanup_";
 
 let authTransitionVersion = 0;
 
@@ -109,6 +112,24 @@ function captureAuthFailure(event: string, err: unknown) {
   });
 }
 
+function pendingDeletedAccountCleanupKey(userId: UserId): string {
+  return `${PENDING_DELETED_ACCOUNT_CLEANUP_KEY_PREFIX}${userId}`;
+}
+
+async function markPendingDeletedAccountCleanup(userId: UserId): Promise<void> {
+  await SecureStore.setItemAsync(pendingDeletedAccountCleanupKey(userId), "true");
+}
+
+async function hasPendingDeletedAccountCleanup(userId: UserId): Promise<boolean> {
+  return (await SecureStore.getItemAsync(pendingDeletedAccountCleanupKey(userId))) === "true";
+}
+
+async function clearPendingDeletedAccountCleanup(userId: UserId): Promise<void> {
+  await SecureStore.deleteItemAsync(pendingDeletedAccountCleanupKey(userId)).catch((err) => {
+    captureAuthFailure("auth_deleted_account_cleanup_marker_clear_failed", err);
+  });
+}
+
 async function restoreStoredLocalQaSession(
   set: SetAuthState,
   transitionVersion: number
@@ -140,16 +161,58 @@ async function handleMissingValidatedUser(
   userId: UserId,
   errorMessage?: string
 ) {
-  const didDiscardLocalState = await discardCloudLedgerStateAfterMissingRemoteUser(
+  const hasPendingDeletedCleanup = await readPendingDeletedAccountCleanup(
     set,
     transitionVersion,
     userId
   );
+  if (hasPendingDeletedCleanup === null) return;
+
+  const didDiscardLocalState = hasPendingDeletedCleanup
+    ? await discardDeletedAccountStateAfterMissingRemoteUser(set, transitionVersion, userId)
+    : await discardCloudLedgerStateAfterMissingRemoteUser(set, transitionVersion, userId);
   if (!didDiscardLocalState) return;
   if (isStaleAuthTransition(transitionVersion)) return;
   await signOutRemoteSession();
   if (isStaleAuthTransition(transitionVersion)) return;
   await handleMissingRemoteSession(set, transitionVersion, errorMessage);
+}
+
+async function readPendingDeletedAccountCleanup(
+  set: SetAuthState,
+  transitionVersion: number,
+  userId: UserId
+): Promise<boolean | null> {
+  try {
+    return await hasPendingDeletedAccountCleanup(userId);
+  } catch (err) {
+    captureAuthFailure("auth_deleted_account_cleanup_marker_read_failed", err);
+    if (!isStaleAuthTransition(transitionVersion)) {
+      set({ isLoading: false });
+    }
+    return null;
+  }
+}
+
+async function discardDeletedAccountStateAfterMissingRemoteUser(
+  set: SetAuthState,
+  transitionVersion: number,
+  userId: UserId
+): Promise<boolean> {
+  suspendCloudLedgerStateForUser(userId);
+  try {
+    await discardCloudLedgerStateAfterDeletedAccount(userId);
+    await clearPendingDeletedAccountCleanup(userId);
+    return true;
+  } catch (err) {
+    resumeCloudLedgerRuntimeCacheWrites(userId);
+    resumeTransactionSession(userId);
+    captureAuthFailure("auth_deleted_account_pending_cleanup_retry_failed", err);
+    if (!isStaleAuthTransition(transitionVersion)) {
+      set({ isLoading: false });
+    }
+    return false;
+  }
 }
 
 function hasMissingRemoteSession(error: unknown, session: Session | null): session is null {
@@ -321,7 +384,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
     const cloudLedgerSignOutUserId = suspendCloudLedgerStateBeforeSignOut();
     try {
+      if (cloudLedgerSignOutUserId !== null) {
+        await markPendingDeletedAccountCleanup(cloudLedgerSignOutUserId);
+      }
       await discardCloudLedgerStateAfterDeletedAccount(cloudLedgerSignOutUserId);
+      if (cloudLedgerSignOutUserId !== null) {
+        await clearPendingDeletedAccountCleanup(cloudLedgerSignOutUserId);
+      }
     } catch (err) {
       if (cloudLedgerSignOutUserId !== null) {
         resumeCloudLedgerRuntimeCacheWrites(cloudLedgerSignOutUserId);
