@@ -1,0 +1,58 @@
+apps/mobile/features/transactions/cloud-ledger-cache-cleanup.ts
+  s_6c070d47258744::t_b595694ea04707 40,93-99,103,105,126,194-200,204,206
+  s_6c070d47258744::t_c21f9d67f937a1 23,85-88
+  s_6c070d47258744::t_1fb2eed13316ac 60,68
+  s_6c070d47258744::t_64c597b3185c41 1,14-15,33-35,43-59,61-67,69-71,116,127-139
+  s_6c070d47258744::t_a8317961f90053 2-13,16-22,24-32,36-39,41-42,72-84,89-92,100-102,104,106-115,117-125,140-193,201-203,205,207-214
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_6c070d47258744::t_123c431e4d23fa 16-21,30-31,41-42
+supabase/functions/delete-account/cleanup.ts
+  s_6c070d47258744::t_a330ffcc716765 80-82
+  s_6c070d47258744::t_1ae26a244b23e9 83-84
+apps/mobile/shared/i18n/locales/es.ts
+  s_6c070d47258744::t_341a59915dc1db 771
+apps/mobile/__tests__/edge-functions/delete-account-cleanup.test.ts
+  s_6c070d47258744::t_df8c1054cc83ed 72-87
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_6c070d47258744::t_990b8115349c10 95,99
+apps/mobile/shared/i18n/locales/en.ts
+  s_6c070d47258744::t_0f7e1711442592 761
+plans/lizard-complexity-debt.json
+  s_6c070d47258744::t_cd79c280b6fe2d 25-34,43,52-53,57,62,66,70,75,79-80,84,88-89,93,106,111,124,129-138,151,169-178,187-189,191-193,196,205,257-267,269-272,274
+  s_6c070d47258744::t_c4e0bd75a8c217 61,268,273
+apps/mobile/drizzle/0038_ledger_cache_reference_source.sql
+  s_6c070d47258744::t_f2b2970140edea 10-11,14,18
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_923d28be499ab9 2304,2358,2364,2373,2377
+  s_6c070d47258744::t_ed61e9b3021a06 566-567,572-573,578-579,584-585,590-591,601-602,612-613
+  s_6c070d47258744::t_86419a0c2977df 1395-1403
+  s_6c070d47258744::t_8794ece424097a 2454-2467,2470-2471,2475,2481
+  s_6c070d47258744::t_c21f9d67f937a1 2281
+  s_6c070d47258744::t_eb20e141ab24d1 2419
+  s_6c070d47258744::t_1063f78567d7ea 1358,1361-1362,1364,1857-1860,1864-1866,1895-1897,1910
+  s_6c070d47258744::t_2187c14098734c 2164-2184,2188-2192,2194-2197,2231-2263,2267-2272,2286-2303
+  s_6c070d47258744::t_95407194d262d7 2185-2187,2193,2198-2230,2264-2266,2273-2280,2282-2285
+  s_6c070d47258744::t_b89dfdc4c2bb20 188-192
+apps/mobile/features/transactions/store.ts
+  s_6c070d47258744::t_cfa67ec94654a8 60
+  s_6c070d47258744::t_19cc184f9bb65f 599
+apps/mobile/features/auth/store.ts
+  s_6c070d47258744::t_c21f9d67f937a1 157-163
+  s_6c070d47258744::t_4536ab683d7e65 165-168,173-176,179,181-182,250,253-256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "c1955523d39cf834b3c92c6502bc6e2d232e8639",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
