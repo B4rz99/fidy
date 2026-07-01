@@ -1,0 +1,35 @@
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_c6b2d9fbf43027 2043-2046,2048-2077
+  s_6c070d47258744::t_a8199209931e15 2047
+apps/mobile/features/transactions/store.ts
+  s_6c070d47258744::t_bd3b9d93f5fe34 591-595
+apps/mobile/features/auth/store.ts
+  s_6c070d47258744::t_1c548b13a84f7e 22,266-271
+  s_6c070d47258744::t_e15d37c1cda4b5 38,140-145,147,242-246,248-265,272-284,293-306
+  s_6c070d47258744::t_850cb9451a4926 307
+apps/mobile/features/settings/hooks/use-delete-account.ts
+  s_6c070d47258744::t_e1e44b49e6a913 18
+apps/mobile/__tests__/settings/remote-data.test.ts
+  s_6c070d47258744::t_48c1d733180dd1 82,89-90
+apps/mobile/__tests__/auth/store.test.ts
+  s_6c070d47258744::t_3ea60575d763b7 278-308,637-651,653-661
+  s_6c070d47258744::t_c6e3cbc5ebc093 652
+  s_6c070d47258744::t_1d59f07770680f 23,57,73,127-130
+  s_6c070d47258744::t_63d2681891ead8 662
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "f21f412d41ecd04adff887392aa53967f5f76b0b",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
