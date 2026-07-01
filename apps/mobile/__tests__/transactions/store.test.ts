@@ -2062,6 +2062,41 @@ describe("transaction boundaries", () => {
     }
   });
 
+  it("rolls back Cloud Ledger cache cleanup when a mid-cleanup delete fails", async () => {
+    const committedDeletes: unknown[] = [];
+    const stagedDeletes: unknown[] = [];
+    const failure = new Error("category delete failed");
+    const makeDelete = (target: unknown[]) => (table: unknown) => ({
+      where: (scope: unknown) => ({
+        run: () => {
+          if (table === userCategories) {
+            throw failure;
+          }
+          target.push({ table, scope });
+        },
+      }),
+    });
+    const transactionalDb = {
+      delete: makeDelete(stagedDeletes),
+    };
+    const db = {
+      delete: makeDelete(committedDeletes),
+      transaction: vi.fn<(...args: any[]) => any>((fn: (tx: unknown) => unknown) => {
+        const result = fn(transactionalDb);
+        committedDeletes.push(...stagedDeletes);
+        return result;
+      }),
+    } as unknown as AnyDb;
+    mockTryGetDb.mockReturnValueOnce(db);
+
+    await expect(deleteCloudLedgerTransactionCache(mockUserId)).rejects.toThrow(
+      "category delete failed"
+    );
+
+    expect(db.transaction).toHaveBeenCalledOnce();
+    expect(committedDeletes).toEqual([]);
+  });
+
   it("deletes all local Cloud Ledger shadows when pending outbox state is unreadable", async () => {
     const load = vi
       .fn<(...args: any[]) => any>()

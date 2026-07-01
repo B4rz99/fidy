@@ -588,8 +588,11 @@ export async function deleteCloudLedgerTransactionCache(userId: UserId): Promise
   const db = tryGetDb(userId);
   if (db === null) return;
 
-  deleteCloudLedgerReferenceRows(db, userId);
-  deleteAllCloudLedgerTransactionShadows(db, userId);
+  db.transaction((tx) => {
+    const transactionDb = tx as AnyDb;
+    deleteCloudLedgerReferenceRows(transactionDb, userId);
+    deleteAllCloudLedgerTransactionShadows(transactionDb, userId);
+  });
 }
 
 function deleteCloudLedgerReferenceRows(db: AnyDb, userId: UserId): void {

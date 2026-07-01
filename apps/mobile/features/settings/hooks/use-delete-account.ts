@@ -15,7 +15,7 @@ export function useDeleteAccountMutation() {
       deleteAccountRequest(supabaseUrl, token),
     onSuccess: async () => {
       queryClient.clear();
-      await useAuthStore.getState().signOut();
+      await useAuthStore.getState().completeDeletedAccountSignOut();
     },
   });
 }

@@ -79,14 +79,15 @@ describe("settings remote callers", () => {
     expect(source).not.toContain("deleteAccount = useSettingsStore");
   });
 
-  test("delete-account success reuses signOut local Ledger Cache cleanup", () => {
+  test("delete-account success uses the deleted-account local cleanup path", () => {
     const source = readFileSync(
       resolve(__dirname, "../../features/settings/hooks/use-delete-account.ts"),
       "utf-8"
     );
 
     expect(source).toContain("queryClient.clear()");
-    expect(source).toContain("useAuthStore.getState().signOut()");
+    expect(source).toContain("useAuthStore.getState().completeDeletedAccountSignOut()");
+    expect(source).not.toContain("useAuthStore.getState().signOut()");
   });
 
   test("delete-account confirmation copy says Cloud Ledger records and linked samples are deleted", () => {

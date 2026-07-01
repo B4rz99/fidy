@@ -20,6 +20,7 @@ const {
   mockClearLocalQaSession,
   mockGetOnboardingCompleteFromStore,
   mockClearOnboardingFromStore,
+  mockResetDbForUser,
 } = vi.hoisted(() => {
   const mockClearCloudLedgerRuntimeCache = vi.fn<(...args: any[]) => any>();
   const mockCleanupCurrentPushToken = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
@@ -53,6 +54,7 @@ const {
   const mockClearLocalQaSession = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockGetOnboardingCompleteFromStore = vi.fn<(...args: any[]) => any>(() => false);
   const mockClearOnboardingFromStore = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+  const mockResetDbForUser = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 
   return {
     mockClearCloudLedgerRuntimeCache,
@@ -68,6 +70,7 @@ const {
     mockClearLocalQaSession,
     mockGetOnboardingCompleteFromStore,
     mockClearOnboardingFromStore,
+    mockResetDbForUser,
   };
 });
 
@@ -119,6 +122,10 @@ const {
 
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({ auth: supabaseAuthMock }),
+}));
+
+vi.mock("@/shared/db/client", () => ({
+  resetDbForUser: mockResetDbForUser,
 }));
 
 const mockOpenAuthSession = vi.fn<
@@ -266,6 +273,37 @@ describe("useAuthStore", () => {
     expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
     expect(useLocalOnboardingState.getState().isComplete).toBe(false);
     expect(isLoading).toBe(false);
+  });
+
+  it("restoreSession stays signed in when missing-user Cloud Ledger cleanup fails", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+      isLoading: true,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(new Error("sqlite locked"));
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toEqual(mockSession);
+    expect(isLoading).toBe(false);
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+    expect(mockDiscardCloudLedgerOutbox).not.toHaveBeenCalled();
+    expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
   });
 
   it("restoreSession preserves cached session on transient getUser errors", async () => {
@@ -594,6 +632,32 @@ describe("useAuthStore", () => {
     expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
     expect(mockSignOut).not.toHaveBeenCalled();
     expect(useAuthStore.getState().session).toEqual(mockSession);
+  });
+
+  it("account-deletion signout clears local auth after remote deletion even when cache cleanup fails", async () => {
+    useAuthStore.setState({
+      session: mockSession as never,
+      localQaSession: null,
+    });
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockDeleteCloudLedgerTransactionCache.mockRejectedValueOnce(
+      new Error("local shadow delete failed")
+    );
+
+    await useAuthStore.getState().completeDeletedAccountSignOut();
+
+    expect(mockInvalidateTransactionSession).toHaveBeenCalledOnce();
+    expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).toHaveBeenCalledWith("user-1");
+    expect(mockResetDbForUser).toHaveBeenCalledWith("user-1");
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockClearCloudLedgerRuntimeCache).toHaveBeenCalledWith("user-1");
+    expect(mockResumeCloudLedgerRuntimeCacheWrites).not.toHaveBeenCalled();
+    expect(mockResumeTransactionSession).not.toHaveBeenCalled();
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
   });
 
   it("signOut clears state even if supabase.signOut fails", async () => {
