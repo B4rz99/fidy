@@ -1,0 +1,23 @@
+apps/mobile/__tests__/settings/profile-screen.test.ts
+  s_6c070d47258744::t_bf1211363aca6d 3,5-9,12-46,77-79,81-85,105-106,130-136,140-142,144,146-150,158-182
+  s_6c070d47258744::t_2e3e35738fca25 4
+  s_6c070d47258744::t_29a3b3de6e75f4 11
+  s_6c070d47258744::t_eccae6e2a76dc2 47-51,80,86-94,98-104,107-114,118-129,145,151-157
+  s_6c070d47258744::t_caad08745763ae 52,95-97,115-117,137-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "9c2b4e0dc895d6113ffee2fa8b618d52474aaa2f",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
