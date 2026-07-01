@@ -1,0 +1,47 @@
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_2786197d75f880 1208-1272,1287
+  s_6c070d47258744::t_42140cd3e5f413 1032-1112,1274-1275,1289
+  s_6c070d47258744::t_b6579c598693b5 1276,1278,1291-1311,1315,1318-1320,1323,1332,1335-1336,1338-1342,1348-1359,1361,1364-1369,1371-1383,1397-1404
+  s_6c070d47258744::t_8349b8ddc984d9 1273
+  s_6c070d47258744::t_5bc178ea34602a 1277
+  s_6c070d47258744::t_9117d2969af939 1279-1281,1284-1286
+  s_6c070d47258744::t_279b7b6b472cd3 1288
+  s_6c070d47258744::t_c1cbfe3ddb8863 1290
+  s_1875f8c9cb91e8::t_5952fdc12efe64 1282-1283
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_46e38e8fa56955 167
+  s_6c070d47258744::t_0bb017cfe3724c 342-344
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_6c070d47258744::t_6f3ac1cfe61d72 143-152,154-159
+  s_6c070d47258744::t_0bb017cfe3724c 92-93,97
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairList.tsx
+  s_6c070d47258744::t_ee641fee54c642 27
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_6c070d47258744::t_4e8c37442b6ad2 410-435
+apps/mobile/__tests__/cloud-ledger/repair-list.test.tsx
+  s_6c070d47258744::t_67f0ae43cb6444 99-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "3f0b2f9eef48589db470ad1cce2c0d18338ece9c",
+  "prompts": {},
+  "sessions": {
+    "s_1875f8c9cb91e8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1a31-ba22-7cb2-bebe-477d6d5e970c",
+        "model": "unknown"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

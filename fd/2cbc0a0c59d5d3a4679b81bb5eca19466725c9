@@ -1,0 +1,40 @@
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_6c070d47258744::t_be666e9525e126 24
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_2d0d656166b3e8 24-34,65-69
+  s_6c070d47258744::t_8ada3918ec7cd0 23,35-46,54-60
+  s_6c070d47258744::t_ddeb10e2057ec0 61-64
+  s_6c070d47258744::t_f4aade0ee5a382 119,131,148,159,176,196,211
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairList.tsx
+  s_6c070d47258744::t_1a6d85deac9e40 6
+apps/mobile/features/cloud-ledger/repair-policy.ts
+  s_6c070d47258744::t_210fddf20bea6a 1-291
+apps/mobile/features/cloud-ledger/outbox-reconciliation.ts
+  s_6c070d47258744::t_c42e08e05a5456 6
+apps/mobile/features/cloud-ledger/repair-copy.ts
+  s_6c070d47258744::t_53dd4074aed7a4 6
+apps/mobile/features/cloud-ledger/outbox.public.ts
+  s_6c070d47258744::t_ab69f0abc6d92b 11-15
+apps/mobile/features/cloud-ledger/outbox-storage.ts
+  s_6c070d47258744::t_070b473797695b 1-619
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairScreen.tsx
+  s_6c070d47258744::t_77e9ebdd6042c4 8-9
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairTransactionScreen.tsx
+  s_6c070d47258744::t_fa8cc841798959 35-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "fd2cbc0a0c59d5d3a4679b81bb5eca19466725c9",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+apps/mobile/features/cloud-ledger/repair-copy.ts
+  s_6c070d47258744::t_6969463cce6e35 1-66
+apps/mobile/shared/i18n/locales/es.ts
+  s_6c070d47258744::t_25e20cb06b3f13 137-143,146-168
+  s_6c070d47258744::t_86e58b578f5f3d 144-145
+apps/mobile/__tests__/cloud-ledger/repair-list.test.tsx
+  s_6c070d47258744::t_e0aead1197d069 48,52
+  s_6c070d47258744::t_954dca2aa89e66 5,17
+  s_6c070d47258744::t_5d4656a095d404 1-4,6-16,18-47,53-94
+  s_6c070d47258744::t_d8433102343a83 49-51
+apps/mobile/features/cloud-ledger/ui.public.ts
+  s_6c070d47258744::t_59542273caefc3 1
+apps/mobile/__tests__/cloud-ledger/repair-copy.test.ts
+  s_6c070d47258744::t_54216ed30fa8fe 1-7,11-109,111-112,114,116-130
+  s_6c070d47258744::t_0743fe89efa21c 8-10,110,113,115
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairList.tsx
+  s_6c070d47258744::t_b4d142ba956992 74-100
+  s_6c070d47258744::t_c5ed2bfe91c1f2 1-2,4-67,69-72,102-125
+  s_6c070d47258744::t_1f7260bfa61e56 3,73,101
+  s_6c070d47258744::t_798883ce6313ad 68
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_3316bd9a3df9ef 1296-1389
+  s_6c070d47258744::t_c5fc9362970ebc 1450,1452-1531
+  s_6c070d47258744::t_5015673dfecb75 22,24,26-27,771,837-1292,2086-2095
+  s_6c070d47258744::t_b706cb450c10e7 17,1293-1295,1390-1445
+  s_6c070d47258744::t_43e85cfc61b775 1532-1592
+  s_6c070d47258744::t_df9f3026e77a11 1451
+apps/mobile/shared/i18n/locales/en.ts
+  s_6c070d47258744::t_7e54390f956b69 140-141
+  s_6c070d47258744::t_5143fb27169ba4 133-139,142-164
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_1c4a6087ce7b0a 325-331
+  s_6c070d47258744::t_ccfb2454a1de75 4,9-10,48,50-51,55-56,61-63,69-76,78-87,89-94,98-99,154-164,167-168,172-173,178-203,207-209,217-218,223,225,228-229,237-240,243-256,313-324,332-359,401,483-492,496-499,501-502,518-519,529,532-536,538,541-547,549,551,563-573,575-586,591,627-678,682-722,758,821-828,832-853,861-871
+  s_6c070d47258744::t_93338e1a9eb271 77,88,587-590,592-616,618-626,679-681,854-860
+  s_6c070d47258744::t_34687ddb32f1c7 360-400
+  s_6c070d47258744::t_178fc09d5ec4c7 1295
+apps/mobile/features/cloud-ledger/outbox.public.ts
+  s_6c070d47258744::t_b0e55048109d38 2-4,34-38
+  s_6c070d47258744::t_ea52231b7df548 23
+  s_6c070d47258744::t_e4ba934f500032 27,29,31-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "4bdc3a546b9b4d3b3344c51bf41aeba3ed78b849",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

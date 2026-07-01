@@ -1,0 +1,30 @@
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_6c070d47258744::t_79b88a1e58693a 116,127,138
+apps/mobile/features/cloud-ledger/pending-changes.ts
+  s_6c070d47258744::t_0a64f797464da8 22,31,41,115,121,131,142
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_6082124873e407 40,191
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_c4f6231124a777 2878-2898
+  s_6c070d47258744::t_416d5841767d00 2108-2204
+  s_6c070d47258744::t_75962b2fbbb3dd 2268-2338
+  s_6c070d47258744::t_8a56b9b902dbd6 2844,2851-2861,2868-2870
+apps/mobile/features/cloud-ledger/repair-policy.ts
+  s_6c070d47258744::t_5bbd497251af39 198-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "2cebd7ebeca972866437477eecbf40ab54bdccae",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}

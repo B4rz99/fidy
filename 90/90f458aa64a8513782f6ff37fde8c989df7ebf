@@ -1,0 +1,33 @@
+apps/mobile/features/transactions/store.ts
+  s_6c070d47258744::t_2b12c6cbbc39d4 672,682-686
+  s_6c070d47258744::t_01f471958a5b4f 687-688
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_0b65cbd25a872d 2339-2408
+apps/mobile/features/cloud-ledger/outbox-reconciliation.ts
+  s_6c070d47258744::t_455d6ee0375e54 116,120,122,124-133
+apps/mobile/features/cloud-ledger/pending-changes.ts
+  s_6c070d47258744::t_bb048906ec78e7 48-56,60-61,77-87,124-126,139-140,142-152,162,173,192,204-207,219-221,283-290,340-346
+  s_6c070d47258744::t_c901fedbe78ddd 347
+apps/mobile/features/cloud-ledger/repair-policy.ts
+  s_6c070d47258744::t_03242e48334c3e 86-90,309-311
+apps/mobile/features/cloud-ledger/api-client.ts
+  s_6c070d47258744::t_1e92e2488fc27f 146-155,176
+apps/mobile/features/transactions/services/cloud-ledger-transaction-adapter.ts
+  s_6c070d47258744::t_594903b61f3b53 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "9090f458aa64a8513782f6ff37fde8c989df7ebf",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
