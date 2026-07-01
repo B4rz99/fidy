@@ -1,0 +1,64 @@
+apps/mobile/features/transactions/components/transaction-form/TransactionForm.types.ts
+  s_6c070d47258744::t_07df5e02eb7cdd 12
+apps/mobile/__tests__/cloud-ledger/repair-screen.test.tsx
+  s_6c070d47258744::t_74e390307e956c 1-87,91-127
+  s_6c070d47258744::t_e8c16fe50f272e 88-90
+apps/mobile/features/cloud-ledger/pending-changes.ts
+  s_6c070d47258744::t_91a5c9ce5d57a6 184-191
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_bbdd2a44e7871f 2409-2480
+apps/mobile/__tests__/transactions/transaction-form.test.tsx
+  s_6c070d47258744::t_5a98c714833483 1-48
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairTransactionScreen.tsx
+  s_6c070d47258744::t_e723e1ab4c7122 147
+  s_6c070d47258744::t_6855cc88bb08a0 262-263
+  s_6c070d47258744::t_dfaaf998d64f73 30,36-40,121,123-128,131
+  s_6c070d47258744::t_07d2adb7bfbd2d 67
+  s_6c070d47258744::t_c85e31c4c01aaa 129-130
+apps/mobile/__tests__/cloud-ledger/repair-route.test.ts
+  s_6c070d47258744::t_712fcb9ce2f986 45,47
+apps/mobile/features/cloud-ledger/runtime-mutations.public.ts
+  s_6c070d47258744::t_92dbf328d586e9 11
+plans/lizard-complexity-debt.json
+  s_6c070d47258744::t_f7d8360451058d 42-50,187,196-207,210-220,223,232-234,236-238,241,248-256
+apps/mobile/__tests__/cloud-ledger/repair-transaction-screen.test.tsx
+  s_6c070d47258744::t_6a1026d65930bd 1-2,4,14-19,22-43,45-67,69,71-78,92
+  s_6c070d47258744::t_d86da8f1b8aa70 3,5-13,20-21,44,68,70,79-91,93-126
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_6c070d47258744::t_5411dfe2d3f4bc 9,58,80,127,337-365
+  s_6c070d47258744::t_c2021fd48abd1e 366-367
+apps/mobile/__tests__/helpers/react-native-mock.ts
+  s_6c070d47258744::t_c01d30bac82c29 11-19,22-24,26,29-40
+  s_6c070d47258744::t_6b44657a9bb619 1,20-21,25,27-28
+apps/mobile/features/transactions/components/transaction-form/TransactionFormContent.tsx
+  s_6c070d47258744::t_49dec726b17042 29,133
+apps/mobile/features/transactions/components/transaction-form/TransactionForm.tsx
+  s_6c070d47258744::t_247de9122c30c7 14-15,18,30-32
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairList.tsx
+  s_6c070d47258744::t_de050fadde5204 2,39,41-60,64,70
+apps/mobile/features/transactions/components/transaction-form/TransactionFormHeader.tsx
+  s_6c070d47258744::t_ad29e64691b445 10,20,33-37,60
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_6c070d47258744::t_eb3c8b77d71a3c 161-163
+  s_6c070d47258744::t_df91392edcf282 19,138-160
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairScreen.tsx
+  s_6c070d47258744::t_68decee9cf5e7d 4-7,9,103-110
+  s_6c070d47258744::t_d9cfc8268831fc 111
+  s_6c070d47258744::t_eb0ccd6e9f6e9d 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "3f6c6e83922b7c27bbbb4d1882ec2fa6e8e85513",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
