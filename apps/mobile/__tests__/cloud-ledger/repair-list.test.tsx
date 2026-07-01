@@ -18,6 +18,7 @@ describe("Cloud Ledger repair list", () => {
     const onDiscard = vi.fn();
     const onEditAndResubmit = vi.fn();
     const onRetry = vi.fn();
+    const onRetrySet = vi.fn();
     const screen = renderFidy(
       <CloudLedgerRepairList
         items={[
@@ -32,15 +33,23 @@ describe("Cloud Ledger repair list", () => {
             code: "edge_function_unavailable",
             actions: ["retry", "discard"],
           }),
+          repairItem({
+            reason: "dependencyFailure",
+            code: "dependency_failed",
+            actions: ["discard"],
+            parentChangeId: "change-parent-invalid",
+          }),
         ]}
         onDiscard={onDiscard}
         onEditAndResubmit={onEditAndResubmit}
         onRetry={onRetry}
+        onRetrySet={onRetrySet}
       />
     );
 
     expect(screen.getByText("Transaction changed elsewhere")).toBeTruthy();
     expect(screen.getByText("Sync did not finish")).toBeTruthy();
+    expect(screen.getByText(/change-parent-invalid/)).toBeTruthy();
     expect(screen.queryByText("stale_expected_version")).toBeNull();
 
     screen.pressByText("Edit and resubmit");
@@ -55,15 +64,49 @@ describe("Cloud Ledger repair list", () => {
     expect(onRetry).toHaveBeenCalledWith(requireLedgerChangeId("change-retryableFailure"));
     expect(onDiscard).toHaveBeenCalledWith(requireLedgerChangeId("change-staleConflict"));
   });
+
+  it("renders a reachable Pending Change Set retry action when multiple retryable repairs are visible", () => {
+    i18n.locale = "en";
+    const onRetrySet = vi.fn();
+    const screen = renderFidy(
+      <CloudLedgerRepairList
+        items={[
+          repairItem({
+            reason: "retryableFailure",
+            status: "retryable",
+            code: "edge_function_unavailable",
+            actions: ["retry", "discard"],
+          }),
+          repairItem({
+            reason: "retryableFailure",
+            status: "retryable",
+            code: "edge_function_unavailable",
+            actions: ["retry", "discard"],
+            changeId: "change-retryableFailure-two",
+          }),
+        ]}
+        onDiscard={vi.fn()}
+        onEditAndResubmit={vi.fn()}
+        onRetry={vi.fn()}
+        onRetrySet={onRetrySet}
+      />
+    );
+
+    screen.pressByText("Retry all changes");
+
+    expect(onRetrySet).toHaveBeenCalledOnce();
+  });
 });
 
 function repairItem(input: {
   readonly actions: CloudLedgerRepairItem["actions"];
+  readonly changeId?: string;
   readonly code: string;
+  readonly parentChangeId?: string;
   readonly reason: CloudLedgerRepairItem["reason"];
   readonly status?: CloudLedgerRepairItem["outcome"]["status"];
 }): CloudLedgerRepairItem {
-  const changeId = requireLedgerChangeId(`change-${input.reason}`);
+  const changeId = requireLedgerChangeId(input.changeId ?? `change-${input.reason}`);
   return {
     id: changeId,
     kind: "createTransaction",
@@ -88,6 +131,9 @@ function repairItem(input: {
       status: input.status ?? "repair_required",
       code: input.code,
     },
+    ...(input.parentChangeId === undefined
+      ? {}
+      : { parentChangeId: requireLedgerChangeId(input.parentChangeId) }),
     reason: input.reason,
     actions: input.actions,
   };

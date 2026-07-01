@@ -15,7 +15,13 @@ import {
   discardCloudLedgerRepairItem,
   flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox,
+  loadCloudLedgerRepairItems,
   restoreOptimisticCloudLedgerCache,
+  retryCloudLedgerRepairItem,
+  retryCloudLedgerRepairSet,
+  type CloudLedgerRepairItem,
+  type CloudLedgerRepairState,
+  type EncryptedCloudLedgerOutbox,
 } from "./outbox";
 import {
   beginCloudLedgerRuntimeCacheFlush,
@@ -65,6 +71,31 @@ export async function flushCloudLedgerOutboxForUser(userId: UserId): Promise<boo
   return flushCloudLedgerOutboxIfCurrent(userId, writeToken, getSupabase());
 }
 
+export async function retryCloudLedgerRepairItemForUser(
+  userId: UserId,
+  changeId: LedgerChangeId
+): Promise<boolean> {
+  const outbox = getCloudLedgerOutbox(userId);
+  const repairItem = (await loadCloudLedgerRepairItems(outbox)).find(
+    (item) => item.id === changeId
+  );
+  if (repairItem === undefined) {
+    return false;
+  }
+  await retryCloudLedgerRepairItem(outbox, changeId);
+  return await flushAndRestoreRepairMarkersIfNeeded(userId, outbox, [repairItem]);
+}
+
+export async function retryCloudLedgerRepairSetForUser(userId: UserId): Promise<boolean> {
+  const outbox = getCloudLedgerOutbox(userId);
+  const repairItems = await loadCloudLedgerRepairItems(outbox);
+  if (repairItems.length === 0) {
+    return false;
+  }
+  await retryCloudLedgerRepairSet(outbox);
+  return await flushAndRestoreRepairMarkersIfNeeded(userId, outbox, repairItems);
+}
+
 export async function discardCloudLedgerRepairItemForUser(
   userId: UserId,
   changeId: LedgerChangeId
@@ -101,6 +132,30 @@ export async function discardCloudLedgerRepairItemForUser(
   } finally {
     finishCloudLedgerRuntimeCacheWrite(userId, writeToken);
   }
+}
+
+async function flushAndRestoreRepairMarkersIfNeeded(
+  userId: UserId,
+  outbox: EncryptedCloudLedgerOutbox,
+  repairItems: readonly CloudLedgerRepairItem[]
+): Promise<boolean> {
+  const didFlush = await flushCloudLedgerOutboxForUser(userId);
+  if (didFlush) {
+    return true;
+  }
+  await outbox.markForRepair?.(repairItems.map(repairStateFromRepairItem));
+  return false;
+}
+
+function repairStateFromRepairItem(item: CloudLedgerRepairItem): CloudLedgerRepairState {
+  return {
+    changeId: item.id,
+    outcome: item.outcome,
+    ...(item.parentChangeId === undefined ? {} : { parentChangeId: item.parentChangeId }),
+    ...(item.acceptedTransactionVersion === undefined
+      ? {}
+      : { acceptedTransactionVersion: item.acceptedTransactionVersion }),
+  };
 }
 
 export async function enqueueCloudLedgerOptimisticCreate(input: {

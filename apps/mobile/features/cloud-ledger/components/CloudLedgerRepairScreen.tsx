@@ -8,12 +8,12 @@ import type { LedgerChangeId, UserId } from "@/shared/types/branded";
 import {
   getCloudLedgerOutbox,
   loadCloudLedgerRepairItems,
-  retryCloudLedgerRepairItem,
   type CloudLedgerRepairItem,
 } from "../outbox";
 import {
   discardCloudLedgerRepairItemForUser,
-  flushCloudLedgerOutboxForUser,
+  retryCloudLedgerRepairItemForUser,
+  retryCloudLedgerRepairSetForUser,
 } from "../runtime-mutations.public";
 import { CloudLedgerRepairList } from "./CloudLedgerRepairList";
 
@@ -51,8 +51,18 @@ export function CloudLedgerRepairScreen() {
 
   const handleRetry = (changeId: LedgerChangeId) =>
     runRepairAction(async (currentUserId) => {
-      await retryCloudLedgerRepairItem(getCloudLedgerOutbox(currentUserId), changeId);
-      await flushCloudLedgerOutboxForUser(currentUserId);
+      const didRetry = await retryCloudLedgerRepairItemForUser(currentUserId, changeId);
+      if (!didRetry) {
+        throw new Error("ledger repair retry failed");
+      }
+    });
+
+  const handleRetrySet = () =>
+    runRepairAction(async (currentUserId) => {
+      const didRetry = await retryCloudLedgerRepairSetForUser(currentUserId);
+      if (!didRetry) {
+        throw new Error("ledger repair set retry failed");
+      }
     });
 
   const handleDiscard = (changeId: LedgerChangeId) =>
@@ -78,6 +88,7 @@ export function CloudLedgerRepairScreen() {
           onDiscard={handleDiscard}
           onEditAndResubmit={handleEditAndResubmit}
           onRetry={handleRetry}
+          onRetrySet={handleRetrySet}
         />
       )}
     </ScreenLayout>

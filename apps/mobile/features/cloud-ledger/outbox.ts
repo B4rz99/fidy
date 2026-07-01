@@ -80,6 +80,7 @@ export type CloudLedgerRepairReason =
 export type CloudLedgerRepairState = {
   readonly changeId: LedgerChangeId;
   readonly outcome: CloudLedgerPendingChangeOutcome;
+  readonly acceptedTransactionVersion?: number;
   readonly parentChangeId?: LedgerChangeId;
 };
 export type CloudLedgerAutoRetryState = {
@@ -91,6 +92,7 @@ export type CloudLedgerRepairItem = {
   readonly kind: CloudLedgerPendingChange["kind"];
   readonly change: CloudLedgerPendingChange;
   readonly outcome: CloudLedgerPendingChangeOutcome;
+  readonly acceptedTransactionVersion?: number;
   readonly parentChangeId?: LedgerChangeId;
   readonly reason: CloudLedgerRepairReason;
   readonly actions: readonly CloudLedgerRepairAction[];
@@ -522,7 +524,9 @@ export async function flushPendingCloudLedgerChanges(input: {
     await input.outbox.removeAcceptedChanges(removableChanges);
   }
   await input.outbox.recordAutoRetryAttempts?.(retryStates);
-  await input.outbox.markForRepair?.(repairStates);
+  await input.outbox.markForRepair?.(
+    repairStatesWithAcceptedTransactionVersions(repairStates, flushableChanges, refreshedCache)
+  );
   return restoreOptimisticCloudLedgerCache({
     cache: refreshedCache,
     outbox: input.outbox,
@@ -545,6 +549,27 @@ function dependencyBlockedChangeIds(
   return nextBlockedIds.size === blockedIds.size
     ? blockedIds
     : dependencyBlockedChangeIds(changes, nextBlockedIds);
+}
+
+function repairStatesWithAcceptedTransactionVersions(
+  repairs: readonly CloudLedgerRepairState[],
+  changes: readonly CloudLedgerPendingChange[],
+  cache: CloudLedgerCache
+): readonly CloudLedgerRepairState[] {
+  const changesById = new Map(changes.map((change) => [change.id, change]));
+  const versionsByTransactionId = new Map(
+    cache.transactions.map((transaction) => [transaction.id, transaction.version])
+  );
+  return repairs.map((repair) => {
+    const change = changesById.get(repair.changeId);
+    const transactionId =
+      change?.kind === "deleteTransaction" ? change.transactionId : change?.transaction.id;
+    const acceptedTransactionVersion =
+      transactionId === undefined ? undefined : versionsByTransactionId.get(transactionId);
+    return acceptedTransactionVersion === undefined
+      ? repair
+      : { ...repair, acceptedTransactionVersion };
+  });
 }
 
 async function flushPendingChanges(
@@ -697,6 +722,9 @@ function repairItemsFromSnapshot(
             kind: change.kind,
             change,
             outcome: repair.outcome,
+            ...(repair.acceptedTransactionVersion === undefined
+              ? {}
+              : { acceptedTransactionVersion: repair.acceptedTransactionVersion }),
             ...(repair.parentChangeId === undefined
               ? {}
               : { parentChangeId: repair.parentChangeId }),
@@ -892,6 +920,14 @@ function parseRepairState(value: unknown): CloudLedgerRepairState {
       status: requireRepairOutcomeStatus(outcome.status),
       code: requireString(outcome.code, "repair outcome code"),
     },
+    ...(record.acceptedTransactionVersion === undefined
+      ? {}
+      : {
+          acceptedTransactionVersion: requirePositiveInteger(
+            record.acceptedTransactionVersion,
+            "repair acceptedTransactionVersion"
+          ),
+        }),
     ...(record.parentChangeId === undefined
       ? {}
       : {
@@ -1091,6 +1127,14 @@ function requireNonNegativeInteger(value: unknown, label: string): number {
     return number;
   }
   throw new Error(`${label} must be a non-negative integer`);
+}
+
+function requirePositiveInteger(value: unknown, label: string): number {
+  const number = requireNumber(value, label);
+  if (Number.isInteger(number) && number > 0) {
+    return number;
+  }
+  throw new Error(`${label} must be a positive integer`);
 }
 
 function chunkIndexes(chunkCount: number): readonly number[] {

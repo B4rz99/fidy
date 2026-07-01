@@ -9,4 +9,6 @@ export {
   enqueueCloudLedgerOptimisticDelete,
   flushCloudLedgerOutboxForUser,
   restoreCloudLedgerOptimisticRuntimeState,
+  retryCloudLedgerRepairItemForUser,
+  retryCloudLedgerRepairSetForUser,
 } from "./runtime-mutations";

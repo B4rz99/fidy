@@ -7,6 +7,7 @@ import {
   enqueueCloudLedgerOptimisticDelete,
   flushCloudLedgerOutboxForUser,
   restoreCloudLedgerOptimisticRuntimeState,
+  retryCloudLedgerRepairItemForUser,
 } from "@/features/cloud-ledger/runtime-mutations";
 import { requireUserId } from "@/shared/types/assertions";
 import type {
@@ -23,7 +24,7 @@ import { getSupabase } from "@/shared/db/supabase";
 const mocks = vi.hoisted(() => {
   const cache = { cursor: null, transactions: [] };
   const emptyCache = { cursor: null, transactions: [], source: "empty" };
-  const outbox = { id: "outbox" };
+  const outbox = { id: "outbox", markForRepair: vi.fn<(...args: any[]) => any>() };
   const writeToken = { generation: 1 };
   const abortSignal = new AbortController().signal;
   return {
@@ -50,10 +51,12 @@ const mocks = vi.hoisted(() => {
     getCloudLedgerRuntimeCache: vi.fn<(...args: any[]) => any>(),
     getSupabase: vi.fn<(...args: any[]) => any>(),
     isCloudLedgerRuntimeCacheWriteCurrent: vi.fn<(...args: any[]) => any>(),
+    loadCloudLedgerRepairItems: vi.fn<(...args: any[]) => any>(),
     releaseCloudLedgerRuntimeCacheWriteAbortSignal: vi.fn<(...args: any[]) => any>(),
     refreshCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     restoreOptimisticCloudLedgerCache: vi.fn<(...args: any[]) => any>(),
     resumeCloudLedgerRuntimeCacheWrites: vi.fn<(...args: any[]) => any>(),
+    retryCloudLedgerRepairItem: vi.fn<(...args: any[]) => any>(),
     setCloudLedgerRuntimeCacheIfCurrent: vi.fn<(...args: any[]) => any>(),
   };
 });
@@ -71,7 +74,9 @@ vi.mock("@/features/cloud-ledger/outbox", () => ({
   discardCloudLedgerRepairItem: mocks.discardCloudLedgerRepairItem,
   flushPendingCloudLedgerChanges: mocks.flushPendingCloudLedgerChanges,
   getCloudLedgerOutbox: mocks.getCloudLedgerOutbox,
+  loadCloudLedgerRepairItems: mocks.loadCloudLedgerRepairItems,
   restoreOptimisticCloudLedgerCache: mocks.restoreOptimisticCloudLedgerCache,
+  retryCloudLedgerRepairItem: mocks.retryCloudLedgerRepairItem,
 }));
 
 vi.mock("@/features/cloud-ledger/cache", () => ({
@@ -114,9 +119,12 @@ describe("Cloud Ledger runtime mutations", () => {
     mocks.getCloudLedgerOutbox.mockReturnValue(mocks.outbox);
     mocks.getCloudLedgerRuntimeCache.mockReturnValue(mocks.cache);
     mocks.isCloudLedgerRuntimeCacheWriteCurrent.mockReturnValue(true);
+    mocks.loadCloudLedgerRepairItems.mockResolvedValue([]);
     mocks.refreshCloudLedgerCache.mockResolvedValue(mocks.refreshedRepairBaseCache);
     mocks.restoreOptimisticCloudLedgerCache.mockResolvedValue(mocks.optimisticCache);
+    mocks.retryCloudLedgerRepairItem.mockResolvedValue(undefined);
     mocks.setCloudLedgerRuntimeCacheIfCurrent.mockReturnValue(true);
+    mocks.outbox.markForRepair.mockResolvedValue(undefined);
     vi.mocked(NetInfo.fetch).mockResolvedValue({ isConnected: true } as never);
     vi.mocked(getSupabase).mockReturnValue({
       auth: {
@@ -367,6 +375,37 @@ describe("Cloud Ledger runtime mutations", () => {
     expect(mocks.setCloudLedgerRuntimeCacheIfCurrent).not.toHaveBeenCalled();
     expect(NetInfo.fetch).not.toHaveBeenCalled();
     expect(mocks.flushPendingCloudLedgerChanges).not.toHaveBeenCalled();
+  });
+
+  it("restores a repair marker when retry cannot run a flush", async () => {
+    const changeId = "ledger-change-retry" as LedgerChangeId;
+    const repairItem = {
+      id: changeId,
+      outcome: { changeId, status: "retryable", code: "edge_function_unavailable" },
+      parentChangeId: "ledger-change-parent" as LedgerChangeId,
+      acceptedTransactionVersion: 5,
+    };
+    mocks.loadCloudLedgerRepairItems.mockResolvedValueOnce([repairItem]);
+    vi.mocked(getSupabase).mockReturnValueOnce({
+      auth: {
+        getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+          data: { session: null },
+          error: null,
+        }),
+      },
+    } as never);
+
+    await expect(retryCloudLedgerRepairItemForUser(userId, changeId)).resolves.toBe(false);
+
+    expect(mocks.retryCloudLedgerRepairItem).toHaveBeenCalledWith(mocks.outbox, changeId);
+    expect(mocks.outbox.markForRepair).toHaveBeenCalledWith([
+      {
+        changeId,
+        outcome: repairItem.outcome,
+        parentChangeId: repairItem.parentChangeId,
+        acceptedTransactionVersion: 5,
+      },
+    ]);
   });
 });
 

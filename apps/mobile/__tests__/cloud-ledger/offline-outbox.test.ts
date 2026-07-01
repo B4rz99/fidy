@@ -821,7 +821,7 @@ describe("mobile Cloud Ledger offline outbox", () => {
         categories: [],
         financialAccounts: [],
         transactions: [
-          acceptedCoffeeTransaction({ description: "Coffee accepted elsewhere", version: 2 }),
+          acceptedCoffeeTransaction({ description: "Coffee accepted elsewhere", version: 5 }),
           acceptedTaxiTransaction(),
         ],
         tombstones: [],
@@ -843,6 +843,7 @@ describe("mobile Cloud Ledger offline outbox", () => {
         id: "change-stale-amend-coffee",
         kind: "amendTransaction",
         actions: ["editAndResubmit", "discard"],
+        acceptedTransactionVersion: 5,
       }),
       expect.objectContaining({
         id: "change-stale-delete-taxi",

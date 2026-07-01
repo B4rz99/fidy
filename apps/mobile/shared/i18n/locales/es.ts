@@ -140,6 +140,7 @@ const es = {
         discard: "Descartar cambio",
         editAndResubmit: "Editar y reenviar",
         retry: "Reintentar sincronización",
+        retrySet: "Reintentar todos los cambios",
       },
       actionFailed:
         "No se pudo actualizar la reparación del ledger. Revisa tu conexión e intenta de nuevo.",
@@ -151,6 +152,8 @@ const es = {
       dependencyFailure: {
         title: "Bloqueado por otro cambio",
         body: "Resuelve primero la reparación principal. Este cambio local no puede sincronizarse hasta que ese problema quede resuelto.",
+        bodyWithParent:
+          "Resuelve primero el cambio principal %{parentChangeId}. Este cambio local no puede sincronizarse hasta que ese problema quede resuelto.",
       },
       duplicateChange: {
         title: "Cambio local duplicado",

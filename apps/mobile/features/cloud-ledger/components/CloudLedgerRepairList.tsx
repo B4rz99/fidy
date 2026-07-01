@@ -10,6 +10,7 @@ type CloudLedgerRepairListProps = {
   readonly onDiscard: (changeId: LedgerChangeId) => void;
   readonly onEditAndResubmit: (changeId: LedgerChangeId) => void;
   readonly onRetry: (changeId: LedgerChangeId) => void;
+  readonly onRetrySet?: () => void;
 };
 
 export function CloudLedgerRepairList({
@@ -17,8 +18,13 @@ export function CloudLedgerRepairList({
   onDiscard,
   onEditAndResubmit,
   onRetry,
+  onRetrySet,
 }: CloudLedgerRepairListProps) {
   const { t } = useTranslation();
+  const canRetrySet =
+    onRetrySet !== undefined &&
+    items.length > 1 &&
+    items.some((item) => item.actions.includes("retry"));
 
   if (items.length === 0) {
     return (
@@ -42,6 +48,14 @@ export function CloudLedgerRepairList({
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
     >
+      {canRetrySet ? (
+        <Button
+          label={t("cloudLedger.repair.actions.retrySet")}
+          size="compact"
+          variant="secondary"
+          onPress={onRetrySet}
+        />
+      ) : null}
       {items.map((item) => (
         <CloudLedgerRepairCard
           key={item.id}

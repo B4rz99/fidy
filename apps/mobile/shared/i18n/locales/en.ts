@@ -136,6 +136,7 @@ const en = {
         discard: "Discard change",
         editAndResubmit: "Edit and resubmit",
         retry: "Retry sync",
+        retrySet: "Retry all changes",
       },
       actionFailed: "Ledger repair could not be updated. Check your connection and try again.",
       emptyTitle: "No ledger repairs",
@@ -146,6 +147,8 @@ const en = {
       dependencyFailure: {
         title: "Blocked by another change",
         body: "Fix the parent repair item first. This local change cannot sync until that problem is resolved.",
+        bodyWithParent:
+          "Fix parent change %{parentChangeId} first. This local change cannot sync until that problem is resolved.",
       },
       duplicateChange: {
         title: "Duplicate local change",

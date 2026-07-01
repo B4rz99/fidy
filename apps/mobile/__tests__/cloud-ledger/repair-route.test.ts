@@ -34,15 +34,16 @@ test("Ledger Repair is reachable from settings and registered in the root stack"
 
 test("Ledger Repair screen wires visible repairs to retry, discard, and edit actions", () => {
   expect(repairScreenSource).toContain("loadCloudLedgerRepairItems");
-  expect(repairScreenSource).toContain("retryCloudLedgerRepairItem");
+  expect(repairScreenSource).toContain("retryCloudLedgerRepairItemForUser");
+  expect(repairScreenSource).toContain("retryCloudLedgerRepairSetForUser");
   expect(repairScreenSource).toContain("discardCloudLedgerRepairItemForUser");
-  expect(repairScreenSource).toContain("flushCloudLedgerOutboxForUser");
   expect(repairScreenSource).toContain('pathname: "/ledger-repair-transaction"');
 });
 
 test("Ledger Repair transaction screen resubmits editable pending transaction repairs", () => {
   expect(repairEditScreenSource).toContain("TransactionForm");
   expect(repairEditScreenSource).toContain("resubmitCloudLedgerRepairTransactionChange");
+  expect(repairEditScreenSource).toContain("acceptedTransactionVersion");
   expect(repairEditScreenSource).toContain("setCloudLedgerRuntimeCache");
   expect(repairEditScreenSource).toContain("flushCloudLedgerOutboxForUser");
   expect(repairEditScreenSource).toContain('replace("/ledger-repair")');

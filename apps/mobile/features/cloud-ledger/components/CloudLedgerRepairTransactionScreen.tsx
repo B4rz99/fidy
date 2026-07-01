@@ -242,8 +242,10 @@ function expectedVersionForRepairItem(
 ): number | undefined {
   return item.change.kind === "createTransaction"
     ? undefined
-    : (cache.transactions.find((transaction) => transaction.id === item.change.transaction.id)
-        ?.version ?? item.change.expectedVersion + 1);
+    : (item.acceptedTransactionVersion ??
+        cache.transactions.find((transaction) => transaction.id === item.change.transaction.id)
+          ?.version ??
+        item.change.expectedVersion + 1);
 }
 
 function normalizeDescription(value: string): string | null {

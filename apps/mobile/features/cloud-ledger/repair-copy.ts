@@ -19,11 +19,12 @@ export type CloudLedgerRepairItemCopy = {
 
 const REPAIR_REASON_COPY_KEYS: Record<
   CloudLedgerRepairReason,
-  { readonly title: string; readonly body: string }
+  { readonly title: string; readonly body: string; readonly bodyWithParent?: string }
 > = {
   dependencyFailure: {
     title: "cloudLedger.repair.dependencyFailure.title",
     body: "cloudLedger.repair.dependencyFailure.body",
+    bodyWithParent: "cloudLedger.repair.dependencyFailure.bodyWithParent",
   },
   duplicateChange: {
     title: "cloudLedger.repair.duplicateChange.title",
@@ -68,7 +69,12 @@ export function describeCloudLedgerRepairItem(
   const copyKeys = REPAIR_REASON_COPY_KEYS[item.reason];
   return {
     title: t(copyKeys.title),
-    body: t(copyKeys.body),
+    body:
+      item.reason === "dependencyFailure" &&
+      item.parentChangeId !== undefined &&
+      copyKeys.bodyWithParent !== undefined
+        ? t(copyKeys.bodyWithParent, { parentChangeId: item.parentChangeId })
+        : t(copyKeys.body),
     actionLabels: item.actions.map((action) => ({
       action,
       label: t(REPAIR_ACTION_COPY_KEYS[action]),

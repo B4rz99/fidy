@@ -71,6 +71,7 @@ describe("Cloud Ledger repair copy", () => {
     });
     expect(copies[3]).toMatchObject({
       title: "Blocked by another change",
+      body: "Fix parent change change-parent-invalid first. This local change cannot sync until that problem is resolved.",
       parentChangeId: "change-parent-invalid",
     });
     expect(
