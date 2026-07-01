@@ -83,14 +83,10 @@ Deno.serve(async (req) => {
           success: false,
           error: "delete_failed",
           failureCount: deleteResult.failures.length,
+          localCleanupRequired: deleteResult.localCleanupRequired === true,
         },
         500
       );
-    }
-
-    if (deleteResult.failures.length > 0) {
-      // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
-      console.error("Partial delete account remote cleanup failures:", deleteResult.failures);
     }
 
     return jsonResponse({ success: true });

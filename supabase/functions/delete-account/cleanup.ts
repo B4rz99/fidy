@@ -58,6 +58,7 @@ export type DeleteAccountRemoteFailure = {
 export type DeleteAccountRemoteResult = {
   readonly success: boolean;
   readonly failures: readonly DeleteAccountRemoteFailure[];
+  readonly localCleanupRequired?: boolean;
 };
 
 const ENCRYPTED_BACKUPS_TABLE = "encrypted_backups";
@@ -95,10 +96,24 @@ export async function deleteAccountRemoteData(
   ].filter((failure): failure is DeleteAccountRemoteFailure => failure !== null);
 
   const authFailure = await deleteAuthUser(supabase, userId);
-  const failures = authFailure === null ? cleanupFailures : [...cleanupFailures, authFailure];
+  if (authFailure !== null) {
+    return {
+      success: false,
+      failures: [...cleanupFailures, authFailure],
+    };
+  }
+
+  if (cleanupFailures.length > 0) {
+    return {
+      success: false,
+      failures: cleanupFailures,
+      localCleanupRequired: true,
+    };
+  }
+
   return {
-    success: authFailure === null,
-    failures,
+    success: true,
+    failures: [],
   };
 }
 

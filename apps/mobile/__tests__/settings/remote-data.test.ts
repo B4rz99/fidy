@@ -2,7 +2,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { deleteAccountRequest } from "@/features/settings/data/delete-account";
+import {
+  deleteAccountRequest,
+  isDeleteAccountLocalCleanupRequiredError,
+} from "@/features/settings/data/delete-account";
 import { saveNotificationPreferences } from "@/features/settings/data/notification-preferences";
 import { getSupabase } from "@/shared/db";
 import en from "@/shared/i18n/locales/en";
@@ -57,6 +60,24 @@ describe("settings remote data", () => {
       "delete_failed"
     );
   });
+
+  test("delete-account helper preserves the deleted-account local cleanup signal", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<(...args: any[]) => any>().mockResolvedValue({
+        ok: false,
+        json: vi.fn<(...args: any[]) => any>().mockResolvedValue({
+          error: "delete_failed",
+          localCleanupRequired: true,
+        }),
+      })
+    );
+
+    const result = deleteAccountRequest("https://example.supabase.co", "token");
+
+    await expect(result).rejects.toThrow("delete_failed");
+    await expect(result).rejects.toSatisfy(isDeleteAccountLocalCleanupRequiredError);
+  });
 });
 
 describe("settings remote callers", () => {
@@ -85,6 +106,7 @@ describe("settings remote callers", () => {
 
     expect(source).toContain("queryClient.clear()");
     expect(source).toContain("useAuthStore.getState().completeDeletedAccountSignOut()");
+    expect(source).toContain("isDeleteAccountLocalCleanupRequiredError");
     expect(source).not.toContain("useAuthStore.getState().signOut()");
   });
 

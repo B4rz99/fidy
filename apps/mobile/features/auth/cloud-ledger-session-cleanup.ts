@@ -3,7 +3,11 @@ import {
   resumeCloudLedgerRuntimeCacheWrites,
   suspendCloudLedgerRuntimeCacheWrites,
 } from "@/features/cloud-ledger/runtime.public";
-import { discardCloudLedgerOutbox } from "@/features/cloud-ledger/outbox.public";
+import {
+  type CloudLedgerOutboxDiscardCheckpoint,
+  createCloudLedgerOutboxDiscardCheckpoint,
+  discardCloudLedgerOutbox,
+} from "@/features/cloud-ledger/outbox.public";
 import {
   deleteCloudLedgerTransactionCache,
   invalidateTransactionSession,
@@ -36,13 +40,25 @@ export function resumeCloudLedgerStateForUser(userId: UserId): void {
 export async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null): Promise<void> {
   if (userId === null) return;
 
+  let didDiscardOutbox = false;
+  let outboxDiscard: CloudLedgerOutboxDiscardCheckpoint | null = null;
   try {
-    await discardCloudLedgerOutbox(userId);
+    outboxDiscard = await createCloudLedgerOutboxDiscardCheckpoint(userId);
+    await outboxDiscard.discard();
+    didDiscardOutbox = true;
     await deleteCloudLedgerTransactionCache(userId);
     clearCloudLedgerRuntimeCache(userId);
   } catch (err) {
+    if (didDiscardOutbox && outboxDiscard !== null) {
+      await outboxDiscard.restore().catch((restoreErr) => {
+        captureCloudLedgerSessionCleanupFailure(
+          "auth_signout_cloud_ledger_outbox_restore_failed",
+          restoreErr
+        );
+      });
+    }
     resumeCloudLedgerStateForUser(userId);
-    captureCloudLedgerSessionCleanupFailure("auth_signout_cloud_ledger_outbox_discard_failed", err);
+    captureCloudLedgerSessionCleanupFailure("auth_signout_cloud_ledger_cleanup_failed", err);
     throw err;
   }
 }

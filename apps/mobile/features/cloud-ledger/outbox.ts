@@ -22,6 +22,7 @@ import {
 } from "./pending-changes";
 import {
   clearSecureStoreOutboxPayload,
+  createSecureStoreOutboxPayloadCheckpoint,
   createSecureStoreCloudLedgerOutboxStorage,
   getExistingOutboxEncryptionKey,
   getOrCreateOutboxEncryptionKey,
@@ -87,6 +88,11 @@ export type EncryptedCloudLedgerOutbox = {
     change: CloudLedgerPendingChange
   ) => Promise<readonly CloudLedgerPendingChange[]>;
   readonly clear: () => Promise<void>;
+};
+
+export type CloudLedgerOutboxDiscardCheckpoint = {
+  readonly discard: () => Promise<void>;
+  readonly restore: () => Promise<void>;
 };
 
 const CLOUD_LEDGER_DEVICE_ID_BYTES = 16;
@@ -235,6 +241,25 @@ export function getCloudLedgerOutbox(userId: UserId): EncryptedCloudLedgerOutbox
 
 export function resetCloudLedgerOutboxInstances(): void {
   outboxesByUserId.clear();
+}
+
+export async function createCloudLedgerOutboxDiscardCheckpoint(
+  userId: UserId
+): Promise<CloudLedgerOutboxDiscardCheckpoint> {
+  const payloadKey = secureStoreOutboxKey(userId);
+  const encryptionKeyName = secureStoreOutboxEncryptionKey(userId);
+  const encryptionKey = SecureStore.getItem(encryptionKeyName);
+  const payloadCheckpoint = await createSecureStoreOutboxPayloadCheckpoint(payloadKey);
+  return {
+    discard: () => discardCloudLedgerOutbox(userId),
+    restore: async () => {
+      if (encryptionKey !== null) {
+        SecureStore.setItem(encryptionKeyName, encryptionKey);
+      }
+      await payloadCheckpoint.restore();
+      outboxesByUserId.delete(userId);
+    },
+  };
 }
 
 export async function discardCloudLedgerOutbox(userId: UserId): Promise<void> {

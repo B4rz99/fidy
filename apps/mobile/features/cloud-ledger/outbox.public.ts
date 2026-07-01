@@ -7,6 +7,7 @@ export type {
   EncryptedCloudLedgerOutbox,
   EncryptedCloudLedgerOutboxSnapshot,
   EncryptedCloudLedgerOutboxStorage,
+  CloudLedgerOutboxDiscardCheckpoint,
 } from "./outbox";
 export type {
   CloudLedgerRepairAction,
@@ -17,6 +18,7 @@ export {
   applyPendingLedgerChanges,
   amendOfflineCloudLedgerTransaction,
   CloudLedgerOutboxFailure,
+  createCloudLedgerOutboxDiscardCheckpoint,
   createEncryptedCloudLedgerOutbox,
   createOfflineCloudLedgerTransaction,
   createSecureStoreCloudLedgerOutboxStorage,

@@ -12,6 +12,7 @@ import {
   amendOfflineCloudLedgerTransaction,
   CloudLedgerOutboxFailure,
   createEncryptedCloudLedgerOutbox,
+  createCloudLedgerOutboxDiscardCheckpoint,
   createOfflineCloudLedgerTransaction,
   discardCloudLedgerOutbox,
   discardCloudLedgerRepairItem,
@@ -416,6 +417,28 @@ describe("mobile Cloud Ledger offline outbox", () => {
     await discardCloudLedgerOutbox(USER_ID);
 
     expect([...secureStore.keys()]).toEqual([]);
+  });
+
+  it("restores discarded encrypted outbox state from a signout cleanup checkpoint", async () => {
+    await createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox: getCloudLedgerOutbox(USER_ID),
+    });
+
+    const checkpoint = await createCloudLedgerOutboxDiscardCheckpoint(USER_ID);
+
+    await checkpoint.discard();
+    expect([...secureStore.keys()]).toEqual([]);
+
+    await checkpoint.restore();
+    resetCloudLedgerOutboxInstances();
+
+    await expect(getCloudLedgerOutbox(USER_ID).load()).resolves.toMatchObject([
+      { id: "change-offline-coffee" },
+    ]);
   });
 
   it("does not create encrypted outbox keys when logout discard has no stored outbox", async () => {

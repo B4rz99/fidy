@@ -45,8 +45,9 @@ describe("delete-account remote cleanup", () => {
     });
 
     await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
-      success: true,
+      success: false,
       failures: [{ target: "encrypted-backups", message: "storage unavailable" }],
+      localCleanupRequired: true,
     });
 
     expect(supabase.storageRemove).toHaveBeenCalledWith([`${USER_ID}/backup-1.json`]);
@@ -113,7 +114,7 @@ describe("delete-account remote cleanup", () => {
     const source = readDeleteAccountFunctionSource();
 
     expect(source).toContain("failureCount: deleteResult.failures.length");
-    expect(source).toContain("Partial delete account remote cleanup failures");
+    expect(source).toContain("localCleanupRequired: deleteResult.localCleanupRequired === true");
     expect(source).not.toContain("failures: deleteResult.failures.map");
   });
 

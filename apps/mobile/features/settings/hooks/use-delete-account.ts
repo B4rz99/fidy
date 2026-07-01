@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/public";
-import { deleteAccountRequest } from "../data/delete-account";
+import {
+  deleteAccountRequest,
+  isDeleteAccountLocalCleanupRequiredError,
+} from "../data/delete-account";
 
 type DeleteAccountInput = {
   readonly supabaseUrl: string;
@@ -16,6 +19,12 @@ export function useDeleteAccountMutation() {
     onSuccess: async () => {
       queryClient.clear();
       await useAuthStore.getState().completeDeletedAccountSignOut();
+    },
+    onError: async (error) => {
+      if (isDeleteAccountLocalCleanupRequiredError(error)) {
+        queryClient.clear();
+        await useAuthStore.getState().completeDeletedAccountSignOut();
+      }
     },
   });
 }
