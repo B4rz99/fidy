@@ -85,12 +85,12 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@2316-2394@apps/mobile/__tests__/transactions/store.test.ts",
+      "key": "(anonymous)@2316-2396@apps/mobile/__tests__/transactions/store.test.ts",
       "file": "apps/mobile/__tests__/transactions/store.test.ts",
       "function": "(anonymous)",
       "thresholdProfile": "default",
       "cyclomaticComplexity": 1,
-      "nloc": 74,
+      "nloc": 76,
       "parameterCount": 0
     },
     {

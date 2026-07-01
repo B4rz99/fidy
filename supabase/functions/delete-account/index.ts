@@ -88,6 +88,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (deleteResult.failures.length > 0) {
+      // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
+      console.error("Partial delete account remote cleanup failures:", deleteResult.failures);
+    }
+
     return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

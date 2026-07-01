@@ -28,6 +28,10 @@ type RangedSelectQuery<Row> = {
   range(from: number, to: number): SelectResponse<Row>;
 };
 
+type BackupRow = {
+  readonly id: string;
+};
+
 export type DeleteAccountSupabaseClient = {
   readonly auth: {
     readonly admin: {
@@ -72,31 +76,29 @@ export async function deleteAccountRemoteData(
   supabase: DeleteAccountSupabaseClient,
   userId: string
 ): Promise<DeleteAccountRemoteResult> {
+  const backupRowsResult = await listAllBackupRows(supabase, userId);
+  if ("failure" in backupRowsResult) {
+    return { success: false, failures: [backupRowsResult.failure] };
+  }
+
   const cloudLedgerFailure = await deleteCloudLedgerAccountData(supabase, userId);
   if (cloudLedgerFailure !== null) {
     return { success: false, failures: [cloudLedgerFailure] };
   }
 
-  const backupBlobFailure = await deleteBackupBlobs(supabase, userId);
-  if (backupBlobFailure !== null) {
-    return { success: false, failures: [backupBlobFailure] };
-  }
-
   const cleanupFailures = [
+    await deleteBackupBlobs(supabase, userId, backupRowsResult.rows),
     await deleteUserRows(supabase, ENCRYPTED_BACKUPS_TABLE, userId),
     ...(await Promise.all(
       OPERATIONAL_REMOTE_TABLES.map((tableName) => deleteUserRows(supabase, tableName, userId))
     )),
   ].filter((failure): failure is DeleteAccountRemoteFailure => failure !== null);
 
-  if (cleanupFailures.length > 0) {
-    return { success: false, failures: cleanupFailures };
-  }
-
   const authFailure = await deleteAuthUser(supabase, userId);
+  const failures = authFailure === null ? cleanupFailures : [...cleanupFailures, authFailure];
   return {
     success: authFailure === null,
-    failures: authFailure === null ? [] : [authFailure],
+    failures,
   };
 }
 
@@ -144,6 +146,25 @@ async function listBackupRows(
   return { rows: data ?? [] };
 }
 
+async function listAllBackupRows(
+  supabase: DeleteAccountSupabaseClient,
+  userId: string,
+  pageIndex = 0,
+  rows: readonly BackupRow[] = []
+): Promise<
+  { readonly rows: readonly BackupRow[] } | { readonly failure: DeleteAccountRemoteFailure }
+> {
+  const pageResult = await listBackupRows(supabase, userId, pageIndex);
+  if ("failure" in pageResult) {
+    return pageResult;
+  }
+
+  const nextRows = [...rows, ...pageResult.rows];
+  return pageResult.rows.length < BACKUP_DELETE_PAGE_SIZE
+    ? { rows: nextRows }
+    : listAllBackupRows(supabase, userId, pageIndex + 1, nextRows);
+}
+
 async function deleteUserRows(
   supabase: DeleteAccountSupabaseClient,
   tableName: string,
@@ -155,22 +176,20 @@ async function deleteUserRows(
 
 async function deleteBackupBlobs(
   supabase: DeleteAccountSupabaseClient,
-  userId: string
+  userId: string,
+  backupRows: readonly BackupRow[]
 ): Promise<DeleteAccountRemoteFailure | null> {
-  return deleteBackupBlobPage(supabase, userId, 0);
+  return deleteBackupBlobPage(supabase, userId, backupRows, 0);
 }
 
 async function deleteBackupBlobPage(
   supabase: DeleteAccountSupabaseClient,
   userId: string,
+  rows: readonly BackupRow[],
   pageIndex: number
 ): Promise<DeleteAccountRemoteFailure | null> {
-  const backupRowsResult = await listBackupRows(supabase, userId, pageIndex);
-  if ("failure" in backupRowsResult) {
-    return backupRowsResult.failure;
-  }
-
-  const backupRows = backupRowsResult.rows;
+  const pageStart = pageIndex * BACKUP_DELETE_PAGE_SIZE;
+  const backupRows = rows.slice(pageStart, pageStart + BACKUP_DELETE_PAGE_SIZE);
   if (backupRows.length === 0) {
     return null;
   }
@@ -183,7 +202,7 @@ async function deleteBackupBlobPage(
 
   return backupRows.length < BACKUP_DELETE_PAGE_SIZE
     ? null
-    : deleteBackupBlobPage(supabase, userId, pageIndex + 1);
+    : deleteBackupBlobPage(supabase, userId, rows, pageIndex + 1);
 }
 
 async function deleteAuthUser(

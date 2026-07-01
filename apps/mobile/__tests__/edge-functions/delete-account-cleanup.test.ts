@@ -38,20 +38,27 @@ describe("delete-account remote cleanup", () => {
     expect(supabase.deleteUser).toHaveBeenCalledWith(USER_ID);
   });
 
-  it("reports partial remote failures while keeping backup metadata retryable", async () => {
+  it("continues deleted-account cleanup after ledger deletion when backup blob removal fails", async () => {
     const supabase = createDeleteAccountSupabase({
       backupRows: [{ id: "backup-1" }],
       storageError: { message: "storage unavailable" },
     });
 
     await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
-      success: false,
+      success: true,
       failures: [{ target: "encrypted-backups", message: "storage unavailable" }],
     });
 
-    expect(supabase.tableDeletes()).not.toContain("encrypted_backups");
     expect(supabase.storageRemove).toHaveBeenCalledWith([`${USER_ID}/backup-1.json`]);
-    expect(supabase.deleteUser).not.toHaveBeenCalled();
+    expect(supabase.tableDeletes()).toEqual([
+      "encrypted_backups",
+      "push_devices",
+      "notification_preferences",
+      "capture_improvement_preferences",
+      "notification_parse_improvement_samples",
+      "rate_limits",
+    ]);
+    expect(supabase.deleteUser).toHaveBeenCalledWith(USER_ID);
   });
 
   it("reports Cloud Ledger cleanup failures before deleting operational rows or the auth user", async () => {
@@ -106,6 +113,7 @@ describe("delete-account remote cleanup", () => {
     const source = readDeleteAccountFunctionSource();
 
     expect(source).toContain("failureCount: deleteResult.failures.length");
+    expect(source).toContain("Partial delete account remote cleanup failures");
     expect(source).not.toContain("failures: deleteResult.failures.map");
   });
 

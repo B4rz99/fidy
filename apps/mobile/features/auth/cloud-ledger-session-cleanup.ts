@@ -37,8 +37,8 @@ export async function discardCloudLedgerStateBeforeSignOut(userId: UserId | null
   if (userId === null) return;
 
   try {
-    await deleteCloudLedgerTransactionCache(userId);
     await discardCloudLedgerOutbox(userId);
+    await deleteCloudLedgerTransactionCache(userId);
     clearCloudLedgerRuntimeCache(userId);
   } catch (err) {
     resumeCloudLedgerStateForUser(userId);

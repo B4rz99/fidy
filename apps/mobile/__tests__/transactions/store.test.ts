@@ -2368,13 +2368,13 @@ describe("transaction boundaries", () => {
       expect(sqlite.prepare("select id, source from financial_accounts order by id").all()).toEqual(
         [
           { id: "fa-cloud-cache-only", source: "local_ledger" },
-          { id: "fa-cloud-transaction", source: "cloud_ledger" },
+          { id: "fa-cloud-transaction", source: "local_ledger" },
           { id: "fa-local-transaction", source: "local_ledger" },
         ]
       );
       expect(sqlite.prepare("select id, source from user_categories order by id").all()).toEqual([
         { id: "ucat-cloud-cache-only", source: "local_ledger" },
-        { id: "ucat-cloud-transaction", source: "cloud_ledger" },
+        { id: "ucat-cloud-transaction", source: "local_ledger" },
         { id: "ucat-local-transaction", source: "local_ledger" },
       ]);
 
@@ -2383,10 +2383,12 @@ describe("transaction boundaries", () => {
 
       expect(sqlite.prepare("select id from financial_accounts order by id").all()).toEqual([
         { id: "fa-cloud-cache-only" },
+        { id: "fa-cloud-transaction" },
         { id: "fa-local-transaction" },
       ]);
       expect(sqlite.prepare("select id from user_categories order by id").all()).toEqual([
         { id: "ucat-cloud-cache-only" },
+        { id: "ucat-cloud-transaction" },
         { id: "ucat-local-transaction" },
       ]);
     } finally {

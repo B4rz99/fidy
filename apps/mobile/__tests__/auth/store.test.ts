@@ -658,10 +658,13 @@ describe("useAuthStore", () => {
       mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!
     );
     expect(mockSuspendCloudLedgerRuntimeCacheWrites.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!
+    );
+    expect(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!).toBeLessThan(
       mockDeleteCloudLedgerTransactionCache.mock.invocationCallOrder[0]!
     );
     expect(mockDeleteCloudLedgerTransactionCache.mock.invocationCallOrder[0]!).toBeLessThan(
-      mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!
+      mockClearCloudLedgerRuntimeCache.mock.invocationCallOrder[0]!
     );
     expect(mockDiscardCloudLedgerOutbox.mock.invocationCallOrder[0]!).toBeLessThan(
       mockClearCloudLedgerRuntimeCache.mock.invocationCallOrder[0]!
@@ -700,6 +703,7 @@ describe("useAuthStore", () => {
 
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
+    expect(mockDeleteCloudLedgerTransactionCache).not.toHaveBeenCalled();
     expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
@@ -722,7 +726,7 @@ describe("useAuthStore", () => {
     expect(mockSignOut).toHaveBeenCalled();
   });
 
-  it("signOut preserves auth and outbox state when the local database cannot be opened", async () => {
+  it("signOut preserves auth when the local database cannot be opened after outbox discard", async () => {
     useAuthStore.setState({
       session: mockSession as never,
       localQaSession: null,
@@ -732,7 +736,7 @@ describe("useAuthStore", () => {
     await expect(useAuthStore.getState().signOut()).rejects.toThrow("db decryption failed");
 
     expect(mockSuspendCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
-    expect(mockDiscardCloudLedgerOutbox).not.toHaveBeenCalled();
+    expect(mockDiscardCloudLedgerOutbox).toHaveBeenCalledWith("user-1");
     expect(mockClearCloudLedgerRuntimeCache).not.toHaveBeenCalled();
     expect(mockResumeCloudLedgerRuntimeCacheWrites).toHaveBeenCalledWith("user-1");
     expect(mockResumeTransactionSession).toHaveBeenCalledWith("user-1");
