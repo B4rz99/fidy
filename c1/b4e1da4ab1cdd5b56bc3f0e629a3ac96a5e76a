@@ -1,0 +1,32 @@
+plans/lizard-complexity-debt.json
+  s_6c070d47258744::t_7276229d2c259c 88,93
+supabase/functions/delete-account/cleanup.ts
+  s_6c070d47258744::t_f6995a469af364 31-34,79-83,90,98,101,149-154,156-167,179-180,182,188,191-192,205
+  s_6c070d47258744::t_9b4c09826233db 155
+apps/mobile/__tests__/auth/store.test.ts
+  s_6c070d47258744::t_b068c9276002ac 661-663,667,706,729,739
+apps/mobile/__tests__/edge-functions/delete-account-cleanup.test.ts
+  s_6c070d47258744::t_652cfd4c6baaa6 41,48,53-61,116
+supabase/functions/delete-account/index.ts
+  s_6c070d47258744::t_90513448cf4ded 91-95
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6c070d47258744::t_012ae73f313f6d 2371,2377,2386,2391
+apps/mobile/features/auth/cloud-ledger-session-cleanup.ts
+  s_6c070d47258744::t_fa9f0b145dce05 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "c1b4e1da4ab1cdd5b56bc3f0e629a3ac96a5e76a",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
