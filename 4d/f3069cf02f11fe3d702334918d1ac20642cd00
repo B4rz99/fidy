@@ -1,0 +1,23 @@
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_d523cb447bd3de 1887-1889
+  s_6c070d47258744::t_4d62ef373ce0f4 1870-1886,1890-1907,1909-1967
+  s_6c070d47258744::t_87a07c4641b75a 1908
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_6664591ebd3445 655,670-671,683,691-692,694-700,710-711,718-724
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "4df3069cf02f11fe3d702334918d1ac20642cd00",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
