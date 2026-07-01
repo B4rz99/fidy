@@ -1,0 +1,57 @@
+apps/mobile/__tests__/cloud-ledger/repair-list.test.tsx
+  s_6c070d47258744::t_81134cf30ea236 21,46,67-98,103,109
+  s_6c070d47258744::t_8859e3317775ec 36-41,52,105,134-136
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairTransactionScreen.tsx
+  s_6c070d47258744::t_5031bb699858aa 245-248
+apps/mobile/__tests__/cloud-ledger/runtime-mutations.test.ts
+  s_6c070d47258744::t_2fa014988ed59c 10,27,54,59,77,79,122,125,127
+  s_6c070d47258744::t_b85c3a1c07f4c0 379-408
+  s_6c070d47258744::t_122f9a4e326f1a 409
+apps/mobile/shared/i18n/locales/en.ts
+  s_6c070d47258744::t_77062d1506c64b 150-151
+  s_6c070d47258744::t_596c7ad42df5d0 139
+apps/mobile/__tests__/cloud-ledger/repair-route.test.ts
+  s_6c070d47258744::t_84049fc534ddab 37-38
+  s_6c070d47258744::t_b3506f7e7a2aae 46
+apps/mobile/features/cloud-ledger/repair-copy.ts
+  s_6c070d47258744::t_77062d1506c64b 22,27,72-77
+apps/mobile/shared/i18n/locales/es.ts
+  s_6c070d47258744::t_77062d1506c64b 155-156
+  s_6c070d47258744::t_596c7ad42df5d0 143
+apps/mobile/__tests__/cloud-ledger/offline-outbox.test.ts
+  s_6c070d47258744::t_0863a360a070e8 824,846
+apps/mobile/__tests__/cloud-ledger/repair-copy.test.ts
+  s_6c070d47258744::t_8859e3317775ec 74
+apps/mobile/features/cloud-ledger/runtime-mutations.ts
+  s_6c070d47258744::t_e7a3e6c7d31102 74-96,98
+  s_6c070d47258744::t_eac8942f209ffd 137-158
+  s_6c070d47258744::t_35a8f28e316bb0 18,20-24
+  s_6c070d47258744::t_ec3f8ef8b4e1b3 97,159-160
+apps/mobile/features/cloud-ledger/outbox.ts
+  s_6c070d47258744::t_ef877ffac9121f 83,95,527-529,554-574,725-727,923-930,1132-1137
+  s_6c070d47258744::t_321a028d8e66a0 1138-1139
+apps/mobile/features/cloud-ledger/runtime-mutations.public.ts
+  s_6c070d47258744::t_b8c46c9a3722a2 12-13
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairScreen.tsx
+  s_6c070d47258744::t_b8c46c9a3722a2 15-16,54-57,62-65
+  s_6c070d47258744::t_876fbe20e558b0 60-61,91
+  s_6c070d47258744::t_e1dc63c060ebcf 58-59
+apps/mobile/features/cloud-ledger/components/CloudLedgerRepairList.tsx
+  s_6c070d47258744::t_596c7ad42df5d0 13,21,24-27,51-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d5565a0e5f9e56f140f39fc44858e9ae9d3e8e5b",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
