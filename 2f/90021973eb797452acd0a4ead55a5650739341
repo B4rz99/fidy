@@ -1,0 +1,19 @@
+apps/mobile/__tests__/cloud-ledger/authenticated-shell-bootstrap.test.ts
+  s_6c070d47258744::t_1289e2cf875761 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "2f90021973eb797452acd0a4ead55a5650739341",
+  "prompts": {},
+  "sessions": {
+    "s_6c070d47258744": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eeca9-4593-7c71-a75f-8384245299fd",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
