@@ -3089,6 +3089,44 @@ describe("mobile Cloud Ledger offline outbox", () => {
       { id: "change-offline-coffee" },
     ]);
   });
+
+  it("restores queued pending writes from a signout cleanup checkpoint", async () => {
+    let releaseManifestWrite: () => void = () => undefined;
+    const manifestWriteStarted = new Promise<void>((resolveStarted) => {
+      const releasePromise = new Promise<void>((resolveRelease) => {
+        releaseManifestWrite = resolveRelease;
+      });
+      vi.mocked(SecureStore.setItemAsync).mockImplementation(async (key: string, value: string) => {
+        if (key === "cloud-ledger-outbox_user-1") {
+          resolveStarted();
+          await releasePromise;
+        }
+        secureStore.set(key, value);
+      });
+    });
+    const outbox = getCloudLedgerOutbox(USER_ID);
+    const queuedWrite = createOfflineCloudLedgerTransaction({
+      cache: createSeededLedgerCache(),
+      changeId: requireLedgerChangeId("change-offline-coffee"),
+      command: offlineCoffeeCommand(),
+      createdAt: requireIsoDateTime("2026-06-02T10:03:00.000Z"),
+      outbox,
+    });
+
+    await manifestWriteStarted;
+    const checkpointPromise = createCloudLedgerOutboxDiscardCheckpoint(USER_ID);
+    releaseManifestWrite();
+    await queuedWrite;
+    const checkpoint = await checkpointPromise;
+
+    await checkpoint.discard();
+    await checkpoint.restore();
+    resetCloudLedgerOutboxInstances();
+
+    await expect(getCloudLedgerOutbox(USER_ID).load()).resolves.toMatchObject([
+      { id: "change-offline-coffee" },
+    ]);
+  });
 });
 
 function secureStoreOutboxPayloadChunkKeys() {

@@ -47,6 +47,7 @@ describe("delete-account remote cleanup", () => {
     await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
       success: false,
       failures: [{ target: "encrypted-backups", message: "storage unavailable" }],
+      localCleanupRequired: true,
     });
 
     expect(supabase.storageRemove).toHaveBeenCalledWith([`${USER_ID}/backup-1.json`]);
@@ -57,6 +58,21 @@ describe("delete-account remote cleanup", () => {
       "notification_parse_improvement_samples",
       "rate_limits",
     ]);
+    expect(supabase.deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("signals local cleanup when operational cleanup fails after ledger deletion", async () => {
+    const supabase = createDeleteAccountSupabase({
+      backupRows: [],
+      tableDeleteErrors: { rate_limits: { message: "rate limit cleanup unavailable" } },
+    });
+
+    await expect(deleteAccountRemoteData(supabase.client, USER_ID)).resolves.toEqual({
+      success: false,
+      failures: [{ target: "rate_limits", message: "rate limit cleanup unavailable" }],
+      localCleanupRequired: true,
+    });
+
     expect(supabase.deleteUser).not.toHaveBeenCalled();
   });
 
@@ -138,12 +154,16 @@ function createDeleteAccountSupabase(options: {
   readonly backupListError?: { readonly message: string };
   readonly rpcError?: { readonly message: string };
   readonly storageError?: { readonly message: string };
+  readonly tableDeleteErrors?: Readonly<Record<string, { readonly message: string }>>;
 }) {
   const tableDeleteCalls: string[] = [];
-  const eq = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
   const deleteTable = vi.fn<(...args: any[]) => any>((tableName: string) => {
     tableDeleteCalls.push(tableName);
-    return { eq };
+    return {
+      eq: vi.fn<(...args: any[]) => any>(() =>
+        Promise.resolve({ error: options.tableDeleteErrors?.[tableName] ?? null })
+      ),
+    };
   });
   const range = vi.fn<(...args: any[]) => any>((from: number, to: number) =>
     Promise.resolve({

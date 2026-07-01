@@ -31,6 +31,7 @@ import {
   secureStoreOutboxKey,
   writeOutboxSnapshot,
   type EncryptedCloudLedgerOutboxStorage,
+  type SecureStoreOutboxPayloadCheckpoint,
 } from "./outbox-storage";
 import {
   dependencyBlockedChangeIds,
@@ -72,6 +73,9 @@ export type {
 
 export type EncryptedCloudLedgerOutbox = {
   readonly clearRepairStates?: (changeIds: readonly LedgerChangeId[]) => Promise<void>;
+  readonly createPayloadCheckpoint?: (
+    checkpoint: () => Promise<SecureStoreOutboxPayloadCheckpoint>
+  ) => Promise<SecureStoreOutboxPayloadCheckpoint>;
   readonly load: () => Promise<readonly CloudLedgerPendingChange[]>;
   readonly loadAutoRetryAttempts?: () => Promise<readonly CloudLedgerAutoRetryState[]>;
   readonly loadRepairItems?: () => Promise<readonly CloudLedgerRepairItem[]>;
@@ -118,6 +122,7 @@ export function createEncryptedCloudLedgerOutbox(input: {
 
   return {
     clear: () => serializeMutation(() => input.storage.clear()),
+    createPayloadCheckpoint: (checkpoint) => serializeMutation(checkpoint),
     clearRepairStates: (changeIds) =>
       serializeMutation(async () => {
         const changeIdSet = new Set(changeIds);
@@ -249,7 +254,13 @@ export async function createCloudLedgerOutboxDiscardCheckpoint(
   const payloadKey = secureStoreOutboxKey(userId);
   const encryptionKeyName = secureStoreOutboxEncryptionKey(userId);
   const encryptionKey = SecureStore.getItem(encryptionKeyName);
-  const payloadCheckpoint = await createSecureStoreOutboxPayloadCheckpoint(payloadKey);
+  const outbox = outboxesByUserId.get(userId);
+  const payloadCheckpoint =
+    outbox?.createPayloadCheckpoint === undefined
+      ? await createSecureStoreOutboxPayloadCheckpoint(payloadKey)
+      : await outbox.createPayloadCheckpoint(() =>
+          createSecureStoreOutboxPayloadCheckpoint(payloadKey)
+        );
   return {
     discard: () => discardCloudLedgerOutbox(userId),
     restore: async () => {
